@@ -1,0 +1,16 @@
+# --- Custom Andritz Portal Rules ---
+# Ignore local SQLite databases (prevents overwriting live data)
+*.db
+*.db-shm
+*.db-wal
+
+# Ignore environment files with sensitive keys
+.env
+.env.local
+.env.*.local
+
+# Ignore build artifacts
+/bin/
+/obj/
+node_modules/
+dist/

@@ -1,0 +1,339 @@
+import { useState } from 'react'
+import { CheckBadgeIcon, StarIcon } from '@heroicons/react/24/solid'
+import { XMarkIcon, EyeIcon, CheckIcon, ClockIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline'
+import Modal from '../shared/Modal'
+import StatusBadge from '../shared/StatusBadge'
+import ApprovalTimeline from '../shared/ApprovalTimeline'
+import VendorDetailModal from '../VendorDetailModal'
+import Toast from '../shared/Toast'
+
+const TABS = [
+  { id: 'pending', label: 'Pending', icon: ClockIcon },
+  { id: 'history', label: 'History', icon: ArchiveBoxIcon },
+]
+
+export default function FinalApproverConsole({ workflow, currentUser }) {
+  const queue   = workflow.getPendingFor(currentUser.id)
+  const history = workflow.getHistoryFor(currentUser.id)
+
+  const [activeTab, setActiveTab]         = useState('pending')
+  const [reviewing, setReviewing]         = useState(null)
+  const [vendorCode, setVendorCode]       = useState('')
+  const [vendorCodeErr, setVendorCodeErr] = useState('')
+  const [rejectMode, setRejectMode]       = useState(false)
+  const [rejectComment, setRejectComment] = useState('')
+  const [rejectError, setRejectError]     = useState('')
+  const [viewingRequest, setViewingRequest] = useState(null)
+  const [toast, setToast]                 = useState(null)
+
+  const isAuthorizedFinalApprover = currentUser?.email === 'pardeep.sharma@andritz.com'
+
+  const openReview = (req) => {
+    setReviewing(req)
+    setVendorCode('')
+    setVendorCodeErr('')
+    setRejectMode(false)
+    setRejectComment('')
+    setRejectError('')
+  }
+
+  const handleComplete = () => {
+    if (!vendorCode.trim()) { setVendorCodeErr('SAP Vendor Code is required.'); return }
+    const name = reviewing.vendorName
+    const code = vendorCode.trim()
+    workflow.complete(reviewing.id, code)
+    setReviewing(null)
+    setToast({
+      type: 'success',
+      title: 'Vendor Registration Completed',
+      body:  `${name} has been approved and vendor code ${code} has been assigned. The buyer will be notified.`,
+    })
+  }
+
+  const handleReject = () => {
+    if (!rejectComment.trim()) { setRejectError('A rejection reason is required.'); return }
+    workflow.reject(reviewing.id, rejectComment)
+    setReviewing(null)
+  }
+
+  const myStepFor = (req) =>
+    req.approvalSteps.find(s => s.approverUserId === currentUser.id)
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      {/* Identity banner */}
+      <div className="mb-6 rounded-xl bg-gradient-to-r from-[#c8102e] to-rose-700 px-6 py-5 flex items-center gap-4 text-white shadow-lg">
+        <StarIcon className="h-10 w-10 text-white/80 flex-shrink-0" />
+        <div>
+          <p className="text-sm font-semibold text-white/70 uppercase tracking-wider">Final Approver Console</p>
+          <p className="text-xl font-bold">{currentUser.name}</p>
+          <p className="text-sm text-white/70">
+            You are the designated Final Approver. Only you can assign SAP Vendor Codes and complete vendor registrations.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab bar */}
+      <div className="flex gap-1 border-b border-gray-200 mb-5">
+        {TABS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => setActiveTab(id)}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              activeTab === id
+                ? 'border-[#c8102e] text-[#c8102e]'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+            <span className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
+              activeTab === id ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'
+            }`}>
+              {id === 'pending' ? queue.length : history.length}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* ── Pending tab ─────────────────────────────────────────────────── */}
+      {activeTab === 'pending' && (
+        <>
+          {queue.length === 0 && (
+            <div className="card p-12 text-center">
+              <CheckBadgeIcon className="h-10 w-10 text-emerald-400 mx-auto mb-3" />
+              <p className="text-sm text-gray-500">No requests awaiting your approval.</p>
+            </div>
+          )}
+          <div className="space-y-4">
+            {queue.map(req => {
+              const intermediateSteps = req.approvalSteps.filter(s => !s.isFinalApproval)
+              const allIntermediate   = intermediateSteps.every(s => s.decision === 'Approved')
+              return (
+                <div key={req.id} className="card overflow-hidden">
+                  <div className="bg-emerald-50 border-b border-emerald-100 px-5 py-2.5 flex items-center gap-3">
+                    <CheckBadgeIcon className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                    <p className="text-xs text-emerald-800 font-medium">
+                      {allIntermediate
+                        ? `All ${intermediateSteps.length} intermediate approval${intermediateSteps.length !== 1 ? 's' : ''} completed`
+                        : 'Some intermediate approvals still pending'}
+                    </p>
+                  </div>
+                  <div className="px-5 py-4">
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="font-semibold text-gray-900">{req.vendorName}</h2>
+                          <StatusBadge status={req.status} />
+                          {req.revisionNo > 0 && (
+                            <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">
+                              REV {req.revisionNo}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1">{req.contactInformation}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{req.addressDetails} · {req.city}, {req.locality}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button className="btn-secondary" onClick={() => setViewingRequest(req)}>
+                          <EyeIcon className="h-4 w-4" />
+                          View
+                        </button>
+                        {isAuthorizedFinalApprover && (
+                          <button
+                            className="inline-flex items-center gap-1.5 rounded-md bg-[#c8102e] hover:bg-red-800 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+                            onClick={() => openReview(req)}
+                          >
+                            <StarIcon className="h-4 w-4" />
+                            Final Review
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center gap-2 rounded-lg bg-amber-50 ring-1 ring-amber-200 px-3 py-2">
+                      <span className="text-xs text-amber-700 font-medium">Awaiting SAP Vendor Code entry.</span>
+                      <span className="text-xs text-amber-500">Click "Final Review" to enter the code and complete.</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+
+      {/* ── History tab ─────────────────────────────────────────────────── */}
+      {activeTab === 'history' && (
+        <>
+          {history.length === 0 && (
+            <div className="card p-12 text-center">
+              <ArchiveBoxIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm text-gray-500">No vendor registrations acted upon yet.</p>
+            </div>
+          )}
+          <div className="space-y-4">
+            {history.map(req => {
+              const step      = myStepFor(req)
+              const isApproved = step?.decision === 'Approved'
+              return (
+                <div key={req.id} className="card px-5 py-4">
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="font-semibold text-gray-900">{req.vendorName}</h2>
+                        <StatusBadge status={req.status} />
+                        {req.revisionNo > 0 && (
+                          <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">
+                            REV {req.revisionNo}
+                          </span>
+                        )}
+                        <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ring-1 ring-inset ${
+                          isApproved
+                            ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                            : 'bg-red-50 text-red-700 ring-red-200'
+                        }`}>
+                          {isApproved
+                            ? <CheckIcon className="h-3 w-3" />
+                            : <XMarkIcon className="h-3 w-3" />}
+                          Final {isApproved ? 'approved' : 'rejected'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">{req.contactInformation}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{req.addressDetails} · {req.city}, {req.locality}</p>
+                      {req.vendorCode && (
+                        <p className="text-xs text-emerald-600 font-mono mt-1">Vendor Code: {req.vendorCode}</p>
+                      )}
+                      {step?.comment && (
+                        <p className="text-xs text-gray-500 mt-1 italic">Comment: "{step.comment}"</p>
+                      )}
+                      {step?.decidedAt && (
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          Decided {new Date(step.decidedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button className="btn-secondary" onClick={() => setViewingRequest(req)}>
+                        <EyeIcon className="h-4 w-4" />
+                        View
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+
+      {/* Audit / Detail view */}
+      {viewingRequest && (
+        <VendorDetailModal
+          request={workflow.requests.find(r => r.id === viewingRequest.id) ?? viewingRequest}
+          onClose={() => setViewingRequest(null)}
+        />
+      )}
+
+      {/* Final Review + Vendor Code Modal */}
+      {reviewing && (
+        <Modal title={`Final Review — ${reviewing.vendorName}`} onClose={() => setReviewing(null)} size="lg">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Information</h3>
+              <Field label="Vendor Name" value={reviewing.vendorName} />
+              <Field label="Contact"     value={reviewing.contactInformation} />
+              <Field label="Address"     value={reviewing.addressDetails} />
+              <Field label="City"        value={reviewing.city} />
+              <Field label="Locality"    value={reviewing.locality} />
+              {reviewing.revisionNo > 0 && <Field label="Revision" value={`REV ${reviewing.revisionNo}`} />}
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Approval Chain</h3>
+              <ApprovalTimeline steps={reviewing.approvalSteps} />
+            </div>
+          </div>
+
+          {!rejectMode ? (
+            <div className="border-t border-gray-100 pt-5 space-y-4">
+              <div className="rounded-xl bg-amber-50 ring-1 ring-amber-200 p-4">
+                <p className="text-sm font-semibold text-amber-800 mb-1">Enter SAP Vendor Code</p>
+                <p className="text-xs text-amber-700">
+                  Retrieve the code from SAP after final approval. Once submitted, the workflow will be
+                  marked <strong>Completed</strong> and the Buyer will be notified.
+                </p>
+              </div>
+              <div>
+                <label className="form-label">SAP Vendor Code <span className="text-red-500">*</span></label>
+                <input
+                  className="form-input font-mono text-base tracking-widest"
+                  placeholder="e.g. SAP-V-20240117-001"
+                  value={vendorCode}
+                  onChange={e => { setVendorCode(e.target.value); setVendorCodeErr('') }}
+                  autoFocus
+                />
+                {vendorCodeErr && <p className="mt-1 text-xs text-red-600">{vendorCodeErr}</p>}
+              </div>
+              <div className="flex justify-end gap-3">
+                <button className="btn-danger" onClick={() => setRejectMode(true)}>
+                  <XMarkIcon className="h-4 w-4" />
+                  Reject
+                </button>
+                {isAuthorizedFinalApprover && (
+                  <button
+                    className="inline-flex items-center gap-1.5 rounded-md bg-[#c8102e] hover:bg-red-800 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+                    onClick={handleComplete}
+                  >
+                    <CheckBadgeIcon className="h-4 w-4" />
+                    Approve &amp; Assign Vendor Code
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="border-t border-gray-100 pt-5 space-y-4">
+              <div className="rounded-lg bg-red-50 ring-1 ring-red-200 p-4">
+                <p className="text-sm font-semibold text-red-800 mb-1">Reject at Final Stage</p>
+                <p className="text-xs text-red-600">The Buyer will be notified and must correct and resubmit.</p>
+              </div>
+              <div>
+                <label className="form-label">Rejection Reason <span className="text-red-500">*</span></label>
+                <textarea
+                  className="form-input resize-none"
+                  rows={3}
+                  placeholder="Describe the issue..."
+                  value={rejectComment}
+                  onChange={e => { setRejectComment(e.target.value); setRejectError('') }}
+                />
+                {rejectError && <p className="mt-1 text-xs text-red-600">{rejectError}</p>}
+              </div>
+              <div className="flex justify-end gap-3">
+                <button className="btn-secondary" onClick={() => setRejectMode(false)}>Back</button>
+                <button className="btn-danger" onClick={handleReject}>
+                  <XMarkIcon className="h-4 w-4" />
+                  Confirm Rejection
+                </button>
+              </div>
+            </div>
+          )}
+        </Modal>
+      )}
+
+      {toast && (
+        <Toast
+          message={{ title: toast.title, body: toast.body }}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+function Field({ label, value }) {
+  return (
+    <div>
+      <dt className="text-xs text-gray-400">{label}</dt>
+      <dd className="text-sm text-gray-800 font-medium mt-0.5">{value}</dd>
+    </div>
+  )
+}

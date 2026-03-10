@@ -1,0 +1,114 @@
+using AndritzVendorPortal.API.Data;
+using AndritzVendorPortal.API.Infrastructure;
+using AndritzVendorPortal.API.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ── Database ─────────────────────────────────────────────────────────────────
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// ── Identity ─────────────────────────────────────────────────────────────────
+builder.Services
+    .AddIdentity<ApplicationUser, IdentityRole>(options =>
+    {
+        options.Password.RequireDigit           = true;
+        options.Password.RequiredLength         = 8;
+        options.Password.RequireNonAlphanumeric = true;
+        options.User.RequireUniqueEmail         = true;
+    })
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+// ── JWT Authentication ────────────────────────────────────────────────────────
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme    = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer           = true,
+            ValidateAudience         = true,
+            ValidateLifetime         = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer              = builder.Configuration["Jwt:Issuer"],
+            ValidAudience            = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+
+// ── Authorization Policies ────────────────────────────────────────────────────
+builder.Services.AddSingleton<IAuthorizationHandler, FinalApproverHandler>();
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(Policies.FinalApproverOnly, policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireRole(Roles.FinalApprover);
+        policy.AddRequirements(new FinalApproverRequirement());
+    });
+
+// ── API ───────────────────────────────────────────────────────────────────────
+builder.Services.AddControllers()
+    .AddJsonOptions(opts =>
+    {
+        opts.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// ✅ ONE CONSOLIDATED CORS BLOCK
+builder.Services.AddCors(options => {
+    options.AddPolicy("AllowReactApp",
+        policy => policy.WithOrigins("http://localhost:5173")
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials());
+});
+
+var app = builder.Build();
+
+// ── Apply Migrations and Seed ─────────────────────────────────────────────────
+using (var scope = app.Services.CreateScope())
+{
+    var db          = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+    await db.Database.MigrateAsync();                        // applies any pending migrations
+    await SeedData.InitialiseAsync(roleManager, userManager); // seeds roles + demo accounts
+}
+
+// ── Middleware ────────────────────────────────────────────────────────────────
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseRouting(); // 1. Map the route first
+
+// ✅ 2. HANDLE CORS IMMEDIATELY AFTER ROUTING
+app.UseCors("AllowReactApp"); 
+
+app.UseAuthentication(); // 3. Then check who they are
+app.UseAuthorization();  // 4. Then check what they can do
+
+app.MapControllers();    // 5. Finally, run the code
+app.Run();
