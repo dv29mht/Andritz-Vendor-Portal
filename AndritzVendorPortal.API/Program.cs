@@ -1,3 +1,7 @@
+using AndritzVendorPortal.API.Models; 
+using AndritzVendorPortal.API.Data;   
+using Microsoft.EntityFrameworkCore;
+
 using AndritzVendorPortal.API.Data;
 using AndritzVendorPortal.API.Infrastructure;
 using AndritzVendorPortal.API.Models;
@@ -88,6 +92,11 @@ builder.Services.AddCors(options => {
 
 var app = builder.Build();
 
+// Call it here, BEFORE any 'void SeedData' definitions
+SeedData(app); 
+
+app.Run();
+
 // ── Apply Migrations and Seed ─────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
@@ -117,20 +126,37 @@ app.UseAuthorization();  // 4. Then check what they can do
 app.MapControllers();    // 5. Finally, run the code
 app.Run();
 
-// --- Remove 'public static' ---
-void SeedData(IHost app)
+void SeedData(IHost host)
 {
-    using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<AndritzDbContext>();
+    using var scope = host.Services.CreateScope();
+    var services = scope.ServiceProvider;
+    
+    // We use the FULL path here to avoid the CS0246 error
+    var context = services.GetRequiredService<AndritzVendorPortal.API.Data.AndritzDbContext>();
 
     context.Database.EnsureCreated();
 
     if (!context.Users.Any())
     {
         context.Users.AddRange(
-            new User { Name = "Vikram Nair", Email = "vikram.nair@andritz.com", Password = "Buyer@123!", Role = "Buyer" },
-            new User { Name = "Rajesh Kumar", Email = "rajesh.kumar@andritz.com", Password = "Approver@123!", Role = "Approver" },
-            new User { Name = "Pardeep Sharma", Email = "pardeep.sharma@andritz.com", Password = "FinalApprover@123!", Role = "FinalApprover" }
+            new AndritzVendorPortal.API.Models.User { 
+                Name = "Vikram Nair", 
+                Email = "vikram.nair@andritz.com", 
+                Password = "Buyer@123!", 
+                Role = "Buyer" 
+            },
+            new AndritzVendorPortal.API.Models.User { 
+                Name = "Rajesh Kumar", 
+                Email = "rajesh.kumar@andritz.com", 
+                Password = "Approver@123!", 
+                Role = "Approver" 
+            },
+            new AndritzVendorPortal.API.Models.User { 
+                Name = "Pardeep Sharma", 
+                Email = "pardeep.sharma@andritz.com", 
+                Password = "FinalApprover@123!", 
+                Role = "FinalApprover" 
+            }
         );
         context.SaveChanges();
     }
