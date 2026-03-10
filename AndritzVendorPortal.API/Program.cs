@@ -113,7 +113,6 @@ app.MapControllers();
 // 🏁 THE ONLY RUN CALL
 app.Run();
 
-// ── Static Seeder Class ──────────────────────────────────────────────────────
 public static class DbInitializer
 {
     public static void SeedData(IHost host)
@@ -136,31 +135,36 @@ public static class DbInitializer
             }
         }
 
-        if (!userManager.Users.Any())
+        // 2. Create and Role-Link EACH user if they don't exist
+        SeedUser(userManager, "vikram.nair@andritz.com", "Vikram Nair", "Buyer", "Buyer@123!");
+        SeedUser(userManager, "rajesh.kumar@andritz.com", "Rajesh Kumar", "Approver", "Approver@123!");
+        SeedUser(userManager, "pardeep.sharma@andritz.com", "Pardeep Sharma", "FinalApprover", "ChangeMe1!");
+        SeedUser(userManager, "admin@andritz.com", "System Admin", "Admin", "Admin@123!");
+
+        context.SaveChanges();
+    }
+
+    private static void SeedUser(UserManager<ApplicationUser> userManager, string email, string name, string role, string password)
+    {
+        var user = userManager.FindByEmailAsync(email).GetAwaiter().GetResult();
+        if (user == null)
         {
-            Console.WriteLine("--- STARTING FULL SEED ---");
-
-            // SEED VIKRAM (Buyer)
-            var vikram = new ApplicationUser { UserName = "vikram.nair@andritz.com", Email = "vikram.nair@andritz.com", FullName = "Vikram Nair", Designation = "Buyer", EmailConfirmed = true };
-            userManager.CreateAsync(vikram, "Buyer@123!").GetAwaiter().GetResult();
-            userManager.AddToRoleAsync(vikram, "Buyer").GetAwaiter().GetResult();
-
-            // SEED RAJESH (Approver)
-            var rajesh = new ApplicationUser { UserName = "rajesh.kumar@andritz.com", Email = "rajesh.kumar@andritz.com", FullName = "Rajesh Kumar", Designation = "Approver", EmailConfirmed = true };
-            userManager.CreateAsync(rajesh, "Approver@123!").GetAwaiter().GetResult();
-            userManager.AddToRoleAsync(rajesh, "Approver").GetAwaiter().GetResult();
-
-            // SEED PARDEEP (Final Approver) - THIS FIXES YOUR MODAL ERROR
-            var pardeep = new ApplicationUser { UserName = "pardeep.sharma@andritz.com", Email = "pardeep.sharma@andritz.com", FullName = "Pardeep Sharma", Designation = "FinalApprover", EmailConfirmed = true };
-            userManager.CreateAsync(pardeep, "ChangeMe1!").GetAwaiter().GetResult();
-            userManager.AddToRoleAsync(pardeep, "FinalApprover").GetAwaiter().GetResult();
-
-            // SEED ADMIN
-            var admin = new ApplicationUser { UserName = "admin@andritz.com", Email = "admin@andritz.com", FullName = "System Admin", Designation = "Admin", EmailConfirmed = true };
-            userManager.CreateAsync(admin, "Admin@123!").GetAwaiter().GetResult();
-            userManager.AddToRoleAsync(admin, "Admin").GetAwaiter().GetResult();
-
-            Console.WriteLine("--- SEEDING COMPLETE: ALL ROLES ACTIVE ---");
+            user = new ApplicationUser 
+            { 
+                UserName = email, 
+                Email = email, 
+                FullName = name, 
+                Designation = role,
+                NormalizedUserName = email.ToUpper(),
+                NormalizedEmail = email.ToUpper(),
+                EmailConfirmed = true 
+            };
+            var result = userManager.CreateAsync(user, password).GetAwaiter().GetResult();
+            if (result.Succeeded)
+            {
+                userManager.AddToRoleAsync(user, role).GetAwaiter().GetResult();
+                Console.WriteLine($"Successfully seeded and role-linked: {email}");
+            }
         }
     }
 }
