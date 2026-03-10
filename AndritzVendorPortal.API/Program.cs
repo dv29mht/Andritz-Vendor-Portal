@@ -104,15 +104,6 @@ app.UseCors("AllowReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ── Data Seeding ─────────────────────────────────────────────────────────────
-// This must happen after builder.Build but BEFORE app.Run
-DbInitializer.SeedData(app);
-
-app.MapControllers();
-
-// 🏁 THE ONLY RUN CALL
-app.Run();
-
 public static class DbInitializer
 {
     public static void SeedData(IHost host)
@@ -125,7 +116,7 @@ public static class DbInitializer
 
         context.Database.EnsureCreated();
 
-        // 1. Ensure ALL Roles exist
+        // 1. Force-create ALL Roles
         string[] roleNames = { "Buyer", "Approver", "FinalApprover", "Admin" };
         foreach (var roleName in roleNames)
         {
@@ -135,36 +126,43 @@ public static class DbInitializer
             }
         }
 
-        // 2. Create and Role-Link EACH user if they don't exist
-        SeedUser(userManager, "vikram.nair@andritz.com", "Vikram Nair", "Buyer", "Buyer@123!");
-        SeedUser(userManager, "rajesh.kumar@andritz.com", "Rajesh Kumar", "Approver", "Approver@123!");
-        SeedUser(userManager, "pardeep.sharma@andritz.com", "Pardeep Sharma", "FinalApprover", "ChangeMe1!");
-        SeedUser(userManager, "admin@andritz.com", "System Admin", "Admin", "Admin@123!");
+        // 2. The "Guaranteed" User List
+        var seedData = new[] {
+            (Email: "vikram.nair@andritz.com", Name: "Vikram Nair", Role: "Buyer", Pass: "Buyer@123!"),
+            (Email: "rajesh.kumar@andritz.com", Name: "Rajesh Kumar", Role: "Approver", Pass: "Approver@123!"),
+            (Email: "pardeep.sharma@andritz.com", Name: "Pardeep Sharma", Role: "FinalApprover", Pass: "ChangeMe1!"),
+            (Email: "admin@andritz.com", Name: "System Admin", Role: "Admin", Pass: "Admin@123!")
+        };
 
-        context.SaveChanges();
-    }
-
-    private static void SeedUser(UserManager<ApplicationUser> userManager, string email, string name, string role, string password)
-    {
-        var user = userManager.FindByEmailAsync(email).GetAwaiter().GetResult();
-        if (user == null)
+        foreach (var data in seedData)
         {
-            user = new ApplicationUser 
-            { 
-                UserName = email, 
-                Email = email, 
-                FullName = name, 
-                Designation = role,
-                NormalizedUserName = email.ToUpper(),
-                NormalizedEmail = email.ToUpper(),
-                EmailConfirmed = true 
-            };
-            var result = userManager.CreateAsync(user, password).GetAwaiter().GetResult();
-            if (result.Succeeded)
+            var existingUser = userManager.FindByEmailAsync(data.Email).GetAwaiter().GetResult();
+            if (existingUser == null)
             {
-                userManager.AddToRoleAsync(user, role).GetAwaiter().GetResult();
-                Console.WriteLine($"Successfully seeded and role-linked: {email}");
+                var user = new ApplicationUser 
+                { 
+                    UserName = data.Email, 
+                    Email = data.Email, 
+                    FullName = data.Name, 
+                    Designation = data.Role,
+                    NormalizedUserName = data.Email.ToUpper(),
+                    NormalizedEmail = data.Email.ToUpper(),
+                    EmailConfirmed = true 
+                };
+                
+                var result = userManager.CreateAsync(user, data.Pass).GetAwaiter().GetResult();
+                if (result.Succeeded)
+                {
+                    userManager.AddToRoleAsync(user, data.Role).GetAwaiter().GetResult();
+                    Console.WriteLine($"✅ Seeded: {data.Email}");
+                }
+                else
+                {
+                    // This will show in Render logs if the password is too weak
+                    Console.WriteLine($"❌ FAILED {data.Email}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                }
             }
         }
+        context.SaveChanges();
     }
 }
