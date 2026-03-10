@@ -131,33 +131,46 @@ void SeedData(IHost host)
     using var scope = host.Services.CreateScope();
     var services = scope.ServiceProvider;
     
-    // We use the FULL path here to avoid the CS0246 error
-    var context = services.GetRequiredService<AndritzVendorPortal.API.Data.AndritzDbContext>();
+    // 1. Get the correct context name
+    var context = services.GetRequiredService<AndritzVendorPortal.API.Data.ApplicationDbContext>();
+    // 2. Get UserManager to handle password hashing
+    var userManager = services.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AndritzVendorPortal.API.Models.ApplicationUser>>();
 
     context.Database.EnsureCreated();
 
     if (!context.Users.Any())
     {
-        context.Users.AddRange(
-            new AndritzVendorPortal.API.Models.User { 
-                Name = "Vikram Nair", 
+        var users = new List<AndritzVendorPortal.API.Models.ApplicationUser>
+        {
+            new() { 
+                FullName = "Vikram Nair", 
+                UserName = "vikram.nair@andritz.com", 
                 Email = "vikram.nair@andritz.com", 
-                Password = "Buyer@123!", 
-                Role = "Buyer" 
+                Designation = "Buyer" 
             },
-            new AndritzVendorPortal.API.Models.User { 
-                Name = "Rajesh Kumar", 
+            new() { 
+                FullName = "Rajesh Kumar", 
+                UserName = "rajesh.kumar@andritz.com", 
                 Email = "rajesh.kumar@andritz.com", 
-                Password = "Approver@123!", 
-                Role = "Approver" 
+                Designation = "Approver" 
             },
-            new AndritzVendorPortal.API.Models.User { 
-                Name = "Pardeep Sharma", 
+            new() { 
+                FullName = "Pardeep Sharma", 
+                UserName = "pardeep.sharma@andritz.com", 
                 Email = "pardeep.sharma@andritz.com", 
-                Password = "FinalApprover@123!", 
-                Role = "FinalApprover" 
+                Designation = "FinalApprover" 
             }
-        );
-        context.SaveChanges();
+        };
+
+        foreach (var user in users)
+        {
+            // This hashes the password properly!
+            string password = user.Designation switch {
+                "Buyer" => "Buyer@123!",
+                "Approver" => "Approver@123!",
+                _ => "ChangeMe1!"
+            };
+            userManager.CreateAsync(user, password).Wait();
+        }
     }
 }
