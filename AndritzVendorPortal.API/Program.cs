@@ -51,6 +51,22 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+// Prevent Identity's cookie auth from redirecting API requests to /Account/Login.
+// Without this, unauthenticated API calls get a 302 redirect instead of 401.
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Events.OnRedirectToLogin = ctx =>
+    {
+        ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = ctx =>
+    {
+        ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return Task.CompletedTask;
+    };
+});
+
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is missing.");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
