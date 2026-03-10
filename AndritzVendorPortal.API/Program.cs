@@ -116,3 +116,22 @@ app.UseAuthorization();  // 4. Then check what they can do
 
 app.MapControllers();    // 5. Finally, run the code
 app.Run();
+
+// --- Remove 'public static' ---
+void SeedData(IHost app)
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<AndritzDbContext>();
+
+    context.Database.EnsureCreated();
+
+    if (!context.Users.Any())
+    {
+        context.Users.AddRange(
+            new User { Name = "Vikram Nair", Email = "vikram.nair@andritz.com", Password = "Buyer@123!", Role = "Buyer" },
+            new User { Name = "Rajesh Kumar", Email = "rajesh.kumar@andritz.com", Password = "Approver@123!", Role = "Approver" },
+            new User { Name = "Pardeep Sharma", Email = "pardeep.sharma@andritz.com", Password = "FinalApprover@123!", Role = "FinalApprover" }
+        );
+        context.SaveChanges();
+    }
+}
