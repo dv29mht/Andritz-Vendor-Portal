@@ -1,7 +1,3 @@
-using AndritzVendorPortal.API.Models; 
-using AndritzVendorPortal.API.Data;   
-using Microsoft.EntityFrameworkCore;
-
 using AndritzVendorPortal.API.Data;
 using AndritzVendorPortal.API.Infrastructure;
 using AndritzVendorPortal.API.Models;
@@ -24,10 +20,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
-        options.Password.RequireDigit           = true;
-        options.Password.RequiredLength         = 8;
+        options.Password.RequireDigit = true;
+        options.Password.RequiredLength = 8;
         options.Password.RequireNonAlphanumeric = true;
-        options.User.RequireUniqueEmail         = true;
+        options.User.RequireUniqueEmail = true;
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
@@ -40,19 +36,19 @@ builder.Services
     .AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme    = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer           = true,
-            ValidateAudience         = true,
-            ValidateLifetime         = true,
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer              = builder.Configuration["Jwt:Issuer"],
-            ValidAudience            = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 
@@ -67,66 +63,57 @@ builder.Services.AddAuthorizationBuilder()
         policy.AddRequirements(new FinalApproverRequirement());
     });
 
-// ── API ───────────────────────────────────────────────────────────────────────
+// ── API & CORS ────────────────────────────────────────────────────────────────
 builder.Services.AddControllers()
     .AddJsonOptions(opts =>
     {
         opts.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ✅ ONE CONSOLIDATED CORS BLOCK
 builder.Services.AddCors(options => {
-    options.AddPolicy("AllowReactApp",
-        policy => policy.WithOrigins(
-    "http://localhost:5173", 
-    "https://andritz-portal-live.vercel.app",
-    "https://andritz-portal-live-43ye0gdsh-dv29mhts-projects.vercel.app" // Add this one too
-)
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                        .AllowCredentials());
+    options.AddPolicy("AllowReactApp", policy => {
+        policy.WithOrigins(
+            "http://localhost:5173", 
+            "https://andritz-portal-live.vercel.app",
+            "https://andritz-portal-live-43ye0gdsh-dv29mhts-projects.vercel.app"
+        )
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials();
+    });
 });
 
 var app = builder.Build();
 
-// Use the class name to call it - this fixes CS0119
-DbInitializer.SeedData(app); 
-
-app.Run();
-
-// ── Apply Migrations and Seed ─────────────────────────────────────────────────
-using (var scope = app.Services.CreateScope())
-{
-    var db          = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-
-    await db.Database.MigrateAsync();                        // applies any pending migrations
-    await SeedData.InitialiseAsync(roleManager, userManager); // seeds roles + demo accounts
-}
-
-// ── Middleware ────────────────────────────────────────────────────────────────
+// ── Middleware Pipeline ───────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseRouting(); // 1. Map the route first
+// ⚠️ ORDER MATTERS HERE
+app.UseRouting();
 
-// ✅ 2. HANDLE CORS IMMEDIATELY AFTER ROUTING
 app.UseCors("AllowReactApp"); 
 
-app.UseAuthentication(); // 3. Then check who they are
-app.UseAuthorization();  // 4. Then check what they can do
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.MapControllers();    // 5. Finally, run the code
+// ── Data Seeding ─────────────────────────────────────────────────────────────
+// This must happen after builder.Build but BEFORE app.Run
+DbInitializer.SeedData(app);
+
+app.MapControllers();
+
+// 🏁 THE ONLY RUN CALL
 app.Run();
 
-// --- Paste this at the absolute bottom of Program.cs ---
+// ── Static Seeder Class ──────────────────────────────────────────────────────
 public static class DbInitializer
 {
     public static void SeedData(IHost host)
@@ -134,17 +121,16 @@ public static class DbInitializer
         using var scope = host.Services.CreateScope();
         var services = scope.ServiceProvider;
         
-        var context = services.GetRequiredService<AndritzVendorPortal.API.Data.ApplicationDbContext>();
-        var userManager = services.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AndritzVendorPortal.API.Models.ApplicationUser>>();
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 
-        // Ensure database exists
         context.Database.EnsureCreated();
 
         if (!context.Users.Any())
         {
             Console.WriteLine("--- SEEDING USERS ---");
 
-            var vikram = new AndritzVendorPortal.API.Models.ApplicationUser 
+            var vikram = new ApplicationUser 
             { 
                 FullName = "Vikram Nair", 
                 UserName = "vikram.nair@andritz.com", 
@@ -163,8 +149,7 @@ public static class DbInitializer
                 Console.WriteLine($"Failed to seed Vikram: {string.Join(", ", result.Errors.Select(e => e.Description))}");
             }
 
-            // Seed Rajesh
-            var rajesh = new AndritzVendorPortal.API.Models.ApplicationUser 
+            var rajesh = new ApplicationUser 
             { 
                 FullName = "Rajesh Kumar", 
                 UserName = "rajesh.kumar@andritz.com", 
