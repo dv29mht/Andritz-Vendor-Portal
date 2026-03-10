@@ -126,7 +126,7 @@ public static class DbInitializer
 
         context.Database.EnsureCreated();
 
-        // 1. Create the Roles first!
+        // 1. Ensure ALL Roles exist
         string[] roleNames = { "Buyer", "Approver", "FinalApprover", "Admin" };
         foreach (var roleName in roleNames)
         {
@@ -138,25 +138,29 @@ public static class DbInitializer
 
         if (!userManager.Users.Any())
         {
-            // 2. Create Vikram
-            var vikram = new ApplicationUser { 
-                UserName = "vikram.nair@andritz.com", 
-                Email = "vikram.nair@andritz.com",
-                FullName = "Vikram Nair",
-                Designation = "Buyer" 
-            };
-            userManager.CreateAsync(vikram, "Buyer@123!").GetAwaiter().GetResult();
-            userManager.AddToRoleAsync(vikram, "Buyer").GetAwaiter().GetResult(); // 👈 THIS FIXES THE 403
+            Console.WriteLine("--- STARTING FULL SEED ---");
 
-            // 3. Create Rajesh
-            var rajesh = new ApplicationUser { 
-                UserName = "rajesh.kumar@andritz.com", 
-                Email = "rajesh.kumar@andritz.com",
-                FullName = "Rajesh Kumar",
-                Designation = "Approver" 
-            };
+            // SEED VIKRAM (Buyer)
+            var vikram = new ApplicationUser { UserName = "vikram.nair@andritz.com", Email = "vikram.nair@andritz.com", FullName = "Vikram Nair", Designation = "Buyer", EmailConfirmed = true };
+            userManager.CreateAsync(vikram, "Buyer@123!").GetAwaiter().GetResult();
+            userManager.AddToRoleAsync(vikram, "Buyer").GetAwaiter().GetResult();
+
+            // SEED RAJESH (Approver)
+            var rajesh = new ApplicationUser { UserName = "rajesh.kumar@andritz.com", Email = "rajesh.kumar@andritz.com", FullName = "Rajesh Kumar", Designation = "Approver", EmailConfirmed = true };
             userManager.CreateAsync(rajesh, "Approver@123!").GetAwaiter().GetResult();
-            userManager.AddToRoleAsync(rajesh, "Approver").GetAwaiter().GetResult(); // 👈 THIS FIXES THE 403
+            userManager.AddToRoleAsync(rajesh, "Approver").GetAwaiter().GetResult();
+
+            // SEED PARDEEP (Final Approver) - THIS FIXES YOUR MODAL ERROR
+            var pardeep = new ApplicationUser { UserName = "pardeep.sharma@andritz.com", Email = "pardeep.sharma@andritz.com", FullName = "Pardeep Sharma", Designation = "FinalApprover", EmailConfirmed = true };
+            userManager.CreateAsync(pardeep, "ChangeMe1!").GetAwaiter().GetResult();
+            userManager.AddToRoleAsync(pardeep, "FinalApprover").GetAwaiter().GetResult();
+
+            // SEED ADMIN
+            var admin = new ApplicationUser { UserName = "admin@andritz.com", Email = "admin@andritz.com", FullName = "System Admin", Designation = "Admin", EmailConfirmed = true };
+            userManager.CreateAsync(admin, "Admin@123!").GetAwaiter().GetResult();
+            userManager.AddToRoleAsync(admin, "Admin").GetAwaiter().GetResult();
+
+            Console.WriteLine("--- SEEDING COMPLETE: ALL ROLES ACTIVE ---");
         }
     }
 }
