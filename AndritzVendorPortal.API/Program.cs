@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -19,9 +20,17 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     if (!string.IsNullOrEmpty(databaseUrl))
     {
         var uri = new Uri(databaseUrl);
-        var userInfo = uri.UserInfo.Split(':');
-        var connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
-        options.UseNpgsql(connectionString);
+        var userInfo = uri.UserInfo.Split(':', 2);
+        var csb = new NpgsqlConnectionStringBuilder
+        {
+            Host = uri.Host,
+            Port = uri.Port > 0 ? uri.Port : 5432,
+            Database = uri.AbsolutePath.TrimStart('/'),
+            Username = userInfo[0],
+            Password = Uri.UnescapeDataString(userInfo.Length > 1 ? userInfo[1] : ""),
+            SslMode = SslMode.Require
+        };
+        options.UseNpgsql(csb.ConnectionString);
     }
     else
     {
@@ -32,8 +41,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // ── 2. IDENTITY & AUTHENTICATION ──────────────────────────────────────────────
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
-    options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 8;
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
     options.User.RequireUniqueEmail = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -65,6 +77,7 @@ builder.Services.AddAuthorizationBuilder()
     });
 
 builder.Services.AddControllers().AddJsonOptions(opts => {
+    opts.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
