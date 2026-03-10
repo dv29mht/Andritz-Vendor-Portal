@@ -1,109 +1,26 @@
-using AndritzVendorPortal.API.Data;
-using AndritzVendorPortal.API.Infrastructure;
-using AndritzVendorPortal.API.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
-var builder = WebApplication.CreateBuilder(args);
-
-// ── Database ─────────────────────────────────────────────────────────────────
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// ── Identity ─────────────────────────────────────────────────────────────────
-builder.Services
-    .AddIdentity<ApplicationUser, IdentityRole>(options =>
-    {
-        options.Password.RequireDigit = true;
-        options.Password.RequiredLength = 8;
-        options.Password.RequireNonAlphanumeric = true;
-        options.User.RequireUniqueEmail = true;
-    })
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
-
-// ── JWT Authentication ────────────────────────────────────────────────────────
-var jwtKey = builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("Jwt:Key is not configured.");
-
-builder.Services
-    .AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-        };
-    });
-
-// ── Authorization Policies ────────────────────────────────────────────────────
-builder.Services.AddSingleton<IAuthorizationHandler, FinalApproverHandler>();
-
-builder.Services.AddAuthorizationBuilder()
-    .AddPolicy(Policies.FinalApproverOnly, policy =>
-    {
-        policy.RequireAuthenticatedUser();
-        policy.RequireRole(Roles.FinalApprover);
-        policy.AddRequirements(new FinalApproverRequirement());
-    });
-
-// ── API & CORS ────────────────────────────────────────────────────────────────
-builder.Services.AddControllers()
-    .AddJsonOptions(opts =>
-    {
-        opts.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-builder.Services.AddCors(options => {
-    options.AddPolicy("AllowReactApp", policy => {
-        policy.WithOrigins(
-            "http://localhost:5173", 
-            "https://andritz-portal-live.vercel.app",
-            "https://andritz-portal-live-43ye0gdsh-dv29mhts-projects.vercel.app"
-        )
-        .AllowAnyMethod()
-        .AllowAnyHeader()
-        .AllowCredentials();
-    });
-});
-
-var app = builder.Build();
-
-// ── Middleware Pipeline ───────────────────────────────────────────────────────
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-// ⚠️ ORDER MATTERS HERE
-app.UseRouting();
-
-app.UseCors("AllowReactApp"); 
-
 app.UseAuthentication();
 app.UseAuthorization();
 
+// ── 1. MAP CONTROLLERS (Missing in your snippet) ──────────────────────────────
+app.MapControllers();
+
+// ── 2. CALL THE SEEDER (This was missing!) ────────────────────────────────────
+// We wrap this in a try-catch so one database error doesn't kill the whole app.
+try 
+{
+    Console.WriteLine("🚀 Attempting to seed data...");
+    DbInitializer.SeedData(app);
+    Console.WriteLine("✅ Seeding logic completed.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"⚠️ Seeding failed but app will continue: {ex.Message}");
+}
+
+// ── 3. FINISH THE STARTUP ─────────────────────────────────────────────────────
+app.Run();
+
+// ── 4. THE STATIC CLASS DEFINITION ────────────────────────────────────────────
 public static class DbInitializer
 {
     public static void SeedData(IHost host)
@@ -116,7 +33,6 @@ public static class DbInitializer
 
         context.Database.EnsureCreated();
 
-        // 1. Force-create ALL Roles
         string[] roleNames = { "Buyer", "Approver", "FinalApprover", "Admin" };
         foreach (var roleName in roleNames)
         {
@@ -126,7 +42,6 @@ public static class DbInitializer
             }
         }
 
-        // 2. The "Guaranteed" User List
         var seedData = new[] {
             (Email: "vikram.nair@andritz.com", Name: "Vikram Nair", Role: "Buyer", Pass: "Buyer@123!"),
             (Email: "rajesh.kumar@andritz.com", Name: "Rajesh Kumar", Role: "Approver", Pass: "Approver@123!"),
@@ -158,7 +73,6 @@ public static class DbInitializer
                 }
                 else
                 {
-                    // This will show in Render logs if the password is too weak
                     Console.WriteLine($"❌ FAILED {data.Email}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
                 }
             }
