@@ -120,46 +120,43 @@ public static class DbInitializer
     {
         using var scope = host.Services.CreateScope();
         var services = scope.ServiceProvider;
-        
-        var context = services.GetRequiredService<ApplicationDbContext>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var context = services.GetRequiredService<ApplicationDbContext>();
 
         context.Database.EnsureCreated();
 
-        if (!context.Users.Any())
+        // 1. Create the Roles first!
+        string[] roleNames = { "Buyer", "Approver", "FinalApprover", "Admin" };
+        foreach (var roleName in roleNames)
         {
-            Console.WriteLine("--- SEEDING USERS ---");
+            if (!roleManager.RoleExistsAsync(roleName).GetAwaiter().GetResult())
+            {
+                roleManager.CreateAsync(new IdentityRole(roleName)).GetAwaiter().GetResult();
+            }
+        }
 
-            var vikram = new ApplicationUser 
-            { 
-                FullName = "Vikram Nair", 
+        if (!userManager.Users.Any())
+        {
+            // 2. Create Vikram
+            var vikram = new ApplicationUser { 
                 UserName = "vikram.nair@andritz.com", 
-                Email = "vikram.nair@andritz.com", 
-                NormalizedUserName = "VIKRAM.NAIR@ANDRITZ.COM",
-                NormalizedEmail = "VIKRAM.NAIR@ANDRITZ.COM",
-                EmailConfirmed = true,
+                Email = "vikram.nair@andritz.com",
+                FullName = "Vikram Nair",
                 Designation = "Buyer" 
             };
+            userManager.CreateAsync(vikram, "Buyer@123!").GetAwaiter().GetResult();
+            userManager.AddToRoleAsync(vikram, "Buyer").GetAwaiter().GetResult(); // 👈 THIS FIXES THE 403
 
-            var result = userManager.CreateAsync(vikram, "Buyer@123!").GetAwaiter().GetResult();
-            
-            if (result.Succeeded) {
-                Console.WriteLine("Successfully seeded Vikram.");
-            } else {
-                Console.WriteLine($"Failed to seed Vikram: {string.Join(", ", result.Errors.Select(e => e.Description))}");
-            }
-
-            var rajesh = new ApplicationUser 
-            { 
-                FullName = "Rajesh Kumar", 
+            // 3. Create Rajesh
+            var rajesh = new ApplicationUser { 
                 UserName = "rajesh.kumar@andritz.com", 
-                Email = "rajesh.kumar@andritz.com", 
-                NormalizedUserName = "RAJESH.KUMAR@ANDRITZ.COM",
-                NormalizedEmail = "RAJESH.KUMAR@ANDRITZ.COM",
-                EmailConfirmed = true,
+                Email = "rajesh.kumar@andritz.com",
+                FullName = "Rajesh Kumar",
                 Designation = "Approver" 
             };
             userManager.CreateAsync(rajesh, "Approver@123!").GetAwaiter().GetResult();
+            userManager.AddToRoleAsync(rajesh, "Approver").GetAwaiter().GetResult(); // 👈 THIS FIXES THE 403
         }
     }
 }
