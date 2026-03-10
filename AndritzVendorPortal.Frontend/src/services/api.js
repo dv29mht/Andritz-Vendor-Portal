@@ -1,6 +1,8 @@
 import axios from 'axios'
 
 const api = axios.create({
+  // This will use the Vercel setting if it exists, 
+  // otherwise it falls back to your local server
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api',
 })
 

@@ -76,7 +76,11 @@ builder.Services.AddSwaggerGen();
 // ✅ ONE CONSOLIDATED CORS BLOCK
 builder.Services.AddCors(options => {
     options.AddPolicy("AllowReactApp",
-        policy => policy.WithOrigins("http://localhost:5173")
+        policy => policy.WithOrigins(
+    "http://localhost:5173", 
+    "https://andritz-portal-live.vercel.app",
+    "https://andritz-portal-live-43ye0gdsh-dv29mhts-projects.vercel.app" // Add this one too
+)
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials());
