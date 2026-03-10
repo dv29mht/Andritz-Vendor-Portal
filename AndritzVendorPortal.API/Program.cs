@@ -134,23 +134,34 @@ public static class DbInitializer
         using var scope = host.Services.CreateScope();
         var services = scope.ServiceProvider;
         
-        // Use fully qualified names to ensure no namespace confusion
         var context = services.GetRequiredService<AndritzVendorPortal.API.Data.ApplicationDbContext>();
         var userManager = services.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AndritzVendorPortal.API.Models.ApplicationUser>>();
 
+        // Ensure database exists
         context.Database.EnsureCreated();
 
         if (!context.Users.Any())
         {
-            // Seed Vikram
+            Console.WriteLine("--- SEEDING USERS ---");
+
             var vikram = new AndritzVendorPortal.API.Models.ApplicationUser 
             { 
                 FullName = "Vikram Nair", 
                 UserName = "vikram.nair@andritz.com", 
                 Email = "vikram.nair@andritz.com", 
+                NormalizedUserName = "VIKRAM.NAIR@ANDRITZ.COM",
+                NormalizedEmail = "VIKRAM.NAIR@ANDRITZ.COM",
+                EmailConfirmed = true,
                 Designation = "Buyer" 
             };
-            userManager.CreateAsync(vikram, "Buyer@123!").GetAwaiter().GetResult();
+
+            var result = userManager.CreateAsync(vikram, "Buyer@123!").GetAwaiter().GetResult();
+            
+            if (result.Succeeded) {
+                Console.WriteLine("Successfully seeded Vikram.");
+            } else {
+                Console.WriteLine($"Failed to seed Vikram: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+            }
 
             // Seed Rajesh
             var rajesh = new AndritzVendorPortal.API.Models.ApplicationUser 
@@ -158,6 +169,9 @@ public static class DbInitializer
                 FullName = "Rajesh Kumar", 
                 UserName = "rajesh.kumar@andritz.com", 
                 Email = "rajesh.kumar@andritz.com", 
+                NormalizedUserName = "RAJESH.KUMAR@ANDRITZ.COM",
+                NormalizedEmail = "RAJESH.KUMAR@ANDRITZ.COM",
+                EmailConfirmed = true,
                 Designation = "Approver" 
             };
             userManager.CreateAsync(rajesh, "Approver@123!").GetAwaiter().GetResult();
