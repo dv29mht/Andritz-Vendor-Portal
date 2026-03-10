@@ -92,8 +92,8 @@ builder.Services.AddCors(options => {
 
 var app = builder.Build();
 
-// Call it here, BEFORE any 'void SeedData' definitions
-SeedData(app); 
+// Use the class name to call it - this fixes CS0119
+DbInitializer.SeedData(app); 
 
 app.Run();
 
@@ -126,51 +126,41 @@ app.UseAuthorization();  // 4. Then check what they can do
 app.MapControllers();    // 5. Finally, run the code
 app.Run();
 
-void SeedData(IHost host)
+// --- Paste this at the absolute bottom of Program.cs ---
+public static class DbInitializer
 {
-    using var scope = host.Services.CreateScope();
-    var services = scope.ServiceProvider;
-    
-    // 1. Get the correct context name
-    var context = services.GetRequiredService<AndritzVendorPortal.API.Data.ApplicationDbContext>();
-    // 2. Get UserManager to handle password hashing
-    var userManager = services.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AndritzVendorPortal.API.Models.ApplicationUser>>();
-
-    context.Database.EnsureCreated();
-
-    if (!context.Users.Any())
+    public static void SeedData(IHost host)
     {
-        var users = new List<AndritzVendorPortal.API.Models.ApplicationUser>
+        using var scope = host.Services.CreateScope();
+        var services = scope.ServiceProvider;
+        
+        // Use fully qualified names to ensure no namespace confusion
+        var context = services.GetRequiredService<AndritzVendorPortal.API.Data.ApplicationDbContext>();
+        var userManager = services.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AndritzVendorPortal.API.Models.ApplicationUser>>();
+
+        context.Database.EnsureCreated();
+
+        if (!context.Users.Any())
         {
-            new() { 
+            // Seed Vikram
+            var vikram = new AndritzVendorPortal.API.Models.ApplicationUser 
+            { 
                 FullName = "Vikram Nair", 
                 UserName = "vikram.nair@andritz.com", 
                 Email = "vikram.nair@andritz.com", 
                 Designation = "Buyer" 
-            },
-            new() { 
+            };
+            userManager.CreateAsync(vikram, "Buyer@123!").GetAwaiter().GetResult();
+
+            // Seed Rajesh
+            var rajesh = new AndritzVendorPortal.API.Models.ApplicationUser 
+            { 
                 FullName = "Rajesh Kumar", 
                 UserName = "rajesh.kumar@andritz.com", 
                 Email = "rajesh.kumar@andritz.com", 
                 Designation = "Approver" 
-            },
-            new() { 
-                FullName = "Pardeep Sharma", 
-                UserName = "pardeep.sharma@andritz.com", 
-                Email = "pardeep.sharma@andritz.com", 
-                Designation = "FinalApprover" 
-            }
-        };
-
-        foreach (var user in users)
-        {
-            // This hashes the password properly!
-            string password = user.Designation switch {
-                "Buyer" => "Buyer@123!",
-                "Approver" => "Approver@123!",
-                _ => "ChangeMe1!"
             };
-            userManager.CreateAsync(user, password).Wait();
+            userManager.CreateAsync(rajesh, "Approver@123!").GetAwaiter().GetResult();
         }
     }
 }
