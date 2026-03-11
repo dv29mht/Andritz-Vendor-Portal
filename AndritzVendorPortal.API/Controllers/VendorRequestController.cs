@@ -160,8 +160,9 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
             Status          = VendorRequestStatus.Draft,
         };
 
-        // Build approval chain: all selected approvers run in parallel at step 1;
-        // FinalApprover is always last at step 2.
+        // Build approval chain: each approver gets a unique StepOrder (1, 2, 3...);
+        // FinalApprover is always last at stepOrder = approverCount + 1.
+        int stepOrder = 1;
         foreach (var approverId in dto.ApproverUserIds)
         {
             var approver = await db.Users.FindAsync(approverId);
@@ -169,7 +170,7 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
             {
                 ApproverUserId  = approverId,
                 ApproverName    = approver?.FullName ?? approverId,
-                StepOrder       = 1,
+                StepOrder       = stepOrder++,
                 IsFinalApproval = false,
             });
         }
@@ -184,7 +185,7 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
         {
             ApproverUserId  = pardeep.Id,
             ApproverName    = pardeep.FullName,
-            StepOrder       = 2,
+            StepOrder       = stepOrder,
             IsFinalApproval = true,
         });
 
