@@ -105,18 +105,37 @@ builder.Services.AddControllers().AddJsonOptions(opts => {
     opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
-// ── 4. CORS (Matches your Vercel URLs) ───────────────────────────────────────
-builder.Services.AddCors(options => {
-    options.AddPolicy("AllowReactApp", policy => {
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-    });
-});
-
 var app = builder.Build();
 
 // ── 5. MIDDLEWARE PIPELINE ───────────────────────────────────────────────────
+
+// Raw CORS middleware — runs before everything, writes headers directly.
+// Bypasses the standard CORS machinery so nothing in the pipeline can interfere.
+app.Use(async (ctx, next) =>
+{
+    string[] allowed = [
+        "https://andritz-portal-live.vercel.app",
+        "https://andritz-portal-live-43ye0gdsh-dv29mhts-projects.vercel.app",
+        "http://localhost:5173"
+    ];
+    var origin = ctx.Request.Headers.Origin.ToString();
+    if (allowed.Contains(origin))
+    {
+        ctx.Response.Headers["Access-Control-Allow-Origin"]      = origin;
+        ctx.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+        ctx.Response.Headers["Access-Control-Allow-Methods"]     = "GET,POST,PUT,DELETE,OPTIONS,PATCH";
+        ctx.Response.Headers["Access-Control-Allow-Headers"]     = "Authorization,Content-Type,Accept";
+        ctx.Response.Headers["Vary"]                             = "Origin";
+    }
+    if (ctx.Request.Method == "OPTIONS")
+    {
+        ctx.Response.StatusCode = 204;
+        return;
+    }
+    await next();
+});
+
 app.UseRouting();
-app.UseCors("AllowReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
