@@ -182,17 +182,28 @@ public static class DbInitializer
 
         foreach (var data in seedData)
         {
-            var existingUser = userManager.FindByEmailAsync(data.Email).GetAwaiter().GetResult();
-            if (existingUser != null) userManager.DeleteAsync(existingUser).GetAwaiter().GetResult();
-
-            var user = new ApplicationUser { 
-                UserName = data.Email, Email = data.Email, FullName = data.Name, 
-                Designation = data.Role, EmailConfirmed = true,
-                NormalizedUserName = data.Email.ToUpper(), NormalizedEmail = data.Email.ToUpper()
-            };
-
-            var result = userManager.CreateAsync(user, data.Pass).GetAwaiter().GetResult();
-            if (result.Succeeded) userManager.AddToRoleAsync(user, data.Role).GetAwaiter().GetResult();
+            var user = userManager.FindByEmailAsync(data.Email).GetAwaiter().GetResult();
+            if (user == null)
+            {
+                // First-time creation
+                user = new ApplicationUser {
+                    UserName = data.Email, Email = data.Email, FullName = data.Name,
+                    Designation = data.Role, EmailConfirmed = true,
+                    NormalizedUserName = data.Email.ToUpper(), NormalizedEmail = data.Email.ToUpper()
+                };
+                var result = userManager.CreateAsync(user, data.Pass).GetAwaiter().GetResult();
+                if (result.Succeeded)
+                    userManager.AddToRoleAsync(user, data.Role).GetAwaiter().GetResult();
+            }
+            else
+            {
+                // User already exists — force-reset password without deleting (avoids FK violations)
+                var token = userManager.GeneratePasswordResetTokenAsync(user).GetAwaiter().GetResult();
+                userManager.ResetPasswordAsync(user, token, data.Pass).GetAwaiter().GetResult();
+                // Ensure correct role
+                if (!userManager.IsInRoleAsync(user, data.Role).GetAwaiter().GetResult())
+                    userManager.AddToRoleAsync(user, data.Role).GetAwaiter().GetResult();
+            }
         }
     }
 }
