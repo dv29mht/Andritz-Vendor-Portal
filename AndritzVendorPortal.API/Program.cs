@@ -109,8 +109,7 @@ var app = builder.Build();
 
 // ── 5. MIDDLEWARE PIPELINE ───────────────────────────────────────────────────
 
-// Raw CORS middleware — runs before everything, writes headers directly.
-// Bypasses the standard CORS machinery so nothing in the pipeline can interfere.
+// Raw CORS middleware — fires first AND last (via OnStarting) so nothing downstream can wipe headers.
 app.Use(async (ctx, next) =>
 {
     string[] allowed = [
@@ -119,6 +118,8 @@ app.Use(async (ctx, next) =>
         "http://localhost:5173"
     ];
     var origin = ctx.Request.Headers.Origin.ToString();
+
+    // Set headers now (before pipeline runs)
     if (allowed.Contains(origin))
     {
         ctx.Response.Headers["Access-Control-Allow-Origin"]      = origin;
@@ -127,6 +128,21 @@ app.Use(async (ctx, next) =>
         ctx.Response.Headers["Access-Control-Allow-Headers"]     = "Authorization,Content-Type,Accept";
         ctx.Response.Headers["Vary"]                             = "Origin";
     }
+
+    // Re-apply just before headers are flushed — catches anything that cleared them downstream
+    ctx.Response.OnStarting(() =>
+    {
+        if (allowed.Contains(origin))
+        {
+            ctx.Response.Headers["Access-Control-Allow-Origin"]      = origin;
+            ctx.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+            ctx.Response.Headers["Access-Control-Allow-Methods"]     = "GET,POST,PUT,DELETE,OPTIONS,PATCH";
+            ctx.Response.Headers["Access-Control-Allow-Headers"]     = "Authorization,Content-Type,Accept";
+            ctx.Response.Headers["Vary"]                             = "Origin";
+        }
+        return Task.CompletedTask;
+    });
+
     if (ctx.Request.Method == "OPTIONS")
     {
         ctx.Response.StatusCode = 204;
