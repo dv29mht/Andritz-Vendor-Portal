@@ -112,15 +112,13 @@ var app = builder.Build();
 // Raw CORS middleware — fires first AND last (via OnStarting) so nothing downstream can wipe headers.
 app.Use(async (ctx, next) =>
 {
-    string[] allowed = [
-        "https://andritz-portal-live.vercel.app",
-        "https://andritz-portal-live-43ye0gdsh-dv29mhts-projects.vercel.app",
-        "http://localhost:5173"
-    ];
     var origin = ctx.Request.Headers.Origin.ToString();
+    bool isAllowed = origin == "https://andritz-portal-live.vercel.app"
+                  || origin == "http://localhost:5173"
+                  || (origin.StartsWith("https://andritz-portal-live-") && origin.EndsWith(".vercel.app"));
 
     // Set headers now (before pipeline runs)
-    if (allowed.Contains(origin))
+    if (isAllowed)
     {
         ctx.Response.Headers["Access-Control-Allow-Origin"]      = origin;
         ctx.Response.Headers["Access-Control-Allow-Credentials"] = "true";
@@ -132,7 +130,7 @@ app.Use(async (ctx, next) =>
     // Re-apply just before headers are flushed — catches anything that cleared them downstream
     ctx.Response.OnStarting(() =>
     {
-        if (allowed.Contains(origin))
+        if (isAllowed)
         {
             ctx.Response.Headers["Access-Control-Allow-Origin"]      = origin;
             ctx.Response.Headers["Access-Control-Allow-Credentials"] = "true";
