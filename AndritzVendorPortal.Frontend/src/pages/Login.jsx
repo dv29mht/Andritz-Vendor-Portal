@@ -37,13 +37,13 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <header className="bg-slate-900 text-white px-8 py-0 flex items-center gap-4 h-14 shadow-lg">
+      <header className="bg-[#0062AC] text-white px-8 py-0 flex items-center gap-4 h-14 shadow-lg">
         <div className="flex items-center gap-2.5">
-          <div className="h-7 w-1 bg-[#c8102e] rounded-full" />
+          <div className="h-7 w-1 bg-white/60 rounded-full" />
           <span className="font-extrabold text-lg tracking-widest uppercase">ANDRITZ</span>
         </div>
         <div className="h-5 w-px bg-white/20" />
-        <span className="text-sm text-slate-300 font-medium">Vendor Registration Portal</span>
+        <span className="text-sm text-blue-100 font-medium">Vendor Registration Portal</span>
       </header>
 
       {/* Body */}
