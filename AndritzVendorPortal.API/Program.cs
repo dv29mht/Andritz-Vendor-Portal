@@ -155,71 +155,21 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapGet("/api/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 
-// ── 6. SEED DATA ────────────────────────────────────────────────────────────
-try 
+// ── 6. ENSURE DB SCHEMA EXISTS ───────────────────────────────────────────────
+using (var scope = app.Services.CreateScope())
 {
-    Console.WriteLine("🚀 Seeding database...");
-    DbInitializer.SeedData(app);
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"⚠️ Seeding failed: {ex.Message}");
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    context.Database.EnsureCreated();
+
+    // Ensure all 4 roles exist (required for Admin to create users via the UI)
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    foreach (var role in new[] { "Buyer", "Approver", "FinalApprover", "Admin" })
+    {
+        if (!roleManager.RoleExistsAsync(role).GetAwaiter().GetResult())
+            roleManager.CreateAsync(new IdentityRole(role)).GetAwaiter().GetResult();
+    }
 }
 
 app.Run();
-
-// ── 7. THE SEEDER CLASS ──────────────────────────────────────────────────────
-public static class DbInitializer
-{
-    public static void SeedData(IHost host)
-    {
-        using var scope = host.Services.CreateScope();
-        var services = scope.ServiceProvider;
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-        var context = services.GetRequiredService<ApplicationDbContext>();
-
-        context.Database.EnsureCreated();
-
-        string[] roleNames = { "Buyer", "Approver", "FinalApprover", "Admin" };
-        foreach (var roleName in roleNames)
-        {
-            if (!roleManager.RoleExistsAsync(roleName).GetAwaiter().GetResult())
-                roleManager.CreateAsync(new IdentityRole(roleName)).GetAwaiter().GetResult();
-        }
-
-        var seedData = new[] {
-            (Email: "vikram.nair@andritz.com", Name: "Vikram Nair", Role: "Buyer", Pass: "Buyer@123!"),
-            (Email: "rajesh.kumar@andritz.com", Name: "Rajesh Kumar", Role: "Approver", Pass: "Approver@123!"),
-            (Email: "pardeep.sharma@andritz.com", Name: "Pardeep Sharma", Role: "FinalApprover", Pass: "Change@Me1!"),
-            (Email: "sunita.rao@andritz.com", Name: "Sunita Rao", Role: "Admin", Pass: "Admin@123!")
-        };
-
-        foreach (var data in seedData)
-        {
-            var user = userManager.FindByEmailAsync(data.Email).GetAwaiter().GetResult();
-            if (user == null)
-            {
-                // First-time creation
-                user = new ApplicationUser {
-                    UserName = data.Email, Email = data.Email, FullName = data.Name,
-                    Designation = data.Role, EmailConfirmed = true,
-                    NormalizedUserName = data.Email.ToUpper(), NormalizedEmail = data.Email.ToUpper()
-                };
-                var result = userManager.CreateAsync(user, data.Pass).GetAwaiter().GetResult();
-                if (result.Succeeded)
-                    userManager.AddToRoleAsync(user, data.Role).GetAwaiter().GetResult();
-            }
-            else
-            {
-                // User already exists — force-reset password without deleting (avoids FK violations)
-                var token = userManager.GeneratePasswordResetTokenAsync(user).GetAwaiter().GetResult();
-                userManager.ResetPasswordAsync(user, token, data.Pass).GetAwaiter().GetResult();
-                // Ensure correct role
-                if (!userManager.IsInRoleAsync(user, data.Role).GetAwaiter().GetResult())
-                    userManager.AddToRoleAsync(user, data.Role).GetAwaiter().GetResult();
-            }
-        }
-    }
-}

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import {
   UsersIcon, ClockIcon, CheckCircleIcon, XCircleIcon,
   CheckBadgeIcon, ArrowDownTrayIcon, MagnifyingGlassIcon, EyeIcon,
-  TableCellsIcon, UserGroupIcon,
+  TableCellsIcon, UserGroupIcon, ArrowPathIcon, TrophyIcon, NoSymbolIcon,
 } from '@heroicons/react/24/outline'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
@@ -17,11 +17,14 @@ const ADMIN_TABS = [
 const STATUS_FILTERS = ['All', 'Draft', 'PendingApproval', 'PendingFinalApproval', 'Rejected', 'Completed']
 
 const STAT_CARDS = [
-  { label: 'Total',          key: 'total',    icon: UsersIcon,       bg: 'bg-blue-50',    text: 'text-blue-700',    ic: 'text-blue-500'    },
-  { label: 'Pending',        key: 'pending',  icon: ClockIcon,       bg: 'bg-amber-50',   text: 'text-amber-700',   ic: 'text-amber-500'   },
-  { label: 'Final Approval', key: 'final',    icon: CheckCircleIcon, bg: 'bg-indigo-50',  text: 'text-indigo-700',  ic: 'text-indigo-500'  },
-  { label: 'Rejected',       key: 'rejected', icon: XCircleIcon,     bg: 'bg-red-50',     text: 'text-red-700',     ic: 'text-red-500'     },
-  { label: 'Completed',      key: 'completed',icon: CheckBadgeIcon,  bg: 'bg-emerald-50', text: 'text-emerald-700', ic: 'text-emerald-500' },
+  { label: 'Total',           key: 'total',        icon: UsersIcon,       bg: 'bg-blue-50',    text: 'text-blue-700',    ic: 'text-blue-500'    },
+  { label: 'Pending',         key: 'pending',      icon: ClockIcon,       bg: 'bg-amber-50',   text: 'text-amber-700',   ic: 'text-amber-500'   },
+  { label: 'Final Approval',  key: 'final',        icon: CheckCircleIcon, bg: 'bg-indigo-50',  text: 'text-indigo-700',  ic: 'text-indigo-500'  },
+  { label: 'Rejected',        key: 'rejected',     icon: XCircleIcon,     bg: 'bg-red-50',     text: 'text-red-700',     ic: 'text-red-500'     },
+  { label: 'Completed',       key: 'completed',    icon: CheckBadgeIcon,  bg: 'bg-emerald-50', text: 'text-emerald-700', ic: 'text-emerald-500' },
+  { label: 'Approval Rate',   key: 'approvalRate', icon: TrophyIcon,      bg: 'bg-cyan-50',    text: 'text-cyan-700',    ic: 'text-cyan-500',   noFilter: true },
+  { label: 'Re-edit Rate',    key: 'reEditRate',   icon: ArrowPathIcon,   bg: 'bg-orange-50',  text: 'text-orange-700',  ic: 'text-orange-500', noFilter: true },
+  { label: 'Rejection Rate',  key: 'rejectionRate',icon: NoSymbolIcon,    bg: 'bg-rose-50',    text: 'text-rose-700',    ic: 'text-rose-500',   noFilter: true },
 ]
 
 const STAT_KEY_TO_FILTER = {
@@ -30,12 +33,20 @@ const STAT_KEY_TO_FILTER = {
 }
 
 function buildStats(requests) {
+  const total     = requests.length
+  const completed = requests.filter(r => r.status === 'Completed').length
+  const rejected  = requests.filter(r => r.status === 'Rejected').length
+  const reEdited  = requests.filter(r => r.revisionNo > 0).length
+  const pct = (n) => total === 0 ? '—' : `${Math.round((n / total) * 100)}%`
   return {
-    total:    requests.length,
-    pending:  requests.filter(r => r.status === 'PendingApproval').length,
-    final:    requests.filter(r => r.status === 'PendingFinalApproval').length,
-    rejected: requests.filter(r => r.status === 'Rejected').length,
-    completed:requests.filter(r => r.status === 'Completed').length,
+    total,
+    pending:       requests.filter(r => r.status === 'PendingApproval').length,
+    final:         requests.filter(r => r.status === 'PendingFinalApproval').length,
+    rejected,
+    completed,
+    approvalRate:  pct(completed),
+    reEditRate:    pct(reEdited),
+    rejectionRate: pct(rejected),
   }
 }
 
@@ -99,19 +110,17 @@ export default function AdminConsole({ workflow }) {
       {activeTab === 'requests' && (<>
 
       {/* Clickable stat cards — filter the table on click */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-7">
-        {STAT_CARDS.map(({ label, key, icon: Icon, bg, text, ic }) => (
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-7">
+        {STAT_CARDS.map(({ label, key, icon: Icon, bg, text, ic, noFilter }) => (
           <button
             key={key}
-            onClick={() => setFilterStatus(key === 'total' ? 'All' : (STAT_KEY_TO_FILTER[key] ?? 'All'))}
-            className={`card px-4 py-3.5 flex items-center gap-3 ${bg} text-left w-full
-                        hover:ring-2 hover:ring-blue-400 transition-all`}
+            onClick={() => !noFilter && setFilterStatus(key === 'total' ? 'All' : (STAT_KEY_TO_FILTER[key] ?? 'All'))}
+            className={`card px-3 py-3.5 flex flex-col items-center gap-1.5 ${bg} text-center w-full
+                        ${noFilter ? 'cursor-default' : 'hover:ring-2 hover:ring-[#0062AC]'} transition-all`}
           >
-            <Icon className={`h-7 w-7 ${ic} flex-shrink-0`} />
-            <div>
-              <p className="text-2xl font-bold text-gray-900 leading-none">{stats[key]}</p>
-              <p className={`text-xs font-medium ${text} mt-0.5`}>{label}</p>
-            </div>
+            <Icon className={`h-6 w-6 ${ic} flex-shrink-0`} />
+            <p className="text-xl font-bold text-gray-900 leading-none">{stats[key]}</p>
+            <p className={`text-xs font-medium ${text} leading-tight`}>{label}</p>
           </button>
         ))}
       </div>

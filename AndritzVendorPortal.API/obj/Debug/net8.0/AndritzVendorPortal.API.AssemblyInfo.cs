@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AndritzVendorPortal.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+47b0ef4a0ba4957dd53250a78385bcdc586d2629")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cfe53160ba1eaae6ef133aee2fa4478ab35b40af")]
 [assembly: System.Reflection.AssemblyProductAttribute("AndritzVendorPortal.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AndritzVendorPortal.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

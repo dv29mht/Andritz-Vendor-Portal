@@ -391,6 +391,12 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
         if (finalStep is null || !finalStep.IsFinalApproval)
             return Forbid("No pending final approval step assigned to you for this request.");
 
+        // Ensure vendor code is unique across all completed requests
+        var duplicate = await db.VendorRequests
+            .AnyAsync(r => r.Id != id && r.VendorCode == dto.VendorCode && r.VendorCode != null);
+        if (duplicate)
+            return BadRequest($"Vendor code '{dto.VendorCode}' is already assigned to another request.");
+
         // Atomically approve final step + assign vendor code
         finalStep.Decision  = ApprovalDecision.Approved;
         finalStep.Comment   = "Final approval granted. Vendor code assigned from SAP.";

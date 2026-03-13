@@ -37,17 +37,22 @@ export default function FinalApproverConsole({ workflow, currentUser }) {
     setRejectError('')
   }
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (!vendorCode.trim()) { setVendorCodeErr('SAP Vendor Code is required.'); return }
     const name = reviewing.vendorName
     const code = vendorCode.trim()
-    workflow.complete(reviewing.id, code)
-    setReviewing(null)
-    setToast({
-      type: 'success',
-      title: 'Vendor Registration Completed',
-      body:  `${name} has been approved and vendor code ${code} has been assigned. The buyer will be notified.`,
-    })
+    try {
+      await workflow.complete(reviewing.id, code)
+      setReviewing(null)
+      setToast({
+        type: 'success',
+        title: 'Vendor Registration Completed',
+        body:  `${name} has been approved and vendor code ${code} has been assigned.`,
+      })
+    } catch (err) {
+      const msg = err?.response?.data || 'Failed to complete request.'
+      setVendorCodeErr(typeof msg === 'string' ? msg : 'Vendor code already in use or invalid.')
+    }
   }
 
   const handleReject = () => {

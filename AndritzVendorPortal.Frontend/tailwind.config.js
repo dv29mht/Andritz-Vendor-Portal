@@ -5,6 +5,7 @@ export default {
     extend: {
       colors: {
         andritz: {
+          blue: '#0062AC',
           red:  '#c8102e',
           dark: '#1a1a2e',
         },
