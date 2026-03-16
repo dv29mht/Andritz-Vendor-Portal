@@ -161,6 +161,14 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     context.Database.EnsureCreated();
 
+    // Add new columns if they don't exist yet (safe to run on every startup)
+    context.Database.ExecuteSqlRaw("""
+        ALTER TABLE "VendorRequests"
+            ADD COLUMN IF NOT EXISTS "IsOneTimeVendor" boolean NOT NULL DEFAULT false;
+        ALTER TABLE "VendorRequests"
+            ADD COLUMN IF NOT EXISTS "ProposedBy" text NOT NULL DEFAULT '';
+        """);
+
     // Ensure all 4 roles exist (required for Admin to create users via the UI)
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     foreach (var role in new[] { "Buyer", "Approver", "FinalApprover", "Admin" })
