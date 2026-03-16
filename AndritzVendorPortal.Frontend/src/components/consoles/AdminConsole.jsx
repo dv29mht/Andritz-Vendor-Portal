@@ -58,6 +58,7 @@ export default function AdminConsole({ workflow }) {
   const [filterStatus, setFilterStatus]     = useState('All')
   const [search, setSearch]                 = useState('')
   const [viewingRequest, setViewingRequest] = useState(null)
+  const [previewRequest, setPreviewRequest] = useState(null)
   const [toast, setToast]                   = useState(null)
 
   const visible = requests.filter(r => {
@@ -71,11 +72,7 @@ export default function AdminConsole({ workflow }) {
   })
 
   const handleDownloadPdf = (req) => {
-    setToast({
-      type:  'success',
-      title: 'PDF Export',
-      body:  `PDF for "${req.vendorName}" will be available once the .NET API is connected.`,
-    })
+    setPreviewRequest(workflow.requests.find(r => r.id === req.id) ?? req)
   }
 
   return (
@@ -229,14 +226,14 @@ export default function AdminConsole({ workflow }) {
           onClose={() => setViewingRequest(null)}
         />
       )}
-
-      {toast && (
-        <Toast
-          message={{ title: toast.title, body: toast.body }}
-          type={toast.type}
-          onClose={() => setToast(null)}
+      {previewRequest && (
+        <VendorDetailModal
+          request={previewRequest}
+          initialTab="preview"
+          onClose={() => setPreviewRequest(null)}
         />
       )}
+
       </>)}
     </div>
   )

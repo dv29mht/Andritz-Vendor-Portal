@@ -215,8 +215,8 @@ export default function BuyerConsole({ workflow, currentUser }) {
     if (!form.gstNumber.trim())      e.gstNumber      = 'GST Number is required.'
     if (!form.panCard.trim())        e.panCard        = 'PAN Card is required.'
     if (!form.addressDetails.trim()) e.addressDetails = 'Address is required.'
-    if (!form.city)                  e.city           = 'Please select a city.'
-    if (!form.locality)              e.locality       = 'Please select a locality.'
+    if (!form.city.trim())           e.city           = 'City is required.'
+    if (!form.locality.trim())       e.locality       = 'Locality is required.'
     if (!editingRequest && selectedApprovers.length === 0)
       e.approvers = 'Select at least one approver.'
     return e
@@ -428,25 +428,28 @@ export default function BuyerConsole({ workflow, currentUser }) {
                 />
               </Field>
               <Field label="City" required error={errors.city}>
-                <select
+                <input
                   className="form-input"
+                  list="city-list"
+                  placeholder="e.g. Mumbai"
                   value={form.city}
                   onChange={e => setForm(f => ({ ...f, city: e.target.value, locality: '' }))}
-                >
-                  <option value="">Select City</option>
-                  {Object.keys(CITIES).map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                />
+                <datalist id="city-list">
+                  {Object.keys(CITIES).map(c => <option key={c} value={c} />)}
+                </datalist>
               </Field>
               <Field label="Locality" required error={errors.locality}>
-                <select
+                <input
                   className="form-input"
+                  list="locality-list"
+                  placeholder="e.g. Andheri"
                   value={form.locality}
-                  disabled={!form.city}
                   onChange={e => set('locality', e.target.value)}
-                >
-                  <option value="">Select Locality</option>
-                  {(CITIES[form.city] ?? []).map(l => <option key={l} value={l}>{l}</option>)}
-                </select>
+                />
+                <datalist id="locality-list">
+                  {(CITIES[form.city] ?? []).map(l => <option key={l} value={l} />)}
+                </datalist>
               </Field>
               <Field label="State" error={errors.state}>
                 <select

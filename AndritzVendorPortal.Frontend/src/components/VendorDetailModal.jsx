@@ -18,8 +18,8 @@ const TABS = [
 
 // ── Main Modal ─────────────────────────────────────────────────────────────────
 
-export default function VendorDetailModal({ request, onClose }) {
-  const [activeTab, setActiveTab] = useState('details')
+export default function VendorDetailModal({ request, onClose, initialTab = 'details' }) {
+  const [activeTab, setActiveTab] = useState(initialTab)
 
   return (
     <Modal
