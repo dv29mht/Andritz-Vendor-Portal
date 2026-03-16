@@ -176,6 +176,24 @@ using (var scope = app.Services.CreateScope())
         if (!roleManager.RoleExistsAsync(role).GetAwaiter().GetResult())
             roleManager.CreateAsync(new IdentityRole(role)).GetAwaiter().GetResult();
     }
+
+    // Reset all known account passwords to the standard portal password
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var newPassword = "Dahlia@1234";
+    foreach (var email in new[] {
+        "pardeep.sharma@andritz.com",
+        "vikram.nair@andritz.com",
+        "rajesh.kumar@andritz.com",
+        "sunita.rao@andritz.com"
+    })
+    {
+        var user = userManager.FindByEmailAsync(email).GetAwaiter().GetResult();
+        if (user is not null)
+        {
+            var token = userManager.GeneratePasswordResetTokenAsync(user).GetAwaiter().GetResult();
+            userManager.ResetPasswordAsync(user, token, newPassword).GetAwaiter().GetResult();
+        }
+    }
 }
 
 app.Run();
