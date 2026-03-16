@@ -2,6 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes welcome-bar {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+@keyframes welcome-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+@keyframes login-bg-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.welcome-progress { animation: welcome-bar 1.6s ease-out forwards; }
+.login-bg-animate {
+  background-size: 200% 200%;
+  animation: login-bg-shift 8s ease infinite;
+}
+
 @layer base {
   body { @apply text-gray-900; }
 }

@@ -21,6 +21,13 @@ public record UserDto(
     List<string> Roles
 );
 
+public record UpdateUserDto(
+    [Required] string  FullName,
+               string? Designation,
+    [Required] string  Role,
+               string? NewPassword
+);
+
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 public record LoginDto(

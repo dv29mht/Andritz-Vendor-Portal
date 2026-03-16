@@ -3,6 +3,7 @@ import {
   UserPlusIcon, ArrowPathIcon, MagnifyingGlassIcon,
   XMarkIcon, CheckIcon, ExclamationCircleIcon,
   ShieldCheckIcon, ClipboardDocumentIcon,
+  PencilSquareIcon, TrashIcon, EyeIcon,
 } from '@heroicons/react/24/outline'
 import api from '../services/api'
 
@@ -26,10 +27,254 @@ const ROLE_ACCESS_NOTE = {
     'Full visibility of all requests and user management. Cannot create or approve requests.',
 }
 
-/** Default password pattern: Role@123! e.g. "Buyer@123!" */
-const defaultPassword = (role) => `${role}@123!`
+const CONSOLE_LABEL = {
+  Admin:         'Admin Dashboard',
+  Buyer:         'Buyer Console',
+  Approver:      'Approver Console',
+  FinalApprover: 'Final Approver Console',
+}
 
+const defaultPassword = (role) => `${role}@123!`
 const EMPTY_FORM = { fullName: '', email: '', password: '', role: 'Buyer', designation: '' }
+
+// ── User Detail / Edit Modal ──────────────────────────────────────────────────
+
+function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
+  const [mode, setMode]           = useState('view') // 'view' | 'edit' | 'delete'
+  const [form, setForm]           = useState({
+    fullName:    user.fullName,
+    designation: user.designation ?? '',
+    role:        user.roles[0] ?? 'Buyer',
+    newPassword: '',
+  })
+  const [errors, setErrors]  = useState([])
+  const [saving, setSaving]  = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const primaryRole = user.roles[0]
+  const hasEmailGuard = primaryRole === 'FinalApprover'
+
+  const handleSave = async (e) => {
+    e.preventDefault()
+    setErrors([])
+    const errs = []
+    if (!form.fullName.trim()) errs.push('Full name is required.')
+    if (form.newPassword && form.newPassword.length < 8) errs.push('New password must be at least 8 characters.')
+    if (errs.length) { setErrors(errs); return }
+
+    setSaving(true)
+    try {
+      const { data } = await api.put(`/users/${user.id}`, {
+        fullName:    form.fullName.trim(),
+        designation: form.designation.trim() || null,
+        role:        form.role,
+        newPassword: form.newPassword.trim() || null,
+      })
+      onUpdated(data)
+      onClose()
+    } catch (err) {
+      const detail = err.response?.data
+      if (Array.isArray(detail))           setErrors(detail)
+      else if (typeof detail === 'string') setErrors([detail])
+      else setErrors(['Failed to update user. Please try again.'])
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    try {
+      await api.delete(`/users/${user.id}`)
+      onDeleted(user.id)
+      onClose()
+    } catch {
+      setErrors(['Failed to delete user. Please try again.'])
+      setMode('view')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div>
+            <h2 className="font-semibold text-gray-900">
+              {mode === 'delete' ? 'Delete User' : mode === 'edit' ? 'Edit User' : 'User Details'}
+            </h2>
+            {mode === 'view' && (
+              <p className="text-xs text-gray-400 mt-0.5">{user.email}</p>
+            )}
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Errors */}
+        {errors.length > 0 && (
+          <div className="mx-6 mt-4 rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3">
+            <ul className="list-disc list-inside space-y-0.5">
+              {errors.map((e, i) => <li key={i} className="text-xs text-red-700">{e}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {/* ── View mode ─────────────────────────────────── */}
+        {mode === 'view' && (
+          <div className="px-6 py-5 space-y-4">
+            {/* Role badge */}
+            <div className="flex items-center gap-2">
+              {user.roles.map(role => (
+                <span key={role} className={`text-xs px-2.5 py-1 rounded-full font-semibold ring-1 ring-inset ${ROLE_BADGE[role] ?? 'bg-gray-100 text-gray-600 ring-gray-200'}`}>
+                  {role}
+                </span>
+              ))}
+              {hasEmailGuard && (
+                <span className="flex items-center gap-0.5 text-xs text-rose-600 font-medium">
+                  <ShieldCheckIcon className="h-3.5 w-3.5" />
+                  email-gated
+                </span>
+              )}
+            </div>
+
+            {/* Detail rows */}
+            <table className="w-full text-sm">
+              <tbody>
+                {[
+                  ['Full Name',   user.fullName],
+                  ['Email',       user.email],
+                  ['Designation', user.designation || '—'],
+                  ['Console',     CONSOLE_LABEL[primaryRole] ?? '—'],
+                  ['User ID',     user.id],
+                ].map(([label, value]) => (
+                  <tr key={label} className="border-b border-gray-50 last:border-0">
+                    <td className="py-2 pr-6 text-gray-400 text-xs font-medium w-2/5 align-top">{label}</td>
+                    <td className={`py-2 text-gray-900 font-medium break-all text-xs ${label === 'User ID' ? 'font-mono text-gray-500' : ''}`}>{value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Access note */}
+            <div className="flex items-start gap-2 rounded-lg bg-blue-50 ring-1 ring-blue-100 px-3 py-2.5">
+              <ShieldCheckIcon className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-blue-700">{ROLE_ACCESS_NOTE[primaryRole]}</p>
+            </div>
+
+            <div className="flex justify-between pt-1">
+              <button
+                onClick={() => setMode('delete')}
+                className="btn-danger !py-1.5 !px-3 !text-xs"
+              >
+                <TrashIcon className="h-3.5 w-3.5" />
+                Delete User
+              </button>
+              <button onClick={() => setMode('edit')} className="btn-primary !py-1.5 !px-3 !text-xs">
+                <PencilSquareIcon className="h-3.5 w-3.5" />
+                Edit
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Edit mode ─────────────────────────────────── */}
+        {mode === 'edit' && (
+          <form onSubmit={handleSave} className="px-6 py-5 space-y-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="form-label">Full Name <span className="text-red-500">*</span></label>
+                <input
+                  className="form-input"
+                  value={form.fullName}
+                  onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="form-label">Designation</label>
+                <input
+                  className="form-input"
+                  placeholder="e.g. Senior Purchase Manager"
+                  value={form.designation}
+                  onChange={e => setForm(f => ({ ...f, designation: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="form-label">Role <span className="text-red-500">*</span></label>
+                <select
+                  className="form-input"
+                  value={form.role}
+                  onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
+                >
+                  {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">
+                  New Password
+                  <span className="ml-1 text-gray-400 font-normal">(leave blank to keep current)</span>
+                </label>
+                <input
+                  type="password"
+                  className="form-input"
+                  placeholder="Min 8 characters"
+                  value={form.newPassword}
+                  onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2 rounded-lg bg-blue-50 ring-1 ring-blue-100 px-3 py-2.5">
+              <ShieldCheckIcon className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-blue-700">{ROLE_ACCESS_NOTE[form.role]}</p>
+            </div>
+
+            <div className="flex justify-between pt-1">
+              <button type="button" className="btn-secondary !py-1.5 !px-3 !text-xs" onClick={() => { setMode('view'); setErrors([]) }}>
+                Cancel
+              </button>
+              <button type="submit" className="btn-primary !py-1.5 !px-3 !text-xs" disabled={saving}>
+                {saving ? 'Saving…' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* ── Delete confirmation ────────────────────────── */}
+        {mode === 'delete' && (
+          <div className="px-6 py-5 space-y-4">
+            <div className="rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3">
+              <p className="text-sm font-semibold text-red-800 mb-1">Are you sure you want to delete this user?</p>
+              <p className="text-xs text-red-700">
+                <span className="font-medium">{user.fullName}</span> ({user.email}) will be permanently removed.
+                This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex justify-between">
+              <button className="btn-secondary !py-1.5 !px-3 !text-xs" onClick={() => { setMode('view'); setErrors([]) }}>
+                Cancel
+              </button>
+              <button
+                className="btn-danger !py-1.5 !px-3 !text-xs"
+                disabled={deleting}
+                onClick={handleDelete}
+              >
+                <TrashIcon className="h-3.5 w-3.5" />
+                {deleting ? 'Deleting…' : 'Confirm Delete'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Main UserManagement component ─────────────────────────────────────────────
 
 export default function UserManagement() {
   const [users, setUsers]           = useState([])
@@ -43,6 +288,7 @@ export default function UserManagement() {
   const [syncMsg, setSyncMsg]       = useState(null)
   const [successMsg, setSuccessMsg] = useState(null)
   const [copiedPwd, setCopiedPwd]   = useState(false)
+  const [detailUser, setDetailUser] = useState(null)
 
   const fetchUsers = async () => {
     setLoading(true)
@@ -78,14 +324,11 @@ export default function UserManagement() {
     const errs = []
     if (!form.fullName.trim()) errs.push('Full name is required.')
     if (!form.email.trim())    errs.push('Email address is required.')
-
     if (form.email.trim() && !form.email.toLowerCase().endsWith('@andritz.com'))
-      errs.push('Email must use the @andritz.com domain (e.g. name@andritz.com).')
+      errs.push('Email must use the @andritz.com domain.')
 
     const effectivePassword = form.password.trim() || defaultPassword(form.role)
-    if (effectivePassword.length < 8)
-      errs.push('Password must be at least 8 characters.')
-
+    if (effectivePassword.length < 8) errs.push('Password must be at least 8 characters.')
     if (errs.length) { setFormErrors(errs); return }
 
     setSaving(true)
@@ -102,14 +345,8 @@ export default function UserManagement() {
       setForm(EMPTY_FORM)
       setShowForm(false)
       setCopiedPwd(false)
-      setSuccessMsg({
-        name:          data.fullName,
-        email:         data.email,
-        designation:   data.designation,
-        role:          data.roles[0],
-        password:      effectivePassword,
-        autoGenerated: wasAutoGenerated,
-      })
+      setSuccessMsg({ name: data.fullName, email: data.email, designation: data.designation,
+                      role: data.roles[0], password: effectivePassword, autoGenerated: wasAutoGenerated })
     } catch (err) {
       const detail = err.response?.data
       if (Array.isArray(detail))           setFormErrors(detail)
@@ -138,6 +375,14 @@ export default function UserManagement() {
       setSyncing(false)
       setTimeout(() => setSyncMsg(null), 6000)
     }
+  }
+
+  const handleUserUpdated = (updated) => {
+    setUsers(prev => prev.map(u => u.id === updated.id ? updated : u).sort((a, b) => a.fullName.localeCompare(b.fullName)))
+  }
+
+  const handleUserDeleted = (id) => {
+    setUsers(prev => prev.filter(u => u.id !== id))
   }
 
   return (
@@ -175,7 +420,7 @@ export default function UserManagement() {
         </div>
       )}
 
-      {/* Success banner — shows generated password if applicable */}
+      {/* Success banner */}
       {successMsg && (
         <div className="mb-4 rounded-lg bg-emerald-50 ring-1 ring-inset ring-emerald-200 px-4 py-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800 mb-1">
@@ -195,7 +440,6 @@ export default function UserManagement() {
               <button
                 onClick={() => copyPassword(successMsg.password)}
                 className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-800 transition-colors"
-                title="Copy to clipboard"
               >
                 <ClipboardDocumentIcon className="h-3.5 w-3.5" />
                 {copiedPwd ? 'Copied!' : 'Copy'}
@@ -221,9 +465,7 @@ export default function UserManagement() {
           {formErrors.length > 0 && (
             <div className="mb-4 rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3">
               <ul className="list-disc list-inside space-y-0.5">
-                {formErrors.map((e, i) => (
-                  <li key={i} className="text-xs text-red-700">{e}</li>
-                ))}
+                {formErrors.map((e, i) => <li key={i} className="text-xs text-red-700">{e}</li>)}
               </ul>
             </div>
           )}
@@ -231,78 +473,44 @@ export default function UserManagement() {
           <form onSubmit={handleAddUser} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="form-label">Full Name <span className="text-red-500">*</span></label>
-              <input
-                className="form-input"
-                placeholder="e.g. Priya Mehta"
-                value={form.fullName}
-                onChange={e => handleFormChange('fullName', e.target.value)}
-              />
+              <input className="form-input" placeholder="e.g. Priya Mehta"
+                value={form.fullName} onChange={e => handleFormChange('fullName', e.target.value)} />
             </div>
-
             <div>
-              <label className="form-label">
-                Email <span className="text-red-500">*</span>
+              <label className="form-label">Email <span className="text-red-500">*</span>
                 <span className="ml-1 text-gray-400 font-normal">(@andritz.com only)</span>
               </label>
-              <input
-                type="email"
-                className="form-input"
-                placeholder="priya.mehta@andritz.com"
-                value={form.email}
-                onChange={e => handleFormChange('email', e.target.value)}
-              />
+              <input type="email" className="form-input" placeholder="priya.mehta@andritz.com"
+                value={form.email} onChange={e => handleFormChange('email', e.target.value)} />
             </div>
-
             <div>
               <label className="form-label">Designation</label>
-              <input
-                className="form-input"
-                placeholder="e.g. Senior Purchase Manager"
-                value={form.designation}
-                onChange={e => handleFormChange('designation', e.target.value)}
-              />
+              <input className="form-input" placeholder="e.g. Senior Purchase Manager"
+                value={form.designation} onChange={e => handleFormChange('designation', e.target.value)} />
             </div>
-
             <div>
               <label className="form-label">Role <span className="text-red-500">*</span></label>
-              <select
-                className="form-input"
-                value={form.role}
-                onChange={e => handleFormChange('role', e.target.value)}
-              >
+              <select className="form-input" value={form.role} onChange={e => handleFormChange('role', e.target.value)}>
                 {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
-
             <div className="sm:col-span-2">
-              <label className="form-label">
-                Password
+              <label className="form-label">Password
                 <span className="ml-1 text-gray-400 font-normal">
-                  (optional — defaults to{' '}
-                  <span className="font-mono">{defaultPassword(form.role)}</span>)
+                  (optional — defaults to <span className="font-mono">{defaultPassword(form.role)}</span>)
                 </span>
               </label>
-              <input
-                type="password"
-                className="form-input"
-                placeholder={`Leave blank for ${defaultPassword(form.role)}`}
-                value={form.password}
-                onChange={e => handleFormChange('password', e.target.value)}
-              />
+              <input type="password" className="form-input" placeholder={`Leave blank for ${defaultPassword(form.role)}`}
+                value={form.password} onChange={e => handleFormChange('password', e.target.value)} />
             </div>
-
-            {/* Rights assignment note */}
             <div className="sm:col-span-2">
               <div className="flex items-start gap-2 rounded-lg bg-blue-50 ring-1 ring-blue-100 px-3 py-2.5">
                 <ShieldCheckIcon className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-blue-700">{ROLE_ACCESS_NOTE[form.role]}</p>
               </div>
             </div>
-
             <div className="sm:col-span-2 flex justify-end gap-3 pt-1">
-              <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>
-                Cancel
-              </button>
+              <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
               <button type="submit" className="btn-primary" disabled={saving}>
                 {saving ? 'Creating…' : 'Create User'}
               </button>
@@ -314,12 +522,8 @@ export default function UserManagement() {
       {/* Search */}
       <div className="relative max-w-xs mb-4">
         <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-        <input
-          className="form-input pl-9"
-          placeholder="Search by name, email, designation, role…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <input className="form-input pl-9" placeholder="Search by name, email, role…"
+          value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       {/* Users table */}
@@ -327,7 +531,7 @@ export default function UserManagement() {
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
-              {['Full Name', 'Designation', 'Email', 'Role(s)', 'Console Access', 'User ID'].map(h => (
+              {['Full Name', 'Designation', 'Email', 'Role(s)', 'Console Access', 'Actions'].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   {h}
                 </th>
@@ -343,16 +547,18 @@ export default function UserManagement() {
             )}
             {!loading && visible.map(user => {
               const primaryRole = user.roles[0]
-              const consoleLabel = {
-                Admin:         'Admin Dashboard',
-                Buyer:         'Buyer Console',
-                Approver:      'Approver Console',
-                FinalApprover: 'Final Approver Console',
-              }[primaryRole] ?? '—'
+              const consoleLabel = CONSOLE_LABEL[primaryRole] ?? '—'
               const hasEmailGuard = primaryRole === 'FinalApprover'
               return (
                 <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{user.fullName}</td>
+                  <td className="px-4 py-3">
+                    <button
+                      className="font-medium text-[#0062AC] hover:underline whitespace-nowrap text-left"
+                      onClick={() => setDetailUser(user)}
+                    >
+                      {user.fullName}
+                    </button>
+                  </td>
                   <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
                     {user.designation || <span className="text-gray-300">—</span>}
                   </td>
@@ -360,10 +566,7 @@ export default function UserManagement() {
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
                       {user.roles.map(role => (
-                        <span
-                          key={role}
-                          className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ring-1 ring-inset ${ROLE_BADGE[role] ?? 'bg-gray-100 text-gray-600 ring-gray-200'}`}
-                        >
+                        <span key={role} className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ring-1 ring-inset ${ROLE_BADGE[role] ?? 'bg-gray-100 text-gray-600 ring-gray-200'}`}>
                           {role}
                         </span>
                       ))}
@@ -378,8 +581,14 @@ export default function UserManagement() {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-gray-400 max-w-[120px] truncate" title={user.id}>
-                    {user.id.slice(0, 8)}…
+                  <td className="px-4 py-3">
+                    <button
+                      className="btn-secondary !py-1 !px-2 !text-xs"
+                      onClick={() => setDetailUser(user)}
+                    >
+                      <EyeIcon className="h-3.5 w-3.5" />
+                      View
+                    </button>
                   </td>
                 </tr>
               )
@@ -395,6 +604,16 @@ export default function UserManagement() {
           </span>
         </div>
       </div>
+
+      {/* User Detail Modal */}
+      {detailUser && (
+        <UserDetailModal
+          user={detailUser}
+          onClose={() => setDetailUser(null)}
+          onUpdated={handleUserUpdated}
+          onDeleted={handleUserDeleted}
+        />
+      )}
     </div>
   )
 }
