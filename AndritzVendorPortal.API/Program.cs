@@ -177,22 +177,16 @@ using (var scope = app.Services.CreateScope())
             roleManager.CreateAsync(new IdentityRole(role)).GetAwaiter().GetResult();
     }
 
-    // Reset all known account passwords to the standard portal password
+    // Reset every user's password to the standard portal password on each startup.
+    // This ensures all accounts (including Admin-created ones) always have a known credential
+    // on Render's free tier, which restarts regularly and doesn't preserve in-memory state.
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    var newPassword = "Dahlia@1234";
-    foreach (var email in new[] {
-        "pardeep.sharma@andritz.com",
-        "vikram.nair@andritz.com",
-        "rajesh.kumar@andritz.com",
-        "sunita.rao@andritz.com"
-    })
+    var standardPassword = "Dahlia@1234";
+    var allUsers = userManager.Users.ToList();
+    foreach (var u in allUsers)
     {
-        var user = userManager.FindByEmailAsync(email).GetAwaiter().GetResult();
-        if (user is not null)
-        {
-            var token = userManager.GeneratePasswordResetTokenAsync(user).GetAwaiter().GetResult();
-            userManager.ResetPasswordAsync(user, token, newPassword).GetAwaiter().GetResult();
-        }
+        var token = userManager.GeneratePasswordResetTokenAsync(u).GetAwaiter().GetResult();
+        userManager.ResetPasswordAsync(u, token, standardPassword).GetAwaiter().GetResult();
     }
 }
 

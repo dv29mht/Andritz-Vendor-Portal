@@ -34,7 +34,7 @@ const CONSOLE_LABEL = {
   FinalApprover: 'Final Approver Console',
 }
 
-const defaultPassword = (role) => `${role}@123!`
+const DEFAULT_PASSWORD = 'Dahlia@1234'
 const EMPTY_FORM = { fullName: '', email: '', password: '', role: 'Buyer', designation: '' }
 
 // ── User Detail / Edit Modal ──────────────────────────────────────────────────
@@ -327,7 +327,7 @@ export default function UserManagement() {
     if (form.email.trim() && !form.email.toLowerCase().endsWith('@andritz.com'))
       errs.push('Email must use the @andritz.com domain.')
 
-    const effectivePassword = form.password.trim() || defaultPassword(form.role)
+    const effectivePassword = form.password.trim() || DEFAULT_PASSWORD
     if (effectivePassword.length < 8) errs.push('Password must be at least 8 characters.')
     if (errs.length) { setFormErrors(errs); return }
 
@@ -497,10 +497,10 @@ export default function UserManagement() {
             <div className="sm:col-span-2">
               <label className="form-label">Password
                 <span className="ml-1 text-gray-400 font-normal">
-                  (optional — defaults to <span className="font-mono">{defaultPassword(form.role)}</span>)
+                  (optional — defaults to <span className="font-mono">{DEFAULT_PASSWORD}</span>)
                 </span>
               </label>
-              <input type="password" className="form-input" placeholder={`Leave blank for ${defaultPassword(form.role)}`}
+              <input type="password" className="form-input" placeholder={`Leave blank for ${DEFAULT_PASSWORD}`}
                 value={form.password} onChange={e => handleFormChange('password', e.target.value)} />
             </div>
             <div className="sm:col-span-2">
