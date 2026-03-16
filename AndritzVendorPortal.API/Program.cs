@@ -67,7 +67,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     };
 });
 
-var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is missing.");
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+    throw new InvalidOperationException("Jwt:Key environment variable is not configured. Set Jwt__Key on the host.");
 
 // Explicitly override all three scheme defaults so AddIdentity's cookie scheme
 // cannot intercept authenticated API requests.
@@ -113,8 +115,9 @@ var app = builder.Build();
 app.Use(async (ctx, next) =>
 {
     var origin = ctx.Request.Headers.Origin.ToString();
+    var isDev  = app.Environment.IsDevelopment();
     bool isAllowed = origin == "https://andritz-portal-live.vercel.app"
-                  || origin == "http://localhost:5173"
+                  || (isDev && origin == "http://localhost:5173")
                   || (origin.StartsWith("https://andritz-portal-live-") && origin.EndsWith(".vercel.app"));
 
     // Set headers now (before pipeline runs)
