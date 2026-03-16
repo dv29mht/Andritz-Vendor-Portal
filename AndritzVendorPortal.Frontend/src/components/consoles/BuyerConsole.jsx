@@ -13,6 +13,7 @@ const EMPTY_FORM = {
   gstNumber: '', panCard: '',
   addressDetails: '', postalCode: '', city: '', locality: '', state: '', country: 'India',
   currency: 'INR', paymentTerms: '', incoterms: '', yearlyPvo: '',
+  isOneTimeVendor: false, proposedBy: '',
 }
 
 const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'SGD', 'AED']
@@ -195,10 +196,12 @@ export default function BuyerConsole({ workflow, currentUser }) {
       locality:      req.locality       ?? '',
       state:         req.state          ?? '',
       country:       req.country        ?? 'India',
-      currency:      req.currency       ?? 'INR',
-      paymentTerms:  req.paymentTerms   ?? '',
-      incoterms:     req.incoterms      ?? '',
-      yearlyPvo:     req.yearlyPvo      ?? '',
+      currency:        req.currency        ?? 'INR',
+      paymentTerms:    req.paymentTerms    ?? '',
+      incoterms:       req.incoterms       ?? '',
+      yearlyPvo:       req.yearlyPvo       ?? '',
+      isOneTimeVendor: req.isOneTimeVendor ?? false,
+      proposedBy:      req.proposedBy      ?? '',
     })
     setErrors({})
     setApiError(null)
@@ -380,6 +383,27 @@ export default function BuyerConsole({ workflow, currentUser }) {
                   value={form.reason}
                   onChange={e => set('reason', e.target.value)}
                 />
+              </Field>
+              <Field label="Proposed By" error={errors.proposedBy}>
+                <textarea
+                  className="form-input resize-none"
+                  rows={2}
+                  placeholder="Name / department proposing this vendor"
+                  value={form.proposedBy}
+                  onChange={e => set('proposedBy', e.target.value)}
+                />
+              </Field>
+              <Field label="" span={2}>
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    checked={form.isOneTimeVendor}
+                    onChange={e => set('isOneTimeVendor', e.target.checked)}
+                  />
+                  <span className="text-sm font-medium text-gray-700">One-Time Vendor</span>
+                  <span className="text-xs text-gray-400">(not added to permanent vendor master)</span>
+                </label>
               </Field>
             </FormSection>
 

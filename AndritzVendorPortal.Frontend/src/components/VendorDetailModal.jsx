@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import {
   DocumentTextIcon, ClockIcon, PrinterIcon,
   CheckCircleIcon, XCircleIcon, ArrowRightIcon,
+  ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline'
 import { CheckBadgeIcon } from '@heroicons/react/24/solid'
 import Modal from './shared/Modal'
@@ -35,6 +36,11 @@ export default function VendorDetailModal({ request, onClose }) {
         {request.vendorCode && (
           <span className="text-xs bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 ring-inset px-2.5 py-1 rounded-full font-mono font-medium">
             {request.vendorCode}
+          </span>
+        )}
+        {request.isOneTimeVendor && (
+          <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2.5 py-1 rounded-full font-medium">
+            One-Time Vendor
           </span>
         )}
       </div>
@@ -83,57 +89,53 @@ export default function VendorDetailModal({ request, onClose }) {
 function DetailsTab({ request }) {
   const contact = request.contactPerson || request.contactInformation
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      <div className="space-y-4">
-        <Section title="Vendor Information">
-          <Field label="Vendor Name"    value={request.vendorName} />
-          {request.materialGroup && <Field label="Material Group" value={request.materialGroup} />}
-          {request.reason        && <Field label="Reason"         value={request.reason} />}
-          <Field label="GST Number"     value={request.gstNumber || '—'} mono />
-          <Field label="PAN Card"       value={request.panCard   || '—'} mono />
-        </Section>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="lg:col-span-2 space-y-5">
+        <InfoTable title="Vendor Information" rows={[
+          ['Vendor Name',     request.vendorName],
+          ['Material Group',  request.materialGroup],
+          ['Reason',          request.reason],
+          ['GST Number',      request.gstNumber, true],
+          ['PAN Card',        request.panCard,   true],
+          ['One-Time Vendor', request.isOneTimeVendor ? 'Yes' : 'No'],
+          ['Proposed By',     request.proposedBy],
+        ]} />
 
-        <Section title="Address">
-          <Field label="Street / Building" value={request.addressDetails} />
-          <Field
-            label="City / Locality"
-            value={[request.city, request.locality, request.state, request.postalCode].filter(Boolean).join(', ')}
-          />
-          <Field label="Country" value={request.country || 'India'} />
-        </Section>
+        <InfoTable title="Address" rows={[
+          ['Street / Building', request.addressDetails],
+          ['City / Locality',   [request.city, request.locality, request.state, request.postalCode].filter(Boolean).join(', ')],
+          ['Country',           request.country || 'India'],
+        ]} />
 
-        <Section title="Commercial Terms">
-          <Field label="Currency"      value={request.currency     || 'INR'} />
-          {request.paymentTerms && <Field label="Payment Terms" value={request.paymentTerms} />}
-          {request.incoterms    && <Field label="Incoterms"     value={request.incoterms} />}
-          {request.yearlyPvo    && <Field label="Yearly PVO"    value={request.yearlyPvo} />}
-        </Section>
+        <InfoTable title="Commercial Terms" rows={[
+          ['Currency',      request.currency || 'INR'],
+          ['Payment Terms', request.paymentTerms],
+          ['Incoterms',     request.incoterms],
+          ['Yearly PVO',    request.yearlyPvo],
+        ]} />
 
-        <Section title="Contact">
-          <Field label="Contact Person" value={contact || '—'} />
-          {request.telephone && <Field label="Telephone" value={request.telephone} />}
-        </Section>
+        <InfoTable title="Contact" rows={[
+          ['Contact Person', contact],
+          ['Telephone',      request.telephone],
+        ]} />
 
-        <Section title="Submission">
-          <Field label="Submitted By"  value={request.createdByName} />
-          <Field label="Created"       value={fmtDate(request.createdAt)} />
-          <Field label="Last Updated"  value={fmtDate(request.updatedAt)} />
-        </Section>
+        <InfoTable title="Submission" rows={[
+          ['Submitted By',  request.createdByName],
+          ['Created',       fmtDate(request.createdAt)],
+          ['Last Updated',  fmtDate(request.updatedAt)],
+        ]} />
 
         {request.vendorCode && (
-          <Section title="SAP Vendor Code" accent="emerald">
-            <div className="flex items-center gap-3 py-2">
-              <CheckBadgeIcon className="h-7 w-7 text-emerald-500 flex-shrink-0" />
-              <div>
-                <p className="font-mono text-lg font-bold text-emerald-700 tracking-widest">
-                  {request.vendorCode}
-                </p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Assigned by Pardeep Sharma · {fmtDate(request.vendorCodeAssignedAt)}
-                </p>
-              </div>
+          <div className="rounded-lg bg-emerald-50 ring-1 ring-emerald-200 p-4 flex items-center gap-3">
+            <CheckBadgeIcon className="h-7 w-7 text-emerald-500 flex-shrink-0" />
+            <div>
+              <p className="text-xs text-emerald-600 font-semibold uppercase tracking-wider mb-0.5">SAP Vendor Code</p>
+              <p className="font-mono text-lg font-bold text-emerald-700 tracking-widest">{request.vendorCode}</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Assigned by Pardeep Sharma · {fmtDate(request.vendorCodeAssignedAt)}
+              </p>
             </div>
-          </Section>
+          </div>
         )}
 
         {request.rejectionComment && (
@@ -145,10 +147,37 @@ function DetailsTab({ request }) {
       </div>
 
       <div>
-        <Section title="Approval Chain">
-          <ApprovalTimeline steps={request.approvalSteps} />
-        </Section>
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2 pb-1.5 border-b border-gray-100">
+          Approval Chain
+        </p>
+        <ApprovalTimeline steps={request.approvalSteps} />
       </div>
+    </div>
+  )
+}
+
+// ── Info Table ────────────────────────────────────────────────────────────────
+
+function InfoTable({ title, rows }) {
+  const filtered = rows.filter(([, val]) => val)
+  if (filtered.length === 0) return null
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5 pb-1.5 border-b border-gray-100">
+        {title}
+      </p>
+      <table className="w-full text-sm">
+        <tbody>
+          {filtered.map(([label, value, mono]) => (
+            <tr key={label} className="border-b border-gray-50 last:border-0">
+              <td className="py-2 pr-6 text-gray-400 text-xs font-medium w-2/5 align-top">{label}</td>
+              <td className={`py-2 text-gray-900 font-medium break-words ${mono ? 'font-mono tracking-wider text-gray-700' : ''}`}>
+                {value}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
@@ -211,7 +240,6 @@ function RevisionsTab({ request }) {
               {entry.changedByName} · {fmtDate(entry.changedAt)}
             </p>
 
-            {/* Why it was rejected before this resubmit */}
             {entry.rejectionComment && (
               <div className="mt-2 rounded-md bg-red-50 ring-1 ring-red-100 px-3 py-2">
                 <p className="text-xs text-red-500 font-medium">Rejected because:</p>
@@ -219,7 +247,6 @@ function RevisionsTab({ request }) {
               </div>
             )}
 
-            {/* Field-level diff */}
             {entry.changes.length > 0 ? (
               <div className="mt-3 space-y-2">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -253,161 +280,207 @@ function RevisionsTab({ request }) {
 // ── Tab: Form Preview ─────────────────────────────────────────────────────────
 
 function PreviewTab({ request }) {
+  const paperRef = useRef(null)
   const sorted = [...request.approvalSteps].sort((a, b) => a.stepOrder - b.stepOrder)
   const formNo = `VRF-${String(request.id).padStart(4, '0')}`
 
+  const handleDownloadPdf = () => {
+    const el = paperRef.current
+    if (!el) return
+    const win = window.open('', '_blank', 'width=820,height=1000')
+    win.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>${formNo} — Vendor Registration Form</title>
+  <script src="https://cdn.tailwindcss.com"><\/script>
+  <style>
+    body { font-family: Georgia, 'Times New Roman', serif; background: white; }
+    @media print { @page { margin: 1cm; size: A4; } body { margin: 0; } }
+  </style>
+</head>
+<body class="p-8">
+  ${el.outerHTML}
+  <script>
+    window.addEventListener('load', function() {
+      setTimeout(function() { window.print(); }, 800);
+    });
+  <\/script>
+</body>
+</html>`)
+    win.document.close()
+  }
+
   return (
-    <div className="overflow-x-auto">
-      {/* Paper document */}
-      <div
-        className="mx-auto bg-white border border-gray-300 shadow-md font-serif text-gray-900 min-w-[480px]"
-        style={{ width: '680px', padding: '40px 48px' }}
-      >
-        {/* ── Company Header ── */}
-        <div className="text-center border-b-2 border-gray-800 pb-4 mb-6">
-          <div className="flex items-center justify-center gap-3 mb-1">
-            <div className="h-8 w-1.5 bg-[#c8102e]" />
-            <p className="text-2xl font-extrabold tracking-widest uppercase font-sans text-gray-900">ANDRITZ</p>
+    <div>
+      {/* Download button */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={handleDownloadPdf}
+          className="flex items-center gap-2 rounded-lg bg-[#0062AC] text-white text-sm font-semibold px-4 py-2 hover:bg-blue-700 transition-colors"
+        >
+          <ArrowDownTrayIcon className="h-4 w-4" />
+          Download PDF
+        </button>
+      </div>
+
+      <div className="overflow-x-auto">
+        {/* Paper document */}
+        <div
+          ref={paperRef}
+          className="mx-auto bg-white border border-gray-300 shadow-md font-serif text-gray-900 min-w-[480px]"
+          style={{ width: '680px', padding: '40px 48px' }}
+        >
+          {/* ── Company Header ── */}
+          <div className="text-center border-b-2 border-gray-800 pb-4 mb-6">
+            <div className="flex items-center justify-center gap-3 mb-1">
+              <div className="h-8 w-1.5 bg-[#c8102e]" />
+              <p className="text-2xl font-extrabold tracking-widest uppercase font-sans text-gray-900">ANDRITZ</p>
+            </div>
+            <p className="text-xs text-gray-500 uppercase tracking-widest font-sans">India Private Limited</p>
+            <p className="text-base font-bold uppercase tracking-wider mt-3">Vendor Registration Form</p>
           </div>
-          <p className="text-xs text-gray-500 uppercase tracking-widest font-sans">India Private Limited</p>
-          <p className="text-base font-bold uppercase tracking-wider mt-3">Vendor Registration Form</p>
-        </div>
 
-        {/* ── Document meta ── */}
-        <div className="grid grid-cols-2 gap-x-8 mb-6 text-xs font-sans">
-          <DocRow label="Form No."       value={formNo} />
-          <DocRow label="Date"           value={fmtDateFull(request.createdAt)} />
-          <DocRow label="Status"         value={request.status.replace(/([A-Z])/g, ' $1').trim()} />
-          <DocRow label="Revision"       value={request.revisionNo === 0 ? 'Original' : `REV ${request.revisionNo}`} />
-        </div>
+          {/* ── Document meta ── */}
+          <div className="grid grid-cols-2 gap-x-8 mb-6 text-xs font-sans">
+            <DocRow label="Form No."       value={formNo} />
+            <DocRow label="Date"           value={fmtDateFull(request.createdAt)} />
+            <DocRow label="Status"         value={request.status.replace(/([A-Z])/g, ' $1').trim()} />
+            <DocRow label="Revision"       value={request.revisionNo === 0 ? 'Original' : `REV ${request.revisionNo}`} />
+          </div>
 
-        <hr className="border-gray-300 mb-5" />
+          <hr className="border-gray-300 mb-5" />
 
-        {/* ── Section A: Vendor Particulars ── */}
-        <SectionHeader letter="A" title="Vendor Particulars" />
-        <FormRow no="1" label="Vendor / Company Name"   value={request.vendorName} />
-        <div className="grid grid-cols-2 gap-4">
-          <FormRow no="2" label="Material Group" value={request.materialGroup} />
-          <FormRow no="3" label="Reason"         value={request.reason} />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <FormRow no="4" label="GST Number" value={request.gstNumber} mono />
-          <FormRow no="5" label="PAN Card"   value={request.panCard}   mono />
-        </div>
-
-        <hr className="border-gray-200 my-4" />
-
-        {/* ── Section B: Address ── */}
-        <SectionHeader letter="B" title="Address Details" />
-        <FormRow no="6" label="Street / Building / Plot" value={request.addressDetails} />
-        <div className="grid grid-cols-2 gap-4">
-          <FormRow no="7" label="Postal Code" value={request.postalCode} />
-          <FormRow no="8" label="City"        value={request.city} />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <FormRow no="9"  label="Locality" value={request.locality} />
-          <FormRow no="10" label="State"    value={request.state} />
-        </div>
-        <FormRow no="11" label="Country" value={request.country || 'India'} />
-
-        <hr className="border-gray-200 my-4" />
-
-        {/* ── Section C: Commercial Terms ── */}
-        <SectionHeader letter="C" title="Commercial Terms" />
-        <div className="grid grid-cols-2 gap-4">
-          <FormRow no="12" label="Currency"      value={request.currency     || 'INR'} />
-          <FormRow no="13" label="Payment Terms" value={request.paymentTerms} />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <FormRow no="14" label="Incoterms"  value={request.incoterms} />
-          <FormRow no="15" label="Yearly PVO" value={request.yearlyPvo} />
-        </div>
-
-        <hr className="border-gray-200 my-4" />
-
-        {/* ── Section D: Contact ── */}
-        <SectionHeader letter="D" title="Contact Details" />
-        <div className="grid grid-cols-2 gap-4">
-          <FormRow no="16" label="Contact Person" value={request.contactPerson || request.contactInformation} />
-          <FormRow no="17" label="Telephone"      value={request.telephone} />
-        </div>
-
-        <hr className="border-gray-200 my-4" />
-
-        {/* ── Section E: Approval Record ── */}
-        <SectionHeader letter="E" title="Approval Record" />
-        <table className="w-full text-xs border-collapse mb-1 font-sans">
-          <thead>
-            <tr className="bg-gray-100">
-              <Th>Step</Th>
-              <Th>Approver</Th>
-              <Th>Decision</Th>
-              <Th>Date</Th>
-              <Th>Remarks</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map(s => (
-              <tr key={s.id} className="border-b border-gray-200">
-                <Td>{s.isFinalApproval ? 'Final' : `Step ${s.stepOrder}`}</Td>
-                <Td>
-                  {s.approverName}
-                  {s.isFinalApproval && <span className="text-[10px] text-blue-600 ml-1">(FA)</span>}
-                </Td>
-                <Td>
-                  {s.decision === 'Approved' && (
-                    <span className="flex items-center gap-1 text-emerald-700 font-semibold">
-                      <CheckCircleIcon className="h-3.5 w-3.5" /> Approved
-                    </span>
-                  )}
-                  {s.decision === 'Rejected' && (
-                    <span className="flex items-center gap-1 text-red-700 font-semibold">
-                      <XCircleIcon className="h-3.5 w-3.5" /> Rejected
-                    </span>
-                  )}
-                  {s.decision === 'Pending' && (
-                    <span className="text-amber-600 italic">Pending</span>
-                  )}
-                </Td>
-                <Td>{s.decidedAt ? fmtDateShort(s.decidedAt) : '—'}</Td>
-                <Td className="italic text-gray-500">{s.comment ?? '—'}</Td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <hr className="border-gray-200 my-4" />
-
-        {/* ── Section F: SAP Vendor Code ── */}
-        <SectionHeader letter="F" title="SAP Vendor Code" />
-        {request.vendorCode ? (
+          {/* ── Section A: Vendor Particulars ── */}
+          <SectionHeader letter="A" title="Vendor Particulars" />
+          <FormRow no="1" label="Vendor / Company Name"   value={request.vendorName} />
           <div className="grid grid-cols-2 gap-4">
-            <FormRow no="18" label="Vendor Code (SAP)" value={request.vendorCode} mono />
-            <FormRow no="19" label="Date Assigned"     value={fmtDateFull(request.vendorCodeAssignedAt)} />
-            <FormRow no=""   label="Assigned By"       value="Pardeep Sharma (Final Approver)" />
+            <FormRow no="2" label="Material Group" value={request.materialGroup} />
+            <FormRow no="3" label="Reason"         value={request.reason} />
           </div>
-        ) : (
-          <p className="text-xs text-gray-400 italic mb-4">
-            Vendor Code will be assigned upon final approval.
-          </p>
-        )}
+          <div className="grid grid-cols-2 gap-4">
+            <FormRow no="4" label="GST Number" value={request.gstNumber} mono />
+            <FormRow no="5" label="PAN Card"   value={request.panCard}   mono />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <FormRow no="6" label="Proposed By"     value={request.proposedBy} />
+            <FormRow no="7" label="One-Time Vendor" value={request.isOneTimeVendor ? 'Yes' : 'No'} />
+          </div>
 
-        <hr className="border-gray-200 my-4" />
+          <hr className="border-gray-200 my-4" />
 
-        {/* ── Declaration ── */}
-        <div className="border border-gray-300 rounded p-3 mb-6">
-          <p className="text-[11px] text-gray-600 leading-relaxed font-sans">
-            <strong>Declaration:</strong> I/We hereby certify that the information provided above is true,
-            accurate and complete to the best of my/our knowledge. I/We understand that any misrepresentation
-            may result in the rejection of this registration. I/We agree to comply with the procurement
-            policies and terms of Andritz India Private Limited.
-          </p>
-        </div>
+          {/* ── Section B: Address ── */}
+          <SectionHeader letter="B" title="Address Details" />
+          <FormRow no="8" label="Street / Building / Plot" value={request.addressDetails} />
+          <div className="grid grid-cols-2 gap-4">
+            <FormRow no="9"  label="Postal Code" value={request.postalCode} />
+            <FormRow no="10" label="City"        value={request.city} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <FormRow no="11" label="Locality" value={request.locality} />
+            <FormRow no="12" label="State"    value={request.state} />
+          </div>
+          <FormRow no="13" label="Country" value={request.country || 'India'} />
 
-        {/* ── Signature blocks ── */}
-        <div className="grid grid-cols-2 gap-8 font-sans text-xs">
-          <SignatureBlock label="Buyer Signature" name={request.createdByName} />
-          <SignatureBlock label="Final Approver Signature" name="Pardeep Sharma" />
+          <hr className="border-gray-200 my-4" />
+
+          {/* ── Section C: Commercial Terms ── */}
+          <SectionHeader letter="C" title="Commercial Terms" />
+          <div className="grid grid-cols-2 gap-4">
+            <FormRow no="14" label="Currency"      value={request.currency     || 'INR'} />
+            <FormRow no="15" label="Payment Terms" value={request.paymentTerms} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <FormRow no="16" label="Incoterms"  value={request.incoterms} />
+            <FormRow no="17" label="Yearly PVO" value={request.yearlyPvo} />
+          </div>
+
+          <hr className="border-gray-200 my-4" />
+
+          {/* ── Section D: Contact ── */}
+          <SectionHeader letter="D" title="Contact Details" />
+          <div className="grid grid-cols-2 gap-4">
+            <FormRow no="18" label="Contact Person" value={request.contactPerson || request.contactInformation} />
+            <FormRow no="19" label="Telephone"      value={request.telephone} />
+          </div>
+
+          <hr className="border-gray-200 my-4" />
+
+          {/* ── Section E: Approval Record ── */}
+          <SectionHeader letter="E" title="Approval Record" />
+          <table className="w-full text-xs border-collapse mb-1 font-sans">
+            <thead>
+              <tr className="bg-gray-100">
+                <Th>Step</Th>
+                <Th>Approver</Th>
+                <Th>Decision</Th>
+                <Th>Date</Th>
+                <Th>Remarks</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map(s => (
+                <tr key={s.id} className="border-b border-gray-200">
+                  <Td>{s.isFinalApproval ? 'Final' : `Step ${s.stepOrder}`}</Td>
+                  <Td>
+                    {s.approverName}
+                    {s.isFinalApproval && <span className="text-[10px] text-blue-600 ml-1">(FA)</span>}
+                  </Td>
+                  <Td>
+                    {s.decision === 'Approved' && (
+                      <span className="flex items-center gap-1 text-emerald-700 font-semibold">
+                        <CheckCircleIcon className="h-3.5 w-3.5" /> Approved
+                      </span>
+                    )}
+                    {s.decision === 'Rejected' && (
+                      <span className="flex items-center gap-1 text-red-700 font-semibold">
+                        <XCircleIcon className="h-3.5 w-3.5" /> Rejected
+                      </span>
+                    )}
+                    {s.decision === 'Pending' && (
+                      <span className="text-amber-600 italic">Pending</span>
+                    )}
+                  </Td>
+                  <Td>{s.decidedAt ? fmtDateShort(s.decidedAt) : '—'}</Td>
+                  <Td className="italic text-gray-500">{s.comment ?? '—'}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <hr className="border-gray-200 my-4" />
+
+          {/* ── Section F: SAP Vendor Code ── */}
+          <SectionHeader letter="F" title="SAP Vendor Code" />
+          {request.vendorCode ? (
+            <div className="grid grid-cols-2 gap-4">
+              <FormRow no="20" label="Vendor Code (SAP)" value={request.vendorCode} mono />
+              <FormRow no="21" label="Date Assigned"     value={fmtDateFull(request.vendorCodeAssignedAt)} />
+              <FormRow no=""   label="Assigned By"       value="Pardeep Sharma (Final Approver)" />
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 italic mb-4">
+              Vendor Code will be assigned upon final approval.
+            </p>
+          )}
+
+          <hr className="border-gray-200 my-4" />
+
+          {/* ── Declaration ── */}
+          <div className="border border-gray-300 rounded p-3 mb-6">
+            <p className="text-[11px] text-gray-600 leading-relaxed font-sans">
+              <strong>Declaration:</strong> I/We hereby certify that the information provided above is true,
+              accurate and complete to the best of my/our knowledge. I/We understand that any misrepresentation
+              may result in the rejection of this registration. I/We agree to comply with the procurement
+              policies and terms of Andritz India Private Limited.
+            </p>
+          </div>
+
+          {/* ── Signature blocks ── */}
+          <div className="grid grid-cols-2 gap-8 font-sans text-xs">
+            <SignatureBlock label="Buyer Signature" name={request.createdByName} />
+            <SignatureBlock label="Final Approver Signature" name="Pardeep Sharma" />
+          </div>
         </div>
       </div>
     </div>
@@ -415,25 +488,6 @@ function PreviewTab({ request }) {
 }
 
 // ── Small sub-components ──────────────────────────────────────────────────────
-
-function Section({ title, children, accent = 'gray' }) {
-  const colors = { gray: 'text-gray-500', emerald: 'text-emerald-600' }
-  return (
-    <div>
-      <p className={`text-xs font-semibold uppercase tracking-wider mb-3 ${colors[accent]}`}>{title}</p>
-      <div className="space-y-3">{children}</div>
-    </div>
-  )
-}
-
-function Field({ label, value, mono = false }) {
-  return (
-    <div>
-      <dt className="text-xs text-gray-400">{label}</dt>
-      <dd className={`text-sm font-medium mt-0.5 break-words ${mono ? 'font-mono tracking-wider text-gray-700' : 'text-gray-800'}`}>{value}</dd>
-    </div>
-  )
-}
 
 function SectionHeader({ letter, title }) {
   return (

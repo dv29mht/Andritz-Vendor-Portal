@@ -70,7 +70,9 @@ export function useVendorWorkflow() {
       paymentTerms:   form.paymentTerms  || null,
       incoterms:      form.incoterms     || null,
       reason:         form.reason        || null,
-      yearlyPvo:      form.yearlyPvo     || null,
+      yearlyPvo:       form.yearlyPvo      || null,
+      isOneTimeVendor: form.isOneTimeVendor ?? false,
+      proposedBy:      form.proposedBy     || null,
       approverUserIds: approvers.map(a => a.id),
     })
     // Auto-submit immediately so the request enters the approval queue
@@ -101,7 +103,9 @@ export function useVendorWorkflow() {
       paymentTerms:   form.paymentTerms  || null,
       incoterms:      form.incoterms     || null,
       reason:         form.reason        || null,
-      yearlyPvo:      form.yearlyPvo     || null,
+      yearlyPvo:       form.yearlyPvo      || null,
+      isOneTimeVendor: form.isOneTimeVendor ?? false,
+      proposedBy:      form.proposedBy     || null,
     })
     await fetchAll()
   }

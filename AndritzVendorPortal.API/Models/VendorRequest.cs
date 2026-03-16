@@ -35,6 +35,8 @@ public class VendorRequest
     public string Telephone      { get; set; } = string.Empty;
     public string Reason         { get; set; } = string.Empty;
     public string YearlyPvo      { get; set; } = string.Empty;
+    public bool   IsOneTimeVendor { get; set; } = false;
+    public string ProposedBy     { get; set; } = string.Empty;
 
     // -- Workflow State --
     public VendorRequestStatus Status          { get; set; } = VendorRequestStatus.Draft;

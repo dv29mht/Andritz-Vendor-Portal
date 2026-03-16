@@ -153,8 +153,10 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
             Currency       = dto.Currency       ?? "INR",
             PaymentTerms   = dto.PaymentTerms   ?? string.Empty,
             Incoterms      = dto.Incoterms      ?? string.Empty,
-            Reason         = dto.Reason         ?? string.Empty,
-            YearlyPvo      = dto.YearlyPvo      ?? string.Empty,
+            Reason          = dto.Reason          ?? string.Empty,
+            YearlyPvo       = dto.YearlyPvo       ?? string.Empty,
+            IsOneTimeVendor = dto.IsOneTimeVendor  ?? false,
+            ProposedBy      = dto.ProposedBy       ?? string.Empty,
             CreatedByUserId = UserId(),
             CreatedByName   = creator?.FullName ?? string.Empty,
             Status          = VendorRequestStatus.Draft,
@@ -279,8 +281,10 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
         request.Currency      = dto.Currency      ?? "INR";
         request.PaymentTerms  = dto.PaymentTerms  ?? string.Empty;
         request.Incoterms     = dto.Incoterms     ?? string.Empty;
-        request.Reason        = dto.Reason        ?? string.Empty;
-        request.YearlyPvo     = dto.YearlyPvo     ?? string.Empty;
+        request.Reason          = dto.Reason          ?? string.Empty;
+        request.YearlyPvo       = dto.YearlyPvo       ?? string.Empty;
+        request.IsOneTimeVendor = dto.IsOneTimeVendor  ?? false;
+        request.ProposedBy      = dto.ProposedBy       ?? string.Empty;
 
         // Reset workflow state
         request.RevisionNo       = newRevNo;
@@ -495,6 +499,7 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
             r.AddressDetails, r.City, r.Locality,
             r.MaterialGroup, r.PostalCode, r.State, r.Country,
             r.Currency, r.PaymentTerms, r.Incoterms, r.Reason, r.YearlyPvo,
+            r.IsOneTimeVendor, r.ProposedBy,
             r.Status, r.RevisionNo, r.RejectionComment,
             r.VendorCode, r.VendorCodeAssignedAt, r.VendorCodeAssignedBy,
             r.CreatedByUserId, r.CreatedByName, r.CreatedAt, r.UpdatedAt,

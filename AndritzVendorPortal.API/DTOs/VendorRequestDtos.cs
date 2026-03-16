@@ -61,6 +61,8 @@ public record CreateVendorRequestDto(
                                string? Incoterms,
                                string? Reason,
                                string? YearlyPvo,
+                               bool?   IsOneTimeVendor,
+                               string? ProposedBy,
     [Required, MinLength(1)]   List<string> ApproverUserIds
 );
 
@@ -81,7 +83,9 @@ public record ResubmitRequestDto(
                                string? PaymentTerms,
                                string? Incoterms,
                                string? Reason,
-                               string? YearlyPvo
+                               string? YearlyPvo,
+                               bool?   IsOneTimeVendor,
+                               string? ProposedBy
 );
 
 public record ApproveRequestDto(string? Comment);
@@ -120,6 +124,8 @@ public record VendorRequestDetailDto(
     string                  Incoterms,
     string                  Reason,
     string                  YearlyPvo,
+    bool                    IsOneTimeVendor,
+    string                  ProposedBy,
     VendorRequestStatus     Status,
     int                     RevisionNo,
     string?                 RejectionComment,
