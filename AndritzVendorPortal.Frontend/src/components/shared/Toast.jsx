@@ -20,13 +20,15 @@ const VARIANTS = {
  * @param {() => void} onClose
  * @param {number} [duration=4500]
  */
-export default function Toast({ message, type = 'success', onClose, duration = 4500 }) {
+export default function Toast({ message, title, body, type = 'success', onClose, duration = 4500 }) {
   useEffect(() => {
     const t = setTimeout(onClose, duration)
     return () => clearTimeout(t)
   }, [onClose, duration])
 
   const v = VARIANTS[type] ?? VARIANTS.success
+  const heading = message?.title ?? title
+  const detail  = message?.body  ?? body
 
   return (
     <div className={`fixed bottom-6 right-6 z-50 flex items-start gap-3.5 rounded-2xl
@@ -35,9 +37,9 @@ export default function Toast({ message, type = 'success', onClose, duration = 4
     >
       {v.icon}
       <div className="flex-1 min-w-0 pt-0.5">
-        <p className="text-sm font-semibold text-gray-900 leading-snug">{message.title}</p>
-        {message.body && (
-          <p className="text-xs text-gray-500 mt-1 leading-relaxed">{message.body}</p>
+        <p className="text-sm font-semibold text-gray-900 leading-snug">{heading}</p>
+        {detail && (
+          <p className="text-xs text-gray-500 mt-1 leading-relaxed">{detail}</p>
         )}
       </div>
       <button
