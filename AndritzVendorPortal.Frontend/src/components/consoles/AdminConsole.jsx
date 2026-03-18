@@ -372,15 +372,16 @@ export default function AdminConsole({ workflow }) {
                       <EyeIcon className="h-3.5 w-3.5" />
                       View
                     </button>
-                    {req.status === 'Completed' && (
-                      <button
-                        className="btn-secondary !py-1 !px-2 !text-xs"
-                        onClick={() => setEditingRequest(req)}
-                      >
-                        <PencilSquareIcon className="h-3.5 w-3.5" />
-                        Edit
-                      </button>
-                    )}
+                    <button
+                      className={`btn-secondary !py-1 !px-2 !text-xs transition-all ${
+                        req.status !== 'Completed' ? 'opacity-30 cursor-not-allowed' : ''
+                      }`}
+                      onClick={() => req.status === 'Completed' && setEditingRequest(req)}
+                      title={req.status !== 'Completed' ? 'Only SAP-approved (Completed) forms can be edited' : 'Edit form'}
+                    >
+                      <PencilSquareIcon className="h-3.5 w-3.5" />
+                      Edit
+                    </button>
                     <button
                       className="btn-secondary !py-1 !px-2 !text-xs"
                       onClick={() => handleDownloadPdf(req)}
