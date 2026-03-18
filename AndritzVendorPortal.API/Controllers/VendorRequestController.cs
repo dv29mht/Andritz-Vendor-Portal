@@ -432,6 +432,9 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
 
         if (request is null) return NotFound();
 
+        if (request.Status != VendorRequestStatus.Completed)
+            return BadRequest("Only completed (SAP-approved) requests can be edited by Admin.");
+
         request.VendorName      = dto.VendorName;
         request.ContactPerson   = dto.ContactPerson;
         request.Telephone       = dto.Telephone      ?? string.Empty;
