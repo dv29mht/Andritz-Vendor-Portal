@@ -461,6 +461,30 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // PATCH /api/vendor-requests/{id}/classify
+    // Admin-only: toggle permanent ↔ one-time on a Completed request.
+    // ─────────────────────────────────────────────────────────────────────────
+    [HttpPatch("{id:int}/classify")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> Classify(int id, [FromBody] ClassifyVendorRequestDto dto)
+    {
+        var request = await db.VendorRequests
+            .Include(r => r.ApprovalSteps)
+            .Include(r => r.RevisionHistory)
+            .FirstOrDefaultAsync(r => r.Id == id);
+
+        if (request is null) return NotFound();
+        if (request.Status != VendorRequestStatus.Completed)
+            return BadRequest("Only completed requests can be reclassified.");
+
+        request.IsOneTimeVendor = dto.IsOneTimeVendor;
+        request.UpdatedAt       = DateTime.UtcNow;
+
+        await db.SaveChangesAsync();
+        return Ok(MapToDetail(request));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // Helpers
     // ─────────────────────────────────────────────────────────────────────────
 

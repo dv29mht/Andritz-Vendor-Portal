@@ -117,6 +117,8 @@ public record AdminEditVendorRequestDto(
                                string? ProposedBy
 );
 
+public record ClassifyVendorRequestDto(bool IsOneTimeVendor);
+
 public record ApproveRequestDto(string? Comment);
 
 public record RejectRequestDto([Required] string Comment);

@@ -3,8 +3,9 @@ import {
   UsersIcon, ClockIcon, CheckCircleIcon, XCircleIcon,
   CheckBadgeIcon, ArrowDownTrayIcon, MagnifyingGlassIcon, EyeIcon,
   TableCellsIcon, UserGroupIcon, ArrowPathIcon, TrophyIcon, NoSymbolIcon,
-  PencilSquareIcon, XMarkIcon,
+  PencilSquareIcon, XMarkIcon, BuildingOfficeIcon,
 } from '@heroicons/react/24/outline'
+import VendorDatabase from '../VendorDatabase'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
@@ -12,8 +13,9 @@ import UserManagement from '../UserManagement'
 import api from '../../services/api'
 
 const ADMIN_TABS = [
-  { id: 'requests', label: 'Requests',        icon: TableCellsIcon  },
-  { id: 'users',    label: 'User Management', icon: UserGroupIcon   },
+  { id: 'requests', label: 'Requests',        icon: TableCellsIcon      },
+  { id: 'vendors',  label: 'Vendor Database', icon: BuildingOfficeIcon  },
+  { id: 'users',    label: 'User Management', icon: UserGroupIcon       },
 ]
 
 const STATUS_FILTERS = ['All', 'Draft', 'PendingApproval', 'PendingFinalApproval', 'Rejected', 'Completed']
@@ -270,6 +272,15 @@ export default function AdminConsole({ workflow }) {
           </button>
         ))}
       </div>
+
+      {/* ── Vendor Database tab ─────────────────────────────────────────── */}
+      {activeTab === 'vendors' && (
+        <VendorDatabase
+          requests={requests}
+          isAdmin={true}
+          onReclassified={() => workflow.fetchAll()}
+        />
+      )}
 
       {/* ── User Management tab ─────────────────────────────────────────── */}
       {activeTab === 'users' && <UserManagement />}

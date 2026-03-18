@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon } from '@heroicons/react/24/outline'
 import { ExclamationTriangleIcon, CheckBadgeIcon } from '@heroicons/react/24/solid'
 import Modal from '../shared/Modal'
@@ -52,100 +52,82 @@ function Field({ label, required, error, span = 1, children }) {
   )
 }
 
-function ApproverMultiSelect({ approvers, selected, onChange, error }) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [search, setSearch]   = useState('')
-  const containerRef          = useRef(null)
+function ApprovalChainBuilder({ approvers, selected, onChange, error }) {
+  const available = approvers.filter(a => !selected.find(s => s.id === a.id))
 
-  useEffect(() => {
-    function onOutside(e) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setIsOpen(false)
-        setSearch('')
-      }
-    }
-    document.addEventListener('mousedown', onOutside)
-    return () => document.removeEventListener('mousedown', onOutside)
-  }, [])
-
-  const filtered = approvers.filter(a =>
-    a.name.toLowerCase().includes(search.toLowerCase()) ||
-    a.email.toLowerCase().includes(search.toLowerCase())
-  )
-
-  const toggle = (a) =>
-    onChange(
-      selected.find(s => s.id === a.id)
-        ? selected.filter(s => s.id !== a.id)
-        : [...selected, a]
-    )
-
-  const remove = (id, e) => { e.stopPropagation(); onChange(selected.filter(s => s.id !== id)) }
+  const add = (id) => {
+    const a = approvers.find(x => x.id === id)
+    if (a) onChange([...selected, a])
+  }
+  const remove = (id) => onChange(selected.filter(s => s.id !== id))
+  const move = (i, dir) => {
+    const arr = [...selected]
+    const j = i + dir
+    if (j < 0 || j >= arr.length) return
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    onChange(arr)
+  }
 
   return (
-    <div ref={containerRef} className="relative">
-      {/* Trigger / chip area */}
-      <div
-        className={`form-input cursor-pointer min-h-[2.5rem] flex flex-wrap gap-1.5 items-center${isOpen ? ' ring-2 ring-blue-500 border-blue-500' : ''}`}
-        onClick={() => setIsOpen(o => !o)}
+    <div className="space-y-3">
+      {/* Add approver */}
+      <select
+        className="form-input"
+        value=""
+        onChange={e => { if (e.target.value) add(e.target.value) }}
       >
-        {selected.length === 0 && !isOpen && (
-          <span className="text-gray-400 text-sm select-none">Select approvers…</span>
-        )}
-        {selected.map(s => (
-          <span key={s.id} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 ring-1 ring-blue-200 text-xs font-medium px-2 py-0.5 rounded-full">
-            {s.name}
-            <button type="button" className="text-blue-400 hover:text-blue-700 leading-none ml-0.5" onClick={e => remove(s.id, e)}>×</button>
-          </span>
+        <option value="">+ Add approver to chain…</option>
+        {available.map(a => (
+          <option key={a.id} value={a.id}>{a.name} ({a.email})</option>
         ))}
-        {isOpen && (
-          <input
-            autoFocus
-            className="flex-1 min-w-[140px] outline-none bg-transparent text-sm placeholder-gray-400"
-            placeholder="Search by name or email…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            onClick={e => e.stopPropagation()}
-          />
-        )}
-      </div>
+      </select>
 
-      {/* Dropdown panel */}
-      {isOpen && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg ring-1 ring-gray-200 max-h-52 overflow-y-auto">
-          {approvers.length === 0 && (
-            <p className="text-xs text-gray-400 px-3 py-2.5">Loading approvers…</p>
-          )}
-          {approvers.length > 0 && filtered.length === 0 && (
-            <p className="text-xs text-gray-400 px-3 py-2.5">No approvers match "{search}".</p>
-          )}
-          {filtered.map(a => {
-            const checked = !!selected.find(s => s.id === a.id)
-            return (
-              <button
-                key={a.id}
-                type="button"
-                className={`w-full text-left flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors${checked ? ' bg-blue-50' : ''}`}
-                onClick={() => toggle(a)}
-              >
-                <span className={`h-4 w-4 rounded border flex-shrink-0 flex items-center justify-center${checked ? ' bg-blue-600 border-blue-600' : ' border-gray-300'}`}>
-                  {checked && (
-                    <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 12 12">
-                      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
-                </span>
-                <span className="min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{a.name}</p>
-                  <p className="text-xs text-gray-400 truncate">{a.email}</p>
-                </span>
-              </button>
-            )
-          })}
+      {/* Chain preview */}
+      {(selected.length > 0 || true) && (
+        <div className="rounded-xl border border-gray-200 overflow-hidden">
+          <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Approval Chain Preview</p>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {selected.length === 0 && (
+              <div className="px-4 py-3 text-xs text-gray-400 italic">No approvers added yet — select from the dropdown above.</div>
+            )}
+            {selected.map((s, i) => (
+              <div key={s.id} className="flex items-center gap-3 px-4 py-2.5 bg-white">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">{i + 1}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800">{s.name}</p>
+                  <p className="text-xs text-gray-400">{s.email}</p>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button type="button" onClick={() => move(i, -1)} disabled={i === 0}
+                    className="p-1 rounded text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7"/></svg>
+                  </button>
+                  <button type="button" onClick={() => move(i, 1)} disabled={i === selected.length - 1}
+                    className="p-1 rounded text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+                  <button type="button" onClick={() => remove(s.id)}
+                    className="p-1 rounded text-gray-400 hover:text-red-500 transition-colors">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+            {/* Always-last: Pardeep Sharma */}
+            <div className="flex items-center gap-3 px-4 py-2.5 bg-rose-50">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-rose-100 text-rose-700 text-xs font-bold flex items-center justify-center">★</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-rose-800">Pardeep Sharma</p>
+                <p className="text-xs text-rose-400">pardeep.sharma@andritz.com · Final Approver</p>
+              </div>
+              <span className="text-xs text-rose-400 font-medium flex-shrink-0">Auto-added · cannot remove</span>
+            </div>
+          </div>
         </div>
       )}
-
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   )
 }
@@ -556,15 +538,12 @@ export default function BuyerConsole({ workflow, currentUser }) {
                 <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3 border-b border-gray-100 pb-1.5">
                   Approvers
                 </p>
-                <ApproverMultiSelect
+                <ApprovalChainBuilder
                   approvers={availableApprovers}
                   selected={selectedApprovers}
                   onChange={setSelectedApprovers}
                   error={errors.approvers}
                 />
-                <p className="text-xs text-gray-400 mt-2">
-                  Pardeep Sharma (Final Approver) is always added automatically as the last step.
-                </p>
               </div>
             )}
 

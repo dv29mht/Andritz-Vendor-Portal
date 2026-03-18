@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { CheckBadgeIcon, StarIcon } from '@heroicons/react/24/solid'
 import { XMarkIcon, EyeIcon, CheckIcon, ClockIcon, ArchiveBoxIcon,
-         UsersIcon, ArrowPathIcon, NoSymbolIcon, TrophyIcon } from '@heroicons/react/24/outline'
+         UsersIcon, ArrowPathIcon, NoSymbolIcon, TrophyIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'
+import VendorDatabase from '../VendorDatabase'
 import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
 import ApprovalTimeline from '../shared/ApprovalTimeline'
@@ -9,8 +10,9 @@ import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
 
 const TABS = [
-  { id: 'pending', label: 'Pending', icon: ClockIcon },
-  { id: 'history', label: 'History', icon: ArchiveBoxIcon },
+  { id: 'pending',   label: 'Pending',          icon: ClockIcon          },
+  { id: 'history',   label: 'History',           icon: ArchiveBoxIcon     },
+  { id: 'vendors',   label: 'Vendor Database',   icon: BuildingOfficeIcon },
 ]
 
 function buildStats(requests) {
@@ -97,16 +99,12 @@ export default function FinalApproverConsole({ workflow, currentUser }) {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      {/* Identity banner */}
-      <div className="mb-6 rounded-xl bg-gradient-to-r from-[#c8102e] to-rose-700 px-6 py-5 flex items-center gap-4 text-white shadow-lg">
-        <StarIcon className="h-10 w-10 text-white/80 flex-shrink-0" />
-        <div>
-          <p className="text-sm font-semibold text-white/70 uppercase tracking-wider">Final Approver Console</p>
-          <p className="text-xl font-bold">{currentUser.name}</p>
-          <p className="text-sm text-white/70">
-            You are the designated Final Approver. Only you can assign SAP Vendor Codes and complete vendor registrations.
-          </p>
-        </div>
+      {/* Header */}
+      <div className="mb-5">
+        <h1 className="text-xl font-bold text-gray-900">Final Approver Console</h1>
+        <p className="text-sm text-gray-500 mt-0.5">
+          {currentUser.name} — SAP Vendor Code assignment and final approvals
+        </p>
       </div>
 
       {/* Metric cards */}
@@ -137,7 +135,7 @@ export default function FinalApproverConsole({ workflow, currentUser }) {
             <span className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
               activeTab === id ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'
             }`}>
-              {id === 'pending' ? queue.length : history.length}
+              {id === 'pending' ? queue.length : id === 'history' ? history.length : workflow.requests.filter(r => r.status === 'Completed' && !r.isOneTimeVendor).length}
             </span>
           </button>
         ))}
@@ -271,6 +269,14 @@ export default function FinalApproverConsole({ workflow, currentUser }) {
             })}
           </div>
         </>
+      )}
+
+      {/* ── Vendor Database tab ─────────────────────────────────────────── */}
+      {activeTab === 'vendors' && (
+        <VendorDatabase
+          requests={workflow.requests}
+          isAdmin={false}
+        />
       )}
 
       {/* Audit / Detail view */}
