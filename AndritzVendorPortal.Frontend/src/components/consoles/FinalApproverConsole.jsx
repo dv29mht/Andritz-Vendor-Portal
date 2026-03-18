@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CheckBadgeIcon, StarIcon } from '@heroicons/react/24/solid'
-import { XMarkIcon, EyeIcon, CheckIcon, ClockIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, EyeIcon, CheckIcon, ClockIcon, ArchiveBoxIcon,
+         UsersIcon, ArrowPathIcon, NoSymbolIcon, TrophyIcon } from '@heroicons/react/24/outline'
 import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
 import ApprovalTimeline from '../shared/ApprovalTimeline'
@@ -12,9 +13,39 @@ const TABS = [
   { id: 'history', label: 'History', icon: ArchiveBoxIcon },
 ]
 
+function buildStats(requests) {
+  const total     = requests.length
+  const completed = requests.filter(r => r.status === 'Completed').length
+  const rejected  = requests.filter(r => r.status === 'Rejected').length
+  const reEdited  = requests.filter(r => r.revisionNo > 0).length
+  const pct = n => total === 0 ? '—' : `${Math.round((n / total) * 100)}%`
+  return {
+    total,
+    pending:       requests.filter(r => r.status === 'PendingApproval').length,
+    finalPending:  requests.filter(r => r.status === 'PendingFinalApproval').length,
+    rejected,
+    completed,
+    approvalRate:  pct(completed),
+    reEditRate:    pct(reEdited),
+    rejectionRate: pct(rejected),
+  }
+}
+
+const METRICS = [
+  { label: 'Total Assigned',   key: 'total',        icon: UsersIcon,       bg: 'bg-blue-50',    ic: 'text-blue-500',    text: 'text-blue-700'    },
+  { label: 'In Progress',      key: 'pending',       icon: ClockIcon,       bg: 'bg-amber-50',   ic: 'text-amber-500',   text: 'text-amber-700'   },
+  { label: 'Awaiting Me',      key: 'finalPending',  icon: CheckBadgeIcon,  bg: 'bg-indigo-50',  ic: 'text-indigo-500',  text: 'text-indigo-700'  },
+  { label: 'Completed',        key: 'completed',     icon: CheckIcon,       bg: 'bg-emerald-50', ic: 'text-emerald-500', text: 'text-emerald-700' },
+  { label: 'Rejected',         key: 'rejected',      icon: NoSymbolIcon,    bg: 'bg-red-50',     ic: 'text-red-500',     text: 'text-red-700'     },
+  { label: 'Approval Rate',    key: 'approvalRate',  icon: TrophyIcon,      bg: 'bg-cyan-50',    ic: 'text-cyan-500',    text: 'text-cyan-700'    },
+  { label: 'Re-edit Rate',     key: 'reEditRate',    icon: ArrowPathIcon,   bg: 'bg-orange-50',  ic: 'text-orange-500',  text: 'text-orange-700'  },
+  { label: 'Rejection Rate',   key: 'rejectionRate', icon: NoSymbolIcon,    bg: 'bg-rose-50',    ic: 'text-rose-500',    text: 'text-rose-700'    },
+]
+
 export default function FinalApproverConsole({ workflow, currentUser }) {
   const queue   = workflow.getPendingFor(currentUser.id)
   const history = workflow.getHistoryFor(currentUser.id)
+  const stats   = buildStats(workflow.requests)
 
   const [activeTab, setActiveTab]         = useState('pending')
   const [reviewing, setReviewing]         = useState(null)
@@ -76,6 +107,17 @@ export default function FinalApproverConsole({ workflow, currentUser }) {
             You are the designated Final Approver. Only you can assign SAP Vendor Codes and complete vendor registrations.
           </p>
         </div>
+      </div>
+
+      {/* Metric cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
+        {METRICS.map(({ label, key, icon: Icon, bg, ic, text }) => (
+          <div key={key} className={`card px-3 py-3.5 flex flex-col items-center gap-1.5 ${bg} text-center`}>
+            <Icon className={`h-5 w-5 ${ic} flex-shrink-0`} />
+            <p className="text-xl font-bold text-gray-900 leading-none">{stats[key]}</p>
+            <p className={`text-xs font-medium ${text} leading-tight`}>{label}</p>
+          </div>
+        ))}
       </div>
 
       {/* Tab bar */}

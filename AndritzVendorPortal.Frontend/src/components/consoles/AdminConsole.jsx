@@ -3,11 +3,13 @@ import {
   UsersIcon, ClockIcon, CheckCircleIcon, XCircleIcon,
   CheckBadgeIcon, ArrowDownTrayIcon, MagnifyingGlassIcon, EyeIcon,
   TableCellsIcon, UserGroupIcon, ArrowPathIcon, TrophyIcon, NoSymbolIcon,
+  PencilSquareIcon, XMarkIcon,
 } from '@heroicons/react/24/outline'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
 import UserManagement from '../UserManagement'
+import api from '../../services/api'
 
 const ADMIN_TABS = [
   { id: 'requests', label: 'Requests',        icon: TableCellsIcon  },
@@ -50,6 +52,169 @@ function buildStats(requests) {
   }
 }
 
+// ── Admin Edit Form Modal ─────────────────────────────────────────────────────
+function AdminEditModal({ request, onClose, onSaved }) {
+  const [form, setForm] = useState({
+    vendorName:     request.vendorName     ?? '',
+    contactPerson:  request.contactPerson  ?? '',
+    telephone:      request.telephone      ?? '',
+    gstNumber:      request.gstNumber      ?? '',
+    panCard:        request.panCard        ?? '',
+    addressDetails: request.addressDetails ?? '',
+    city:           request.city           ?? '',
+    locality:       request.locality       ?? '',
+    materialGroup:  request.materialGroup  ?? '',
+    postalCode:     request.postalCode     ?? '',
+    state:          request.state          ?? '',
+    country:        request.country        ?? 'India',
+    currency:       request.currency       ?? 'INR',
+    paymentTerms:   request.paymentTerms   ?? '',
+    incoterms:      request.incoterms      ?? '',
+    reason:         request.reason         ?? '',
+    yearlyPvo:      request.yearlyPvo      ?? '',
+    isOneTimeVendor:request.isOneTimeVendor ?? false,
+    proposedBy:     request.proposedBy     ?? '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [error,  setError]  = useState(null)
+
+  const set = (field, val) => setForm(f => ({ ...f, [field]: val }))
+
+  const handleSave = async () => {
+    if (!form.vendorName.trim() || !form.gstNumber.trim() || !form.panCard.trim() ||
+        !form.addressDetails.trim() || !form.city.trim() || !form.locality.trim() ||
+        !form.contactPerson.trim()) {
+      setError('Vendor Name, Contact Person, GST, PAN, Address, City and Locality are required.')
+      return
+    }
+    setSaving(true)
+    setError(null)
+    try {
+      const { data } = await api.put(`/vendor-requests/${request.id}`, {
+        vendorName:      form.vendorName,
+        contactPerson:   form.contactPerson,
+        telephone:       form.telephone      || null,
+        gstNumber:       form.gstNumber,
+        panCard:         form.panCard,
+        addressDetails:  form.addressDetails,
+        city:            form.city,
+        locality:        form.locality,
+        materialGroup:   form.materialGroup  || null,
+        postalCode:      form.postalCode     || null,
+        state:           form.state          || null,
+        country:         form.country        || null,
+        currency:        form.currency       || null,
+        paymentTerms:    form.paymentTerms   || null,
+        incoterms:       form.incoterms      || null,
+        reason:          form.reason         || null,
+        yearlyPvo:       form.yearlyPvo      || null,
+        isOneTimeVendor: form.isOneTimeVendor,
+        proposedBy:      form.proposedBy     || null,
+      })
+      onSaved(data)
+      onClose()
+    } catch (err) {
+      const detail = err.response?.data
+      setError(Array.isArray(detail) ? detail.join(' ') : typeof detail === 'string' ? detail : 'Save failed.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const fi = (label, field, opts = {}) => (
+    <div key={field}>
+      <label className="form-label">{label}</label>
+      <input
+        className="form-input"
+        value={form[field]}
+        onChange={e => set(field, e.target.value)}
+        {...opts}
+      />
+    </div>
+  )
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+          <div>
+            <h2 className="font-semibold text-gray-900">Admin Edit — {request.vendorName}</h2>
+            <p className="text-xs text-gray-400 mt-0.5">#{request.id} · All fields editable regardless of status</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><XMarkIcon className="h-5 w-5" /></button>
+        </div>
+
+        <div className="px-6 py-5 space-y-5">
+          {error && (
+            <div className="rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
+          )}
+
+          {/* Vendor Info */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Vendor Information</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {fi('Supplier Name *', 'vendorName')}
+              {fi('Contact Person *', 'contactPerson')}
+              {fi('Telephone', 'telephone')}
+              {fi('Material Group', 'materialGroup')}
+              {fi('Reason for Registration', 'reason')}
+              <div>
+                <label className="form-label">Proposed By</label>
+                <textarea className="form-input resize-none" rows={2} value={form.proposedBy} onChange={e => set('proposedBy', e.target.value)} />
+              </div>
+              <div className="sm:col-span-2 flex items-center gap-2">
+                <input type="checkbox" id="adm-otv" checked={form.isOneTimeVendor} onChange={e => set('isOneTimeVendor', e.target.checked)} className="rounded border-gray-300" />
+                <label htmlFor="adm-otv" className="text-sm text-gray-700">One-Time Vendor</label>
+              </div>
+            </div>
+          </div>
+
+          {/* Compliance */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Compliance</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {fi('GST Number *', 'gstNumber')}
+              {fi('PAN Card *', 'panCard')}
+              {fi('Yearly PVO', 'yearlyPvo')}
+            </div>
+          </div>
+
+          {/* Address */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Address</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">{fi('Street / Building / Plot *', 'addressDetails')}</div>
+              {fi('City *', 'city')}
+              {fi('Locality *', 'locality')}
+              {fi('State', 'state')}
+              {fi('Postal Code', 'postalCode')}
+              {fi('Country', 'country')}
+            </div>
+          </div>
+
+          {/* Commercial */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Commercial</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {fi('Currency', 'currency')}
+              {fi('Payment Terms', 'paymentTerms')}
+              {fi('Incoterms', 'incoterms')}
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0 bg-white">
+          <button className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn-primary" disabled={saving} onClick={handleSave}>
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminConsole({ workflow }) {
   const { requests } = workflow
   const stats = buildStats(requests)
@@ -59,7 +224,13 @@ export default function AdminConsole({ workflow }) {
   const [search, setSearch]                 = useState('')
   const [viewingRequest, setViewingRequest] = useState(null)
   const [previewRequest, setPreviewRequest] = useState(null)
+  const [editingRequest, setEditingRequest] = useState(null)
   const [toast, setToast]                   = useState(null)
+
+  const handleAdminSaved = (updated) => {
+    workflow.fetchAll?.()
+    setToast({ type: 'success', title: 'Request updated', body: `${updated.vendorName} has been updated.` })
+  }
 
   const visible = requests.filter(r => {
     const matchStatus = filterStatus === 'All' || r.status === filterStatus
@@ -203,6 +374,13 @@ export default function AdminConsole({ workflow }) {
                     </button>
                     <button
                       className="btn-secondary !py-1 !px-2 !text-xs"
+                      onClick={() => setEditingRequest(req)}
+                    >
+                      <PencilSquareIcon className="h-3.5 w-3.5" />
+                      Edit
+                    </button>
+                    <button
+                      className="btn-secondary !py-1 !px-2 !text-xs"
                       onClick={() => handleDownloadPdf(req)}
                     >
                       <ArrowDownTrayIcon className="h-3.5 w-3.5" />
@@ -233,6 +411,16 @@ export default function AdminConsole({ workflow }) {
           onClose={() => setPreviewRequest(null)}
         />
       )}
+
+      {editingRequest && (
+        <AdminEditModal
+          request={workflow.requests.find(r => r.id === editingRequest.id) ?? editingRequest}
+          onClose={() => setEditingRequest(null)}
+          onSaved={handleAdminSaved}
+        />
+      )}
+
+      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
 
       </>)}
     </div>

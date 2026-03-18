@@ -95,6 +95,28 @@ public record ResubmitRequestDto(
                                string? ProposedBy
 );
 
+public record AdminEditVendorRequestDto(
+    [Required, MaxLength(200)] string  VendorName,
+    [Required]                 string  ContactPerson,
+                               string? Telephone,
+    [Required]                 string  GstNumber,
+    [Required]                 string  PanCard,
+    [Required]                 string  AddressDetails,
+    [Required]                 string  City,
+    [Required]                 string  Locality,
+                               string? MaterialGroup,
+                               string? PostalCode,
+                               string? State,
+                               string? Country,
+                               string? Currency,
+                               string? PaymentTerms,
+                               string? Incoterms,
+                               string? Reason,
+                               string? YearlyPvo,
+                               bool?   IsOneTimeVendor,
+                               string? ProposedBy
+);
+
 public record ApproveRequestDto(string? Comment);
 
 public record RejectRequestDto([Required] string Comment);

@@ -132,6 +132,7 @@ export function useVendorWorkflow() {
   return {
     requests,
     loading,
+    fetchAll,
     fetchDetail,
     getPendingFor,
     getHistoryFor,

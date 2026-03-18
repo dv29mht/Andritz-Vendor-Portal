@@ -418,6 +418,46 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // PUT /api/vendor-requests/{id}
+    // Admin-only: edit any field on any request regardless of status.
+    // ─────────────────────────────────────────────────────────────────────────
+    [HttpPut("{id:int}")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> AdminEdit(int id, [FromBody] AdminEditVendorRequestDto dto)
+    {
+        var request = await db.VendorRequests
+            .Include(r => r.ApprovalSteps)
+            .Include(r => r.RevisionHistory)
+            .FirstOrDefaultAsync(r => r.Id == id);
+
+        if (request is null) return NotFound();
+
+        request.VendorName      = dto.VendorName;
+        request.ContactPerson   = dto.ContactPerson;
+        request.Telephone       = dto.Telephone      ?? string.Empty;
+        request.GstNumber       = dto.GstNumber;
+        request.PanCard         = dto.PanCard;
+        request.AddressDetails  = dto.AddressDetails;
+        request.City            = dto.City;
+        request.Locality        = dto.Locality;
+        request.MaterialGroup   = dto.MaterialGroup  ?? string.Empty;
+        request.PostalCode      = dto.PostalCode     ?? string.Empty;
+        request.State           = dto.State          ?? string.Empty;
+        request.Country         = dto.Country        ?? "India";
+        request.Currency        = dto.Currency       ?? "INR";
+        request.PaymentTerms    = dto.PaymentTerms   ?? string.Empty;
+        request.Incoterms       = dto.Incoterms      ?? string.Empty;
+        request.Reason          = dto.Reason         ?? string.Empty;
+        request.YearlyPvo       = dto.YearlyPvo      ?? string.Empty;
+        request.IsOneTimeVendor = dto.IsOneTimeVendor ?? request.IsOneTimeVendor;
+        request.ProposedBy      = dto.ProposedBy     ?? string.Empty;
+        request.UpdatedAt       = DateTime.UtcNow;
+
+        await db.SaveChangesAsync();
+        return Ok(MapToDetail(request));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // Helpers
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -436,10 +476,18 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
     private ApprovalStep? GetPendingStepForCurrentUser(VendorRequest request)
     {
         var uid = UserId();
-        return request.ApprovalSteps
+        var myStep = request.ApprovalSteps
             .Where(s => s.ApproverUserId == uid && s.Decision == ApprovalDecision.Pending)
             .OrderBy(s => s.StepOrder)
             .FirstOrDefault();
+
+        if (myStep is null) return null;
+
+        // Sequential chain: block if any earlier step is still pending
+        bool blocked = request.ApprovalSteps
+            .Any(s => s.StepOrder < myStep.StepOrder && s.Decision == ApprovalDecision.Pending);
+
+        return blocked ? null : myStep;
     }
 
     private static void AdvanceWorkflow(VendorRequest request)
@@ -459,8 +507,8 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
     {
         var sortedSteps = r.ApprovalSteps.OrderBy(s => s.StepOrder).ToList();
 
-        // Parallel model: expose all users who still have a pending step relevant to the current status.
-        // PendingApproval  → all non-final steps that are still Pending
+        // Sequential chain: only the NEXT approver (lowest StepOrder) is active at a time.
+        // PendingApproval  → the single next non-final step that is still Pending
         // PendingFinalApproval → the final step that is still Pending
         // Any other status → empty (nothing actionable)
         var pendingApproverUserIds = r.Status switch
@@ -468,6 +516,8 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
             VendorRequestStatus.PendingApproval =>
                 sortedSteps
                     .Where(s => !s.IsFinalApproval && s.Decision == ApprovalDecision.Pending)
+                    .OrderBy(s => s.StepOrder)
+                    .Take(1)   // Sequential: only the next approver in the chain
                     .Select(s => s.ApproverUserId)
                     .ToList(),
             VendorRequestStatus.PendingFinalApproval =>
