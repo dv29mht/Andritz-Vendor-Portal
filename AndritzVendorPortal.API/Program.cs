@@ -149,7 +149,23 @@ app.Use(async (ctx, next) =>
         ctx.Response.StatusCode = 204;
         return;
     }
-    await next();
+
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        // Without this catch, Kestrel resets the TCP connection on unhandled exceptions,
+        // which the browser misreports as a CORS error. Return a proper 500 instead.
+        if (!ctx.Response.HasStarted)
+        {
+            ctx.Response.StatusCode  = 500;
+            ctx.Response.ContentType = "application/json";
+            await ctx.Response.WriteAsync(
+                $"{{\"error\":\"Internal server error: {ex.Message.Replace("\"", "'")}\"}}");
+        }
+    }
 });
 
 app.UseRouting();
@@ -159,41 +175,48 @@ app.MapControllers();
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 
 // ── 6. ENSURE DB SCHEMA EXISTS ───────────────────────────────────────────────
-try
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
-
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    context.Database.EnsureCreated();
 
-    // Split into individual statements — some PostgreSQL configs reject multi-statement batches
-    context.Database.ExecuteSqlRaw(
-        """ALTER TABLE "VendorRequests" ADD COLUMN IF NOT EXISTS "IsOneTimeVendor" boolean NOT NULL DEFAULT false""");
-    context.Database.ExecuteSqlRaw(
-        """ALTER TABLE "VendorRequests" ADD COLUMN IF NOT EXISTS "ProposedBy" text NOT NULL DEFAULT ''""");
+    // Step 1: ensure base schema
+    try { context.Database.EnsureCreated(); }
+    catch (Exception ex) { Console.Error.WriteLine($"[STARTUP] EnsureCreated failed: {ex.Message}"); }
 
-    // Ensure all 4 roles exist
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    foreach (var role in new[] { "Buyer", "Approver", "FinalApprover", "Admin" })
+    // Step 2: add new columns — each statement isolated so one failure doesn't block the other
+    foreach (var sql in new[]
     {
-        if (!roleManager.RoleExistsAsync(role).GetAwaiter().GetResult())
-            roleManager.CreateAsync(new IdentityRole(role)).GetAwaiter().GetResult();
+        """ALTER TABLE "VendorRequests" ADD COLUMN IF NOT EXISTS "IsOneTimeVendor" boolean NOT NULL DEFAULT false""",
+        """ALTER TABLE "VendorRequests" ADD COLUMN IF NOT EXISTS "ProposedBy" text NOT NULL DEFAULT ''""",
+    })
+    {
+        try { context.Database.ExecuteSqlRaw(sql); }
+        catch (Exception ex) { Console.Error.WriteLine($"[STARTUP] Column migration failed ({sql[..40]}…): {ex.Message}"); }
     }
 
-    // Reset every user's password to Dahlia@1234 on each startup
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    var standardPassword = "Dahlia@1234";
-    var allUsers = userManager.Users.ToList();
-    foreach (var u in allUsers)
+    // Step 3: ensure roles
+    try
     {
-        var token = userManager.GeneratePasswordResetTokenAsync(u).GetAwaiter().GetResult();
-        userManager.ResetPasswordAsync(u, token, standardPassword).GetAwaiter().GetResult();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        foreach (var role in new[] { "Buyer", "Approver", "FinalApprover", "Admin" })
+        {
+            if (!roleManager.RoleExistsAsync(role).GetAwaiter().GetResult())
+                roleManager.CreateAsync(new IdentityRole(role)).GetAwaiter().GetResult();
+        }
     }
-}
-catch (Exception ex)
-{
-    // Log but don't crash — the app should still start even if the migration step fails
-    Console.Error.WriteLine($"[STARTUP] DB initialisation warning: {ex.Message}");
+    catch (Exception ex) { Console.Error.WriteLine($"[STARTUP] Role seeding failed: {ex.Message}"); }
+
+    // Step 4: reset all user passwords to Dahlia@1234
+    try
+    {
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        foreach (var u in userManager.Users.ToList())
+        {
+            var token = userManager.GeneratePasswordResetTokenAsync(u).GetAwaiter().GetResult();
+            userManager.ResetPasswordAsync(u, token, "Dahlia@1234").GetAwaiter().GetResult();
+        }
+    }
+    catch (Exception ex) { Console.Error.WriteLine($"[STARTUP] Password reset failed: {ex.Message}"); }
 }
 
 app.Run();
