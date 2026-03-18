@@ -159,20 +159,20 @@ app.MapControllers();
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 
 // ── 6. ENSURE DB SCHEMA EXISTS ───────────────────────────────────────────────
-using (var scope = app.Services.CreateScope())
+try
 {
+    using var scope = app.Services.CreateScope();
+
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     context.Database.EnsureCreated();
 
-    // Add new columns if they don't exist yet (safe to run on every startup)
-    context.Database.ExecuteSqlRaw("""
-        ALTER TABLE "VendorRequests"
-            ADD COLUMN IF NOT EXISTS "IsOneTimeVendor" boolean NOT NULL DEFAULT false;
-        ALTER TABLE "VendorRequests"
-            ADD COLUMN IF NOT EXISTS "ProposedBy" text NOT NULL DEFAULT '';
-        """);
+    // Split into individual statements — some PostgreSQL configs reject multi-statement batches
+    context.Database.ExecuteSqlRaw(
+        """ALTER TABLE "VendorRequests" ADD COLUMN IF NOT EXISTS "IsOneTimeVendor" boolean NOT NULL DEFAULT false""");
+    context.Database.ExecuteSqlRaw(
+        """ALTER TABLE "VendorRequests" ADD COLUMN IF NOT EXISTS "ProposedBy" text NOT NULL DEFAULT ''""");
 
-    // Ensure all 4 roles exist (required for Admin to create users via the UI)
+    // Ensure all 4 roles exist
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     foreach (var role in new[] { "Buyer", "Approver", "FinalApprover", "Admin" })
     {
@@ -180,9 +180,7 @@ using (var scope = app.Services.CreateScope())
             roleManager.CreateAsync(new IdentityRole(role)).GetAwaiter().GetResult();
     }
 
-    // Reset every user's password to the standard portal password on each startup.
-    // This ensures all accounts (including Admin-created ones) always have a known credential
-    // on Render's free tier, which restarts regularly and doesn't preserve in-memory state.
+    // Reset every user's password to Dahlia@1234 on each startup
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var standardPassword = "Dahlia@1234";
     var allUsers = userManager.Users.ToList();
@@ -191,6 +189,11 @@ using (var scope = app.Services.CreateScope())
         var token = userManager.GeneratePasswordResetTokenAsync(u).GetAwaiter().GetResult();
         userManager.ResetPasswordAsync(u, token, standardPassword).GetAwaiter().GetResult();
     }
+}
+catch (Exception ex)
+{
+    // Log but don't crash — the app should still start even if the migration step fails
+    Console.Error.WriteLine($"[STARTUP] DB initialisation warning: {ex.Message}");
 }
 
 app.Run();
