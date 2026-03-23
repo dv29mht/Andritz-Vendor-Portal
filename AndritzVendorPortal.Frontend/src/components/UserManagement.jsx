@@ -63,10 +63,11 @@ const EMPTY_FORM = { fullName: '', email: '', password: '', role: 'Buyer', desig
 function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
   const [mode, setMode]           = useState('view') // 'view' | 'edit' | 'delete'
   const [form, setForm]           = useState({
-    fullName:    user.fullName,
-    designation: user.designation ?? '',
-    role:        user.roles[0] ?? 'Buyer',
-    newPassword: '',
+    fullName:        user.fullName,
+    designation:     user.designation ?? '',
+    role:            user.roles[0] ?? 'Buyer',
+    newPassword:     '',
+    confirmPassword: '',
   })
   const [errors, setErrors]  = useState([])
   const [saving, setSaving]  = useState(false)
@@ -81,6 +82,7 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
     const errs = []
     if (!form.fullName.trim()) errs.push('Full name is required.')
     if (form.newPassword && form.newPassword.length < 8) errs.push('New password must be at least 8 characters.')
+    if (form.newPassword && form.newPassword !== form.confirmPassword) errs.push('Passwords do not match.')
     if (errs.length) { setErrors(errs); return }
 
     setSaving(true)
@@ -257,6 +259,17 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
                   placeholder="Min 8 characters"
                   value={form.newPassword}
                   onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="form-label">Confirm New Password</label>
+                <input
+                  type="password"
+                  className="form-input"
+                  placeholder="Repeat new password"
+                  value={form.confirmPassword}
+                  onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
+                  disabled={!form.newPassword}
                 />
               </div>
             </div>
