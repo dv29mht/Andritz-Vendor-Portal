@@ -14,6 +14,8 @@ import Toast from '../shared/Toast'
 import UserManagement from '../UserManagement'
 import api from '../../services/api'
 
+const getInitials = (name = '') => name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase()
+
 const ADMIN_TABS = [
   { id: 'requests', label: 'Requests',        icon: TableCellsIcon      },
   { id: 'vendors',  label: 'Vendor Database', icon: BuildingOfficeIcon  },
@@ -257,17 +259,32 @@ export default function AdminConsole({ workflow, currentUser }) {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-start justify-between mb-5">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage vendor requests and user accounts</p>
+      <div className="rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 px-6 py-5 mb-6 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-white font-bold text-base flex-shrink-0">
+              {getInitials(currentUser?.name)}
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-white">Admin Dashboard</h1>
+              <p className="text-sm text-slate-300">{currentUser?.name} · Manage Requests &amp; Users</p>
+            </div>
+          </div>
+          <NotificationBell
+            notifications={notifications}
+            unreadCount={unreadCount}
+            onMarkAllRead={markAllRead}
+            label="Activity Log"
+            variant="light"
+          />
         </div>
-        <NotificationBell
-          notifications={notifications}
-          unreadCount={unreadCount}
-          onMarkAllRead={markAllRead}
-          label="Activity Log"
-        />
+        <div className="mt-4 pt-4 border-t border-white/20 flex items-center gap-5 text-sm text-slate-300">
+          <span><span className="font-semibold text-white">{stats.total}</span> requests</span>
+          <span>·</span>
+          <span><span className="font-semibold text-white">{stats.completed}</span> completed</span>
+          <span>·</span>
+          <span><span className="font-semibold text-white">{stats.pending + stats.final}</span> in progress</span>
+        </div>
       </div>
 
       {/* Top-level tab bar */}
@@ -278,7 +295,7 @@ export default function AdminConsole({ workflow, currentUser }) {
             onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
               activeTab === id
-                ? 'border-blue-600 text-blue-700'
+                ? 'border-slate-700 text-slate-800'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -310,7 +327,7 @@ export default function AdminConsole({ workflow, currentUser }) {
             key={key}
             onClick={() => !noFilter && setFilterStatus(key === 'total' ? 'All' : (STAT_KEY_TO_FILTER[key] ?? 'All'))}
             className={`card px-3 py-3.5 flex flex-col items-center gap-1.5 ${bg} text-center w-full
-                        ${noFilter ? 'cursor-default' : 'hover:ring-2 hover:ring-[#0062AC]'} transition-all`}
+                        ${noFilter ? 'cursor-default' : 'hover:ring-2 hover:ring-slate-600'} transition-all`}
           >
             <Icon className={`h-6 w-6 ${ic} flex-shrink-0`} />
             <p className="text-xl font-bold text-gray-900 leading-none">{stats[key]}</p>
@@ -338,7 +355,7 @@ export default function AdminConsole({ workflow, currentUser }) {
               onClick={() => setFilterStatus(s)}
               className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
                 filterStatus === s
-                  ? 'bg-blue-700 text-white ring-blue-700'
+                  ? 'bg-slate-700 text-white ring-slate-700'
                   : 'bg-white text-gray-600 ring-gray-200 hover:bg-gray-50'
               }`}
             >

@@ -10,6 +10,8 @@ import { useNotifications } from '../../hooks/useNotifications'
 import { CITIES } from '../../data/mockData'
 import api from '../../services/api'
 
+const getInitials = (name = '') => name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase()
+
 const EMPTY_FORM = {
   vendorName: '', materialGroup: '', reason: '',
   contactPerson: '', telephone: '',
@@ -329,22 +331,42 @@ export default function BuyerConsole({ workflow, currentUser }) {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">My Vendor Requests</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{myRequests.length} request{myRequests.length !== 1 ? 's' : ''}</p>
+      <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 px-6 py-5 mb-6 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-white font-bold text-base flex-shrink-0">
+              {getInitials(currentUser.name)}
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-white">My Vendor Requests</h1>
+              <p className="text-sm text-blue-100">{currentUser.name} · Buyer Portal</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <NotificationBell
+              notifications={notifications}
+              unreadCount={unreadCount}
+              onMarkAllRead={markAllRead}
+              label="My Notifications"
+              variant="light"
+            />
+            <button
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white/20 hover:bg-white/30 px-3.5 py-2 text-sm font-semibold text-white transition-colors"
+              onClick={openCreate}
+            >
+              <PlusIcon className="h-4 w-4" />
+              New Request
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <NotificationBell
-            notifications={notifications}
-            unreadCount={unreadCount}
-            onMarkAllRead={markAllRead}
-            label="My Notifications"
-          />
-          <button className="btn-primary" onClick={openCreate}>
-            <PlusIcon className="h-4 w-4" />
-            New Request
-          </button>
+        <div className="mt-4 pt-4 border-t border-white/20 flex items-center gap-5 text-sm text-blue-100">
+          <span><span className="font-semibold text-white">{activeReqs.length}</span> active</span>
+          <span>·</span>
+          <span className={rejectedReqs.length > 0 ? 'text-red-200' : ''}>
+            <span className={`font-semibold ${rejectedReqs.length > 0 ? 'text-red-200' : 'text-white'}`}>{rejectedReqs.length}</span> awaiting revision
+          </span>
+          <span>·</span>
+          <span><span className="font-semibold text-white">{myRequests.length}</span> total</span>
         </div>
       </div>
 

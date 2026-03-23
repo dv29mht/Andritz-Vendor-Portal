@@ -11,6 +11,8 @@ import Toast from '../shared/Toast'
 import NotificationBell from '../shared/NotificationBell'
 import { useNotifications } from '../../hooks/useNotifications'
 
+const getInitials = (name = '') => name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase()
+
 function useViewedRequests(userId) {
   const key = `viewed_reqs_${userId}`
   const load = () => {
@@ -115,10 +117,10 @@ export default function FinalApproverConsole({ workflow, currentUser }) {
     }
   }
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!rejectComment.trim()) { setRejectError('A rejection reason is required.'); return }
     const name = reviewing.vendorName
-    workflow.reject(reviewing.id, rejectComment)
+    await workflow.reject(reviewing.id, rejectComment)
     setReviewing(null)
     setToast({
       type: 'error',
@@ -133,19 +135,32 @@ export default function FinalApproverConsole({ workflow, currentUser }) {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-start justify-between mb-5">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Final Approver Console</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {currentUser.name} — SAP Vendor Code assignment and final approvals
-          </p>
+      <div className="rounded-2xl bg-gradient-to-br from-rose-700 to-red-900 px-6 py-5 mb-6 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-white font-bold text-base flex-shrink-0">
+              {getInitials(currentUser.name)}
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-white">Final Approver Console</h1>
+              <p className="text-sm text-rose-100">{currentUser.name} · SAP Vendor Code Assignment</p>
+            </div>
+          </div>
+          <NotificationBell
+            notifications={notifications}
+            unreadCount={unreadCount}
+            onMarkAllRead={markAllRead}
+            label="Notifications"
+            variant="light"
+          />
         </div>
-        <NotificationBell
-          notifications={notifications}
-          unreadCount={unreadCount}
-          onMarkAllRead={markAllRead}
-          label="Notifications"
-        />
+        <div className="mt-4 pt-4 border-t border-white/20 flex items-center gap-5 text-sm text-rose-100">
+          <span><span className="font-semibold text-white">{queue.length}</span> awaiting final review</span>
+          <span>·</span>
+          <span><span className="font-semibold text-white">{stats.completed}</span> completed</span>
+          <span>·</span>
+          <span><span className="font-semibold text-white">{stats.total}</span> total</span>
+        </div>
       </div>
 
       {/* Metric cards */}

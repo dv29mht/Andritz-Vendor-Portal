@@ -19,9 +19,10 @@ const DOT = {
   info:    'bg-blue-400',
 }
 
-export default function NotificationBell({ notifications, unreadCount, onMarkAllRead, label = 'Notifications' }) {
+export default function NotificationBell({ notifications, unreadCount, onMarkAllRead, label = 'Notifications', variant = 'dark' }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
+  const isLight = variant === 'light'
 
   // Close on outside click
   useEffect(() => {
@@ -44,11 +45,15 @@ export default function NotificationBell({ notifications, unreadCount, onMarkAll
       {/* Bell button */}
       <button
         onClick={handleToggle}
-        className="relative p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+        className={`relative p-2 rounded-lg transition-colors ${
+          isLight
+            ? 'text-white/80 hover:text-white hover:bg-white/15'
+            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+        }`}
         title={label}
       >
         {unreadCount > 0
-          ? <BellAlertIcon className="h-5 w-5 text-blue-600" />
+          ? <BellAlertIcon className={`h-5 w-5 ${isLight ? 'text-white' : 'text-blue-600'}`} />
           : <BellIcon className="h-5 w-5" />
         }
         {unreadCount > 0 && (

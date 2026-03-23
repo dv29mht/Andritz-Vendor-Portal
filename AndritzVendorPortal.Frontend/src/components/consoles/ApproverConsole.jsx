@@ -9,6 +9,8 @@ import Toast from '../shared/Toast'
 import NotificationBell from '../shared/NotificationBell'
 import { useNotifications } from '../../hooks/useNotifications'
 
+const getInitials = (name = '') => name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase()
+
 // Tracks which pending request IDs the approver has already opened.
 // "New" badge disappears once a request has been viewed.
 function useViewedRequests(userId) {
@@ -91,10 +93,10 @@ export default function ApproverConsole({ workflow, currentUser }) {
     })
   }
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!rejectComment.trim()) { setRejectError('A comment is required when rejecting.'); return }
     const name = reviewing.vendorName
-    workflow.reject(reviewing.id, rejectComment)
+    await workflow.reject(reviewing.id, rejectComment)
     setReviewing(null)
     setToast({
       type: 'error',
@@ -109,19 +111,32 @@ export default function ApproverConsole({ workflow, currentUser }) {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Approver Console</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {pending.length} pending · {history.length} approved · {waitingRevision.length} waiting revision
-          </p>
+      <div className="rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 px-6 py-5 mb-6 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-white font-bold text-base flex-shrink-0">
+              {getInitials(currentUser.name)}
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-white">Approver Console</h1>
+              <p className="text-sm text-purple-100">{currentUser.name} · Review &amp; Approve Requests</p>
+            </div>
+          </div>
+          <NotificationBell
+            notifications={notifications}
+            unreadCount={unreadCount}
+            onMarkAllRead={markAllRead}
+            label="Notifications"
+            variant="light"
+          />
         </div>
-        <NotificationBell
-          notifications={notifications}
-          unreadCount={unreadCount}
-          onMarkAllRead={markAllRead}
-          label="Notifications"
-        />
+        <div className="mt-4 pt-4 border-t border-white/20 flex items-center gap-5 text-sm text-purple-100">
+          <span><span className="font-semibold text-white">{pending.length}</span> pending</span>
+          <span>·</span>
+          <span><span className="font-semibold text-white">{waitingRevision.length}</span> awaiting revision</span>
+          <span>·</span>
+          <span><span className="font-semibold text-white">{history.length}</span> approved</span>
+        </div>
       </div>
 
       {/* Tab bar */}
@@ -134,14 +149,14 @@ export default function ApproverConsole({ workflow, currentUser }) {
               onClick={() => setActiveTab(id)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
                 activeTab === id
-                  ? 'border-blue-600 text-blue-700'
+                  ? 'border-violet-600 text-violet-700'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               <Icon className="h-4 w-4" />
               {label}
               <span className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
-                activeTab === id ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
+                activeTab === id ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500'
               }`}>
                 {count}
               </span>
@@ -172,7 +187,7 @@ export default function ApproverConsole({ workflow, currentUser }) {
                         </span>
                       )}
                       {isNew(req.id) && (
-                        <span className="text-xs bg-blue-500 text-white font-bold px-2 py-0.5 rounded-full">
+                        <span className="text-xs bg-violet-500 text-white font-bold px-2 py-0.5 rounded-full">
                           NEW
                         </span>
                       )}
@@ -191,7 +206,10 @@ export default function ApproverConsole({ workflow, currentUser }) {
                       <EyeIcon className="h-4 w-4" />
                       View
                     </button>
-                    <button className="btn-primary" onClick={() => openReview(req)}>
+                    <button
+                      className="inline-flex items-center gap-1.5 rounded-md bg-violet-600 hover:bg-violet-700 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+                      onClick={() => openReview(req)}
+                    >
                       Review
                     </button>
                   </div>
@@ -342,7 +360,10 @@ export default function ApproverConsole({ workflow, currentUser }) {
                   <XMarkIcon className="h-4 w-4" />
                   Reject
                 </button>
-                <button className="btn-success" onClick={handleApprove}>
+                <button
+                  className="inline-flex items-center gap-1.5 rounded-md bg-violet-600 hover:bg-violet-700 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+                  onClick={handleApprove}
+                >
                   <CheckIcon className="h-4 w-4" />
                   Approve
                 </button>
