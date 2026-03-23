@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
-import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
+         ClockIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
 import { ExclamationTriangleIcon, CheckBadgeIcon } from '@heroicons/react/24/solid'
 import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
+import NotificationBell from '../shared/NotificationBell'
+import { useNotifications } from '../../hooks/useNotifications'
 import { CITIES } from '../../data/mockData'
 import api from '../../services/api'
 
@@ -16,8 +19,8 @@ const EMPTY_FORM = {
   isOneTimeVendor: false, proposedBy: '',
 }
 
-const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'SGD', 'AED']
-const INCOTERMS  = ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FAS','FOB','CFR','CIF']
+const CURRENCIES   = ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'SGD', 'AED']
+const INCOTERMS    = ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FAS','FOB','CFR','CIF']
 const INDIAN_STATES = [
   'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat',
   'Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh',
@@ -70,7 +73,6 @@ function ApprovalChainBuilder({ approvers, selected, onChange, error }) {
 
   return (
     <div className="space-y-3">
-      {/* Add approver */}
       <select
         className="form-input"
         value=""
@@ -82,59 +84,64 @@ function ApprovalChainBuilder({ approvers, selected, onChange, error }) {
         ))}
       </select>
 
-      {/* Chain preview */}
-      {(selected.length > 0 || true) && (
-        <div className="rounded-xl border border-gray-200 overflow-hidden">
-          <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Approval Chain Preview</p>
-          </div>
-          <div className="divide-y divide-gray-100">
-            {selected.length === 0 && (
-              <div className="px-4 py-3 text-xs text-gray-400 italic">No approvers added yet — select from the dropdown above.</div>
-            )}
-            {selected.map((s, i) => (
-              <div key={s.id} className="flex items-center gap-3 px-4 py-2.5 bg-white">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">{i + 1}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800">{s.name}</p>
-                  <p className="text-xs text-gray-400">{s.email}</p>
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button type="button" onClick={() => move(i, -1)} disabled={i === 0}
-                    className="p-1 rounded text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed">
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7"/></svg>
-                  </button>
-                  <button type="button" onClick={() => move(i, 1)} disabled={i === selected.length - 1}
-                    className="p-1 rounded text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed">
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                  </button>
-                  <button type="button" onClick={() => remove(s.id)}
-                    className="p-1 rounded text-gray-400 hover:text-red-500 transition-colors">
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                  </button>
-                </div>
-              </div>
-            ))}
-            {/* Always-last: Pardeep Sharma */}
-            <div className="flex items-center gap-3 px-4 py-2.5 bg-rose-50">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-rose-100 text-rose-700 text-xs font-bold flex items-center justify-center">★</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Approval Chain Preview</p>
+        </div>
+        <div className="divide-y divide-gray-100">
+          {selected.length === 0 && (
+            <div className="px-4 py-3 text-xs text-gray-400 italic">No approvers added yet — select from the dropdown above.</div>
+          )}
+          {selected.map((s, i) => (
+            <div key={s.id} className="flex items-center gap-3 px-4 py-2.5 bg-white">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">{i + 1}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-rose-800">Pardeep Sharma</p>
-                <p className="text-xs text-rose-400">pardeep.sharma@andritz.com · Final Approver</p>
+                <p className="text-sm font-medium text-gray-800">{s.name}</p>
+                <p className="text-xs text-gray-400">{s.email}</p>
               </div>
-              <span className="text-xs text-rose-400 font-medium flex-shrink-0">Auto-added · cannot remove</span>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button type="button" onClick={() => move(i, -1)} disabled={i === 0}
+                  className="p-1 rounded text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed">
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7"/></svg>
+                </button>
+                <button type="button" onClick={() => move(i, 1)} disabled={i === selected.length - 1}
+                  className="p-1 rounded text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed">
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <button type="button" onClick={() => remove(s.id)}
+                  className="p-1 rounded text-gray-400 hover:text-red-500 transition-colors">
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
             </div>
+          ))}
+          {/* Locked final step */}
+          <div className="flex items-center gap-3 px-4 py-2.5 bg-rose-50">
+            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-rose-100 text-rose-700 text-xs font-bold flex items-center justify-center">★</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-rose-800">Pardeep Sharma</p>
+              <p className="text-xs text-rose-400">pardeep.sharma@andritz.com · Final Approver</p>
+            </div>
+            <span className="text-xs text-rose-400 font-medium flex-shrink-0">Auto-added · cannot remove</span>
           </div>
         </div>
-      )}
+      </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   )
 }
 
-export default function BuyerConsole({ workflow, currentUser }) {
-  const myRequests = workflow.requests.filter(r => r.createdByUserId === currentUser.id)
+const TABS = [
+  { id: 'active',   label: 'My Requests',      icon: ClockIcon            },
+  { id: 'revision', label: 'Waiting Revision',  icon: ExclamationCircleIcon },
+]
 
+export default function BuyerConsole({ workflow, currentUser }) {
+  const myRequests   = workflow.requests.filter(r => r.createdByUserId === currentUser.id)
+  const activeReqs   = myRequests.filter(r => r.status !== 'Rejected')
+  const rejectedReqs = myRequests.filter(r => r.status === 'Rejected')
+
+  const [activeTab, setActiveTab]                   = useState('active')
   const [showForm, setShowForm]                     = useState(false)
   const [editingRequest, setEditingRequest]         = useState(null)
   const [form, setForm]                             = useState(EMPTY_FORM)
@@ -145,10 +152,19 @@ export default function BuyerConsole({ workflow, currentUser }) {
   const [submitting, setSubmitting]                 = useState(false)
   const [apiError, setApiError]                     = useState(null)
 
+  // Autocomplete master data
+  const [materialGroups, setMaterialGroups] = useState([])
+  const [proposedByNames, setProposedByNames] = useState([])
+
+  // Notifications
+  const { notifications, unreadCount, markAllRead } = useNotifications(
+    workflow.requests, currentUser.id, 'Buyer'
+  )
+
   useEffect(() => {
-    api.get('/users/approvers')
-      .then(r => setAvailableApprovers(r.data))
-      .catch(() => {})
+    api.get('/users/approvers').then(r => setAvailableApprovers(r.data)).catch(() => {})
+    api.get('/master-data/material-groups').then(r => setMaterialGroups(r.data)).catch(() => {})
+    api.get('/master-data/proposed-by').then(r => setProposedByNames(r.data)).catch(() => {})
   }, [])
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }))
@@ -165,19 +181,19 @@ export default function BuyerConsole({ workflow, currentUser }) {
   const openEdit = (req) => {
     setEditingRequest(req)
     setForm({
-      vendorName:    req.vendorName     ?? '',
-      materialGroup: req.materialGroup  ?? '',
-      reason:        req.reason         ?? '',
-      contactPerson: req.contactPerson  ?? '',
-      telephone:     req.telephone      ?? '',
-      gstNumber:     req.gstNumber      ?? '',
-      panCard:       req.panCard        ?? '',
-      addressDetails:req.addressDetails ?? '',
-      postalCode:    req.postalCode     ?? '',
-      city:          req.city           ?? '',
-      locality:      req.locality       ?? '',
-      state:         req.state          ?? '',
-      country:       req.country        ?? 'India',
+      vendorName:     req.vendorName     ?? '',
+      materialGroup:  req.materialGroup  ?? '',
+      reason:         req.reason         ?? '',
+      contactPerson:  req.contactPerson  ?? '',
+      telephone:      req.telephone      ?? '',
+      gstNumber:      req.gstNumber      ?? '',
+      panCard:        req.panCard        ?? '',
+      addressDetails: req.addressDetails ?? '',
+      postalCode:     req.postalCode     ?? '',
+      city:           req.city           ?? '',
+      locality:       req.locality       ?? '',
+      state:          req.state          ?? '',
+      country:        req.country        ?? 'India',
       currency:        req.currency        ?? 'INR',
       paymentTerms:    req.paymentTerms    ?? '',
       incoterms:       req.incoterms       ?? '',
@@ -218,7 +234,7 @@ export default function BuyerConsole({ workflow, currentUser }) {
       setShowForm(false)
     } catch (err) {
       const detail = err.response?.data
-      if (Array.isArray(detail))          setApiError(detail.join(' '))
+      if (Array.isArray(detail))           setApiError(detail.join(' '))
       else if (typeof detail === 'string') setApiError(detail)
       else if (detail?.message)            setApiError(detail.message)
       else                                 setApiError('Request failed. Please check your entries and try again.')
@@ -229,84 +245,159 @@ export default function BuyerConsole({ workflow, currentUser }) {
 
   const revLabel = (n) => n === 0 ? 'Original' : `REV ${n}`
 
+  const RequestCard = ({ req }) => (
+    <div className="card overflow-hidden">
+      {req.status === 'Completed' && (
+        <div className="bg-emerald-50 border-b border-emerald-100 px-5 py-3 flex items-center gap-3">
+          <CheckBadgeIcon className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+          <p className="text-sm font-semibold text-emerald-800">
+            Vendor Code Assigned: <span className="font-mono tracking-wider">{req.vendorCode}</span>
+          </p>
+        </div>
+      )}
+      <div className="px-5 py-4 flex items-start justify-between gap-4 flex-wrap">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="font-semibold text-gray-900">{req.vendorName}</h2>
+            <StatusBadge status={req.status} />
+            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{revLabel(req.revisionNo)}</span>
+            {req.revisionHistory?.length > 0 && (
+              <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">
+                {req.revisionHistory.length} revision{req.revisionHistory.length !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-gray-500 mt-1">
+            {req.contactPerson || req.contactInformation}
+            {req.telephone && <span className="text-gray-400"> · {req.telephone}</span>}
+          </p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {[req.city, req.locality, req.state].filter(Boolean).join(', ')}
+            {' · '}{new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button className="btn-secondary" onClick={() => setViewingRequest(req)}>
+            <EyeIcon className="h-4 w-4" />
+            View
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
+  const RejectedCard = ({ req }) => (
+    <div className="card overflow-hidden">
+      <div className="bg-red-50 border-b border-red-100 px-5 py-3 flex items-start gap-3">
+        <ExclamationTriangleIcon className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-red-800">Request Rejected — Revision Required</p>
+          {req.rejectionComment && (
+            <p className="text-sm text-red-700 mt-0.5">"{req.rejectionComment}"</p>
+          )}
+        </div>
+      </div>
+      <div className="px-5 py-4 flex items-start justify-between gap-4 flex-wrap">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="font-semibold text-gray-900">{req.vendorName}</h2>
+            <StatusBadge status={req.status} />
+            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{revLabel(req.revisionNo)}</span>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">
+            {req.contactPerson || req.contactInformation}
+          </p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {[req.city, req.locality, req.state].filter(Boolean).join(', ')}
+            {' · '}{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button className="btn-secondary" onClick={() => setViewingRequest(req)}>
+            <EyeIcon className="h-4 w-4" />
+            View
+          </button>
+          <button className="btn-primary" onClick={() => openEdit(req)}>
+            <PencilSquareIcon className="h-4 w-4" />
+            Edit &amp; Resubmit
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-gray-900">My Vendor Requests</h1>
           <p className="text-sm text-gray-500 mt-0.5">{myRequests.length} request{myRequests.length !== 1 ? 's' : ''}</p>
         </div>
-        <button className="btn-primary" onClick={openCreate}>
-          <PlusIcon className="h-4 w-4" />
-          New Request
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationBell
+            notifications={notifications}
+            unreadCount={unreadCount}
+            onMarkAllRead={markAllRead}
+            label="My Notifications"
+          />
+          <button className="btn-primary" onClick={openCreate}>
+            <PlusIcon className="h-4 w-4" />
+            New Request
+          </button>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        {myRequests.length === 0 && (
-          <div className="card p-12 text-center text-gray-400">
-            <p className="text-sm">No requests yet. Click "New Request" to get started.</p>
-          </div>
-        )}
-
-        {myRequests.map(req => (
-          <div key={req.id} className="card overflow-hidden">
-            {req.status === 'Rejected' && (
-              <div className="bg-red-50 border-b border-red-100 px-5 py-3 flex items-start gap-3">
-                <ExclamationTriangleIcon className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-red-800">Request Rejected</p>
-                  <p className="text-sm text-red-700 mt-0.5 truncate">"{req.rejectionComment}"</p>
-                </div>
-              </div>
+      {/* Tab bar */}
+      <div className="flex gap-1 border-b border-gray-200 mb-5">
+        {TABS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => setActiveTab(id)}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              activeTab === id
+                ? 'border-blue-600 text-blue-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+            <span className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
+              activeTab === id ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
+            }`}>
+              {id === 'active' ? activeReqs.length : rejectedReqs.length}
+            </span>
+            {id === 'revision' && rejectedReqs.length > 0 && (
+              <span className="ml-0.5 w-2 h-2 rounded-full bg-red-500 inline-block" />
             )}
-            {req.status === 'Completed' && (
-              <div className="bg-emerald-50 border-b border-emerald-100 px-5 py-3 flex items-center gap-3">
-                <CheckBadgeIcon className="h-5 w-5 text-emerald-600 flex-shrink-0" />
-                <p className="text-sm font-semibold text-emerald-800">
-                  Vendor Code Assigned: <span className="font-mono tracking-wider">{req.vendorCode}</span>
-                </p>
-              </div>
-            )}
-
-            <div className="px-5 py-4 flex items-start justify-between gap-4 flex-wrap">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="font-semibold text-gray-900">{req.vendorName}</h2>
-                  <StatusBadge status={req.status} />
-                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{revLabel(req.revisionNo)}</span>
-                  {req.revisionHistory?.length > 0 && (
-                    <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">
-                      {req.revisionHistory.length} revision{req.revisionHistory.length !== 1 ? 's' : ''}
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  {req.contactPerson || req.contactInformation}
-                  {req.telephone && <span className="text-gray-400"> · {req.telephone}</span>}
-                </p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {[req.city, req.locality, req.state].filter(Boolean).join(', ')}
-                  {' · '}{new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {req.status === 'Rejected' && (
-                  <button className="btn-primary" onClick={() => openEdit(req)}>
-                    <PencilSquareIcon className="h-4 w-4" />
-                    Edit &amp; Resubmit
-                  </button>
-                )}
-                <button className="btn-secondary" onClick={() => setViewingRequest(req)}>
-                  <EyeIcon className="h-4 w-4" />
-                  View
-                </button>
-              </div>
-            </div>
-          </div>
+          </button>
         ))}
       </div>
+
+      {/* ── My Requests tab ────────────────────────────────────────────── */}
+      {activeTab === 'active' && (
+        <div className="space-y-4">
+          {activeReqs.length === 0 && (
+            <div className="card p-12 text-center text-gray-400">
+              <p className="text-sm">No active requests. Click "New Request" to get started.</p>
+            </div>
+          )}
+          {activeReqs.map(req => <RequestCard key={req.id} req={req} />)}
+        </div>
+      )}
+
+      {/* ── Waiting Revision tab ────────────────────────────────────────── */}
+      {activeTab === 'revision' && (
+        <div className="space-y-4">
+          {rejectedReqs.length === 0 && (
+            <div className="card p-12 text-center">
+              <ExclamationCircleIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm text-gray-500">No requests waiting for revision.</p>
+            </div>
+          )}
+          {rejectedReqs.map(req => <RejectedCard key={req.id} req={req} />)}
+        </div>
+      )}
 
       {viewingRequest && (
         <VendorDetailModal
@@ -353,10 +444,14 @@ export default function BuyerConsole({ workflow, currentUser }) {
               <Field label="Material Group" error={errors.materialGroup}>
                 <input
                   className="form-input"
+                  list="material-group-list"
                   placeholder="e.g. Raw Materials, Packaging"
                   value={form.materialGroup}
                   onChange={e => set('materialGroup', e.target.value)}
                 />
+                <datalist id="material-group-list">
+                  {materialGroups.map(g => <option key={g} value={g} />)}
+                </datalist>
               </Field>
               <Field label="Reason for Registration" error={errors.reason}>
                 <input
@@ -366,14 +461,17 @@ export default function BuyerConsole({ workflow, currentUser }) {
                   onChange={e => set('reason', e.target.value)}
                 />
               </Field>
-              <Field label="Proposed By" error={errors.proposedBy}>
-                <textarea
-                  className="form-input resize-none"
-                  rows={2}
+              <Field label="Proposed By" error={errors.proposedBy} span={2}>
+                <input
+                  className="form-input"
+                  list="proposed-by-list"
                   placeholder="Name / department proposing this vendor"
                   value={form.proposedBy}
                   onChange={e => set('proposedBy', e.target.value)}
                 />
+                <datalist id="proposed-by-list">
+                  {proposedByNames.map(n => <option key={n} value={n} />)}
+                </datalist>
               </Field>
               <Field label="" span={2}>
                 <label className="flex items-center gap-3 cursor-pointer select-none">

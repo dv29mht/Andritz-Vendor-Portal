@@ -5,6 +5,8 @@ import {
   TableCellsIcon, UserGroupIcon, ArrowPathIcon, TrophyIcon, NoSymbolIcon,
   PencilSquareIcon, XMarkIcon, BuildingOfficeIcon,
 } from '@heroicons/react/24/outline'
+import NotificationBell from '../shared/NotificationBell'
+import { useNotifications } from '../../hooks/useNotifications'
 import VendorDatabase from '../VendorDatabase'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
@@ -217,7 +219,7 @@ function AdminEditModal({ request, onClose, onSaved }) {
   )
 }
 
-export default function AdminConsole({ workflow }) {
+export default function AdminConsole({ workflow, currentUser }) {
   const { requests } = workflow
   const stats = buildStats(requests)
 
@@ -228,6 +230,11 @@ export default function AdminConsole({ workflow }) {
   const [previewRequest, setPreviewRequest] = useState(null)
   const [editingRequest, setEditingRequest] = useState(null)
   const [toast, setToast]                   = useState(null)
+
+  const adminUserId = currentUser?.id ?? 'admin'
+  const { notifications, unreadCount, markAllRead } = useNotifications(
+    requests, adminUserId, 'Admin'
+  )
 
   const handleAdminSaved = (updated) => {
     workflow.fetchAll?.()
@@ -250,9 +257,17 @@ export default function AdminConsole({ workflow }) {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-5">
-        <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Manage vendor requests and user accounts</p>
+      <div className="flex items-start justify-between mb-5">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Manage vendor requests and user accounts</p>
+        </div>
+        <NotificationBell
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkAllRead={markAllRead}
+          label="Activity Log"
+        />
       </div>
 
       {/* Top-level tab bar */}

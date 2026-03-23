@@ -1,0 +1,142 @@
+import { useMemo, useState, useCallback } from 'react'
+
+// Derives notification events from the current requests array.
+// No backend needed — all data is already in the requests fetched by useVendorWorkflow.
+function deriveEvents(requests, role, userId) {
+  const events = []
+
+  if (role === 'Admin') {
+    // Activity log: every significant event across all requests
+    for (const req of requests) {
+      // Submission
+      events.push({
+        id: `submit-${req.id}-${req.revisionNo}`,
+        title: req.revisionNo > 0 ? 'Request Resubmitted' : 'New Request Submitted',
+        body: `${req.createdByName} submitted vendor request for ${req.vendorName}`,
+        timestamp: new Date(req.createdAt).getTime(),
+        type: 'info',
+      })
+
+      // Individual step decisions
+      for (const step of req.approvalSteps ?? []) {
+        if (step.decision !== 'Pending' && step.decidedAt) {
+          events.push({
+            id: `step-${step.id}-${req.revisionNo}`,
+            title: step.decision === 'Approved' ? 'Step Approved' : 'Request Rejected',
+            body: `${step.approverName} ${step.decision === 'Approved' ? 'approved' : 'rejected'} "${req.vendorName}"`,
+            timestamp: new Date(step.decidedAt).getTime(),
+            type: step.decision === 'Approved' ? 'success' : 'error',
+          })
+        }
+      }
+
+      // Fully completed with vendor code
+      if (req.status === 'Completed' && req.vendorCode) {
+        events.push({
+          id: `complete-${req.id}`,
+          title: 'Vendor Code Assigned',
+          body: `${req.vendorName} approved — Vendor Code: ${req.vendorCode}`,
+          timestamp: new Date(req.updatedAt).getTime(),
+          type: 'success',
+        })
+      }
+    }
+  } else if (role === 'Buyer') {
+    // Buyer sees events on their own requests
+    for (const req of requests) {
+      // Step approvals (intermediate steps)
+      for (const step of req.approvalSteps ?? []) {
+        if (step.decision === 'Approved' && step.decidedAt && !step.isFinalApproval) {
+          events.push({
+            id: `step-approved-${step.id}-${req.revisionNo}`,
+            title: 'Step Approved',
+            body: `${step.approverName} approved your request for ${req.vendorName}`,
+            timestamp: new Date(step.decidedAt).getTime(),
+            type: 'success',
+          })
+        }
+      }
+
+      // Rejection
+      if (req.status === 'Rejected') {
+        events.push({
+          id: `rejected-${req.id}-${req.revisionNo}`,
+          title: 'Request Rejected',
+          body: `Your request for ${req.vendorName} was rejected. Revise and resubmit.`,
+          timestamp: new Date(req.updatedAt).getTime(),
+          type: 'error',
+        })
+      }
+
+      // Fully approved
+      if (req.status === 'Completed') {
+        events.push({
+          id: `completed-${req.id}`,
+          title: 'Vendor Approved!',
+          body: `${req.vendorName} fully approved — Vendor Code: ${req.vendorCode}`,
+          timestamp: new Date(req.updatedAt).getTime(),
+          type: 'success',
+        })
+      }
+    }
+  } else if (role === 'Approver' || role === 'FinalApprover') {
+    // Approvers see pending assignments + their own decisions
+    for (const req of requests) {
+      const myStep = (req.approvalSteps ?? []).find(s => s.approverUserId === userId)
+      if (!myStep) continue
+
+      if (myStep.decision === 'Pending') {
+        // New pending assignment
+        events.push({
+          id: `assigned-${req.id}-${req.revisionNo}`,
+          title: 'New Request for Review',
+          body: `${req.createdByName} submitted "${req.vendorName}" — awaiting your review`,
+          timestamp: new Date(req.updatedAt).getTime(),
+          type: 'info',
+        })
+      } else if (myStep.decidedAt) {
+        events.push({
+          id: `decided-${req.id}-${myStep.id}-${req.revisionNo}`,
+          title: myStep.decision === 'Approved' ? 'You Approved a Request' : 'You Rejected a Request',
+          body: `${req.vendorName} — ${myStep.decision}`,
+          timestamp: new Date(myStep.decidedAt).getTime(),
+          type: myStep.decision === 'Approved' ? 'success' : 'error',
+        })
+      }
+    }
+  }
+
+  // Most recent first, cap at 60
+  return events
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 60)
+}
+
+export function useNotifications(requests, userId, role) {
+  const storageKey = `lastSeen_${userId}`
+
+  const [lastSeen, setLastSeen] = useState(() =>
+    parseInt(localStorage.getItem(storageKey) ?? '0', 10)
+  )
+
+  const events = useMemo(
+    () => deriveEvents(requests, role, userId),
+    [requests, role, userId]
+  )
+
+  // Attach isUnread flag for rendering
+  const annotated = useMemo(
+    () => events.map(e => ({ ...e, isUnread: e.timestamp > lastSeen })),
+    [events, lastSeen]
+  )
+
+  const unreadCount = annotated.filter(e => e.isUnread).length
+
+  const markAllRead = useCallback(() => {
+    const now = Date.now()
+    localStorage.setItem(storageKey, now.toString())
+    setLastSeen(now)
+  }, [storageKey])
+
+  return { notifications: annotated, unreadCount, markAllRead }
+}

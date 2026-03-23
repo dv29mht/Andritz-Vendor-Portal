@@ -156,7 +156,7 @@ export default function App() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          {role === 'Admin'         && <AdminConsole         workflow={workflow} />}
+          {role === 'Admin'         && <AdminConsole         workflow={workflow} currentUser={currentUser} />}
           {role === 'Buyer'         && <BuyerConsole         workflow={workflow} currentUser={currentUser} />}
           {role === 'Approver'      && <ApproverConsole      workflow={workflow} currentUser={currentUser} />}
           {role === 'FinalApprover' && <FinalApproverConsole workflow={workflow} currentUser={currentUser} />}

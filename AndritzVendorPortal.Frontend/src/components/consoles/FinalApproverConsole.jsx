@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { CheckBadgeIcon, StarIcon } from '@heroicons/react/24/solid'
 import { XMarkIcon, EyeIcon, CheckIcon, ClockIcon, ArchiveBoxIcon,
          UsersIcon, ArrowPathIcon, NoSymbolIcon, TrophyIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'
@@ -8,6 +8,28 @@ import StatusBadge from '../shared/StatusBadge'
 import ApprovalTimeline from '../shared/ApprovalTimeline'
 import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
+import NotificationBell from '../shared/NotificationBell'
+import { useNotifications } from '../../hooks/useNotifications'
+
+function useViewedRequests(userId) {
+  const key = `viewed_reqs_${userId}`
+  const load = () => {
+    try { return new Set(JSON.parse(localStorage.getItem(key) ?? '[]')) }
+    catch { return new Set() }
+  }
+  const [viewed, setViewed] = useState(load)
+  const markViewed = useCallback((id) => {
+    setViewed(prev => {
+      if (prev.has(id)) return prev
+      const next = new Set(prev)
+      next.add(id)
+      localStorage.setItem(key, JSON.stringify([...next]))
+      return next
+    })
+  }, [key])
+  const isNew = useCallback((id) => !viewed.has(id), [viewed])
+  return { isNew, markViewed }
+}
 
 const TABS = [
   { id: 'pending',   label: 'Pending',          icon: ClockIcon          },
@@ -60,8 +82,13 @@ export default function FinalApproverConsole({ workflow, currentUser }) {
   const [toast, setToast]                 = useState(null)
 
   const isAuthorizedFinalApprover = currentUser?.email === 'pardeep.sharma@andritz.com'
+  const { isNew, markViewed } = useViewedRequests(currentUser.id)
+  const { notifications, unreadCount, markAllRead } = useNotifications(
+    workflow.requests, currentUser.id, 'FinalApprover'
+  )
 
   const openReview = (req) => {
+    markViewed(req.id)
     setReviewing(req)
     setVendorCode('')
     setVendorCodeErr('')
@@ -100,11 +127,19 @@ export default function FinalApproverConsole({ workflow, currentUser }) {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-5">
-        <h1 className="text-xl font-bold text-gray-900">Final Approver Console</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
-          {currentUser.name} — SAP Vendor Code assignment and final approvals
-        </p>
+      <div className="flex items-start justify-between mb-5">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Final Approver Console</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {currentUser.name} — SAP Vendor Code assignment and final approvals
+          </p>
+        </div>
+        <NotificationBell
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkAllRead={markAllRead}
+          label="Notifications"
+        />
       </div>
 
       {/* Metric cards */}
@@ -175,12 +210,17 @@ export default function FinalApproverConsole({ workflow, currentUser }) {
                               REV {req.revisionNo}
                             </span>
                           )}
+                          {isNew(req.id) && (
+                            <span className="text-xs bg-blue-500 text-white font-bold px-2 py-0.5 rounded-full">
+                              NEW
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm text-gray-500 mt-1">{req.contactInformation}</p>
                         <p className="text-xs text-gray-400 mt-0.5">{req.addressDetails} · {req.city}, {req.locality}</p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <button className="btn-secondary" onClick={() => setViewingRequest(req)}>
+                        <button className="btn-secondary" onClick={() => { markViewed(req.id); setViewingRequest(req) }}>
                           <EyeIcon className="h-4 w-4" />
                           View
                         </button>
@@ -373,8 +413,9 @@ export default function FinalApproverConsole({ workflow, currentUser }) {
 
       {toast && (
         <Toast
-          message={{ title: toast.title, body: toast.body }}
           type={toast.type}
+          title={toast.title}
+          body={toast.body}
           onClose={() => setToast(null)}
         />
       )}
