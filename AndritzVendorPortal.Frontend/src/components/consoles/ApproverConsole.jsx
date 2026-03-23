@@ -32,7 +32,7 @@ function useViewedRequests(userId) {
 }
 
 const TABS = [
-  { id: 'pending', label: 'Pending',          icon: ClockIcon             },
+  { id: 'pending', label: 'Pending Approval',  icon: ClockIcon             },
   { id: 'waiting', label: 'Waiting Revision',  icon: ExclamationCircleIcon },
   { id: 'history', label: 'History',           icon: ArchiveBoxIcon        },
 ]
@@ -93,8 +93,14 @@ export default function ApproverConsole({ workflow, currentUser }) {
 
   const handleReject = () => {
     if (!rejectComment.trim()) { setRejectError('A comment is required when rejecting.'); return }
+    const name = reviewing.vendorName
     workflow.reject(reviewing.id, rejectComment)
     setReviewing(null)
+    setToast({
+      type: 'error',
+      title: 'Request Rejected',
+      body: `You rejected the vendor request for ${name}. The buyer will be notified to revise and resubmit.`,
+    })
   }
 
   const myStepFor = (req) =>
@@ -160,7 +166,6 @@ export default function ApproverConsole({ workflow, currentUser }) {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="font-semibold text-gray-900">{req.vendorName}</h2>
-                      <StatusBadge status={req.status} />
                       {req.revisionNo > 0 && (
                         <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">
                           REV {req.revisionNo}
