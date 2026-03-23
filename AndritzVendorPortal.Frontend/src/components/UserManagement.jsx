@@ -4,6 +4,7 @@ import {
   XMarkIcon, CheckIcon, ExclamationCircleIcon,
   ShieldCheckIcon, ClipboardDocumentIcon,
   PencilSquareIcon, TrashIcon, EyeIcon,
+  EnvelopeIcon, BriefcaseIcon, ComputerDesktopIcon, FingerPrintIcon,
 } from '@heroicons/react/24/outline'
 import api from '../services/api'
 
@@ -14,6 +15,26 @@ const ROLE_BADGE = {
   Buyer:         'bg-blue-50   text-blue-700   ring-blue-200',
   Approver:      'bg-indigo-50 text-indigo-700 ring-indigo-200',
   FinalApprover: 'bg-rose-50   text-rose-700   ring-rose-200',
+}
+
+const AVATAR_BG = {
+  Admin:         'bg-purple-600',
+  Buyer:         'bg-blue-600',
+  Approver:      'bg-indigo-600',
+  FinalApprover: 'bg-rose-600',
+}
+
+const HEADER_BG = {
+  Admin:         'from-purple-600 to-purple-800',
+  Buyer:         'from-blue-600   to-blue-800',
+  Approver:      'from-indigo-600 to-indigo-800',
+  FinalApprover: 'from-rose-600   to-rose-800',
+}
+
+function getInitials(name) {
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0][0]?.toUpperCase() ?? '?'
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
 const ROLE_ACCESS_NOTE = {
@@ -96,95 +117,107 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
     }
   }
 
+  const headerGrad  = HEADER_BG[primaryRole]  ?? 'from-gray-600 to-gray-800'
+  const avatarColor = AVATAR_BG[primaryRole]  ?? 'bg-gray-600'
+  const initials    = getInitials(user.fullName)
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <div>
-            <h2 className="font-semibold text-gray-900">
-              {mode === 'delete' ? 'Delete User' : mode === 'edit' ? 'Edit User' : 'User Details'}
-            </h2>
-            {mode === 'view' && (
-              <p className="text-xs text-gray-400 mt-0.5">{user.email}</p>
-            )}
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+        {/* ── Gradient profile header ── */}
+        <div className={`relative bg-gradient-to-br ${headerGrad} px-6 pt-5 pb-8`}>
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-1 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+          >
             <XMarkIcon className="h-5 w-5" />
           </button>
+
+          <div className="flex items-center gap-4">
+            {/* Avatar */}
+            <div className={`flex-shrink-0 w-14 h-14 rounded-2xl ${avatarColor} bg-white/20 flex items-center justify-center shadow-inner`}>
+              <span className="text-xl font-bold text-white tracking-wide">{initials}</span>
+            </div>
+            {/* Name + role + email */}
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold text-white leading-tight truncate">{user.fullName}</h2>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                {user.roles.map(role => (
+                  <span key={role} className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/20 text-white">
+                    {role}
+                  </span>
+                ))}
+                {hasEmailGuard && (
+                  <span className="flex items-center gap-0.5 text-xs text-white/70 font-medium">
+                    <ShieldCheckIcon className="h-3 w-3" />
+                    email-gated
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-white/60 mt-1 truncate">{user.email}</p>
+            </div>
+          </div>
         </div>
 
-        {/* Errors */}
+        {/* ── Errors ── */}
         {errors.length > 0 && (
-          <div className="mx-6 mt-4 rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3">
+          <div className="mx-5 mt-4 rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3">
             <ul className="list-disc list-inside space-y-0.5">
               {errors.map((e, i) => <li key={i} className="text-xs text-red-700">{e}</li>)}
             </ul>
           </div>
         )}
 
-        {/* ── View mode ─────────────────────────────────── */}
+        {/* ── View mode ── */}
         {mode === 'view' && (
-          <div className="px-6 py-5 space-y-4">
-            {/* Role badge */}
-            <div className="flex items-center gap-2">
-              {user.roles.map(role => (
-                <span key={role} className={`text-xs px-2.5 py-1 rounded-full font-semibold ring-1 ring-inset ${ROLE_BADGE[role] ?? 'bg-gray-100 text-gray-600 ring-gray-200'}`}>
-                  {role}
-                </span>
+          <div className="px-5 py-5 space-y-3">
+            {/* Info fields */}
+            <div className="grid grid-cols-1 divide-y divide-gray-50 rounded-xl bg-gray-50 ring-1 ring-gray-100 overflow-hidden">
+              {[
+                { icon: BriefcaseIcon,       label: 'Designation',    value: user.designation || '—',              mono: false },
+                { icon: ComputerDesktopIcon, label: 'Console Access', value: CONSOLE_LABEL[primaryRole] ?? '—',    mono: false },
+                { icon: EnvelopeIcon,        label: 'Email',          value: user.email,                           mono: false },
+                { icon: FingerPrintIcon,     label: 'User ID',        value: user.id,                              mono: true  },
+              ].map(({ icon: Icon, label, value, mono }) => (
+                <div key={label} className="flex items-center gap-3 px-4 py-3">
+                  <Icon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{label}</p>
+                    <p className={`text-sm font-medium text-gray-800 truncate mt-0.5 ${mono ? 'font-mono text-xs text-gray-500' : ''}`}>
+                      {value}
+                    </p>
+                  </div>
+                </div>
               ))}
-              {hasEmailGuard && (
-                <span className="flex items-center gap-0.5 text-xs text-rose-600 font-medium">
-                  <ShieldCheckIcon className="h-3.5 w-3.5" />
-                  email-gated
-                </span>
-              )}
             </div>
-
-            {/* Detail rows */}
-            <table className="w-full text-sm">
-              <tbody>
-                {[
-                  ['Full Name',   user.fullName],
-                  ['Email',       user.email],
-                  ['Designation', user.designation || '—'],
-                  ['Console',     CONSOLE_LABEL[primaryRole] ?? '—'],
-                  ['User ID',     user.id],
-                ].map(([label, value]) => (
-                  <tr key={label} className="border-b border-gray-50 last:border-0">
-                    <td className="py-2 pr-6 text-gray-400 text-xs font-medium w-2/5 align-top">{label}</td>
-                    <td className={`py-2 text-gray-900 font-medium break-all text-xs ${label === 'User ID' ? 'font-mono text-gray-500' : ''}`}>{value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
 
             {/* Access note */}
-            <div className="flex items-start gap-2 rounded-lg bg-blue-50 ring-1 ring-blue-100 px-3 py-2.5">
+            <div className="flex items-start gap-2.5 rounded-xl bg-blue-50 ring-1 ring-blue-100 px-3.5 py-3">
               <ShieldCheckIcon className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-blue-700">{ROLE_ACCESS_NOTE[primaryRole]}</p>
+              <p className="text-xs text-blue-700 leading-relaxed">{ROLE_ACCESS_NOTE[primaryRole]}</p>
             </div>
 
-            <div className="flex justify-between pt-1">
+            {/* Actions */}
+            <div className="flex justify-between gap-3 pt-1">
               <button
                 onClick={() => setMode('delete')}
-                className="btn-danger !py-1.5 !px-3 !text-xs"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-red-600 rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
               >
-                <TrashIcon className="h-3.5 w-3.5" />
-                Delete User
+                <TrashIcon className="h-4 w-4" />
+                Delete
               </button>
-              <button onClick={() => setMode('edit')} className="btn-primary !py-1.5 !px-3 !text-xs">
-                <PencilSquareIcon className="h-3.5 w-3.5" />
-                Edit
+              <button onClick={() => setMode('edit')} className="btn-primary">
+                <PencilSquareIcon className="h-4 w-4" />
+                Edit User
               </button>
             </div>
           </div>
         )}
 
-        {/* ── Edit mode ─────────────────────────────────── */}
+        {/* ── Edit mode ── */}
         {mode === 'edit' && (
-          <form onSubmit={handleSave} className="px-6 py-5 space-y-4">
+          <form onSubmit={handleSave} className="px-5 py-5 space-y-4">
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="form-label">Full Name <span className="text-red-500">*</span></label>
@@ -228,43 +261,52 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
               </div>
             </div>
 
-            <div className="flex items-start gap-2 rounded-lg bg-blue-50 ring-1 ring-blue-100 px-3 py-2.5">
+            <div className="flex items-start gap-2 rounded-xl bg-blue-50 ring-1 ring-blue-100 px-3.5 py-3">
               <ShieldCheckIcon className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-blue-700">{ROLE_ACCESS_NOTE[form.role]}</p>
+              <p className="text-xs text-blue-700 leading-relaxed">{ROLE_ACCESS_NOTE[form.role]}</p>
             </div>
 
-            <div className="flex justify-between pt-1">
-              <button type="button" className="btn-secondary !py-1.5 !px-3 !text-xs" onClick={() => { setMode('view'); setErrors([]) }}>
+            <div className="flex justify-between gap-3 pt-1">
+              <button type="button" className="btn-secondary" onClick={() => { setMode('view'); setErrors([]) }}>
                 Cancel
               </button>
-              <button type="submit" className="btn-primary !py-1.5 !px-3 !text-xs" disabled={saving}>
+              <button type="submit" className="btn-primary" disabled={saving}>
                 {saving ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
           </form>
         )}
 
-        {/* ── Delete confirmation ────────────────────────── */}
+        {/* ── Delete confirmation ── */}
         {mode === 'delete' && (
-          <div className="px-6 py-5 space-y-4">
-            <div className="rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3">
-              <p className="text-sm font-semibold text-red-800 mb-1">Are you sure you want to delete this user?</p>
+          <div className="px-5 py-5 space-y-4">
+            {/* Mini profile recap */}
+            <div className="flex items-center gap-3 rounded-xl bg-gray-50 ring-1 ring-gray-100 px-4 py-3">
+              <div className={`flex-shrink-0 w-10 h-10 rounded-xl ${avatarColor} flex items-center justify-center`}>
+                <span className="text-sm font-bold text-white">{initials}</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
+                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+              </div>
+            </div>
+            <div className="rounded-xl bg-red-50 ring-1 ring-red-200 px-4 py-3">
+              <p className="text-sm font-semibold text-red-800 mb-1">Permanently delete this account?</p>
               <p className="text-xs text-red-700">
-                <span className="font-medium">{user.fullName}</span> ({user.email}) will be permanently removed.
-                This action cannot be undone.
+                This action cannot be undone. All login access for this user will be revoked immediately.
               </p>
             </div>
-            <div className="flex justify-between">
-              <button className="btn-secondary !py-1.5 !px-3 !text-xs" onClick={() => { setMode('view'); setErrors([]) }}>
+            <div className="flex justify-between gap-3">
+              <button className="btn-secondary" onClick={() => { setMode('view'); setErrors([]) }}>
                 Cancel
               </button>
               <button
-                className="btn-danger !py-1.5 !px-3 !text-xs"
+                className="btn-danger"
                 disabled={deleting}
                 onClick={handleDelete}
               >
-                <TrashIcon className="h-3.5 w-3.5" />
-                {deleting ? 'Deleting…' : 'Confirm Delete'}
+                <TrashIcon className="h-4 w-4" />
+                {deleting ? 'Deleting…' : 'Yes, Delete'}
               </button>
             </div>
           </div>
