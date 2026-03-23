@@ -36,7 +36,7 @@ export default function Login() {
       <div
         className="hidden lg:flex lg:w-[48%] xl:w-1/2 flex-col justify-between p-14 relative overflow-hidden login-bg-animate"
         style={{
-          background: 'linear-gradient(135deg, #001d3d 0%, #0062AC 45%, #003f7a 80%, #001a3a 100%)',
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #0f172a 80%, #111827 100%)',
         }}
       >
         {/* SVG geometric background */}
@@ -103,7 +103,7 @@ export default function Login() {
 
         {/* Mobile header */}
         <div className="lg:hidden flex items-center gap-3 px-6 py-4"
-          style={{ background: 'linear-gradient(90deg, #001d3d, #0062AC)' }}>
+          style={{ background: '#0f172a' }}>
           <div className="flex flex-col gap-0.5">
             <div className="h-1.5 w-0.5 bg-[#e8182c] rounded-sm" />
             <div className="h-4 w-0.5 bg-white rounded-sm" />

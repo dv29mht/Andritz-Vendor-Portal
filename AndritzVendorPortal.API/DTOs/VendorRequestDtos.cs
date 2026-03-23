@@ -28,6 +28,12 @@ public record UpdateUserDto(
                string? NewPassword
 );
 
+public record UpdateProfileDto(
+    [Required] string  FullName,
+               string? CurrentPassword,
+               string? NewPassword
+);
+
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 public record LoginDto(

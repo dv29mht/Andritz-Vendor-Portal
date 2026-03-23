@@ -158,6 +158,44 @@ public class UsersController(UserManager<ApplicationUser> userManager) : Control
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // PUT /api/users/profile
+    // Any authenticated user: update their own display name and optionally password.
+    // ─────────────────────────────────────────────────────────────────────────
+    [HttpPut("profile")]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
+    {
+        var userId = userManager.GetUserId(User);
+        var user   = await userManager.FindByIdAsync(userId!);
+        if (user is null) return NotFound("User not found.");
+
+        if (string.IsNullOrWhiteSpace(dto.FullName))
+            return BadRequest("Full name is required.");
+
+        user.FullName = dto.FullName.Trim();
+
+        var updateResult = await userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+            return BadRequest(updateResult.Errors.Select(e => e.Description).ToList());
+
+        // Password change is optional — only attempted when both fields are provided.
+        if (!string.IsNullOrWhiteSpace(dto.CurrentPassword) && !string.IsNullOrWhiteSpace(dto.NewPassword))
+        {
+            var pwResult = await userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
+            if (!pwResult.Succeeded)
+                return BadRequest(pwResult.Errors.Select(e => e.Description).ToList());
+        }
+
+        var roles = await userManager.GetRolesAsync(user);
+        return Ok(new
+        {
+            id       = user.Id,
+            fullName = user.FullName,
+            email    = user.Email,
+            roles,
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // POST /api/users/sync-ad
     // Placeholder for future Azure AD synchronisation (BRD future scope).
     // ─────────────────────────────────────────────────────────────────────────

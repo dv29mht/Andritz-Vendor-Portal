@@ -1,16 +1,12 @@
 import { useState, useEffect } from 'react'
 import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
          ClockIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
-import { ExclamationTriangleIcon, CheckBadgeIcon } from '@heroicons/react/24/solid'
+import { ExclamationTriangleIcon, CheckBadgeIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
-import NotificationBell from '../shared/NotificationBell'
-import { useNotifications } from '../../hooks/useNotifications'
 import { CITIES } from '../../data/mockData'
 import api from '../../services/api'
-
-const getInitials = (name = '') => name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase()
 
 const EMPTY_FORM = {
   vendorName: '', materialGroup: '', reason: '',
@@ -21,8 +17,8 @@ const EMPTY_FORM = {
   isOneTimeVendor: false, proposedBy: '',
 }
 
-const CURRENCIES   = ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'SGD', 'AED']
-const INCOTERMS    = ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FAS','FOB','CFR','CIF']
+const CURRENCIES    = ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'SGD', 'AED']
+const INCOTERMS     = ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FAS','FOB','CFR','CIF']
 const INDIAN_STATES = [
   'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat',
   'Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh',
@@ -35,12 +31,8 @@ const INDIAN_STATES = [
 function FormSection({ title, children }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3 border-b border-gray-100 pb-1.5">
-        {title}
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {children}
-      </div>
+      <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3 border-b border-gray-100 pb-1.5">{title}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{children}</div>
     </div>
   )
 }
@@ -59,33 +51,20 @@ function Field({ label, required, error, span = 1, children }) {
 
 function ApprovalChainBuilder({ approvers, selected, onChange, error }) {
   const available = approvers.filter(a => !selected.find(s => s.id === a.id))
-
-  const add = (id) => {
-    const a = approvers.find(x => x.id === id)
-    if (a) onChange([...selected, a])
-  }
+  const add    = (id) => { const a = approvers.find(x => x.id === id); if (a) onChange([...selected, a]) }
   const remove = (id) => onChange(selected.filter(s => s.id !== id))
-  const move = (i, dir) => {
-    const arr = [...selected]
-    const j = i + dir
+  const move   = (i, dir) => {
+    const arr = [...selected], j = i + dir
     if (j < 0 || j >= arr.length) return
     ;[arr[i], arr[j]] = [arr[j], arr[i]]
     onChange(arr)
   }
-
   return (
     <div className="space-y-3">
-      <select
-        className="form-input"
-        value=""
-        onChange={e => { if (e.target.value) add(e.target.value) }}
-      >
+      <select className="form-input" value="" onChange={e => { if (e.target.value) add(e.target.value) }}>
         <option value="">+ Add approver to chain…</option>
-        {available.map(a => (
-          <option key={a.id} value={a.id}>{a.name} ({a.email})</option>
-        ))}
+        {available.map(a => <option key={a.id} value={a.id}>{a.name} ({a.email})</option>)}
       </select>
-
       <div className="rounded-xl border border-gray-200 overflow-hidden">
         <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Approval Chain Preview</p>
@@ -102,22 +81,18 @@ function ApprovalChainBuilder({ approvers, selected, onChange, error }) {
                 <p className="text-xs text-gray-400">{s.email}</p>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                <button type="button" onClick={() => move(i, -1)} disabled={i === 0}
-                  className="p-1 rounded text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed">
+                <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="p-1 rounded text-gray-400 hover:text-gray-600 disabled:opacity-30">
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7"/></svg>
                 </button>
-                <button type="button" onClick={() => move(i, 1)} disabled={i === selected.length - 1}
-                  className="p-1 rounded text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed">
+                <button type="button" onClick={() => move(i, 1)} disabled={i === selected.length - 1} className="p-1 rounded text-gray-400 hover:text-gray-600 disabled:opacity-30">
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
-                <button type="button" onClick={() => remove(s.id)}
-                  className="p-1 rounded text-gray-400 hover:text-red-500 transition-colors">
+                <button type="button" onClick={() => remove(s.id)} className="p-1 rounded text-gray-400 hover:text-red-500 transition-colors">
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
               </div>
             </div>
           ))}
-          {/* Locked final step */}
           <div className="flex items-center gap-3 px-4 py-2.5 bg-rose-50">
             <span className="flex-shrink-0 w-6 h-6 rounded-full bg-rose-100 text-rose-700 text-xs font-bold flex items-center justify-center">★</span>
             <div className="flex-1 min-w-0">
@@ -133,17 +108,15 @@ function ApprovalChainBuilder({ approvers, selected, onChange, error }) {
   )
 }
 
-const TABS = [
-  { id: 'active',   label: 'My Requests',      icon: ClockIcon            },
-  { id: 'revision', label: 'Waiting Revision',  icon: ExclamationCircleIcon },
-]
+const revLabel = (n) => n === 0 ? 'Original' : `REV ${n}`
 
-export default function BuyerConsole({ workflow, currentUser }) {
+export default function BuyerConsole({ workflow, currentUser, activePage }) {
   const myRequests   = workflow.requests.filter(r => r.createdByUserId === currentUser.id)
   const activeReqs   = myRequests.filter(r => r.status !== 'Rejected')
   const rejectedReqs = myRequests.filter(r => r.status === 'Rejected')
+  const completedReqs = myRequests.filter(r => r.status === 'Completed')
+  const inProgressReqs = activeReqs.filter(r => r.status !== 'Completed')
 
-  const [activeTab, setActiveTab]                   = useState('active')
   const [showForm, setShowForm]                     = useState(false)
   const [editingRequest, setEditingRequest]         = useState(null)
   const [form, setForm]                             = useState(EMPTY_FORM)
@@ -153,15 +126,8 @@ export default function BuyerConsole({ workflow, currentUser }) {
   const [errors, setErrors]                         = useState({})
   const [submitting, setSubmitting]                 = useState(false)
   const [apiError, setApiError]                     = useState(null)
-
-  // Autocomplete master data
-  const [materialGroups, setMaterialGroups] = useState([])
-  const [proposedByNames, setProposedByNames] = useState([])
-
-  // Notifications
-  const { notifications, unreadCount, markAllRead } = useNotifications(
-    workflow.requests, currentUser.id, 'Buyer'
-  )
+  const [materialGroups, setMaterialGroups]         = useState([])
+  const [proposedByNames, setProposedByNames]       = useState([])
 
   useEffect(() => {
     api.get('/users/approvers').then(r => setAvailableApprovers(r.data)).catch(() => {})
@@ -196,12 +162,12 @@ export default function BuyerConsole({ workflow, currentUser }) {
       locality:       req.locality       ?? '',
       state:          req.state          ?? '',
       country:        req.country        ?? 'India',
-      currency:        req.currency        ?? 'INR',
-      paymentTerms:    req.paymentTerms    ?? '',
-      incoterms:       req.incoterms       ?? '',
-      yearlyPvo:       req.yearlyPvo       ?? '',
-      isOneTimeVendor: req.isOneTimeVendor ?? false,
-      proposedBy:      req.proposedBy      ?? '',
+      currency:       req.currency       ?? 'INR',
+      paymentTerms:   req.paymentTerms   ?? '',
+      incoterms:      req.incoterms      ?? '',
+      yearlyPvo:      req.yearlyPvo      ?? '',
+      isOneTimeVendor:req.isOneTimeVendor ?? false,
+      proposedBy:     req.proposedBy     ?? '',
     })
     setErrors({})
     setApiError(null)
@@ -245,7 +211,7 @@ export default function BuyerConsole({ workflow, currentUser }) {
     }
   }
 
-  const revLabel = (n) => n === 0 ? 'Original' : `REV ${n}`
+  // ── Sub-components ───────────────────────────────────────────────────────────
 
   const RequestCard = ({ req }) => (
     <div className="card overflow-hidden">
@@ -278,12 +244,10 @@ export default function BuyerConsole({ workflow, currentUser }) {
             {' · '}{new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button className="btn-secondary" onClick={() => setViewingRequest(req)}>
-            <EyeIcon className="h-4 w-4" />
-            View
-          </button>
-        </div>
+        <button className="btn-secondary flex-shrink-0" onClick={() => setViewingRequest(req)}>
+          <EyeIcon className="h-4 w-4" />
+          View
+        </button>
       </div>
     </div>
   )
@@ -306,9 +270,7 @@ export default function BuyerConsole({ workflow, currentUser }) {
             <StatusBadge status={req.status} />
             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{revLabel(req.revisionNo)}</span>
           </div>
-          <p className="text-sm text-gray-500 mt-1">
-            {req.contactPerson || req.contactInformation}
-          </p>
+          <p className="text-sm text-gray-500 mt-1">{req.contactPerson || req.contactInformation}</p>
           <p className="text-xs text-gray-400 mt-0.5">
             {[req.city, req.locality, req.state].filter(Boolean).join(', ')}
             {' · '}{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
@@ -328,77 +290,103 @@ export default function BuyerConsole({ workflow, currentUser }) {
     </div>
   )
 
+  // ── Render ───────────────────────────────────────────────────────────────────
+
+  const recentReqs = [...myRequests]
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+    .slice(0, 4)
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 px-6 py-5 mb-6 shadow-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-white font-bold text-base flex-shrink-0">
-              {getInitials(currentUser.name)}
-            </div>
+
+      {/* ── Dashboard ───────────────────────────────────────────────────────── */}
+      {activePage === 'dashboard' && (
+        <div className="space-y-5">
+          {/* CTA banner */}
+          <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-6 flex items-center justify-between gap-4 text-white shadow-lg">
             <div>
-              <h1 className="text-lg font-bold text-white">My Vendor Requests</h1>
-              <p className="text-sm text-blue-100">{currentUser.name} · Buyer Portal</p>
+              <h2 className="text-lg font-bold">Register a New Vendor</h2>
+              <p className="text-blue-100 text-sm mt-0.5">Submit a vendor onboarding request for multi-step approval.</p>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <NotificationBell
-              notifications={notifications}
-              unreadCount={unreadCount}
-              onMarkAllRead={markAllRead}
-              label="My Notifications"
-              variant="light"
-            />
             <button
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white/20 hover:bg-white/30 px-3.5 py-2 text-sm font-semibold text-white transition-colors"
+              className="inline-flex items-center gap-2 bg-white text-blue-700 font-semibold px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors text-sm flex-shrink-0 shadow-sm"
               onClick={openCreate}
             >
               <PlusIcon className="h-4 w-4" />
               New Request
             </button>
           </div>
-        </div>
-        <div className="mt-4 pt-4 border-t border-white/20 flex items-center gap-5 text-sm text-blue-100">
-          <span><span className="font-semibold text-white">{activeReqs.length}</span> active</span>
-          <span>·</span>
-          <span className={rejectedReqs.length > 0 ? 'text-red-200' : ''}>
-            <span className={`font-semibold ${rejectedReqs.length > 0 ? 'text-red-200' : 'text-white'}`}>{rejectedReqs.length}</span> awaiting revision
-          </span>
-          <span>·</span>
-          <span><span className="font-semibold text-white">{myRequests.length}</span> total</span>
-        </div>
-      </div>
 
-      {/* Tab bar */}
-      <div className="flex gap-1 border-b border-gray-200 mb-5">
-        {TABS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              activeTab === id
-                ? 'border-blue-600 text-blue-700'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-            <span className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
-              activeTab === id ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
-            }`}>
-              {id === 'active' ? activeReqs.length : rejectedReqs.length}
-            </span>
-            {id === 'revision' && rejectedReqs.length > 0 && (
-              <span className="ml-0.5 w-2 h-2 rounded-full bg-red-500 inline-block" />
-            )}
-          </button>
-        ))}
-      </div>
+          {/* Stat cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                <ClockIcon className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{inProgressReqs.length}</p>
+                <p className="text-xs text-gray-500 mt-0.5">In Progress</p>
+              </div>
+            </div>
+            <div className={`bg-white rounded-xl ring-1 px-5 py-4 flex items-center gap-4 ${rejectedReqs.length > 0 ? 'ring-red-200' : 'ring-gray-200'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${rejectedReqs.length > 0 ? 'bg-red-50' : 'bg-gray-50'}`}>
+                <ExclamationCircleIcon className={`h-5 w-5 ${rejectedReqs.length > 0 ? 'text-red-500' : 'text-gray-400'}`} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{rejectedReqs.length}</p>
+                <p className={`text-xs mt-0.5 ${rejectedReqs.length > 0 ? 'text-red-600 font-medium' : 'text-gray-500'}`}>Awaiting Revision</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                <CheckCircleIcon className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{completedReqs.length}</p>
+                <p className="text-xs text-gray-500 mt-0.5">Completed</p>
+              </div>
+            </div>
+          </div>
 
-      {/* ── My Requests tab ────────────────────────────────────────────── */}
-      {activeTab === 'active' && (
+          {/* Recent activity */}
+          {recentReqs.length > 0 ? (
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-900">Recent Activity</h3>
+              </div>
+              <div className="divide-y divide-gray-50">
+                {recentReqs.map(req => (
+                  <div key={req.id} className="px-5 py-3.5 flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900">{req.vendorName}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {[req.city, req.locality].filter(Boolean).join(', ')}
+                        {' · '}{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                      </p>
+                    </div>
+                    <StatusBadge status={req.status} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 p-12 text-center">
+              <p className="text-sm text-gray-400">No requests yet. Click "New Request" to get started.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── My Requests ─────────────────────────────────────────────────────── */}
+      {activePage === 'requests' && (
         <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">{activeReqs.length} request{activeReqs.length !== 1 ? 's' : ''}</p>
+            <button className="btn-primary" onClick={openCreate}>
+              <PlusIcon className="h-4 w-4" />
+              New Request
+            </button>
+          </div>
           {activeReqs.length === 0 && (
             <div className="card p-12 text-center text-gray-400">
               <p className="text-sm">No active requests. Click "New Request" to get started.</p>
@@ -408,8 +396,8 @@ export default function BuyerConsole({ workflow, currentUser }) {
         </div>
       )}
 
-      {/* ── Waiting Revision tab ────────────────────────────────────────── */}
-      {activeTab === 'revision' && (
+      {/* ── Waiting Revision ────────────────────────────────────────────────── */}
+      {activePage === 'revision' && (
         <div className="space-y-4">
           {rejectedReqs.length === 0 && (
             <div className="card p-12 text-center">
@@ -421,6 +409,7 @@ export default function BuyerConsole({ workflow, currentUser }) {
         </div>
       )}
 
+      {/* ── Modals (always rendered regardless of active page) ──────────────── */}
       {viewingRequest && (
         <VendorDetailModal
           request={workflow.requests.find(r => r.id === viewingRequest.id) ?? viewingRequest}
@@ -443,7 +432,6 @@ export default function BuyerConsole({ workflow, currentUser }) {
               </div>
             </div>
           )}
-
           {apiError && (
             <div className="mb-4 flex items-start gap-2 rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3">
               <ExclamationTriangleIcon className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
@@ -452,212 +440,121 @@ export default function BuyerConsole({ workflow, currentUser }) {
           )}
 
           <div className="space-y-6">
-
-            {/* ── Vendor Information ── */}
             <FormSection title="Vendor Information">
               <Field label="Supplier Name" required error={errors.vendorName} span={2}>
-                <input
-                  className="form-input"
-                  placeholder="e.g. Tata Components Pvt. Ltd."
-                  value={form.vendorName}
-                  onChange={e => set('vendorName', e.target.value)}
-                />
+                <input className="form-input" placeholder="e.g. Tata Components Pvt. Ltd."
+                  value={form.vendorName} onChange={e => set('vendorName', e.target.value)} />
               </Field>
               <Field label="Material Group" error={errors.materialGroup}>
-                <input
-                  className="form-input"
-                  list="material-group-list"
-                  placeholder="e.g. Raw Materials, Packaging"
-                  value={form.materialGroup}
-                  onChange={e => set('materialGroup', e.target.value)}
-                />
+                <input className="form-input" list="material-group-list" placeholder="e.g. Raw Materials"
+                  value={form.materialGroup} onChange={e => set('materialGroup', e.target.value)} />
                 <datalist id="material-group-list">
                   {materialGroups.map(g => <option key={g} value={g} />)}
                 </datalist>
               </Field>
               <Field label="Reason for Registration" error={errors.reason}>
-                <input
-                  className="form-input"
-                  placeholder="e.g. New supplier for FY2026"
-                  value={form.reason}
-                  onChange={e => set('reason', e.target.value)}
-                />
+                <input className="form-input" placeholder="e.g. New supplier for FY2026"
+                  value={form.reason} onChange={e => set('reason', e.target.value)} />
               </Field>
               <Field label="Proposed By" error={errors.proposedBy} span={2}>
-                <input
-                  className="form-input"
-                  list="proposed-by-list"
-                  placeholder="Name / department proposing this vendor"
-                  value={form.proposedBy}
-                  onChange={e => set('proposedBy', e.target.value)}
-                />
+                <input className="form-input" list="proposed-by-list" placeholder="Name / department proposing this vendor"
+                  value={form.proposedBy} onChange={e => set('proposedBy', e.target.value)} />
                 <datalist id="proposed-by-list">
                   {proposedByNames.map(n => <option key={n} value={n} />)}
                 </datalist>
               </Field>
               <Field label="" span={2}>
                 <label className="flex items-center gap-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    checked={form.isOneTimeVendor}
-                    onChange={e => set('isOneTimeVendor', e.target.checked)}
-                  />
+                  <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    checked={form.isOneTimeVendor} onChange={e => set('isOneTimeVendor', e.target.checked)} />
                   <span className="text-sm font-medium text-gray-700">One-Time Vendor</span>
                   <span className="text-xs text-gray-400">(not added to permanent vendor master)</span>
                 </label>
               </Field>
             </FormSection>
 
-            {/* ── Address ── */}
             <FormSection title="Address">
               <Field label="Street / Building / Plot" required error={errors.addressDetails} span={2}>
-                <textarea
-                  className="form-input resize-none"
-                  rows={2}
-                  placeholder="Plot No., Building Name, Area"
-                  value={form.addressDetails}
-                  onChange={e => set('addressDetails', e.target.value)}
-                />
+                <textarea className="form-input resize-none" rows={2} placeholder="Plot No., Building Name, Area"
+                  value={form.addressDetails} onChange={e => set('addressDetails', e.target.value)} />
               </Field>
               <Field label="Postal Code" error={errors.postalCode}>
-                <input
-                  className="form-input"
-                  placeholder="e.g. 400001"
-                  maxLength={10}
-                  value={form.postalCode}
-                  onChange={e => set('postalCode', e.target.value)}
-                />
+                <input className="form-input" placeholder="e.g. 400001" maxLength={10}
+                  value={form.postalCode} onChange={e => set('postalCode', e.target.value)} />
               </Field>
               <Field label="City" required error={errors.city}>
-                <input
-                  className="form-input"
-                  list="city-list"
-                  placeholder="e.g. Mumbai"
-                  value={form.city}
-                  onChange={e => setForm(f => ({ ...f, city: e.target.value, locality: '' }))}
-                />
+                <input className="form-input" list="city-list" placeholder="e.g. Mumbai"
+                  value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value, locality: '' }))} />
                 <datalist id="city-list">
                   {Object.keys(CITIES).map(c => <option key={c} value={c} />)}
                 </datalist>
               </Field>
               <Field label="Locality" required error={errors.locality}>
-                <input
-                  className="form-input"
-                  list="locality-list"
-                  placeholder="e.g. Andheri"
-                  value={form.locality}
-                  onChange={e => set('locality', e.target.value)}
-                />
+                <input className="form-input" list="locality-list" placeholder="e.g. Andheri"
+                  value={form.locality} onChange={e => set('locality', e.target.value)} />
                 <datalist id="locality-list">
                   {(CITIES[form.city] ?? []).map(l => <option key={l} value={l} />)}
                 </datalist>
               </Field>
               <Field label="State" error={errors.state}>
-                <select
-                  className="form-input"
-                  value={form.state}
-                  onChange={e => set('state', e.target.value)}
-                >
+                <select className="form-input" value={form.state} onChange={e => set('state', e.target.value)}>
                   <option value="">Select State</option>
                   {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </Field>
               <Field label="Country" error={errors.country}>
-                <input
-                  className="form-input"
-                  placeholder="India"
-                  value={form.country}
-                  onChange={e => set('country', e.target.value)}
-                />
+                <input className="form-input" placeholder="India"
+                  value={form.country} onChange={e => set('country', e.target.value)} />
               </Field>
             </FormSection>
 
-            {/* ── Commercial Terms ── */}
             <FormSection title="Commercial Terms">
               <Field label="Currency" error={errors.currency}>
-                <select
-                  className="form-input"
-                  value={form.currency}
-                  onChange={e => set('currency', e.target.value)}
-                >
+                <select className="form-input" value={form.currency} onChange={e => set('currency', e.target.value)}>
                   {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </Field>
               <Field label="Payment Terms" error={errors.paymentTerms}>
-                <input
-                  className="form-input"
-                  placeholder="e.g. Net 30, Advance 50%"
-                  value={form.paymentTerms}
-                  onChange={e => set('paymentTerms', e.target.value)}
-                />
+                <input className="form-input" placeholder="e.g. Net 30, Advance 50%"
+                  value={form.paymentTerms} onChange={e => set('paymentTerms', e.target.value)} />
               </Field>
               <Field label="Incoterms" error={errors.incoterms}>
-                <select
-                  className="form-input"
-                  value={form.incoterms}
-                  onChange={e => set('incoterms', e.target.value)}
-                >
+                <select className="form-input" value={form.incoterms} onChange={e => set('incoterms', e.target.value)}>
                   <option value="">Select Incoterms</option>
                   {INCOTERMS.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </Field>
               <Field label="Yearly PVO" error={errors.yearlyPvo}>
-                <input
-                  className="form-input"
-                  placeholder="e.g. 50,00,000"
-                  value={form.yearlyPvo}
-                  onChange={e => set('yearlyPvo', e.target.value)}
-                />
+                <input className="form-input" placeholder="e.g. 50,00,000"
+                  value={form.yearlyPvo} onChange={e => set('yearlyPvo', e.target.value)} />
               </Field>
             </FormSection>
 
-            {/* ── Tax Identification ── */}
             <FormSection title="Tax Identification">
               <Field label="GST Number" required error={errors.gstNumber}>
-                <input
-                  className="form-input font-mono uppercase tracking-wider"
-                  placeholder="e.g. 27AABCT1332L1ZV"
-                  value={form.gstNumber}
-                  onChange={e => set('gstNumber', e.target.value.toUpperCase())}
-                />
+                <input className="form-input font-mono uppercase tracking-wider" placeholder="e.g. 27AABCT1332L1ZV"
+                  value={form.gstNumber} onChange={e => set('gstNumber', e.target.value.toUpperCase())} />
               </Field>
               <Field label="PAN Card" required error={errors.panCard}>
-                <input
-                  className="form-input font-mono uppercase tracking-wider"
-                  placeholder="e.g. AABCT1332L"
-                  value={form.panCard}
-                  onChange={e => set('panCard', e.target.value.toUpperCase())}
-                />
+                <input className="form-input font-mono uppercase tracking-wider" placeholder="e.g. AABCT1332L"
+                  value={form.panCard} onChange={e => set('panCard', e.target.value.toUpperCase())} />
               </Field>
             </FormSection>
 
-            {/* ── Contact Details ── */}
             <FormSection title="Contact Details">
               <Field label="Contact Person" required error={errors.contactPerson}>
-                <input
-                  className="form-input"
-                  placeholder="e.g. Rahul Verma"
-                  value={form.contactPerson}
-                  onChange={e => set('contactPerson', e.target.value)}
-                />
+                <input className="form-input" placeholder="e.g. Rahul Verma"
+                  value={form.contactPerson} onChange={e => set('contactPerson', e.target.value)} />
               </Field>
               <Field label="Telephone / Mobile" error={errors.telephone}>
-                <input
-                  className="form-input"
-                  placeholder="e.g. +91 98765 43210"
-                  value={form.telephone}
-                  onChange={e => set('telephone', e.target.value)}
-                />
+                <input className="form-input" placeholder="e.g. +91 98765 43210"
+                  value={form.telephone} onChange={e => set('telephone', e.target.value)} />
               </Field>
             </FormSection>
 
-            {/* ── Approvers (create only) ── */}
             {!editingRequest && (
               <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3 border-b border-gray-100 pb-1.5">
-                  Approvers
-                </p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3 border-b border-gray-100 pb-1.5">Approvers</p>
                 <ApprovalChainBuilder
                   approvers={availableApprovers}
                   selected={selectedApprovers}

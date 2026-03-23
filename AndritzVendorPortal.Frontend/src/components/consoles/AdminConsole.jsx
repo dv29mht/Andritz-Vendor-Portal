@@ -5,8 +5,6 @@ import {
   TableCellsIcon, UserGroupIcon, ArrowPathIcon, TrophyIcon, NoSymbolIcon,
   PencilSquareIcon, XMarkIcon, BuildingOfficeIcon,
 } from '@heroicons/react/24/outline'
-import NotificationBell from '../shared/NotificationBell'
-import { useNotifications } from '../../hooks/useNotifications'
 import VendorDatabase from '../VendorDatabase'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
@@ -14,25 +12,17 @@ import Toast from '../shared/Toast'
 import UserManagement from '../UserManagement'
 import api from '../../services/api'
 
-const getInitials = (name = '') => name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase()
-
-const ADMIN_TABS = [
-  { id: 'requests', label: 'Requests',        icon: TableCellsIcon      },
-  { id: 'vendors',  label: 'Vendor Database', icon: BuildingOfficeIcon  },
-  { id: 'users',    label: 'User Management', icon: UserGroupIcon       },
-]
-
 const STATUS_FILTERS = ['All', 'Draft', 'PendingApproval', 'PendingFinalApproval', 'Rejected', 'Completed']
 
 const STAT_CARDS = [
-  { label: 'Total',           key: 'total',        icon: UsersIcon,       bg: 'bg-blue-50',    text: 'text-blue-700',    ic: 'text-blue-500'    },
-  { label: 'Pending',         key: 'pending',      icon: ClockIcon,       bg: 'bg-amber-50',   text: 'text-amber-700',   ic: 'text-amber-500'   },
-  { label: 'Final Approval',  key: 'final',        icon: CheckCircleIcon, bg: 'bg-indigo-50',  text: 'text-indigo-700',  ic: 'text-indigo-500'  },
-  { label: 'Rejected',        key: 'rejected',     icon: XCircleIcon,     bg: 'bg-red-50',     text: 'text-red-700',     ic: 'text-red-500'     },
-  { label: 'Completed',       key: 'completed',    icon: CheckBadgeIcon,  bg: 'bg-emerald-50', text: 'text-emerald-700', ic: 'text-emerald-500' },
-  { label: 'Approval Rate',   key: 'approvalRate', icon: TrophyIcon,      bg: 'bg-cyan-50',    text: 'text-cyan-700',    ic: 'text-cyan-500',   noFilter: true },
-  { label: 'Re-edit Rate',    key: 'reEditRate',   icon: ArrowPathIcon,   bg: 'bg-orange-50',  text: 'text-orange-700',  ic: 'text-orange-500', noFilter: true },
-  { label: 'Rejection Rate',  key: 'rejectionRate',icon: NoSymbolIcon,    bg: 'bg-rose-50',    text: 'text-rose-700',    ic: 'text-rose-500',   noFilter: true },
+  { label: 'Total',          key: 'total',        icon: UsersIcon,       bg: 'bg-blue-50',    text: 'text-blue-700',    ic: 'text-blue-500'    },
+  { label: 'Pending',        key: 'pending',      icon: ClockIcon,       bg: 'bg-amber-50',   text: 'text-amber-700',   ic: 'text-amber-500'   },
+  { label: 'Final Approval', key: 'final',        icon: CheckCircleIcon, bg: 'bg-indigo-50',  text: 'text-indigo-700',  ic: 'text-indigo-500'  },
+  { label: 'Rejected',       key: 'rejected',     icon: XCircleIcon,     bg: 'bg-red-50',     text: 'text-red-700',     ic: 'text-red-500'     },
+  { label: 'Completed',      key: 'completed',    icon: CheckBadgeIcon,  bg: 'bg-emerald-50', text: 'text-emerald-700', ic: 'text-emerald-500' },
+  { label: 'Approval Rate',  key: 'approvalRate', icon: TrophyIcon,      bg: 'bg-cyan-50',    text: 'text-cyan-700',    ic: 'text-cyan-500',   noFilter: true },
+  { label: 'Re-edit Rate',   key: 'reEditRate',   icon: ArrowPathIcon,   bg: 'bg-orange-50',  text: 'text-orange-700',  ic: 'text-orange-500', noFilter: true },
+  { label: 'Rejection Rate', key: 'rejectionRate',icon: NoSymbolIcon,    bg: 'bg-rose-50',    text: 'text-rose-700',    ic: 'text-rose-500',   noFilter: true },
 ]
 
 const STAT_KEY_TO_FILTER = {
@@ -130,19 +120,13 @@ function AdminEditModal({ request, onClose, onSaved }) {
   const fi = (label, field, opts = {}) => (
     <div key={field}>
       <label className="form-label">{label}</label>
-      <input
-        className="form-input"
-        value={form[field]}
-        onChange={e => set(field, e.target.value)}
-        {...opts}
-      />
+      <input className="form-input" value={form[field]} onChange={e => set(field, e.target.value)} {...opts} />
     </div>
   )
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div>
             <h2 className="font-semibold text-gray-900">Admin Edit — {request.vendorName}</h2>
@@ -150,13 +134,8 @@ function AdminEditModal({ request, onClose, onSaved }) {
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><XMarkIcon className="h-5 w-5" /></button>
         </div>
-
         <div className="px-6 py-5 space-y-5">
-          {error && (
-            <div className="rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
-          )}
-
-          {/* Vendor Info */}
+          {error && <div className="rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3 text-sm text-red-700">{error}</div>}
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Vendor Information</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -175,8 +154,6 @@ function AdminEditModal({ request, onClose, onSaved }) {
               </div>
             </div>
           </div>
-
-          {/* Compliance */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Compliance</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -185,8 +162,6 @@ function AdminEditModal({ request, onClose, onSaved }) {
               {fi('Yearly PVO', 'yearlyPvo')}
             </div>
           </div>
-
-          {/* Address */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Address</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -198,8 +173,6 @@ function AdminEditModal({ request, onClose, onSaved }) {
               {fi('Country', 'country')}
             </div>
           </div>
-
-          {/* Commercial */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Commercial</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -209,7 +182,6 @@ function AdminEditModal({ request, onClose, onSaved }) {
             </div>
           </div>
         </div>
-
         <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0 bg-white">
           <button className="btn-secondary" onClick={onClose}>Cancel</button>
           <button className="btn-primary" disabled={saving} onClick={handleSave}>
@@ -221,22 +193,18 @@ function AdminEditModal({ request, onClose, onSaved }) {
   )
 }
 
-export default function AdminConsole({ workflow, currentUser }) {
+// ── Main AdminConsole ─────────────────────────────────────────────────────────
+
+export default function AdminConsole({ workflow, currentUser, activePage, onNavigate }) {
   const { requests } = workflow
   const stats = buildStats(requests)
 
-  const [activeTab, setActiveTab]           = useState('requests')
   const [filterStatus, setFilterStatus]     = useState('All')
   const [search, setSearch]                 = useState('')
   const [viewingRequest, setViewingRequest] = useState(null)
   const [previewRequest, setPreviewRequest] = useState(null)
   const [editingRequest, setEditingRequest] = useState(null)
   const [toast, setToast]                   = useState(null)
-
-  const adminUserId = currentUser?.id ?? 'admin'
-  const { notifications, unreadCount, markAllRead } = useNotifications(
-    requests, adminUserId, 'Admin'
-  )
 
   const handleAdminSaved = (updated) => {
     workflow.fetchAll?.()
@@ -253,197 +221,198 @@ export default function AdminConsole({ workflow, currentUser }) {
     return matchStatus && matchSearch
   })
 
-  const handleDownloadPdf = (req) => {
-    setPreviewRequest(workflow.requests.find(r => r.id === req.id) ?? req)
-  }
+  const recentRequests = [...requests]
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+    .slice(0, 5)
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 px-6 py-5 mb-6 shadow-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-white font-bold text-base flex-shrink-0">
-              {getInitials(currentUser?.name)}
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-white">Admin Dashboard</h1>
-              <p className="text-sm text-slate-300">{currentUser?.name} · Manage Requests &amp; Users</p>
-            </div>
+
+      {/* ── Dashboard ─────────────────────────────────────────────────────── */}
+      {activePage === 'dashboard' && (
+        <div className="space-y-5">
+          {/* Clickable stat cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+            {STAT_CARDS.map(({ label, key, icon: Icon, bg, text, ic, noFilter }) => (
+              <button
+                key={key}
+                onClick={() => {
+                  if (noFilter) return
+                  setFilterStatus(key === 'total' ? 'All' : (STAT_KEY_TO_FILTER[key] ?? 'All'))
+                  onNavigate('requests')
+                }}
+                className={`card px-3 py-3.5 flex flex-col items-center gap-1.5 ${bg} text-center w-full
+                            ${noFilter ? 'cursor-default' : 'hover:ring-2 hover:ring-slate-600'} transition-all`}
+              >
+                <Icon className={`h-6 w-6 ${ic} flex-shrink-0`} />
+                <p className="text-xl font-bold text-gray-900 leading-none">{stats[key]}</p>
+                <p className={`text-xs font-medium ${text} leading-tight`}>{label}</p>
+              </button>
+            ))}
           </div>
-          <NotificationBell
-            notifications={notifications}
-            unreadCount={unreadCount}
-            onMarkAllRead={markAllRead}
-            label="Activity Log"
-            variant="light"
-          />
-        </div>
-        <div className="mt-4 pt-4 border-t border-white/20 flex items-center gap-5 text-sm text-slate-300">
-          <span><span className="font-semibold text-white">{stats.total}</span> requests</span>
-          <span>·</span>
-          <span><span className="font-semibold text-white">{stats.completed}</span> completed</span>
-          <span>·</span>
-          <span><span className="font-semibold text-white">{stats.pending + stats.final}</span> in progress</span>
-        </div>
-      </div>
 
-      {/* Top-level tab bar */}
-      <div className="flex gap-1 border-b border-gray-200 mb-6">
-        {ADMIN_TABS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              activeTab === id
-                ? 'border-slate-700 text-slate-800'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Vendor Database tab ─────────────────────────────────────────── */}
-      {activeTab === 'vendors' && (
-        <VendorDatabase
-          requests={requests}
-          isAdmin={true}
-          onReclassified={() => workflow.fetchAll()}
-        />
+          {/* Recent requests */}
+          <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-900">Recent Requests</h3>
+              <button
+                className="text-xs text-slate-600 hover:text-slate-800 font-medium transition-colors"
+                onClick={() => onNavigate('requests')}
+              >
+                View all →
+              </button>
+            </div>
+            <table className="min-w-full divide-y divide-gray-100 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  {['Vendor Name', 'Buyer', 'Status', 'Updated'].map(h => (
+                    <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50 bg-white">
+                {recentRequests.length === 0 && (
+                  <tr><td colSpan={4} className="px-5 py-8 text-center text-sm text-gray-400">No requests yet.</td></tr>
+                )}
+                {recentRequests.map(req => (
+                  <tr key={req.id} className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => setViewingRequest(req)}>
+                    <td className="px-5 py-3">
+                      <p className="font-medium text-gray-900">{req.vendorName}</p>
+                      {req.vendorCode && <p className="text-xs text-emerald-600 font-mono">{req.vendorCode}</p>}
+                    </td>
+                    <td className="px-5 py-3 text-gray-500">{req.createdByName}</td>
+                    <td className="px-5 py-3"><StatusBadge status={req.status} /></td>
+                    <td className="px-5 py-3 text-gray-400 text-xs">{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
-      {/* ── User Management tab ─────────────────────────────────────────── */}
-      {activeTab === 'users' && <UserManagement />}
-
-      {/* ── Requests tab ────────────────────────────────────────────────── */}
-      {activeTab === 'requests' && (<>
-
-      {/* Clickable stat cards — filter the table on click */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-7">
-        {STAT_CARDS.map(({ label, key, icon: Icon, bg, text, ic, noFilter }) => (
-          <button
-            key={key}
-            onClick={() => !noFilter && setFilterStatus(key === 'total' ? 'All' : (STAT_KEY_TO_FILTER[key] ?? 'All'))}
-            className={`card px-3 py-3.5 flex flex-col items-center gap-1.5 ${bg} text-center w-full
-                        ${noFilter ? 'cursor-default' : 'hover:ring-2 hover:ring-slate-600'} transition-all`}
-          >
-            <Icon className={`h-6 w-6 ${ic} flex-shrink-0`} />
-            <p className="text-xl font-bold text-gray-900 leading-none">{stats[key]}</p>
-            <p className={`text-xs font-medium ${text} leading-tight`}>{label}</p>
-          </button>
-        ))}
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
-        <div className="relative flex-1 min-w-0 max-w-xs">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-          <input
-            className="form-input pl-9"
-            placeholder="Search vendor, buyer, code..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-1.5">
-          {STATUS_FILTERS.map(s => (
-            <button
-              key={s}
-              onClick={() => setFilterStatus(s)}
-              className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
-                filterStatus === s
-                  ? 'bg-slate-700 text-white ring-slate-700'
-                  : 'bg-white text-gray-600 ring-gray-200 hover:bg-gray-50'
-              }`}
-            >
-              {s === 'PendingApproval' ? 'Pending' : s === 'PendingFinalApproval' ? 'Final' : s}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="card overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              {['ID', 'Vendor Name', 'Buyer', 'City', 'Revision', 'Status', 'Updated', 'Actions'].map(h => (
-                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 bg-white">
-            {visible.length === 0 && (
-              <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-400">
-                  No requests match the current filter.
-                </td>
-              </tr>
-            )}
-            {visible.map(req => (
-              <tr key={req.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-3 font-mono text-xs text-gray-400">#{req.id}</td>
-                <td className="px-4 py-3">
-                  <p className="font-medium text-gray-900 whitespace-nowrap">{req.vendorName}</p>
-                  {req.vendorCode && (
-                    <p className="text-xs text-emerald-600 font-mono">{req.vendorCode}</p>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{req.createdByName}</td>
-                <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{req.city}, {req.locality}</td>
-                <td className="px-4 py-3 text-center">
-                  {req.revisionNo > 0
-                    ? <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
-                    : <span className="text-xs text-gray-400">—</span>
-                  }
-                </td>
-                <td className="px-4 py-3"><StatusBadge status={req.status} /></td>
-                <td className="px-4 py-3 text-gray-400 whitespace-nowrap text-xs">
-                  {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      className="btn-secondary !py-1 !px-2 !text-xs"
-                      onClick={() => setViewingRequest(req)}
-                    >
-                      <EyeIcon className="h-3.5 w-3.5" />
-                      View
-                    </button>
-                    <button
-                      className={`btn-secondary !py-1 !px-2 !text-xs transition-all ${
-                        req.status !== 'Completed' ? 'opacity-30 cursor-not-allowed' : ''
-                      }`}
-                      onClick={() => req.status === 'Completed' && setEditingRequest(req)}
-                      title={req.status !== 'Completed' ? 'Only SAP-approved (Completed) forms can be edited' : 'Edit form'}
-                    >
-                      <PencilSquareIcon className="h-3.5 w-3.5" />
-                      Edit
-                    </button>
-                    <button
-                      className="btn-secondary !py-1 !px-2 !text-xs"
-                      onClick={() => handleDownloadPdf(req)}
-                    >
-                      <ArrowDownTrayIcon className="h-3.5 w-3.5" />
-                      PDF
-                    </button>
-                  </div>
-                </td>
-              </tr>
+      {/* ── All Requests ──────────────────────────────────────────────────── */}
+      {activePage === 'requests' && (
+        <>
+          {/* Stat cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
+            {STAT_CARDS.map(({ label, key, icon: Icon, bg, text, ic, noFilter }) => (
+              <button
+                key={key}
+                onClick={() => !noFilter && setFilterStatus(key === 'total' ? 'All' : (STAT_KEY_TO_FILTER[key] ?? 'All'))}
+                className={`card px-3 py-3.5 flex flex-col items-center gap-1.5 ${bg} text-center w-full
+                            ${noFilter ? 'cursor-default' : 'hover:ring-2 hover:ring-slate-600'} transition-all`}
+              >
+                <Icon className={`h-6 w-6 ${ic} flex-shrink-0`} />
+                <p className="text-xl font-bold text-gray-900 leading-none">{stats[key]}</p>
+                <p className={`text-xs font-medium ${text} leading-tight`}>{label}</p>
+              </button>
             ))}
-          </tbody>
-        </table>
-        <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400">
-          Showing {visible.length} of {requests.length} request{requests.length !== 1 ? 's' : ''}
-        </div>
-      </div>
+          </div>
 
-      {/* Tabbed VendorDetailModal — Details · Revision History · Form Preview */}
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
+            <div className="relative flex-1 min-w-0 max-w-xs">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <input
+                className="form-input pl-9"
+                placeholder="Search vendor, buyer, code..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {STATUS_FILTERS.map(s => (
+                <button
+                  key={s}
+                  onClick={() => setFilterStatus(s)}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
+                    filterStatus === s
+                      ? 'bg-slate-700 text-white ring-slate-700'
+                      : 'bg-white text-gray-600 ring-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  {s === 'PendingApproval' ? 'Pending' : s === 'PendingFinalApproval' ? 'Final' : s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="card overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  {['ID', 'Vendor Name', 'Buyer', 'City', 'Revision', 'Status', 'Updated', 'Actions'].map(h => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {visible.length === 0 && (
+                  <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-400">No requests match the current filter.</td></tr>
+                )}
+                {visible.map(req => (
+                  <tr key={req.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 font-mono text-xs text-gray-400">#{req.id}</td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-gray-900 whitespace-nowrap">{req.vendorName}</p>
+                      {req.vendorCode && <p className="text-xs text-emerald-600 font-mono">{req.vendorCode}</p>}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{req.createdByName}</td>
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{req.city}, {req.locality}</td>
+                    <td className="px-4 py-3 text-center">
+                      {req.revisionNo > 0
+                        ? <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
+                        : <span className="text-xs text-gray-400">—</span>
+                      }
+                    </td>
+                    <td className="px-4 py-3"><StatusBadge status={req.status} /></td>
+                    <td className="px-4 py-3 text-gray-400 whitespace-nowrap text-xs">
+                      {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5">
+                        <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
+                          <EyeIcon className="h-3.5 w-3.5" />
+                          View
+                        </button>
+                        <button
+                          className={`btn-secondary !py-1 !px-2 !text-xs transition-all ${req.status !== 'Completed' ? 'opacity-30 cursor-not-allowed' : ''}`}
+                          onClick={() => req.status === 'Completed' && setEditingRequest(req)}
+                          title={req.status !== 'Completed' ? 'Only SAP-approved (Completed) forms can be edited' : 'Edit form'}
+                        >
+                          <PencilSquareIcon className="h-3.5 w-3.5" />
+                          Edit
+                        </button>
+                        <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setPreviewRequest(workflow.requests.find(r => r.id === req.id) ?? req)}>
+                          <ArrowDownTrayIcon className="h-3.5 w-3.5" />
+                          PDF
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400">
+              Showing {visible.length} of {requests.length} request{requests.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Vendor Database ────────────────────────────────────────────────── */}
+      {activePage === 'vendors' && (
+        <VendorDatabase requests={requests} isAdmin={true} onReclassified={() => workflow.fetchAll()} />
+      )}
+
+      {/* ── User Management ───────────────────────────────────────────────── */}
+      {activePage === 'users' && <UserManagement />}
+
+      {/* ── Modals ────────────────────────────────────────────────────────── */}
       {viewingRequest && (
         <VendorDetailModal
           request={workflow.requests.find(r => r.id === viewingRequest.id) ?? viewingRequest}
@@ -451,13 +420,8 @@ export default function AdminConsole({ workflow, currentUser }) {
         />
       )}
       {previewRequest && (
-        <VendorDetailModal
-          request={previewRequest}
-          initialTab="preview"
-          onClose={() => setPreviewRequest(null)}
-        />
+        <VendorDetailModal request={previewRequest} initialTab="preview" onClose={() => setPreviewRequest(null)} />
       )}
-
       {editingRequest && (
         <AdminEditModal
           request={workflow.requests.find(r => r.id === editingRequest.id) ?? editingRequest}
@@ -465,10 +429,7 @@ export default function AdminConsole({ workflow, currentUser }) {
           onSaved={handleAdminSaved}
         />
       )}
-
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
-
-      </>)}
     </div>
   )
 }
