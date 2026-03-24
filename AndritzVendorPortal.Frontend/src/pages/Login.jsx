@@ -36,7 +36,7 @@ export default function Login() {
       <div
         className="hidden lg:flex lg:w-[48%] xl:w-1/2 flex-col justify-between p-14 relative overflow-hidden login-bg-animate"
         style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #0f172a 80%, #111827 100%)',
+          background: 'linear-gradient(145deg, #064e80 0%, #096fb3 45%, #075d99 75%, #053e66 100%)',
         }}
       >
         {/* SVG geometric background */}
@@ -102,7 +102,7 @@ export default function Login() {
 
         {/* Mobile header */}
         <div className="lg:hidden flex items-center gap-3 px-6 py-4"
-          style={{ background: '#0f172a' }}>
+          style={{ background: '#064e80' }}>
           <span className="text-white font-extrabold text-lg tracking-[0.2em]">ANDRITZ</span>
           <span className="text-[#096fb3] font-extrabold text-lg tracking-widest">KYC</span>
           <div className="h-4 w-px bg-white/20 mx-1" />

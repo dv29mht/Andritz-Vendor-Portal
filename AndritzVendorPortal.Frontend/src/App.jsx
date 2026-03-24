@@ -30,7 +30,7 @@ function WelcomeScreen({ user, onDone }) {
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+        background: 'linear-gradient(145deg, #064e80 0%, #096fb3 50%, #053e66 100%)',
         transition: 'opacity 0.7s ease, transform 0.7s ease',
         opacity:    phase === 2 ? 0 : 1,
         transform:  phase === 2 ? 'scale(1.04)' : 'scale(1)',

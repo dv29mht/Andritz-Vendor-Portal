@@ -45,6 +45,11 @@ const ROLE_LABELS = {
 const getInitials = (name = '') =>
   name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase()
 
+// Deep Andritz navy — dark enough for white text contrast, clearly blue (not charcoal)
+const SIDEBAR_BG = '#064e80'
+// Active highlight — the lighter primary blue
+const ACTIVE_BG  = '#096fb3'
+
 export default function AppShell({ workflow, currentUser, onLogout, activePage, setActivePage, children }) {
   const role = currentUser.role
   const navItems = NAV[role] ?? []
@@ -64,34 +69,38 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       <aside
         className={`${sidebarW} fixed inset-y-0 left-0 z-30 flex flex-col transition-all duration-200`}
-        style={{ background: '#096fb3' }}
+        style={{ background: SIDEBAR_BG }}
       >
         {/* Logo */}
-        <div className={`flex items-center border-b border-white/20 h-16 flex-shrink-0 ${
+        <div className={`flex items-center border-b h-16 flex-shrink-0 ${
           collapsed ? 'justify-center px-0' : 'justify-between px-4'
-        }`}>
+        }`}
+          style={{ borderColor: 'rgba(255,255,255,0.12)' }}
+        >
           {!collapsed && (
             <div className="min-w-0">
-              {/* ANDRITZ wordmark — full bold text, no icon */}
               <p className="text-white font-black tracking-[0.15em] text-[15px] leading-none"
                 style={{ fontFamily: '"Arial Black", "Arial Bold", Arial, sans-serif' }}>
                 ANDRITZ
               </p>
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className="text-white/60 text-[9px] font-bold tracking-[0.35em] uppercase">KYC</span>
-                <span className="text-white/30 text-[8px]">·</span>
-                <span className="text-white/40 text-[8px] tracking-wider uppercase">Vendor Onboarding</span>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="text-white/70 text-[9px] font-bold tracking-[0.4em] uppercase">KYC</span>
+                <span className="text-white/25 text-[8px]">·</span>
+                <span className="text-white/45 text-[8px] tracking-wider uppercase">Vendor Onboarding</span>
               </div>
             </div>
           )}
           {collapsed && (
-            <span className="text-white font-black text-xs tracking-widest"
+            <span className="text-white font-black text-sm tracking-widest"
               style={{ fontFamily: '"Arial Black", Arial, sans-serif' }}>A</span>
           )}
           {!collapsed && (
             <button
               onClick={() => setCollapsed(true)}
-              className="p-1.5 rounded-md text-white/50 hover:text-white hover:bg-white/15 transition-colors flex-shrink-0"
+              className="p-1.5 rounded-md transition-colors flex-shrink-0"
+              style={{ color: 'rgba(255,255,255,0.45)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'white' }}
+              onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.45)' }}
               title="Collapse sidebar"
             >
               <ChevronLeftIcon className="h-4 w-4" />
@@ -110,11 +119,13 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
                 title={collapsed ? label : undefined}
                 className={`w-full flex items-center gap-3 rounded-lg text-sm font-medium transition-all text-left ${
                   collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
-                } ${
-                  isActive
-                    ? 'bg-white text-[#096fb3] shadow-sm font-semibold'
-                    : 'text-white/70 hover:text-white hover:bg-white/15'
                 }`}
+                style={isActive
+                  ? { background: ACTIVE_BG, color: 'white', fontWeight: 600 }
+                  : { color: 'rgba(255,255,255,0.82)' }
+                }
+                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
+                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = '' }}
               >
                 <Icon className="h-[18px] w-[18px] flex-shrink-0" />
                 {!collapsed && <span className="truncate">{label}</span>}
@@ -124,10 +135,11 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
         </nav>
 
         {/* Sign out */}
-        <div className="px-2 py-3 border-t border-white/20">
+        <div className="px-2 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
           {collapsed && (
             <div className="flex justify-center mb-2">
-              <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white text-[10px] font-bold">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                style={{ background: ACTIVE_BG }}>
                 {getInitials(currentUser.name)}
               </div>
             </div>
@@ -135,9 +147,12 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
           <button
             onClick={onLogout}
             title={collapsed ? 'Sign out' : undefined}
-            className={`w-full flex items-center gap-2.5 rounded-lg text-white/50 hover:text-white hover:bg-white/15 text-xs font-medium transition-all py-2 ${
+            className={`w-full flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all py-2 ${
               collapsed ? 'justify-center px-0' : 'px-3'
             }`}
+            style={{ color: 'rgba(255,255,255,0.5)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'white' }}
+            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.5)' }}
           >
             <ArrowRightOnRectangleIcon className="h-4 w-4 flex-shrink-0" />
             {!collapsed && 'Sign out'}
@@ -151,7 +166,6 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
         {/* Top bar */}
         <header className="bg-white border-b border-gray-200 px-5 h-14 flex items-center justify-between flex-shrink-0 sticky top-0 z-20">
 
-          {/* Left: expand button (when collapsed) + breadcrumb */}
           <div className="flex items-center gap-3">
             {collapsed && (
               <button
@@ -169,15 +183,14 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
             </div>
           </div>
 
-          {/* Right: role badge + user avatar + notification */}
           <div className="flex items-center gap-3">
             <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold text-white"
-              style={{ background: '#096fb3' }}>
+              style={{ background: ACTIVE_BG }}>
               {ROLE_LABELS[role] ?? role}
             </span>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                style={{ background: '#096fb3' }}>
+                style={{ background: ACTIVE_BG }}>
                 {getInitials(currentUser.name)}
               </div>
               <span className="hidden md:block text-sm font-medium text-gray-700">
@@ -195,7 +208,6 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
           </div>
         </header>
 
-        {/* Page content */}
         <main className="flex-1 overflow-y-auto">
           {children}
         </main>
