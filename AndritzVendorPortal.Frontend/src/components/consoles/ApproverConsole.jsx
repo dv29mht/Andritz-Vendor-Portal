@@ -10,20 +10,28 @@ import Toast from '../shared/Toast'
 function useViewedRequests(userId) {
   const key = `viewed_reqs_${userId}`
   const load = () => {
-    try { return new Set(JSON.parse(localStorage.getItem(key) ?? '[]')) }
-    catch { return new Set() }
+    try {
+      const parsed = JSON.parse(localStorage.getItem(key) ?? '{}')
+      // Migrate old format (was a Set stored as array)
+      if (Array.isArray(parsed)) return {}
+      return parsed
+    }
+    catch { return {} }
   }
   const [viewed, setViewed] = useState(load)
-  const markViewed = useCallback((id) => {
+  // markViewed stores { [id]: revisionNo } so re-submissions (new revisionNo) show NEW again
+  const markViewed = useCallback((req) => {
     setViewed(prev => {
-      if (prev.has(id)) return prev
-      const next = new Set(prev)
-      next.add(id)
-      localStorage.setItem(key, JSON.stringify([...next]))
+      if (prev[req.id] === req.revisionNo) return prev
+      const next = { ...prev, [req.id]: req.revisionNo }
+      localStorage.setItem(key, JSON.stringify(next))
       return next
     })
   }, [key])
-  const isNew = useCallback((id) => !viewed.has(id), [viewed])
+  // NEW if never seen OR seen at a lower revisionNo (i.e. buyer revised and resubmitted)
+  const isNew = useCallback((req) => {
+    return viewed[req.id] === undefined || viewed[req.id] < req.revisionNo
+  }, [viewed])
   return { isNew, markViewed }
 }
 
@@ -51,7 +59,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
   const { isNew, markViewed } = useViewedRequests(currentUser.id)
 
   const openReview = (req) => {
-    markViewed(req.id)
+    markViewed(req)
     setReviewing(req)
     setRejectMode(false)
     setApproveComment('')
@@ -60,7 +68,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
   }
 
   const openView = (req) => {
-    markViewed(req.id)
+    markViewed(req)
     setViewingRequest(req)
   }
 
@@ -133,7 +141,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-gray-900">{req.vendorName}</p>
-                        {isNew(req.id) && (
+                        {isNew(req) && (
                           <span className="text-xs bg-violet-500 text-white font-bold px-2 py-0.5 rounded-full">NEW</span>
                         )}
                         {req.revisionNo > 0 && (
@@ -183,7 +191,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
                     {req.revisionNo > 0 && (
                       <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
                     )}
-                    {isNew(req.id) && (
+                    {isNew(req) && (
                       <span className="text-xs bg-violet-500 text-white font-bold px-2 py-0.5 rounded-full">NEW</span>
                     )}
                   </div>

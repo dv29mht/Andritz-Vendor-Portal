@@ -12,20 +12,25 @@ import Toast from '../shared/Toast'
 function useViewedRequests(userId) {
   const key = `viewed_reqs_${userId}`
   const load = () => {
-    try { return new Set(JSON.parse(localStorage.getItem(key) ?? '[]')) }
-    catch { return new Set() }
+    try {
+      const parsed = JSON.parse(localStorage.getItem(key) ?? '{}')
+      if (Array.isArray(parsed)) return {}
+      return parsed
+    }
+    catch { return {} }
   }
   const [viewed, setViewed] = useState(load)
-  const markViewed = useCallback((id) => {
+  const markViewed = useCallback((req) => {
     setViewed(prev => {
-      if (prev.has(id)) return prev
-      const next = new Set(prev)
-      next.add(id)
-      localStorage.setItem(key, JSON.stringify([...next]))
+      if (prev[req.id] === req.revisionNo) return prev
+      const next = { ...prev, [req.id]: req.revisionNo }
+      localStorage.setItem(key, JSON.stringify(next))
       return next
     })
   }, [key])
-  const isNew = useCallback((id) => !viewed.has(id), [viewed])
+  const isNew = useCallback((req) => {
+    return viewed[req.id] === undefined || viewed[req.id] < req.revisionNo
+  }, [viewed])
   return { isNew, markViewed }
 }
 
@@ -76,7 +81,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
   const { isNew, markViewed } = useViewedRequests(currentUser.id)
 
   const openReview = (req) => {
-    markViewed(req.id)
+    markViewed(req)
     setReviewing(req)
     setVendorCode('')
     setVendorCodeErr('')
@@ -139,7 +144,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-gray-900">{req.vendorName}</p>
-                        {isNew(req.id) && (
+                        {isNew(req) && (
                           <span className="text-xs bg-blue-500 text-white font-bold px-2 py-0.5 rounded-full">NEW</span>
                         )}
                       </div>
@@ -199,7 +204,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                         {req.revisionNo > 0 && (
                           <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
                         )}
-                        {isNew(req.id) && (
+                        {isNew(req) && (
                           <span className="text-xs bg-blue-500 text-white font-bold px-2 py-0.5 rounded-full">NEW</span>
                         )}
                       </div>
@@ -207,7 +212,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                       <p className="text-xs text-gray-400 mt-0.5">{req.addressDetails} · {req.city}, {req.locality}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <button className="btn-secondary" onClick={() => { markViewed(req.id); setViewingRequest(req) }}>
+                      <button className="btn-secondary" onClick={() => { markViewed(req); setViewingRequest(req) }}>
                         <EyeIcon className="h-4 w-4" />
                         View
                       </button>

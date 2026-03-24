@@ -5,6 +5,7 @@ import { ExclamationTriangleIcon, CheckBadgeIcon, CheckCircleIcon } from '@heroi
 import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
+import Toast from '../shared/Toast'
 import { CITIES } from '../../data/mockData'
 import api from '../../services/api'
 
@@ -128,6 +129,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
   const [apiError, setApiError]                     = useState(null)
   const [materialGroups, setMaterialGroups]         = useState([])
   const [proposedByNames, setProposedByNames]       = useState([])
+  const [toast, setToast]                           = useState(null)
 
   useEffect(() => {
     api.get('/users/approvers').then(r => setAvailableApprovers(r.data)).catch(() => {})
@@ -195,11 +197,16 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
     setApiError(null)
     try {
       if (editingRequest) {
+        const name = editingRequest.vendorName
         await workflow.resubmit(editingRequest.id, form)
+        setShowForm(false)
+        setToast({ type: 'success', title: 'Revision Submitted', body: `Your updated request for ${name} has been resubmitted for approval.` })
       } else {
+        const name = form.vendorName
         await workflow.createRequest(form, selectedApprovers)
+        setShowForm(false)
+        setToast({ type: 'success', title: 'Request Submitted', body: `Your vendor registration request for ${name} has been submitted for approval.` })
       }
-      setShowForm(false)
     } catch (err) {
       const detail = err.response?.data
       if (Array.isArray(detail))           setApiError(detail.join(' '))
@@ -584,6 +591,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
           </div>
         </Modal>
       )}
+
+      {toast && <Toast type={toast.type} title={toast.title} body={toast.body} onClose={() => setToast(null)} />}
     </div>
   )
 }
