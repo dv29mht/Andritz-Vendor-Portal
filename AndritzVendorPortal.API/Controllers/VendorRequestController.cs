@@ -461,6 +461,79 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // PUT /api/vendor-requests/{id}/buyer-update
+    // Buyer updates a Completed request after SAP code is assigned.
+    // Status stays Completed; vendor code is preserved.
+    // Records a revision entry so FinalApprover/Admin can see what changed.
+    // ─────────────────────────────────────────────────────────────────────────
+    [HttpPut("{id:int}/buyer-update")]
+    [Authorize(Roles = Roles.Buyer)]
+    public async Task<IActionResult> BuyerUpdateCompleted(int id, [FromBody] ResubmitRequestDto dto)
+    {
+        var request = await db.VendorRequests
+            .Include(r => r.ApprovalSteps)
+            .Include(r => r.RevisionHistory)
+            .FirstOrDefaultAsync(r => r.Id == id);
+
+        if (request is null)                             return NotFound();
+        if (request.CreatedByUserId != UserId())          return Forbid();
+        if (request.Status != VendorRequestStatus.Completed)
+            return BadRequest("Only Completed requests can be updated via this endpoint.");
+
+        var changes = TrackedFields
+            .Where(f => f.GetFromRequest(request) != f.GetFromDto(dto))
+            .Select(f => new FieldChangeRecord(
+                f.CamelKey, f.Label,
+                f.GetFromRequest(request),
+                f.GetFromDto(dto)))
+            .ToList();
+
+        var newRevNo  = request.RevisionNo + 1;
+        var changedBy = await db.Users.FindAsync(UserId());
+
+        var revision = new VendorRevision
+        {
+            VendorRequestId  = request.Id,
+            RevisionNo       = newRevNo,
+            ChangedByUserId  = UserId(),
+            ChangedByName    = changedBy?.FullName ?? string.Empty,
+            ChangedAt        = DateTime.UtcNow,
+            RejectionComment = null,
+            ChangesJson      = JsonSerializer.Serialize(changes, JsonOpts),
+        };
+        db.VendorRevisions.Add(revision);
+
+        request.VendorName      = dto.VendorName;
+        request.ContactPerson   = dto.ContactPerson;
+        request.Telephone       = dto.Telephone      ?? string.Empty;
+        request.GstNumber       = dto.GstNumber;
+        request.PanCard         = dto.PanCard;
+        request.AddressDetails  = dto.AddressDetails;
+        request.City            = dto.City;
+        request.Locality        = dto.Locality;
+        request.MaterialGroup   = dto.MaterialGroup  ?? string.Empty;
+        request.PostalCode      = dto.PostalCode     ?? string.Empty;
+        request.State           = dto.State          ?? string.Empty;
+        request.Country         = dto.Country        ?? "India";
+        request.Currency        = dto.Currency       ?? "INR";
+        request.PaymentTerms    = dto.PaymentTerms   ?? string.Empty;
+        request.Incoterms       = dto.Incoterms      ?? string.Empty;
+        request.Reason          = dto.Reason         ?? string.Empty;
+        request.YearlyPvo       = dto.YearlyPvo      ?? string.Empty;
+        request.IsOneTimeVendor = dto.IsOneTimeVendor ?? false;
+        request.ProposedBy      = dto.ProposedBy     ?? string.Empty;
+
+        // Status stays Completed; VendorCode stays assigned
+        request.RevisionNo = newRevNo;
+        request.UpdatedAt  = DateTime.UtcNow;
+
+        await db.SaveChangesAsync();
+
+        request.RevisionHistory.Add(revision);
+        return Ok(MapToDetail(request));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // PATCH /api/vendor-requests/{id}/classify
     // Admin-only: toggle permanent ↔ one-time on a Completed request.
     // ─────────────────────────────────────────────────────────────────────────

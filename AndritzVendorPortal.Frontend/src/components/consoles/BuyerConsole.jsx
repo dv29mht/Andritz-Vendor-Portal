@@ -196,7 +196,12 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
     setSubmitting(true)
     setApiError(null)
     try {
-      if (editingRequest) {
+      if (editingRequest && editingRequest.status === 'Completed') {
+        const name = editingRequest.vendorName
+        await workflow.updateCompleted(editingRequest.id, form)
+        setShowForm(false)
+        setToast({ type: 'success', title: 'Details Updated', body: `Vendor details for ${name} have been updated. FinalApprover and Admin have been notified.` })
+      } else if (editingRequest) {
         const name = editingRequest.vendorName
         await workflow.resubmit(editingRequest.id, form)
         setShowForm(false)
@@ -246,10 +251,18 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
             {' · '}{new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
           </p>
         </div>
-        <button className="btn-secondary flex-shrink-0" onClick={() => setViewingRequest(req)}>
-          <EyeIcon className="h-4 w-4" />
-          View
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button className="btn-secondary" onClick={() => setViewingRequest(req)}>
+            <EyeIcon className="h-4 w-4" />
+            View
+          </button>
+          {req.status === 'Completed' && (
+            <button className="btn-secondary" onClick={() => openEdit(req)}>
+              <PencilSquareIcon className="h-4 w-4" />
+              Edit
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -304,21 +317,6 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
       {/* ── Dashboard ───────────────────────────────────────────────────────── */}
       {activePage === 'dashboard' && (
         <div className="space-y-5">
-          {/* CTA banner */}
-          <div className="rounded-2xl p-6 flex items-center justify-between gap-4 text-white shadow-lg" style={{ background: 'linear-gradient(135deg, #096fb3 0%, #075d99 100%)' }}>
-            <div>
-              <h2 className="text-lg font-bold">Register a New Vendor</h2>
-              <p className="text-blue-100 text-sm mt-0.5">Submit a vendor onboarding request for multi-step approval.</p>
-            </div>
-            <button
-              className="inline-flex items-center gap-2 bg-white text-[#096fb3] font-semibold px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors text-sm flex-shrink-0 shadow-sm"
-              onClick={openCreate}
-            >
-              <PlusIcon className="h-4 w-4" />
-              New Request
-            </button>
-          </div>
-
           {/* Stat cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4">
@@ -421,7 +419,13 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
 
       {showForm && (
         <Modal
-          title={editingRequest ? `Edit & Resubmit — ${editingRequest.vendorName}` : 'New Vendor Registration Request'}
+          title={
+            editingRequest?.status === 'Completed'
+              ? `Update Vendor Details — ${editingRequest.vendorName}`
+              : editingRequest
+                ? `Edit & Resubmit — ${editingRequest.vendorName}`
+                : 'New Vendor Registration Request'
+          }
           onClose={() => setShowForm(false)}
           size="xl"
         >
@@ -566,7 +570,14 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
               </div>
             )}
 
-            {editingRequest && (
+            {editingRequest && editingRequest.status === 'Completed' && (
+              <div className="rounded-lg bg-emerald-50 ring-1 ring-emerald-200 p-3">
+                <p className="text-xs text-emerald-700">
+                  This request is already completed with SAP Vendor Code <strong>{editingRequest.vendorCode}</strong>. Saving will update the vendor details and notify the FinalApprover and Admin. The vendor code and completed status will be preserved.
+                </p>
+              </div>
+            )}
+            {editingRequest && editingRequest.status !== 'Completed' && (
               <div className="rounded-lg bg-blue-50 ring-1 ring-blue-200 p-3">
                 <p className="text-xs text-[#096fb3]">
                   The approval chain is preserved from the original request. Submitting will reset all approver decisions and increment the revision number.
@@ -580,8 +591,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
             <button className="btn-primary" onClick={handleSubmitForm} disabled={submitting}>
               <PaperAirplaneIcon className="h-4 w-4" />
               {submitting
-                ? (editingRequest ? 'Resubmitting…' : 'Submitting…')
-                : (editingRequest ? 'Update & Resubmit for Approval' : 'Submit for Approval')}
+                ? (editingRequest?.status === 'Completed' ? 'Saving…' : editingRequest ? 'Resubmitting…' : 'Submitting…')
+                : (editingRequest?.status === 'Completed' ? 'Save Updates' : editingRequest ? 'Update & Resubmit for Approval' : 'Submit for Approval')}
             </button>
           </div>
         </Modal>

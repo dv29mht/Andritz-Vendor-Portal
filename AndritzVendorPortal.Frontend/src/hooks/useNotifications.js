@@ -40,6 +40,19 @@ function deriveEvents(requests, role, userId) {
           type: 'success',
         })
       }
+
+      // Buyer post-completion updates
+      for (const rev of req.revisionHistory ?? []) {
+        if (req.status === 'Completed' && rev.changedByUserId === req.createdByUserId) {
+          events.push({
+            id: `buyer-update-${req.id}-${rev.revisionNo}`,
+            title: 'Buyer Updated Vendor Details',
+            body: `${req.createdByName} updated details for ${req.vendorName}`,
+            timestamp: new Date(rev.changedAt).getTime(),
+            type: 'info',
+          })
+        }
+      }
     }
   } else if (role === 'Buyer') {
     // Buyer sees events on their own requests
@@ -102,6 +115,21 @@ function deriveEvents(requests, role, userId) {
           timestamp: new Date(myStep.decidedAt).getTime(),
           type: myStep.decision === 'Approved' ? 'success' : 'error',
         })
+      }
+
+      // FinalApprover: notify when buyer updates a completed form they approved
+      if (role === 'FinalApprover' && req.status === 'Completed') {
+        for (const rev of req.revisionHistory ?? []) {
+          if (rev.changedByUserId === req.createdByUserId) {
+            events.push({
+              id: `buyer-update-${req.id}-${rev.revisionNo}`,
+              title: 'Buyer Updated Vendor Details',
+              body: `${req.createdByName} updated details for ${req.vendorName}`,
+              timestamp: new Date(rev.changedAt).getTime(),
+              type: 'info',
+            })
+          }
+        }
       }
     }
   }

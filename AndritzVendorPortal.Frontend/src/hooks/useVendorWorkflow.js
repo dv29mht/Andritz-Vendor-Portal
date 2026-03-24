@@ -110,6 +110,31 @@ export function useVendorWorkflow() {
     await fetchAll()
   }
 
+  const updateCompleted = async (requestId, form) => {
+    await api.put(`/vendor-requests/${requestId}/buyer-update`, {
+      vendorName:      form.vendorName,
+      contactPerson:   form.contactPerson,
+      telephone:       form.telephone      || null,
+      gstNumber:       form.gstNumber,
+      panCard:         form.panCard,
+      addressDetails:  form.addressDetails,
+      city:            form.city,
+      locality:        form.locality,
+      materialGroup:   form.materialGroup  || null,
+      postalCode:      form.postalCode     || null,
+      state:           form.state          || null,
+      country:         form.country        || null,
+      currency:        form.currency       || null,
+      paymentTerms:    form.paymentTerms   || null,
+      incoterms:       form.incoterms      || null,
+      reason:          form.reason         || null,
+      yearlyPvo:       form.yearlyPvo      || null,
+      isOneTimeVendor: form.isOneTimeVendor ?? false,
+      proposedBy:      form.proposedBy     || null,
+    })
+    await fetchAll()
+  }
+
   // ── Approver actions ─────────────────────────────────────────────────────
 
   const approveStep = async (requestId, comment) => {
@@ -139,6 +164,7 @@ export function useVendorWorkflow() {
     createRequest,
     submit,
     resubmit,
+    updateCompleted,
     approveStep,
     reject,
     complete,

@@ -334,6 +334,7 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
 export default function UserManagement() {
   const [users, setUsers]           = useState([])
   const [loading, setLoading]       = useState(true)
+  const [fetchError, setFetchError] = useState(null)
   const [search, setSearch]         = useState('')
   const [showForm, setShowForm]     = useState(false)
   const [form, setForm]             = useState(EMPTY_FORM)
@@ -347,9 +348,12 @@ export default function UserManagement() {
 
   const fetchUsers = async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const { data } = await api.get('/users')
       setUsers(data)
+    } catch {
+      setFetchError('Could not load users. The server may be starting up — please retry in a moment.')
     } finally {
       setLoading(false)
     }
@@ -597,10 +601,21 @@ export default function UserManagement() {
             {loading && (
               <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">Loading users…</td></tr>
             )}
-            {!loading && visible.length === 0 && (
+            {!loading && fetchError && (
+              <tr>
+                <td colSpan={6} className="px-4 py-10 text-center">
+                  <p className="text-sm text-red-600 mb-3">{fetchError}</p>
+                  <button onClick={fetchUsers} className="btn-primary !text-xs !py-1.5 !px-4">
+                    <ArrowPathIcon className="h-3.5 w-3.5" />
+                    Retry
+                  </button>
+                </td>
+              </tr>
+            )}
+            {!loading && !fetchError && visible.length === 0 && (
               <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">No users match the search.</td></tr>
             )}
-            {!loading && visible.map(user => {
+            {!loading && !fetchError && visible.map(user => {
               const primaryRole = user.roles[0]
               const consoleLabel = CONSOLE_LABEL[primaryRole] ?? '—'
               const hasEmailGuard = primaryRole === 'FinalApprover'

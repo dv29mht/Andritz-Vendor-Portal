@@ -81,7 +81,7 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
           {!collapsed && (
             <div className="min-w-0">
               <p className="text-white leading-none"
-                style={{ fontFamily: "'Barlow Condensed', 'Arial Black', Arial, sans-serif", fontWeight: 900, fontSize: '17px', letterSpacing: '0.12em' }}>
+                style={{ fontFamily: "'Barlow Condensed', 'Arial Black', Arial, sans-serif", fontWeight: 800, fontSize: '18px', letterSpacing: '0.06em', WebkitFontSmoothing: 'antialiased' }}>
                 ANDRITZ
               </p>
               <div className="flex items-center gap-1.5 mt-1.5">

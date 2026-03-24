@@ -353,18 +353,13 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 View all →
               </button>
             </div>
-            <table className="w-full table-fixed divide-y divide-gray-100 text-sm">
-              <colgroup>
-                <col className="w-[40%]" />
-                <col className="w-[25%]" />
-                <col className="w-[20%]" />
-                <col className="w-[15%]" />
-              </colgroup>
+            <table className="w-full divide-y divide-gray-100 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  {['Vendor Name', 'Buyer', 'Status', 'Updated'].map(h => (
-                    <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
-                  ))}
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-40">Buyer</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-36">Status</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28 whitespace-nowrap">Updated</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 bg-white">
@@ -373,11 +368,11 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 )}
                 {recentRequests.map(req => (
                   <tr key={req.id} className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => setViewingRequest(req)}>
-                    <td className="px-5 py-3 truncate">
-                      <p className="font-medium text-gray-900 truncate">{req.vendorName}</p>
-                      {req.vendorCode && <p className="text-xs text-emerald-600 font-mono truncate">{req.vendorCode}</p>}
+                    <td className="px-5 py-3">
+                      <p className="font-medium text-gray-900">{req.vendorName}</p>
+                      {req.vendorCode && <p className="text-xs text-emerald-600 font-mono">{req.vendorCode}</p>}
                     </td>
-                    <td className="px-5 py-3 text-gray-500 truncate">{req.createdByName}</td>
+                    <td className="px-5 py-3 text-gray-500 whitespace-nowrap">{req.createdByName}</td>
                     <td className="px-5 py-3"><StatusBadge status={req.status} /></td>
                     <td className="px-5 py-3 text-gray-400 text-xs whitespace-nowrap">{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</td>
                   </tr>
