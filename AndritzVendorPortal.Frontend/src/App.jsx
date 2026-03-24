@@ -80,21 +80,9 @@ function WelcomeScreen({ user, onDone }) {
 // ── Main App ──────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const { currentUser, isAuthenticated, logout, updateUser } = useAuth()
+  const { currentUser, isAuthenticated, logout, updateUser, showWelcome, dismissWelcome } = useAuth()
   const workflow = useVendorWorkflow()
-  const [showWelcome, setShowWelcome] = useState(false)
-  const [activePage,  setActivePage]  = useState('dashboard')
-  // Track previous auth value synchronously to detect the login transition
-  // during render (before paint), eliminating the one-frame dashboard flash.
-  const [prevIsAuth, setPrevIsAuth] = useState(isAuthenticated)
-
-  if (isAuthenticated !== prevIsAuth) {
-    setPrevIsAuth(isAuthenticated)
-    if (isAuthenticated) {
-      setShowWelcome(true)
-      setActivePage('dashboard')
-    }
-  }
+  const [activePage, setActivePage] = useState('dashboard')
 
   if (!isAuthenticated) return <Login />
 
@@ -121,7 +109,7 @@ export default function App() {
 
   return (
     <>
-      {showWelcome && <WelcomeScreen user={currentUser} onDone={() => setShowWelcome(false)} />}
+      {showWelcome && <WelcomeScreen user={currentUser} onDone={dismissWelcome} />}
       <AppShell
         workflow={workflow}
         currentUser={currentUser}
