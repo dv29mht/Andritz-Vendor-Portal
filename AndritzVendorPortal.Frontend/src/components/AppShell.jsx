@@ -34,6 +34,7 @@ const NAV = {
     { id: 'requests',  label: 'All Requests',     icon: TableCellsIcon },
     { id: 'vendors',   label: 'Vendor Database',  icon: BuildingOfficeIcon },
     { id: 'users',     label: 'User Management',  icon: UserGroupIcon },
+    { id: 'settings',  label: 'Settings',          icon: Cog6ToothIcon },
   ],
 }
 
@@ -79,8 +80,8 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
         >
           {!collapsed && (
             <div className="min-w-0">
-              <p className="text-white font-black tracking-[0.15em] text-[15px] leading-none"
-                style={{ fontFamily: '"Arial Black", "Arial Bold", Arial, sans-serif' }}>
+              <p className="text-white leading-none"
+                style={{ fontFamily: "'Barlow Condensed', 'Arial Black', Arial, sans-serif", fontWeight: 900, fontSize: '17px', letterSpacing: '0.12em' }}>
                 ANDRITZ
               </p>
               <div className="flex items-center gap-1.5 mt-1.5">
@@ -91,8 +92,8 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
             </div>
           )}
           {collapsed && (
-            <span className="text-white font-black text-sm tracking-widest"
-              style={{ fontFamily: '"Arial Black", Arial, sans-serif' }}>A</span>
+            <span className="text-white"
+              style={{ fontFamily: "'Barlow Condensed', 'Arial Black', Arial, sans-serif", fontWeight: 900, fontSize: '15px', letterSpacing: '0.08em' }}>A</span>
           )}
           {!collapsed && (
             <button

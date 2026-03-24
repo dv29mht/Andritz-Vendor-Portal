@@ -57,8 +57,8 @@ export default function Login() {
 
         {/* Logo */}
         <div className="relative z-10">
-          <p className="text-white font-black tracking-[0.25em] leading-none"
-            style={{ fontSize: '1.6rem', fontFamily: '"Arial Black", "Arial Bold", Arial, sans-serif' }}>
+          <p className="text-white leading-none"
+            style={{ fontFamily: "'Barlow Condensed', 'Arial Black', Arial, sans-serif", fontWeight: 900, fontSize: '1.9rem', letterSpacing: '0.16em' }}>
             ANDRITZ
           </p>
           <div className="flex items-center gap-2 mt-1.5">
@@ -103,7 +103,7 @@ export default function Login() {
         {/* Mobile header */}
         <div className="lg:hidden flex items-center gap-3 px-6 py-4"
           style={{ background: '#064e80' }}>
-          <span className="text-white font-extrabold text-lg tracking-[0.2em]">ANDRITZ</span>
+          <span className="text-white" style={{ fontFamily: "'Barlow Condensed', 'Arial Black', Arial, sans-serif", fontWeight: 900, fontSize: '1.1rem', letterSpacing: '0.14em' }}>ANDRITZ</span>
           <span className="text-[#096fb3] font-extrabold text-lg tracking-widest">KYC</span>
           <div className="h-4 w-px bg-white/20 mx-1" />
           <span className="text-white/60 text-sm">Vendor Onboarding &amp; Compliance</span>

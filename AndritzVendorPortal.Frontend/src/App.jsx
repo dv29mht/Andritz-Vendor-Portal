@@ -57,8 +57,8 @@ function WelcomeScreen({ user, onDone }) {
         }}
       >
         <div className="text-center mb-10">
-          <p className="text-white font-black tracking-[0.3em] mb-1"
-            style={{ fontSize: '2rem', fontFamily: '"Arial Black", "Arial Bold", Arial, sans-serif', letterSpacing: '0.3em' }}>
+          <p className="text-white mb-1"
+            style={{ fontFamily: "'Barlow Condensed', 'Arial Black', Arial, sans-serif", fontWeight: 900, fontSize: '2.4rem', letterSpacing: '0.18em' }}>
             ANDRITZ
           </p>
           <div className="flex items-center justify-center gap-2">

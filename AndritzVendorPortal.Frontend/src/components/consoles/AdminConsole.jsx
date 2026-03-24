@@ -353,7 +353,13 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 View all →
               </button>
             </div>
-            <table className="min-w-full divide-y divide-gray-100 text-sm">
+            <table className="w-full table-fixed divide-y divide-gray-100 text-sm">
+              <colgroup>
+                <col className="w-[40%]" />
+                <col className="w-[25%]" />
+                <col className="w-[20%]" />
+                <col className="w-[15%]" />
+              </colgroup>
               <thead className="bg-gray-50">
                 <tr>
                   {['Vendor Name', 'Buyer', 'Status', 'Updated'].map(h => (
@@ -367,13 +373,13 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 )}
                 {recentRequests.map(req => (
                   <tr key={req.id} className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => setViewingRequest(req)}>
-                    <td className="px-5 py-3">
-                      <p className="font-medium text-gray-900">{req.vendorName}</p>
-                      {req.vendorCode && <p className="text-xs text-emerald-600 font-mono">{req.vendorCode}</p>}
+                    <td className="px-5 py-3 truncate">
+                      <p className="font-medium text-gray-900 truncate">{req.vendorName}</p>
+                      {req.vendorCode && <p className="text-xs text-emerald-600 font-mono truncate">{req.vendorCode}</p>}
                     </td>
-                    <td className="px-5 py-3 text-gray-500">{req.createdByName}</td>
+                    <td className="px-5 py-3 text-gray-500 truncate">{req.createdByName}</td>
                     <td className="px-5 py-3"><StatusBadge status={req.status} /></td>
-                    <td className="px-5 py-3 text-gray-400 text-xs">{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</td>
+                    <td className="px-5 py-3 text-gray-400 text-xs whitespace-nowrap">{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</td>
                   </tr>
                 ))}
               </tbody>
@@ -387,22 +393,6 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
       {/* ── All Requests ──────────────────────────────────────────────────── */}
       {activePage === 'requests' && (
         <>
-          {/* Stat cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
-            {STAT_CARDS.map(({ label, key, icon: Icon, bg, text, ic, noFilter }) => (
-              <button
-                key={key}
-                onClick={() => !noFilter && setFilterStatus(key === 'total' ? 'All' : (STAT_KEY_TO_FILTER[key] ?? 'All'))}
-                className={`card px-3 py-3.5 flex flex-col items-center gap-1.5 ${bg} text-center w-full
-                            ${noFilter ? 'cursor-default' : 'hover:ring-2 hover:ring-slate-600'} transition-all`}
-              >
-                <Icon className={`h-6 w-6 ${ic} flex-shrink-0`} />
-                <p className="text-xl font-bold text-gray-900 leading-none">{stats[key]}</p>
-                <p className={`text-xs font-medium ${text} leading-tight`}>{label}</p>
-              </button>
-            ))}
-          </div>
-
           {/* Filters */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
             <div className="relative flex-1 min-w-0 max-w-xs">
