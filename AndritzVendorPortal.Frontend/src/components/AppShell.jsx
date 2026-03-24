@@ -45,19 +45,6 @@ const ROLE_LABELS = {
 const getInitials = (name = '') =>
   name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase()
 
-// Inline SVG logo mark — stylised "A" with slash accent
-function AndritzMark({ size = 28 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="28" height="28" rx="5" fill="#096fb3" />
-      <text x="14" y="21" textAnchor="middle" fill="white"
-        fontSize="16" fontWeight="900" fontFamily="Arial Black, Arial, sans-serif">A</text>
-      {/* lightning slash */}
-      <line x1="17" y1="6" x2="14" y2="13" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
-}
-
 export default function AppShell({ workflow, currentUser, onLogout, activePage, setActivePage, children }) {
   const role = currentUser.role
   const navItems = NAV[role] ?? []
@@ -72,39 +59,44 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
   const mainML   = collapsed ? 'ml-14' : 'ml-56'
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#f1f5f9' }}>
+    <div className="flex min-h-screen bg-[#f1f5f9]">
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       <aside
         className={`${sidebarW} fixed inset-y-0 left-0 z-30 flex flex-col transition-all duration-200`}
-        style={{ background: '#0f172a' }}
+        style={{ background: '#096fb3' }}
       >
         {/* Logo */}
-        <div className={`flex items-center border-b border-white/10 h-16 flex-shrink-0 ${
+        <div className={`flex items-center border-b border-white/20 h-16 flex-shrink-0 ${
           collapsed ? 'justify-center px-0' : 'justify-between px-4'
         }`}>
           {!collapsed && (
-            <div className="flex items-center gap-2.5 min-w-0">
-              <AndritzMark size={30} />
-              <div className="min-w-0">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-white font-extrabold tracking-[0.18em] text-sm leading-none">ANDRITZ</span>
-                  <span className="text-[#096fb3] font-extrabold text-sm leading-none tracking-widest">KYC</span>
-                </div>
-                <p className="text-white/30 text-[8.5px] tracking-wider uppercase mt-0.5 leading-none">
-                  Vendor Onboarding &amp; Compliance
-                </p>
+            <div className="min-w-0">
+              {/* ANDRITZ wordmark — full bold text, no icon */}
+              <p className="text-white font-black tracking-[0.15em] text-[15px] leading-none"
+                style={{ fontFamily: '"Arial Black", "Arial Bold", Arial, sans-serif' }}>
+                ANDRITZ
+              </p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="text-white/60 text-[9px] font-bold tracking-[0.35em] uppercase">KYC</span>
+                <span className="text-white/30 text-[8px]">·</span>
+                <span className="text-white/40 text-[8px] tracking-wider uppercase">Vendor Onboarding</span>
               </div>
             </div>
           )}
-          {collapsed && <AndritzMark size={28} />}
-          <button
-            onClick={() => setCollapsed(c => !c)}
-            className={`p-1.5 rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0 ${collapsed ? 'hidden' : ''}`}
-            title="Collapse sidebar"
-          >
-            <ChevronLeftIcon className="h-4 w-4" />
-          </button>
+          {collapsed && (
+            <span className="text-white font-black text-xs tracking-widest"
+              style={{ fontFamily: '"Arial Black", Arial, sans-serif' }}>A</span>
+          )}
+          {!collapsed && (
+            <button
+              onClick={() => setCollapsed(true)}
+              className="p-1.5 rounded-md text-white/50 hover:text-white hover:bg-white/15 transition-colors flex-shrink-0"
+              title="Collapse sidebar"
+            >
+              <ChevronLeftIcon className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         {/* Nav items */}
@@ -120,8 +112,8 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
                   collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
                 } ${
                   isActive
-                    ? 'bg-[#096fb3] text-white shadow-md'
-                    : 'text-white/55 hover:text-white hover:bg-white/8'
+                    ? 'bg-white text-[#096fb3] shadow-sm font-semibold'
+                    : 'text-white/70 hover:text-white hover:bg-white/15'
                 }`}
               >
                 <Icon className="h-[18px] w-[18px] flex-shrink-0" />
@@ -132,10 +124,10 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
         </nav>
 
         {/* Sign out */}
-        <div className="px-2 py-3 border-t border-white/10">
+        <div className="px-2 py-3 border-t border-white/20">
           {collapsed && (
             <div className="flex justify-center mb-2">
-              <div className="w-7 h-7 rounded-md bg-white/10 flex items-center justify-center text-white text-[10px] font-bold">
+              <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white text-[10px] font-bold">
                 {getInitials(currentUser.name)}
               </div>
             </div>
@@ -143,7 +135,7 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
           <button
             onClick={onLogout}
             title={collapsed ? 'Sign out' : undefined}
-            className={`w-full flex items-center gap-2.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 text-xs font-medium transition-all py-2 ${
+            className={`w-full flex items-center gap-2.5 rounded-lg text-white/50 hover:text-white hover:bg-white/15 text-xs font-medium transition-all py-2 ${
               collapsed ? 'justify-center px-0' : 'px-3'
             }`}
           >
@@ -173,33 +165,26 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
             <div className="flex items-center gap-2 text-sm">
               <span className="text-gray-400 text-xs font-medium">{ROLE_LABELS[role] ?? role}</span>
               <ChevronRightIcon className="h-3 w-3 text-gray-300" />
-              <span className="font-semibold text-gray-900 text-sm">{activeItem?.label ?? 'Dashboard'}</span>
+              <span className="font-semibold text-gray-900">{activeItem?.label ?? 'Dashboard'}</span>
             </div>
           </div>
 
-          {/* Right: role badge + user avatar + notification bell */}
+          {/* Right: role badge + user avatar + notification */}
           <div className="flex items-center gap-3">
-            {/* Role badge */}
             <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold text-white"
               style={{ background: '#096fb3' }}>
               {ROLE_LABELS[role] ?? role}
             </span>
-
-            {/* User avatar + name */}
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                 style={{ background: '#096fb3' }}>
                 {getInitials(currentUser.name)}
               </div>
-              <span className="hidden md:block text-sm font-medium text-gray-700 leading-none">
+              <span className="hidden md:block text-sm font-medium text-gray-700">
                 {currentUser.name}
               </span>
             </div>
-
-            {/* Divider */}
             <div className="w-px h-5 bg-gray-200" />
-
-            {/* Notification bell */}
             <NotificationBell
               notifications={notifications}
               unreadCount={unreadCount}

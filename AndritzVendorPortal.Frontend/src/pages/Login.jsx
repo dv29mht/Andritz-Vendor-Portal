@@ -57,22 +57,14 @@ export default function Login() {
 
         {/* Logo */}
         <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <svg width="36" height="36" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="28" height="28" rx="5" fill="#096fb3" />
-              <text x="14" y="21" textAnchor="middle" fill="white"
-                fontSize="16" fontWeight="900" fontFamily="Arial Black, Arial, sans-serif">A</text>
-              <line x1="17" y1="6" x2="14" y2="13" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            <div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-white font-extrabold text-xl tracking-[0.2em] leading-none">ANDRITZ</span>
-                <span className="text-[#096fb3] font-extrabold text-xl leading-none tracking-widest">KYC</span>
-              </div>
-              <p className="text-white/35 text-[9px] tracking-[0.25em] uppercase mt-0.5">
-                Vendor Onboarding &amp; Compliance
-              </p>
-            </div>
+          <p className="text-white font-black tracking-[0.25em] leading-none"
+            style={{ fontSize: '1.6rem', fontFamily: '"Arial Black", "Arial Bold", Arial, sans-serif' }}>
+            ANDRITZ
+          </p>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="text-white/50 text-[9px] font-bold tracking-[0.5em] uppercase">KYC</span>
+            <span className="text-white/20 text-[8px]">·</span>
+            <span className="text-white/35 text-[8.5px] tracking-wider">Vendor Onboarding &amp; Compliance</span>
           </div>
         </div>
 

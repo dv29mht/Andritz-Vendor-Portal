@@ -56,25 +56,22 @@ function WelcomeScreen({ user, onDone }) {
           transform:  phase >= 1 ? 'translateY(0)' : 'translateY(24px)',
         }}
       >
-        <div className="flex items-center justify-center gap-3 mb-10">
-          <svg width="40" height="40" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="28" height="28" rx="5" fill="#096fb3" />
-            <text x="14" y="21" textAnchor="middle" fill="white"
-              fontSize="16" fontWeight="900" fontFamily="Arial Black, Arial, sans-serif">A</text>
-            <line x1="17" y1="6" x2="14" y2="13" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          <div className="text-left">
-            <div className="flex items-baseline gap-2">
-              <span className="text-white font-extrabold text-2xl tracking-[0.25em] leading-none">ANDRITZ</span>
-              <span className="text-[#096fb3] font-extrabold text-2xl leading-none tracking-widest">KYC</span>
-            </div>
-            <p className="text-white/30 text-[9px] tracking-[0.25em] uppercase mt-1">Vendor Onboarding &amp; Compliance</p>
+        <div className="text-center mb-10">
+          <p className="text-white font-black tracking-[0.3em] mb-1"
+            style={{ fontSize: '2rem', fontFamily: '"Arial Black", "Arial Bold", Arial, sans-serif', letterSpacing: '0.3em' }}>
+            ANDRITZ
+          </p>
+          <div className="flex items-center justify-center gap-2">
+            <div className="h-px w-10 bg-white/20" />
+            <span className="text-white/60 text-xs font-bold tracking-[0.5em] uppercase">KYC</span>
+            <div className="h-px w-10 bg-white/20" />
           </div>
+          <p className="text-white/30 text-[9px] tracking-[0.2em] uppercase mt-1.5">Vendor Onboarding &amp; Compliance</p>
         </div>
         <p className="text-white/50 text-sm font-medium uppercase tracking-[0.3em] mb-3">Welcome back</p>
         <h1 className="text-white font-bold mb-4" style={{ fontSize: '2.2rem' }}>{user.name}</h1>
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-white text-sm font-semibold mb-12 bg-white/10 border border-white/20">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#096fb3]" />
+          <div className="w-1.5 h-1.5 rounded-full bg-white/70" />
           {roleLabel}
         </div>
         <div className="w-48 mx-auto h-0.5 bg-white/10 rounded-full overflow-hidden">
