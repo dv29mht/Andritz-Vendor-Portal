@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useAuth } from './contexts/AuthContext'
 import { useVendorWorkflow } from './hooks/useVendorWorkflow'
 import Login from './pages/Login'
@@ -84,15 +84,17 @@ export default function App() {
   const workflow = useVendorWorkflow()
   const [showWelcome, setShowWelcome] = useState(false)
   const [activePage,  setActivePage]  = useState('dashboard')
-  const prevAuth = useRef(false)
+  // Track previous auth value synchronously to detect the login transition
+  // during render (before paint), eliminating the one-frame dashboard flash.
+  const [prevIsAuth, setPrevIsAuth] = useState(isAuthenticated)
 
-  useEffect(() => {
-    if (isAuthenticated && !prevAuth.current) {
+  if (isAuthenticated !== prevIsAuth) {
+    setPrevIsAuth(isAuthenticated)
+    if (isAuthenticated) {
       setShowWelcome(true)
       setActivePage('dashboard')
     }
-    prevAuth.current = isAuthenticated
-  }, [isAuthenticated])
+  }
 
   if (!isAuthenticated) return <Login />
 

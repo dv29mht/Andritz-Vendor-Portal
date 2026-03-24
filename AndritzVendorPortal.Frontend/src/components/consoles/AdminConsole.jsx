@@ -55,8 +55,7 @@ function buildStats(requests) {
 function buildMaterialData(requests) {
   const counts = {}
   requests.forEach(r => {
-    const key = r.materialGroup?.trim()
-    if (!key) return  // skip requests with no material group
+    const key = r.materialGroup?.trim() || 'Unspecified'
     counts[key] = (counts[key] ?? 0) + 1
   })
   return Object.entries(counts)
