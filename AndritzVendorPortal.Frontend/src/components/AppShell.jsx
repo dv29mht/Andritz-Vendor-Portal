@@ -51,7 +51,7 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
   const activeItem = navItems.find(n => n.id === activePage)
   const [collapsed, setCollapsed] = useState(false)
 
-  const { notifications, unreadCount, markAllRead } = useNotifications(
+  const { notifications, unreadCount, markOneRead, markAllRead } = useNotifications(
     workflow.requests, currentUser.id, role
   )
 
@@ -157,6 +157,7 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
           <NotificationBell
             notifications={notifications}
             unreadCount={unreadCount}
+            onMarkOneRead={markOneRead}
             onMarkAllRead={markAllRead}
             label="Notifications"
           />

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { BellIcon } from '@heroicons/react/24/outline'
+import { BellIcon, CheckIcon } from '@heroicons/react/24/outline'
 import { BellAlertIcon } from '@heroicons/react/24/solid'
 
 function timeAgo(ts) {
@@ -19,7 +19,7 @@ const DOT = {
   info:    'bg-blue-400',
 }
 
-export default function NotificationBell({ notifications, unreadCount, onMarkAllRead, label = 'Notifications', variant = 'dark' }) {
+export default function NotificationBell({ notifications, unreadCount, onMarkOneRead, onMarkAllRead, label = 'Notifications', variant = 'dark' }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const isLight = variant === 'light'
@@ -33,18 +33,11 @@ export default function NotificationBell({ notifications, unreadCount, onMarkAll
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const handleToggle = () => {
-    const next = !open
-    setOpen(next)
-    // Mark all read when opening if there are unread
-    if (next && unreadCount > 0) onMarkAllRead()
-  }
-
   return (
     <div className="relative" ref={ref}>
       {/* Bell button */}
       <button
-        onClick={handleToggle}
+        onClick={() => setOpen(o => !o)}
         className={`relative p-2 rounded-lg transition-colors ${
           isLight
             ? 'text-white/80 hover:text-white hover:bg-white/15'
@@ -68,8 +61,15 @@ export default function NotificationBell({ notifications, unreadCount, onMarkAll
         <div className="absolute right-0 top-11 w-80 bg-white rounded-xl shadow-xl ring-1 ring-black/5 z-50 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
-            <h3 className="text-sm font-semibold text-gray-900">{label}</h3>
-            {notifications.length > 0 && (
+            <h3 className="text-sm font-semibold text-gray-900">
+              {label}
+              {unreadCount > 0 && (
+                <span className="ml-2 inline-flex items-center justify-center h-4 min-w-[1rem] rounded-full bg-red-500 text-white text-[10px] font-bold px-1">
+                  {unreadCount}
+                </span>
+              )}
+            </h3>
+            {unreadCount > 0 && (
               <button
                 onClick={onMarkAllRead}
                 className="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
@@ -99,6 +99,15 @@ export default function NotificationBell({ notifications, unreadCount, onMarkAll
                     <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.body}</p>
                     <p className="text-[11px] text-gray-400 mt-1">{timeAgo(n.timestamp)}</p>
                   </div>
+                  {n.isUnread && (
+                    <button
+                      onClick={() => onMarkOneRead(n.id)}
+                      title="Mark as read"
+                      className="flex-shrink-0 mt-1 p-1 rounded-full text-blue-400 hover:text-blue-600 hover:bg-blue-100 transition-colors"
+                    >
+                      <CheckIcon className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

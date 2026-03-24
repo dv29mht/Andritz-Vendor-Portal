@@ -55,7 +55,8 @@ function buildStats(requests) {
 function buildMaterialData(requests) {
   const counts = {}
   requests.forEach(r => {
-    const key = r.materialGroup?.trim() || 'Unspecified'
+    const key = r.materialGroup?.trim()
+    if (!key) return  // skip requests with no material group
     counts[key] = (counts[key] ?? 0) + 1
   })
   return Object.entries(counts)
@@ -292,44 +293,6 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
             ))}
           </div>
 
-          {/* Recent requests */}
-          <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-900">Recent Requests</h3>
-              <button
-                className="text-xs text-slate-600 hover:text-slate-800 font-medium transition-colors"
-                onClick={() => onNavigate('requests')}
-              >
-                View all →
-              </button>
-            </div>
-            <table className="min-w-full divide-y divide-gray-100 text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  {['Vendor Name', 'Buyer', 'Status', 'Updated'].map(h => (
-                    <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 bg-white">
-                {recentRequests.length === 0 && (
-                  <tr><td colSpan={4} className="px-5 py-8 text-center text-sm text-gray-400">No requests yet.</td></tr>
-                )}
-                {recentRequests.map(req => (
-                  <tr key={req.id} className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => setViewingRequest(req)}>
-                    <td className="px-5 py-3">
-                      <p className="font-medium text-gray-900">{req.vendorName}</p>
-                      {req.vendorCode && <p className="text-xs text-emerald-600 font-mono">{req.vendorCode}</p>}
-                    </td>
-                    <td className="px-5 py-3 text-gray-500">{req.createdByName}</td>
-                    <td className="px-5 py-3"><StatusBadge status={req.status} /></td>
-                    <td className="px-5 py-3 text-gray-400 text-xs">{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
           {/* Charts row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
@@ -378,6 +341,44 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 </ResponsiveContainer>
               </div>
             </div>
+          </div>
+
+          {/* Recent requests */}
+          <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-900">Recent Requests</h3>
+              <button
+                className="text-xs text-slate-600 hover:text-slate-800 font-medium transition-colors"
+                onClick={() => onNavigate('requests')}
+              >
+                View all →
+              </button>
+            </div>
+            <table className="min-w-full divide-y divide-gray-100 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  {['Vendor Name', 'Buyer', 'Status', 'Updated'].map(h => (
+                    <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50 bg-white">
+                {recentRequests.length === 0 && (
+                  <tr><td colSpan={4} className="px-5 py-8 text-center text-sm text-gray-400">No requests yet.</td></tr>
+                )}
+                {recentRequests.map(req => (
+                  <tr key={req.id} className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => setViewingRequest(req)}>
+                    <td className="px-5 py-3">
+                      <p className="font-medium text-gray-900">{req.vendorName}</p>
+                      {req.vendorCode && <p className="text-xs text-emerald-600 font-mono">{req.vendorCode}</p>}
+                    </td>
+                    <td className="px-5 py-3 text-gray-500">{req.createdByName}</td>
+                    <td className="px-5 py-3"><StatusBadge status={req.status} /></td>
+                    <td className="px-5 py-3 text-gray-400 text-xs">{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
         </div>

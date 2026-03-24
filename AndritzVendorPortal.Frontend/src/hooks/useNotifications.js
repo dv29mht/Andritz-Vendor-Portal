@@ -113,30 +113,48 @@ function deriveEvents(requests, role, userId) {
 }
 
 export function useNotifications(requests, userId, role) {
-  const storageKey = `lastSeen_${userId}`
+  const storageKey = `readNotifIds_${userId}`
 
-  const [lastSeen, setLastSeen] = useState(() =>
-    parseInt(localStorage.getItem(storageKey) ?? '0', 10)
-  )
+  const loadReadIds = () => {
+    try {
+      const raw = localStorage.getItem(storageKey)
+      if (!raw) return new Set()
+      return new Set(JSON.parse(raw))
+    } catch { return new Set() }
+  }
+
+  const [readIds, setReadIds] = useState(loadReadIds)
 
   const events = useMemo(
     () => deriveEvents(requests, role, userId),
     [requests, role, userId]
   )
 
-  // Attach isUnread flag for rendering
   const annotated = useMemo(
-    () => events.map(e => ({ ...e, isUnread: e.timestamp > lastSeen })),
-    [events, lastSeen]
+    () => events.map(e => ({ ...e, isUnread: !readIds.has(e.id) })),
+    [events, readIds]
   )
 
   const unreadCount = annotated.filter(e => e.isUnread).length
 
-  const markAllRead = useCallback(() => {
-    const now = Date.now()
-    localStorage.setItem(storageKey, now.toString())
-    setLastSeen(now)
+  const markOneRead = useCallback((id) => {
+    setReadIds(prev => {
+      if (prev.has(id)) return prev
+      const next = new Set(prev)
+      next.add(id)
+      localStorage.setItem(storageKey, JSON.stringify([...next]))
+      return next
+    })
   }, [storageKey])
 
-  return { notifications: annotated, unreadCount, markAllRead }
+  const markAllRead = useCallback(() => {
+    setReadIds(prev => {
+      const allIds = events.map(e => e.id)
+      const next = new Set([...prev, ...allIds])
+      localStorage.setItem(storageKey, JSON.stringify([...next]))
+      return next
+    })
+  }, [storageKey, events])
+
+  return { notifications: annotated, unreadCount, markOneRead, markAllRead }
 }
