@@ -76,7 +76,7 @@ function ApprovalChainBuilder({ approvers, selected, onChange, error }) {
           )}
           {selected.map((s, i) => (
             <div key={s.id} className="flex items-center gap-3 px-4 py-2.5 bg-white">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">{i + 1}</span>
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#096fb3]/10 text-[#096fb3] text-xs font-bold flex items-center justify-center">{i + 1}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800">{s.name}</p>
                 <p className="text-xs text-gray-400">{s.email}</p>
@@ -305,13 +305,13 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
       {activePage === 'dashboard' && (
         <div className="space-y-5">
           {/* CTA banner */}
-          <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-6 flex items-center justify-between gap-4 text-white shadow-lg">
+          <div className="rounded-2xl p-6 flex items-center justify-between gap-4 text-white shadow-lg" style={{ background: 'linear-gradient(135deg, #096fb3 0%, #075d99 100%)' }}>
             <div>
               <h2 className="text-lg font-bold">Register a New Vendor</h2>
               <p className="text-blue-100 text-sm mt-0.5">Submit a vendor onboarding request for multi-step approval.</p>
             </div>
             <button
-              className="inline-flex items-center gap-2 bg-white text-blue-700 font-semibold px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors text-sm flex-shrink-0 shadow-sm"
+              className="inline-flex items-center gap-2 bg-white text-[#096fb3] font-semibold px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors text-sm flex-shrink-0 shadow-sm"
               onClick={openCreate}
             >
               <PlusIcon className="h-4 w-4" />
@@ -323,7 +323,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                <ClockIcon className="h-5 w-5 text-blue-600" />
+                <ClockIcon className="h-5 w-5 text-[#096fb3]" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900">{inProgressReqs.length}</p>
@@ -467,7 +467,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
               </Field>
               <Field label="" span={2}>
                 <label className="flex items-center gap-3 cursor-pointer select-none">
-                  <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-[#096fb3] focus:ring-[#096fb3]"
                     checked={form.isOneTimeVendor} onChange={e => set('isOneTimeVendor', e.target.checked)} />
                   <span className="text-sm font-medium text-gray-700">One-Time Vendor</span>
                   <span className="text-xs text-gray-400">(not added to permanent vendor master)</span>
@@ -568,7 +568,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
 
             {editingRequest && (
               <div className="rounded-lg bg-blue-50 ring-1 ring-blue-200 p-3">
-                <p className="text-xs text-blue-700">
+                <p className="text-xs text-[#096fb3]">
                   The approval chain is preserved from the original request. Submitting will reset all approver decisions and increment the revision number.
                 </p>
               </div>

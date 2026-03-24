@@ -46,7 +46,7 @@ export default function NotificationBell({ notifications, unreadCount, onMarkOne
         title={label}
       >
         {unreadCount > 0
-          ? <BellAlertIcon className={`h-5 w-5 ${isLight ? 'text-white' : 'text-blue-600'}`} />
+          ? <BellAlertIcon className={`h-5 w-5 ${isLight ? 'text-white' : 'text-[#096fb3]'}`} />
           : <BellIcon className="h-5 w-5" />
         }
         {unreadCount > 0 && (
@@ -72,7 +72,7 @@ export default function NotificationBell({ notifications, unreadCount, onMarkOne
             {unreadCount > 0 && (
               <button
                 onClick={onMarkAllRead}
-                className="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                className="text-xs text-[#096fb3] hover:text-[#075d99] font-medium transition-colors"
               >
                 Mark all read
               </button>
@@ -103,7 +103,7 @@ export default function NotificationBell({ notifications, unreadCount, onMarkOne
                     <button
                       onClick={() => onMarkOneRead(n.id)}
                       title="Mark as read"
-                      className="flex-shrink-0 mt-1 p-1 rounded-full text-blue-400 hover:text-blue-600 hover:bg-blue-100 transition-colors"
+                      className="flex-shrink-0 mt-1 p-1 rounded-full text-[#096fb3]/60 hover:text-[#096fb3] hover:bg-[#096fb3]/10 transition-colors"
                     >
                       <CheckIcon className="h-3.5 w-3.5" />
                     </button>

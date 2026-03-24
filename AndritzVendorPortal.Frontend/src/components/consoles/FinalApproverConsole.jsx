@@ -152,7 +152,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                     </div>
                     {isAuthorizedFinalApprover && (
                       <button
-                        className="inline-flex items-center gap-1.5 rounded-md bg-[#c8102e] hover:bg-red-800 px-3 py-1.5 text-xs font-semibold text-white transition-colors flex-shrink-0"
+                        className="inline-flex items-center gap-1.5 rounded-md bg-[#096fb3] hover:bg-[#075d99] px-3 py-1.5 text-xs font-semibold text-white transition-colors flex-shrink-0"
                         onClick={() => openReview(req)}
                       >
                         <StarIcon className="h-3.5 w-3.5" />
@@ -218,7 +218,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                       </button>
                       {isAuthorizedFinalApprover && (
                         <button
-                          className="inline-flex items-center gap-1.5 rounded-md bg-[#c8102e] hover:bg-red-800 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+                          className="inline-flex items-center gap-1.5 rounded-md bg-[#096fb3] hover:bg-[#075d99] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
                           onClick={() => openReview(req)}
                         >
                           <StarIcon className="h-4 w-4" />
@@ -345,7 +345,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                 </button>
                 {isAuthorizedFinalApprover && (
                   <button
-                    className="inline-flex items-center gap-1.5 rounded-md bg-[#c8102e] hover:bg-red-800 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-[#096fb3] hover:bg-[#075d99] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
                     onClick={handleComplete}
                   >
                     <CheckBadgeIcon className="h-4 w-4" />

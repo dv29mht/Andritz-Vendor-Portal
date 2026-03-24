@@ -335,7 +335,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                       cursor={{ fill: '#f8fafc' }}
                       formatter={(v) => [v, 'Requests']}
                     />
-                    <Bar dataKey="count" fill="#c8102e" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="count" fill="#096fb3" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

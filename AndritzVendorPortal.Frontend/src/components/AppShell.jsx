@@ -70,7 +70,7 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
           {!collapsed && (
             <div className="flex items-center gap-3">
               <div className="flex flex-col gap-0.5">
-                <div className="h-2 w-1 bg-[#c8102e] rounded-sm" />
+                <div className="h-2 w-1 bg-[#096fb3] rounded-sm" />
                 <div className="h-5 w-1 bg-white rounded-sm" />
               </div>
               <div>
@@ -101,7 +101,7 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
                   collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
                 } ${
                   isActive
-                    ? 'bg-[#c8102e] text-white shadow-lg'
+                    ? 'bg-[#096fb3] text-white shadow-lg'
                     : 'text-white/55 hover:text-white hover:bg-white/10'
                 }`}
               >

@@ -66,7 +66,7 @@ export default function VendorDetailModal({ request, onClose, initialTab = 'deta
               {t.id === 'revisions' && request.revisionHistory?.length > 0 && (
                 <span className={clsx(
                   'ml-0.5 rounded-full h-4 min-w-4 px-1 text-[10px] flex items-center justify-center font-bold',
-                  isActive ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                  isActive ? 'bg-[#096fb3] text-white' : 'bg-gray-300 text-gray-600'
                 )}>
                   {request.revisionHistory.length}
                 </span>
@@ -317,7 +317,7 @@ function PreviewTab({ request }) {
       <div className="flex justify-end mb-4">
         <button
           onClick={handleDownloadPdf}
-          className="flex items-center gap-2 rounded-lg bg-[#0062AC] text-white text-sm font-semibold px-4 py-2 hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 rounded-lg bg-[#096fb3] text-white text-sm font-semibold px-4 py-2 hover:bg-[#075d99] transition-colors"
         >
           <ArrowDownTrayIcon className="h-4 w-4" />
           Download PDF
@@ -334,7 +334,7 @@ function PreviewTab({ request }) {
           {/* ── Company Header ── */}
           <div className="text-center border-b-2 border-gray-800 pb-4 mb-6">
             <div className="flex items-center justify-center gap-3 mb-1">
-              <div className="h-8 w-1.5 bg-[#c8102e]" />
+              <div className="h-8 w-1.5 bg-[#096fb3]" />
               <p className="text-2xl font-extrabold tracking-widest uppercase font-sans text-gray-900">ANDRITZ</p>
             </div>
             <p className="text-xs text-gray-500 uppercase tracking-widest font-sans">India Private Limited</p>

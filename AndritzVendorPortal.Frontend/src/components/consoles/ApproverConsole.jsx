@@ -101,7 +101,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center flex-shrink-0">
-                <ClockIcon className="h-5 w-5 text-violet-600" />
+                <ClockIcon className="h-5 w-5 text-[#096fb3]" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900">{pending.length}</p>
@@ -153,7 +153,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
                       </p>
                     </div>
                     <button
-                      className="inline-flex items-center gap-1.5 rounded-md bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors flex-shrink-0"
+                      className="inline-flex items-center gap-1.5 rounded-md bg-[#096fb3] hover:bg-[#075d99] px-3 py-1.5 text-xs font-semibold text-white transition-colors flex-shrink-0"
                       onClick={() => openReview(req)}
                     >
                       Review
@@ -208,7 +208,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
                     View
                   </button>
                   <button
-                    className="inline-flex items-center gap-1.5 rounded-md bg-violet-600 hover:bg-violet-700 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-[#096fb3] hover:bg-[#075d99] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
                     onClick={() => openReview(req)}
                   >
                     Review
@@ -340,7 +340,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
                   Reject
                 </button>
                 <button
-                  className="inline-flex items-center gap-1.5 rounded-md bg-violet-600 hover:bg-violet-700 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-[#096fb3] hover:bg-[#075d99] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
                   onClick={handleApprove}
                 >
                   <CheckIcon className="h-4 w-4" />

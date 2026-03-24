@@ -18,7 +18,7 @@ export default function ApprovalTimeline({ steps }) {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-medium text-gray-800">{step.approverName}</span>
               {step.isFinalApproval && (
-                <span className="text-xs bg-blue-50 text-blue-700 ring-1 ring-blue-200 ring-inset px-2 py-0.5 rounded-full">
+                <span className="text-xs bg-[#096fb3]/10 text-[#096fb3] ring-1 ring-[#096fb3]/20 ring-inset px-2 py-0.5 rounded-full">
                   ⭐ Final Approver
                 </span>
               )}

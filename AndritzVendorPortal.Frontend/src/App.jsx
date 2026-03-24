@@ -58,7 +58,7 @@ function WelcomeScreen({ user, onDone }) {
       >
         <div className="flex items-center justify-center gap-3 mb-10">
           <div className="flex flex-col gap-0.5">
-            <div className="h-2.5 w-1.5 bg-[#c8102e] rounded-sm" />
+            <div className="h-2.5 w-1.5 bg-[#096fb3] rounded-sm" />
             <div className="h-6 w-1.5 bg-white rounded-sm" />
           </div>
           <span className="text-white font-extrabold text-3xl tracking-[0.3em]">ANDRITZ</span>
@@ -66,11 +66,11 @@ function WelcomeScreen({ user, onDone }) {
         <p className="text-white/50 text-sm font-medium uppercase tracking-[0.3em] mb-3">Welcome back</p>
         <h1 className="text-white font-bold mb-4" style={{ fontSize: '2.2rem' }}>{user.name}</h1>
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-white text-sm font-semibold mb-12 bg-white/10 border border-white/20">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#c8102e]" />
+          <div className="w-1.5 h-1.5 rounded-full bg-[#096fb3]" />
           {roleLabel}
         </div>
         <div className="w-48 mx-auto h-0.5 bg-white/10 rounded-full overflow-hidden">
-          <div className="h-full rounded-full welcome-progress" style={{ background: 'linear-gradient(90deg, #c8102e, white)' }} />
+          <div className="h-full rounded-full welcome-progress" style={{ background: 'linear-gradient(90deg, #096fb3, white)' }} />
         </div>
       </div>
     </div>

@@ -27,10 +27,12 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center gap-1.5 rounded-md bg-blue-700 px-3.5 py-2 text-sm font-semibold text-white shadow-sm
-           hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700
+    @apply inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold text-white shadow-sm
            disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+    background-color: #096fb3;
   }
+  .btn-primary:hover:not(:disabled) { background-color: #075d99; }
+  .btn-primary:focus-visible { outline: 2px solid #096fb3; outline-offset: 2px; }
   .btn-secondary {
     @apply inline-flex items-center gap-1.5 rounded-md bg-white px-3.5 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300
            hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
@@ -46,7 +48,8 @@
   .card { @apply bg-white rounded-xl shadow-sm ring-1 ring-gray-200; }
   .form-input {
     @apply block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300
-           placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm;
+           placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm;
+    --tw-ring-color: #096fb3;
   }
   .form-label { @apply block text-sm font-medium text-gray-700 mb-1; }
 }
