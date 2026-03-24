@@ -53,35 +53,42 @@ export default function Login() {
         <div className="absolute -top-24 -right-24 w-[380px] h-[380px] rounded-full border border-white/10" />
         <div className="absolute -top-12 -right-12 w-[260px] h-[260px] rounded-full border border-white/10" />
         <div className="absolute bottom-0 left-0 w-[300px] h-[300px] rounded-full bg-white/5 -translate-x-1/2 translate-y-1/2" />
-        <div className="absolute top-1/2 right-0 w-48 h-48 rounded-full bg-[#0062AC]/40 translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute top-1/2 right-0 w-48 h-48 rounded-full bg-[#096fb3]/30 translate-x-1/2 -translate-y-1/2" />
 
         {/* Logo */}
         <div className="relative z-10">
-          <div className="flex items-center gap-3.5">
-            <div className="flex flex-col gap-0.5">
-              <div className="h-2 w-1 bg-[#e8182c] rounded-sm" />
-              <div className="h-5 w-1 bg-white rounded-sm" />
+          <div className="flex items-center gap-3">
+            <svg width="36" height="36" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="28" height="28" rx="5" fill="#096fb3" />
+              <text x="14" y="21" textAnchor="middle" fill="white"
+                fontSize="16" fontWeight="900" fontFamily="Arial Black, Arial, sans-serif">A</text>
+              <line x1="17" y1="6" x2="14" y2="13" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-white font-extrabold text-xl tracking-[0.2em] leading-none">ANDRITZ</span>
+                <span className="text-[#096fb3] font-extrabold text-xl leading-none tracking-widest">KYC</span>
+              </div>
+              <p className="text-white/35 text-[9px] tracking-[0.25em] uppercase mt-0.5">
+                Vendor Onboarding &amp; Compliance
+              </p>
             </div>
-            <span className="text-white font-extrabold text-2xl tracking-[0.25em]">ANDRITZ</span>
           </div>
-          <p className="text-white/40 text-[10px] tracking-[0.3em] uppercase mt-1.5 ml-6">
-            India Private Limited
-          </p>
         </div>
 
         {/* Main copy */}
         <div className="relative z-10">
-          <div className="w-8 h-0.5 bg-[#e8182c] mb-8" />
+          <div className="w-8 h-0.5 mb-8" style={{ background: '#096fb3' }} />
           <h1 className="text-white font-bold leading-[1.1] mb-6" style={{ fontSize: '2.8rem' }}>
-            Connecting<br />suppliers<br />worldwide.
+            Smarter<br />vendor<br />onboarding.
           </h1>
           <p className="text-white/50 text-sm leading-relaxed max-w-[280px] mb-10">
-            Streamlined vendor onboarding, multi-step approvals, and SAP code assignment — built for Andritz procurement teams.
+            Multi-step approvals, real-time tracking, and SAP vendor code assignment — all in one compliance-ready portal.
           </p>
 
           {/* Stats strip */}
           <div className="flex gap-8">
-            {[['Multi-step', 'Approval'], ['Real-time', 'Tracking'], ['SAP', 'Integration']].map(([top, bot]) => (
+            {[['Multi-step', 'Approvals'], ['Real-time', 'Tracking'], ['SAP', 'Integration']].map(([top, bot]) => (
               <div key={top}>
                 <p className="text-white text-sm font-bold">{top}</p>
                 <p className="text-white/40 text-xs">{bot}</p>
@@ -104,13 +111,10 @@ export default function Login() {
         {/* Mobile header */}
         <div className="lg:hidden flex items-center gap-3 px-6 py-4"
           style={{ background: '#0f172a' }}>
-          <div className="flex flex-col gap-0.5">
-            <div className="h-1.5 w-0.5 bg-[#e8182c] rounded-sm" />
-            <div className="h-4 w-0.5 bg-white rounded-sm" />
-          </div>
-          <span className="text-white font-extrabold text-lg tracking-widest">ANDRITZ</span>
+          <span className="text-white font-extrabold text-lg tracking-[0.2em]">ANDRITZ</span>
+          <span className="text-[#096fb3] font-extrabold text-lg tracking-widest">KYC</span>
           <div className="h-4 w-px bg-white/20 mx-1" />
-          <span className="text-white/60 text-sm">Vendor Registration Portal</span>
+          <span className="text-white/60 text-sm">Vendor Onboarding &amp; Compliance</span>
         </div>
 
         <div className="flex-1 flex items-center justify-center p-6 lg:p-16">
@@ -122,9 +126,9 @@ export default function Login() {
             {/* Heading */}
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-3">
-                <div className="h-4 w-0.5 bg-[#0062AC] rounded-full" />
-                <span className="text-[11px] font-semibold text-[#0062AC] uppercase tracking-[0.2em]">
-                  Vendor Registration Portal
+                <div className="h-4 w-0.5 rounded-full" style={{ background: '#096fb3' }} />
+                <span className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: '#096fb3' }}>
+                  Andritz KYC Portal
                 </span>
               </div>
               <h2 className="text-[1.9rem] font-bold text-gray-900 tracking-tight leading-tight">
@@ -188,7 +192,7 @@ export default function Login() {
                   type="submit"
                   disabled={loading}
                   className="w-full flex items-center justify-center gap-2 text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-150 disabled:opacity-60 mt-1"
-                  style={{ background: 'linear-gradient(135deg, #0062AC, #004f8c)' }}
+                  style={{ background: 'linear-gradient(135deg, #096fb3, #075d99)' }}
                 >
                   {loading ? (
                     <>

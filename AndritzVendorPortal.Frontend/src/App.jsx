@@ -57,11 +57,19 @@ function WelcomeScreen({ user, onDone }) {
         }}
       >
         <div className="flex items-center justify-center gap-3 mb-10">
-          <div className="flex flex-col gap-0.5">
-            <div className="h-2.5 w-1.5 bg-[#096fb3] rounded-sm" />
-            <div className="h-6 w-1.5 bg-white rounded-sm" />
+          <svg width="40" height="40" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="28" height="28" rx="5" fill="#096fb3" />
+            <text x="14" y="21" textAnchor="middle" fill="white"
+              fontSize="16" fontWeight="900" fontFamily="Arial Black, Arial, sans-serif">A</text>
+            <line x1="17" y1="6" x2="14" y2="13" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <div className="text-left">
+            <div className="flex items-baseline gap-2">
+              <span className="text-white font-extrabold text-2xl tracking-[0.25em] leading-none">ANDRITZ</span>
+              <span className="text-[#096fb3] font-extrabold text-2xl leading-none tracking-widest">KYC</span>
+            </div>
+            <p className="text-white/30 text-[9px] tracking-[0.25em] uppercase mt-1">Vendor Onboarding &amp; Compliance</p>
           </div>
-          <span className="text-white font-extrabold text-3xl tracking-[0.3em]">ANDRITZ</span>
         </div>
         <p className="text-white/50 text-sm font-medium uppercase tracking-[0.3em] mb-3">Welcome back</p>
         <h1 className="text-white font-bold mb-4" style={{ fontSize: '2.2rem' }}>{user.name}</h1>
