@@ -236,11 +236,6 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
             <h2 className="font-semibold text-gray-900">{req.vendorName}</h2>
             <StatusBadge status={req.status} />
             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{revLabel(req.revisionNo)}</span>
-            {req.revisionHistory?.length > 0 && (
-              <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">
-                {req.revisionHistory.length} revision{req.revisionHistory.length !== 1 ? 's' : ''}
-              </span>
-            )}
           </div>
           <p className="text-sm text-gray-500 mt-1">
             {req.contactPerson || req.contactInformation}

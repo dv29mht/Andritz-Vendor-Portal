@@ -5,6 +5,10 @@ import {
   TableCellsIcon, UserGroupIcon, ArrowPathIcon, TrophyIcon, NoSymbolIcon,
   PencilSquareIcon, XMarkIcon, BuildingOfficeIcon,
 } from '@heroicons/react/24/outline'
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line,
+} from 'recharts'
 import VendorDatabase from '../VendorDatabase'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
@@ -46,6 +50,38 @@ function buildStats(requests) {
     reEditRate:    pct(reEdited),
     rejectionRate: pct(rejected),
   }
+}
+
+function buildMaterialData(requests) {
+  const counts = {}
+  requests.forEach(r => {
+    const key = r.materialGroup?.trim() || 'Unspecified'
+    counts[key] = (counts[key] ?? 0) + 1
+  })
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([name, count]) => ({ name, count }))
+}
+
+function buildMonthlyData(requests) {
+  const counts = {}
+  requests.forEach(r => {
+    const d = new Date(r.createdAt)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    counts[key] = (counts[key] ?? 0) + 1
+  })
+  // Fill last 6 months even if zero
+  const months = []
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(1)
+    d.setMonth(d.getMonth() - i)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const label = d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })
+    months.push({ key, label, count: counts[key] ?? 0 })
+  }
+  return months
 }
 
 // ── Admin Edit Form Modal ─────────────────────────────────────────────────────
@@ -231,7 +267,10 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
     <div className="p-6 max-w-6xl mx-auto">
 
       {/* ── Dashboard ─────────────────────────────────────────────────────── */}
-      {activePage === 'dashboard' && (
+      {activePage === 'dashboard' && (() => {
+        const materialData = buildMaterialData(requests)
+        const monthlyData  = buildMonthlyData(requests)
+        return (
         <div className="space-y-5">
           {/* Clickable stat cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
@@ -290,8 +329,60 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
               </tbody>
             </table>
           </div>
+
+          {/* Charts row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+            {/* Monthly requests */}
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-900">Monthly Requests</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Requests submitted over the last 6 months</p>
+              </div>
+              <div className="px-4 py-4">
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={monthlyData} barSize={28} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
+                      cursor={{ fill: '#f8fafc' }}
+                      formatter={(v) => [v, 'Requests']}
+                    />
+                    <Bar dataKey="count" fill="#0f172a" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Requests by material group */}
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-900">Requests by Material Group</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Top 8 material categories</p>
+              </div>
+              <div className="px-4 py-4">
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={materialData} layout="vertical" barSize={16} margin={{ top: 0, right: 16, left: 8, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
+                      cursor={{ fill: '#f8fafc' }}
+                      formatter={(v) => [v, 'Requests']}
+                    />
+                    <Bar dataKey="count" fill="#c8102e" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
         </div>
-      )}
+        )
+      })()}
 
       {/* ── All Requests ──────────────────────────────────────────────────── */}
       {activePage === 'requests' && (
