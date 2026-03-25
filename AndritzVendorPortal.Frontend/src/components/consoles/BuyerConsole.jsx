@@ -214,7 +214,27 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
       }
     } catch (err) {
       const detail = err.response?.data
-      if (Array.isArray(detail))           setApiError(detail.join(' '))
+      // ASP.NET Core model validation returns { errors: { FieldName: ["msg"] } }
+      if (detail?.errors && typeof detail.errors === 'object') {
+        const fieldMap = {
+          VendorName: 'vendorName', ContactPerson: 'contactPerson',
+          GstNumber: 'gstNumber', PanCard: 'panCard',
+          AddressDetails: 'addressDetails', City: 'city', Locality: 'locality',
+          Telephone: 'telephone', PostalCode: 'postalCode', State: 'state',
+          MaterialGroup: 'materialGroup', Reason: 'reason',
+        }
+        const fieldErrors = {}
+        for (const [key, msgs] of Object.entries(detail.errors)) {
+          const mapped = fieldMap[key] ?? key.charAt(0).toLowerCase() + key.slice(1)
+          fieldErrors[mapped] = Array.isArray(msgs) ? msgs[0] : msgs
+        }
+        if (Object.keys(fieldErrors).length) {
+          setErrors(fieldErrors)
+          setApiError('Please fix the highlighted fields below.')
+        } else {
+          setApiError(detail.title ?? 'Request failed. Please check your entries and try again.')
+        }
+      } else if (Array.isArray(detail))           setApiError(detail.join(' '))
       else if (typeof detail === 'string') setApiError(detail)
       else if (detail?.message)            setApiError(detail.message)
       else                                 setApiError('Request failed. Please check your entries and try again.')
