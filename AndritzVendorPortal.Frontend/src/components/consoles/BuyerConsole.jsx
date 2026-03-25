@@ -209,7 +209,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
 
     // Block resubmit if buyer changed nothing
     if (editingRequest && editingRequest.status !== 'Completed' && !hasFormChanged()) {
-      setApiError('No changes detected. Please update at least one field before resubmitting.')
+      setApiError('No changes detected. Please update the required field before resubmitting.')
       return
     }
 
