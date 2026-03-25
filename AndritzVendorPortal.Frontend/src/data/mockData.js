@@ -7,6 +7,14 @@ export const CITIES = {
   Chennai:   ['Anna Nagar', 'Adyar', 'T. Nagar', 'Velachery', 'Tambaram'],
 }
 
+export const CITY_STATE_MAP = {
+  Mumbai:    'Maharashtra',
+  Pune:      'Maharashtra',
+  Delhi:     'Delhi',
+  Bengaluru: 'Karnataka',
+  Chennai:   'Tamil Nadu',
+}
+
 // ── Users (maps to .NET Identity roles) ──────────────────────────────────────
 export const USERS = {
   admin:        { id: 'admin-1',    name: 'Sunita Rao',     role: 'Admin',        email: 'sunita.rao@andritz.com' },

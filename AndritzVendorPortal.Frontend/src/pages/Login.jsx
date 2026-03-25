@@ -153,7 +153,7 @@ export default function Login() {
                     <input
                       type={showPwd ? 'text' : 'password'}
                       className="form-input pr-10"
-                      placeholder="••••••••"
+                      placeholder="Enter password"
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       required

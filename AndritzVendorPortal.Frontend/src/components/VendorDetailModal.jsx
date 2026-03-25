@@ -184,6 +184,43 @@ function InfoTable({ title, rows }) {
 
 // ── Tab: Revision History (BRD §5) ───────────────────────────────────────────
 
+function downloadRevisionCsv(request) {
+  const history = request.revisionHistory ?? []
+  const rows = [['Revision', 'Changed By', 'Changed At', 'Rejection Reason', 'Field', 'Old Value', 'New Value']]
+
+  if (history.length === 0) {
+    rows.push(['Original Submission', request.createdByName, fmtDate(request.createdAt), '', '', '', ''])
+  } else {
+    rows.push(['0 (Original)', request.createdByName, fmtDate(request.createdAt), '', '', '', ''])
+    history.forEach(entry => {
+      if (entry.changes.length === 0) {
+        rows.push([`REV ${entry.revisionNo}`, entry.changedByName, fmtDate(entry.changedAt), entry.rejectionComment ?? '', '(no field changes)', '', ''])
+      } else {
+        entry.changes.forEach((c, i) => {
+          rows.push([
+            i === 0 ? `REV ${entry.revisionNo}` : '',
+            i === 0 ? entry.changedByName : '',
+            i === 0 ? fmtDate(entry.changedAt) : '',
+            i === 0 ? (entry.rejectionComment ?? '') : '',
+            c.fieldLabel,
+            c.oldValue ?? '',
+            c.newValue ?? '',
+          ])
+        })
+      }
+    })
+  }
+
+  const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href     = url
+  a.download = `revision-history-${request.vendorName.replace(/\s+/g, '_')}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 function RevisionsTab({ request }) {
   const history = request.revisionHistory ?? []
 
@@ -201,6 +238,17 @@ function RevisionsTab({ request }) {
 
   return (
     <div className="space-y-5">
+      {/* Download button */}
+      <div className="flex justify-end -mt-1">
+        <button
+          onClick={() => downloadRevisionCsv(request)}
+          className="flex items-center gap-1.5 rounded-lg border border-gray-200 text-gray-600 text-xs font-semibold px-3 py-1.5 hover:bg-gray-50 transition-colors"
+        >
+          <ArrowDownTrayIcon className="h-3.5 w-3.5" />
+          Download Excel
+        </button>
+      </div>
+
       {/* Original submission anchor */}
       <div className="flex items-start gap-3">
         <div className="flex flex-col items-center">

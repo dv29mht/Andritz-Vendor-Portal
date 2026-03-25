@@ -6,7 +6,7 @@ import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
-import { CITIES } from '../../data/mockData'
+import { CITIES, CITY_STATE_MAP } from '../../data/mockData'
 import api from '../../services/api'
 
 const EMPTY_FORM = {
@@ -538,7 +538,10 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
               </Field>
               <Field label="City" required error={errors.city}>
                 <input className="form-input" list="city-list" placeholder="e.g. Mumbai"
-                  value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value, locality: '' }))} />
+                  value={form.city} onChange={e => {
+                    const city = e.target.value
+                    setForm(f => ({ ...f, city, locality: '', ...(CITY_STATE_MAP[city] ? { state: CITY_STATE_MAP[city] } : {}) }))
+                  }} />
                 <datalist id="city-list">
                   {Object.keys(CITIES).map(c => <option key={c} value={c} />)}
                 </datalist>
