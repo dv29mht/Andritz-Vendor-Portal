@@ -95,12 +95,8 @@ public record ResubmitRequestDto(
     [Required, MaxLength(200)]                                                    string  VendorName,
     [Required, MaxLength(100)]                                                    string  ContactPerson,
     [MaxLength(30)]                                                               string? Telephone,
-    [Required, MaxLength(15), RegularExpression(ValidationPatterns.Gst,
-        ErrorMessage = "GST number must be in the format 22AAAAA0000A1Z5 (15 characters).")]
-                                                                                  string  GstNumber,
-    [Required, MaxLength(10), RegularExpression(ValidationPatterns.Pan,
-        ErrorMessage = "PAN card must be in the format ABCDE1234F (10 characters).")]
-                                                                                  string  PanCard,
+    [Required, MaxLength(15)]                                                     string  GstNumber,
+    [Required, MaxLength(10)]                                                     string  PanCard,
     [Required, MaxLength(500)]                                                    string  AddressDetails,
     [Required, MaxLength(100)]                                                    string  City,
     [Required, MaxLength(100)]                                                    string  Locality,
