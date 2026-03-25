@@ -185,6 +185,9 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     if (!form.addressDetails.trim()) e.addressDetails = 'Address is required.'
     if (!form.city.trim())           e.city           = 'City is required.'
     if (!form.locality.trim())       e.locality       = 'Locality is required.'
+    const expectedState = CITY_STATE_MAP[form.city]
+    if (expectedState && form.state && form.state !== expectedState)
+      e.state = `${form.city} is in ${expectedState}, not ${form.state}.`
     if (!editingRequest && selectedApprovers.length === 0)
       e.approvers = 'Select at least one approver.'
     return e
@@ -611,7 +614,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   {(CITIES[form.city] ?? []).map(l => <option key={l} value={l} />)}
                 </datalist>
               </Field>
-              <Field label="State" error={errors.state}>
+              <Field label="State" error={errors.state || (CITY_STATE_MAP[form.city] && form.state && form.state !== CITY_STATE_MAP[form.city] ? `${form.city} belongs to ${CITY_STATE_MAP[form.city]}` : null)}>
                 <select className="form-input" value={form.state} onChange={e => set('state', e.target.value)}>
                   <option value="">Select State</option>
                   {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
