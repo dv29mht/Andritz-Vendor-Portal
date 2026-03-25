@@ -15,14 +15,16 @@ export default function ApprovalTimeline({ steps }) {
         <li key={step.id} className="flex items-start gap-3">
           <div className="mt-0.5 flex-shrink-0">{iconMap[step.decision]}</div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium text-gray-800">{step.approverName}</span>
-              {step.isFinalApproval && (
-                <span className="text-xs bg-[#096fb3]/10 text-[#096fb3] ring-1 ring-[#096fb3]/20 ring-inset px-2 py-0.5 rounded-full">
-                  ⭐ Final Approver
-                </span>
-              )}
-              <span className="text-xs text-gray-400">Step {step.stepOrder}</span>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 flex-wrap min-w-0">
+                <span className="text-sm font-medium text-gray-800">{step.approverName}</span>
+                {step.isFinalApproval && (
+                  <span className="text-xs bg-[#096fb3]/10 text-[#096fb3] ring-1 ring-[#096fb3]/20 ring-inset px-2 py-0.5 rounded-full">
+                    ⭐ Final Approver
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-gray-400 flex-shrink-0">Step {step.stepOrder}</span>
             </div>
             {step.comment && (
               <p className="mt-0.5 text-xs text-gray-500 italic">"{step.comment}"</p>

@@ -98,7 +98,7 @@ export default function App() {
       return <SettingsPage currentUser={currentUser} onUpdate={updateUser} />
     }
     if (role === 'Buyer') {
-      return <BuyerConsole activePage={activePage} workflow={workflow} currentUser={currentUser} />
+      return <BuyerConsole activePage={activePage} onNavigate={setActivePage} workflow={workflow} currentUser={currentUser} />
     }
     if (role === 'Approver') {
       return <ApproverConsole activePage={activePage} workflow={workflow} currentUser={currentUser} />

@@ -111,7 +111,7 @@ function ApprovalChainBuilder({ approvers, selected, onChange, error }) {
 
 const revLabel = (n) => n === 0 ? 'Original' : `REV ${n}`
 
-export default function BuyerConsole({ workflow, currentUser, activePage }) {
+export default function BuyerConsole({ workflow, currentUser, activePage, onNavigate }) {
   const myRequests   = workflow.requests.filter(r => r.createdByUserId === currentUser.id)
   const activeReqs   = myRequests.filter(r => r.status !== 'Rejected')
   const rejectedReqs = myRequests.filter(r => r.status === 'Rejected')
@@ -360,68 +360,126 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
     .slice(0, 4)
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto">
 
       {/* ── Dashboard ───────────────────────────────────────────────────────── */}
       {activePage === 'dashboard' && (
-        <div className="space-y-5">
-          {/* Stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                <ClockIcon className="h-5 w-5 text-[#096fb3]" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* ── Left column (main) ── */}
+          <div className="lg:col-span-2 space-y-5">
+            {/* Stat cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                  <ClockIcon className="h-5 w-5 text-[#096fb3]" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{inProgressReqs.length}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">In Progress</p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{inProgressReqs.length}</p>
-                <p className="text-xs text-gray-500 mt-0.5">In Progress</p>
+              <div className={`bg-white rounded-xl ring-1 px-5 py-4 flex items-center gap-4 ${rejectedReqs.length > 0 ? 'ring-red-200' : 'ring-gray-200'}`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${rejectedReqs.length > 0 ? 'bg-red-50' : 'bg-gray-50'}`}>
+                  <ExclamationCircleIcon className={`h-5 w-5 ${rejectedReqs.length > 0 ? 'text-red-500' : 'text-gray-400'}`} />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{rejectedReqs.length}</p>
+                  <p className={`text-xs mt-0.5 ${rejectedReqs.length > 0 ? 'text-red-600 font-medium' : 'text-gray-500'}`}>Awaiting Revision</p>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                  <CheckCircleIcon className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{completedReqs.length}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Completed</p>
+                </div>
               </div>
             </div>
-            <div className={`bg-white rounded-xl ring-1 px-5 py-4 flex items-center gap-4 ${rejectedReqs.length > 0 ? 'ring-red-200' : 'ring-gray-200'}`}>
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${rejectedReqs.length > 0 ? 'bg-red-50' : 'bg-gray-50'}`}>
-                <ExclamationCircleIcon className={`h-5 w-5 ${rejectedReqs.length > 0 ? 'text-red-500' : 'text-gray-400'}`} />
+
+            {/* Recent activity */}
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-900">Recent Activity</h3>
+                {myRequests.length > 4 && (
+                  <button onClick={() => onNavigate('requests')} className="text-xs text-[#096fb3] hover:underline font-medium">
+                    View all
+                  </button>
+                )}
               </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{rejectedReqs.length}</p>
-                <p className={`text-xs mt-0.5 ${rejectedReqs.length > 0 ? 'text-red-600 font-medium' : 'text-gray-500'}`}>Awaiting Revision</p>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                <CheckCircleIcon className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{completedReqs.length}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Completed</p>
-              </div>
+              {recentReqs.length > 0 ? (
+                <div className="divide-y divide-gray-50">
+                  {recentReqs.map(req => (
+                    <div key={req.id} className="px-5 py-3.5 flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900">{req.vendorName}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {[req.city, req.locality].filter(Boolean).join(', ')}
+                          {' · '}{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                        </p>
+                      </div>
+                      <StatusBadge status={req.status} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-10 text-center">
+                  <p className="text-sm text-gray-400">No requests yet. Use the button on the right to get started.</p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Recent activity */}
-          {recentReqs.length > 0 ? (
-            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-900">Recent Activity</h3>
-              </div>
-              <div className="divide-y divide-gray-50">
-                {recentReqs.map(req => (
-                  <div key={req.id} className="px-5 py-3.5 flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{req.vendorName}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {[req.city, req.locality].filter(Boolean).join(', ')}
-                        {' · '}{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
-                      </p>
+          {/* ── Right column (actions + guide) ── */}
+          <div className="space-y-5">
+            {/* New request CTA */}
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 p-5">
+              <p className="text-sm font-semibold text-gray-900 mb-1">Register a Vendor</p>
+              <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+                Submit a new vendor registration request for approval and SAP onboarding.
+              </p>
+              <button className="w-full btn-primary justify-center" onClick={openCreate}>
+                <PlusIcon className="h-4 w-4" />
+                New Request
+              </button>
+              {rejectedReqs.length > 0 && (
+                <button
+                  onClick={() => onNavigate('revision')}
+                  className="w-full mt-2 flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm font-medium py-2 hover:bg-red-100 transition-colors"
+                >
+                  <ExclamationCircleIcon className="h-4 w-4" />
+                  {rejectedReqs.length} Awaiting Revision
+                </button>
+              )}
+            </div>
+
+            {/* Workflow guide */}
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 p-5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Workflow</p>
+              <ol className="space-y-3">
+                {[
+                  ['Submit',         'Fill in vendor details and assign approvers'],
+                  ['Approver Review','Each approver reviews sequentially'],
+                  ['Final Approval', 'Pardeep Sharma assigns SAP vendor code'],
+                  ['Completed',      'Vendor is onboarded and record is stored'],
+                ].map(([title, desc], i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold text-white"
+                      style={{ background: '#096fb3' }}>
+                      {i + 1}
                     </div>
-                    <StatusBadge status={req.status} />
-                  </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700">{title}</p>
+                      <p className="text-[11px] text-gray-400 leading-relaxed">{desc}</p>
+                    </div>
+                  </li>
                 ))}
-              </div>
+              </ol>
             </div>
-          ) : (
-            <div className="bg-white rounded-2xl ring-1 ring-gray-200 p-12 text-center">
-              <p className="text-sm text-gray-400">No requests yet. Click "New Request" to get started.</p>
-            </div>
-          )}
+          </div>
+
         </div>
       )}
 

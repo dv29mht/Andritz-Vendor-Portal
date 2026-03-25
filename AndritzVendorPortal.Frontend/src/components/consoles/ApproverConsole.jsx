@@ -100,7 +100,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto">
 
       {/* ── Dashboard ───────────────────────────────────────────────────────── */}
       {activePage === 'dashboard' && (
