@@ -4,12 +4,14 @@ using AndritzVendorPortal.API.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,11 +43,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // ── 2. IDENTITY & AUTHENTICATION ──────────────────────────────────────────────
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
-    options.Password.RequireDigit = false;
-    options.Password.RequiredLength = 6;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireLowercase = false;
+    options.Password.RequireDigit           = true;
+    options.Password.RequiredLength         = 8;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequireUppercase       = true;
+    options.Password.RequireLowercase       = true;
     options.User.RequireUniqueEmail = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -107,17 +109,32 @@ builder.Services.AddControllers().AddJsonOptions(opts => {
     opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
+// ── 4. RATE LIMITING ──────────────────────────────────────────────────────────
+// Login endpoint: max 10 attempts per minute per IP. Excess returns 429.
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("login", cfg =>
+    {
+        cfg.PermitLimit    = 10;
+        cfg.Window         = TimeSpan.FromMinutes(1);
+        cfg.QueueLimit     = 0;
+        cfg.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
 var app = builder.Build();
 
 // ── 5. MIDDLEWARE PIPELINE ───────────────────────────────────────────────────
+
+var allowedOrigins = builder.Configuration
+    .GetSection("AllowedOrigins").Get<string[]>() ?? [];
 
 // Raw CORS middleware — fires first AND last (via OnStarting) so nothing downstream can wipe headers.
 app.Use(async (ctx, next) =>
 {
     var origin = ctx.Request.Headers.Origin.ToString();
-    var isDev  = app.Environment.IsDevelopment();
-    bool isAllowed = origin == "https://andritz-portal-live.vercel.app"
-                  || (isDev && origin == "http://localhost:5173")
+    bool isAllowed = allowedOrigins.Contains(origin)
                   || (origin.StartsWith("https://andritz-portal-live-") && origin.EndsWith(".vercel.app"));
 
     // Set headers now (before pipeline runs)
@@ -171,6 +188,7 @@ app.Use(async (ctx, next) =>
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.MapControllers();
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 
@@ -206,17 +224,6 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex) { Console.Error.WriteLine($"[STARTUP] Role seeding failed: {ex.Message}"); }
 
-    // Step 4: reset all user passwords to Dahlia@1234
-    try
-    {
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        foreach (var u in userManager.Users.ToList())
-        {
-            var token = userManager.GeneratePasswordResetTokenAsync(u).GetAwaiter().GetResult();
-            userManager.ResetPasswordAsync(u, token, "Dahlia@1234").GetAwaiter().GetResult();
-        }
-    }
-    catch (Exception ex) { Console.Error.WriteLine($"[STARTUP] Password reset failed: {ex.Message}"); }
 }
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";

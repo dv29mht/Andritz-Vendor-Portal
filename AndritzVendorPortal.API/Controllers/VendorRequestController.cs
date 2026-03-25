@@ -3,6 +3,7 @@ using AndritzVendorPortal.API.DTOs;
 using AndritzVendorPortal.API.Infrastructure;
 using AndritzVendorPortal.API.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -13,7 +14,9 @@ namespace AndritzVendorPortal.API.Controllers;
 [ApiController]
 [Route("api/vendor-requests")]
 [Authorize]
-public class VendorRequestController(ApplicationDbContext db) : ControllerBase
+public class VendorRequestController(
+    ApplicationDbContext db,
+    UserManager<ApplicationUser> userManager) : ControllerBase
 {
     // Tracks which fields are included in revision diffs — matches frontend TRACKED_FIELDS
     private record TrackedField(
@@ -134,33 +137,33 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
     [Authorize(Roles = Roles.Buyer)]
     public async Task<IActionResult> Create([FromBody] CreateVendorRequestDto dto)
     {
+        // Validate all approver IDs: must exist and have the Approver role
+        foreach (var approverId in dto.ApproverUserIds)
+        {
+            var approver = await userManager.FindByIdAsync(approverId);
+            if (approver is null)
+                return BadRequest($"Approver ID '{approverId}' does not exist.");
+            if (!await userManager.IsInRoleAsync(approver, Roles.Approver))
+                return BadRequest($"User '{approver.FullName}' does not have the Approver role.");
+        }
+
         var creator = await db.Users.FindAsync(UserId());
 
         var request = new VendorRequest
         {
-            VendorName     = dto.VendorName,
-            ContactPerson  = dto.ContactPerson,
-            Telephone      = dto.Telephone     ?? string.Empty,
-            GstNumber      = dto.GstNumber,
-            PanCard        = dto.PanCard,
-            AddressDetails = dto.AddressDetails,
-            City           = dto.City,
-            Locality       = dto.Locality,
-            MaterialGroup  = dto.MaterialGroup  ?? string.Empty,
-            PostalCode     = dto.PostalCode     ?? string.Empty,
-            State          = dto.State          ?? string.Empty,
-            Country        = dto.Country        ?? "India",
-            Currency       = dto.Currency       ?? "INR",
-            PaymentTerms   = dto.PaymentTerms   ?? string.Empty,
-            Incoterms      = dto.Incoterms      ?? string.Empty,
-            Reason          = dto.Reason          ?? string.Empty,
-            YearlyPvo       = dto.YearlyPvo       ?? string.Empty,
-            IsOneTimeVendor = dto.IsOneTimeVendor  ?? false,
-            ProposedBy      = dto.ProposedBy       ?? string.Empty,
             CreatedByUserId = UserId(),
             CreatedByName   = creator?.FullName ?? string.Empty,
             Status          = VendorRequestStatus.Draft,
         };
+
+        // Convert to ResubmitRequestDto shape to reuse ApplyVendorFields
+        ApplyVendorFields(request, new ResubmitRequestDto(
+            dto.VendorName, dto.ContactPerson, dto.Telephone,
+            dto.GstNumber, dto.PanCard, dto.AddressDetails,
+            dto.City, dto.Locality, dto.MaterialGroup, dto.PostalCode,
+            dto.State, dto.Country, dto.Currency, dto.PaymentTerms,
+            dto.Incoterms, dto.Reason, dto.YearlyPvo,
+            dto.IsOneTimeVendor, dto.ProposedBy));
 
         // Build approval chain: each approver gets a unique StepOrder (1, 2, 3...);
         // FinalApprover is always last at stepOrder = approverCount + 1.
@@ -265,26 +268,7 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
         };
         db.VendorRevisions.Add(revision);
 
-        // Apply updated fields
-        request.VendorName    = dto.VendorName;
-        request.ContactPerson = dto.ContactPerson;
-        request.Telephone     = dto.Telephone     ?? string.Empty;
-        request.GstNumber     = dto.GstNumber;
-        request.PanCard       = dto.PanCard;
-        request.AddressDetails= dto.AddressDetails;
-        request.City          = dto.City;
-        request.Locality      = dto.Locality;
-        request.MaterialGroup = dto.MaterialGroup ?? string.Empty;
-        request.PostalCode    = dto.PostalCode    ?? string.Empty;
-        request.State         = dto.State         ?? string.Empty;
-        request.Country       = dto.Country       ?? "India";
-        request.Currency      = dto.Currency      ?? "INR";
-        request.PaymentTerms  = dto.PaymentTerms  ?? string.Empty;
-        request.Incoterms     = dto.Incoterms     ?? string.Empty;
-        request.Reason          = dto.Reason          ?? string.Empty;
-        request.YearlyPvo       = dto.YearlyPvo       ?? string.Empty;
-        request.IsOneTimeVendor = dto.IsOneTimeVendor  ?? false;
-        request.ProposedBy      = dto.ProposedBy       ?? string.Empty;
+        ApplyVendorFields(request, dto);
 
         // Reset workflow state
         request.RevisionNo       = newRevNo;
@@ -395,7 +379,7 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
         if (finalStep is null || !finalStep.IsFinalApproval)
             return Forbid("No pending final approval step assigned to you for this request.");
 
-        // Ensure vendor code is unique across all completed requests
+        // Application-level uniqueness check (friendly error before hitting DB constraint)
         var duplicate = await db.VendorRequests
             .AnyAsync(r => r.Id != id && r.VendorCode == dto.VendorCode && r.VendorCode != null);
         if (duplicate)
@@ -408,18 +392,27 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
 
         request.VendorCode           = dto.VendorCode;
         request.VendorCodeAssignedAt = DateTime.UtcNow;
-        request.VendorCodeAssignedBy = UserId();
+        request.VendorCodeAssignedBy = finalStep.ApproverName;   // store name, not ID
         request.Status               = VendorRequestStatus.Completed;
         request.UpdatedAt            = DateTime.UtcNow;
 
-        await db.SaveChangesAsync();
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Unique constraint violation: two concurrent Complete calls raced
+            return Conflict($"Vendor code '{dto.VendorCode}' was just assigned by a concurrent request. Use a different code.");
+        }
 
         return Ok(MapToDetail(request));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
     // PUT /api/vendor-requests/{id}
-    // Admin-only: edit any field on any request regardless of status.
+    // Admin-only: edit any field on a Completed request.
+    // Creates a VendorRevision entry for audit trail (BRD §5).
     // ─────────────────────────────────────────────────────────────────────────
     [HttpPut("{id:int}")]
     [Authorize(Roles = Roles.Admin)]
@@ -435,25 +428,46 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
         if (request.Status != VendorRequestStatus.Completed)
             return BadRequest("Only completed (SAP-approved) requests can be edited by Admin.");
 
-        request.VendorName      = dto.VendorName;
-        request.ContactPerson   = dto.ContactPerson;
-        request.Telephone       = dto.Telephone      ?? string.Empty;
-        request.GstNumber       = dto.GstNumber;
-        request.PanCard         = dto.PanCard;
-        request.AddressDetails  = dto.AddressDetails;
-        request.City            = dto.City;
-        request.Locality        = dto.Locality;
-        request.MaterialGroup   = dto.MaterialGroup  ?? string.Empty;
-        request.PostalCode      = dto.PostalCode     ?? string.Empty;
-        request.State           = dto.State          ?? string.Empty;
-        request.Country         = dto.Country        ?? "India";
-        request.Currency        = dto.Currency       ?? "INR";
-        request.PaymentTerms    = dto.PaymentTerms   ?? string.Empty;
-        request.Incoterms       = dto.Incoterms      ?? string.Empty;
-        request.Reason          = dto.Reason         ?? string.Empty;
-        request.YearlyPvo       = dto.YearlyPvo      ?? string.Empty;
+        // Convert AdminEditDto to ResubmitRequestDto to reuse TrackedFields diff logic
+        var asResubmit = new ResubmitRequestDto(
+            dto.VendorName, dto.ContactPerson, dto.Telephone,
+            dto.GstNumber, dto.PanCard, dto.AddressDetails,
+            dto.City, dto.Locality, dto.MaterialGroup, dto.PostalCode,
+            dto.State, dto.Country, dto.Currency, dto.PaymentTerms,
+            dto.Incoterms, dto.Reason, dto.YearlyPvo,
+            dto.IsOneTimeVendor, dto.ProposedBy);
+
+        // Compute field-level diff before applying changes
+        var changes = TrackedFields
+            .Where(f => f.GetFromRequest(request) != f.GetFromDto(asResubmit))
+            .Select(f => new FieldChangeRecord(
+                f.CamelKey, f.Label,
+                f.GetFromRequest(request),
+                f.GetFromDto(asResubmit)))
+            .ToList();
+
+        // Only create a revision entry if something actually changed
+        if (changes.Count > 0)
+        {
+            var newRevNo  = request.RevisionNo + 1;
+            var adminUser = await db.Users.FindAsync(UserId());
+
+            var revision = new VendorRevision
+            {
+                VendorRequestId  = request.Id,
+                RevisionNo       = newRevNo,
+                ChangedByUserId  = UserId(),
+                ChangedByName    = $"[Admin] {adminUser?.FullName ?? string.Empty}",
+                ChangedAt        = DateTime.UtcNow,
+                RejectionComment = null,
+                ChangesJson      = JsonSerializer.Serialize(changes, JsonOpts),
+            };
+            db.VendorRevisions.Add(revision);
+            request.RevisionNo = newRevNo;
+        }
+
+        ApplyVendorFields(request, asResubmit);
         request.IsOneTimeVendor = dto.IsOneTimeVendor ?? request.IsOneTimeVendor;
-        request.ProposedBy      = dto.ProposedBy     ?? string.Empty;
         request.UpdatedAt       = DateTime.UtcNow;
 
         await db.SaveChangesAsync();
@@ -503,25 +517,7 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
         };
         db.VendorRevisions.Add(revision);
 
-        request.VendorName      = dto.VendorName;
-        request.ContactPerson   = dto.ContactPerson;
-        request.Telephone       = dto.Telephone      ?? string.Empty;
-        request.GstNumber       = dto.GstNumber;
-        request.PanCard         = dto.PanCard;
-        request.AddressDetails  = dto.AddressDetails;
-        request.City            = dto.City;
-        request.Locality        = dto.Locality;
-        request.MaterialGroup   = dto.MaterialGroup  ?? string.Empty;
-        request.PostalCode      = dto.PostalCode     ?? string.Empty;
-        request.State           = dto.State          ?? string.Empty;
-        request.Country         = dto.Country        ?? "India";
-        request.Currency        = dto.Currency       ?? "INR";
-        request.PaymentTerms    = dto.PaymentTerms   ?? string.Empty;
-        request.Incoterms       = dto.Incoterms      ?? string.Empty;
-        request.Reason          = dto.Reason         ?? string.Empty;
-        request.YearlyPvo       = dto.YearlyPvo      ?? string.Empty;
-        request.IsOneTimeVendor = dto.IsOneTimeVendor ?? false;
-        request.ProposedBy      = dto.ProposedBy     ?? string.Empty;
+        ApplyVendorFields(request, dto);
 
         // Status stays Completed; VendorCode stays assigned
         request.RevisionNo = newRevNo;
@@ -593,14 +589,41 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
     private static void AdvanceWorkflow(VendorRequest request)
     {
         // A request advances to FinalApproval only when every non-final step is Approved.
-        // Until then it stays in PendingApproval so remaining parallel approvers can still act.
         var nonFinalSteps = request.ApprovalSteps.Where(s => !s.IsFinalApproval).ToList();
         bool allTechnicalApproved = nonFinalSteps.Count > 0
             && nonFinalSteps.All(s => s.Decision == ApprovalDecision.Approved);
 
         if (allTechnicalApproved)
             request.Status = VendorRequestStatus.PendingFinalApproval;
-        // else: status stays PendingApproval — other parallel approvers still need to act
+        // else: status stays PendingApproval — remaining approvers still need to act
+    }
+
+    /// <summary>
+    /// Applies all vendor detail fields from <paramref name="d"/> onto <paramref name="r"/>.
+    /// Single source of truth — used by Create, Resubmit, AdminEdit, and BuyerUpdateCompleted
+    /// to avoid 4× duplicated field-assignment blocks.
+    /// </summary>
+    private static void ApplyVendorFields(VendorRequest r, ResubmitRequestDto d)
+    {
+        r.VendorName     = d.VendorName;
+        r.ContactPerson  = d.ContactPerson;
+        r.Telephone      = d.Telephone      ?? string.Empty;
+        r.GstNumber      = d.GstNumber;
+        r.PanCard        = d.PanCard;
+        r.AddressDetails = d.AddressDetails;
+        r.City           = d.City;
+        r.Locality       = d.Locality;
+        r.MaterialGroup  = d.MaterialGroup  ?? string.Empty;
+        r.PostalCode     = d.PostalCode     ?? string.Empty;
+        r.State          = d.State          ?? string.Empty;
+        r.Country        = d.Country        ?? "India";
+        r.Currency       = d.Currency       ?? "INR";
+        r.PaymentTerms   = d.PaymentTerms   ?? string.Empty;
+        r.Incoterms      = d.Incoterms      ?? string.Empty;
+        r.Reason         = d.Reason         ?? string.Empty;
+        r.YearlyPvo      = d.YearlyPvo      ?? string.Empty;
+        r.IsOneTimeVendor= d.IsOneTimeVendor ?? false;
+        r.ProposedBy     = d.ProposedBy     ?? string.Empty;
     }
 
     private static VendorRequestDetailDto MapToDetail(VendorRequest r)
@@ -608,16 +631,13 @@ public class VendorRequestController(ApplicationDbContext db) : ControllerBase
         var sortedSteps = r.ApprovalSteps.OrderBy(s => s.StepOrder).ToList();
 
         // Sequential chain: only the NEXT approver (lowest StepOrder) is active at a time.
-        // PendingApproval  → the single next non-final step that is still Pending
-        // PendingFinalApproval → the final step that is still Pending
-        // Any other status → empty (nothing actionable)
         var pendingApproverUserIds = r.Status switch
         {
             VendorRequestStatus.PendingApproval =>
                 sortedSteps
                     .Where(s => !s.IsFinalApproval && s.Decision == ApprovalDecision.Pending)
                     .OrderBy(s => s.StepOrder)
-                    .Take(1)   // Sequential: only the next approver in the chain
+                    .Take(1)
                     .Select(s => s.ApproverUserId)
                     .ToList(),
             VendorRequestStatus.PendingFinalApproval =>

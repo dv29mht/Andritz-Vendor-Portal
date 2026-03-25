@@ -2,6 +2,7 @@ using AndritzVendorPortal.API.DTOs;
 using AndritzVendorPortal.API.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -16,6 +17,7 @@ public class AuthController(
     IConfiguration configuration) : ControllerBase
 {
     [HttpPost("login")]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
         var user = await userManager.FindByEmailAsync(dto.Email);

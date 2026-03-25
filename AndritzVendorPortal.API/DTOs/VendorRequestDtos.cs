@@ -37,8 +37,8 @@ public record UpdateProfileDto(
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 public record LoginDto(
-    [Required] string Email,
-    [Required] string Password
+    [Required, EmailAddress] string Email,
+    [Required]               string Password
 );
 
 public record AuthUserDto(
@@ -56,78 +56,98 @@ public record AuthResponseDto(
 
 // ── Inbound ─────────────────────────────────────────────────────────────────
 
+// GST: 15-char Indian format (e.g. 22AAAAA0000A1Z5)
+// PAN: 10-char Indian format (e.g. ABCDE1234F)
+internal static class ValidationPatterns
+{
+    public const string Gst = @"^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$";
+    public const string Pan = @"^[A-Z]{5}[0-9]{4}[A-Z]$";
+}
+
 public record CreateVendorRequestDto(
-    [Required, MaxLength(200)] string  VendorName,
-    [Required]                 string  ContactPerson,
-                               string? Telephone,
-    [Required]                 string  GstNumber,
-    [Required]                 string  PanCard,
-    [Required]                 string  AddressDetails,
-    [Required]                 string  City,
-    [Required]                 string  Locality,
-                               string? MaterialGroup,
-                               string? PostalCode,
-                               string? State,
-                               string? Country,
-                               string? Currency,
-                               string? PaymentTerms,
-                               string? Incoterms,
-                               string? Reason,
-                               string? YearlyPvo,
-                               bool?   IsOneTimeVendor,
-                               string? ProposedBy,
-    [Required, MinLength(1)]   List<string> ApproverUserIds
+    [Required, MaxLength(200)]                                                    string  VendorName,
+    [Required, MaxLength(100)]                                                    string  ContactPerson,
+    [MaxLength(30)]                                                               string? Telephone,
+    [Required, MaxLength(15), RegularExpression(ValidationPatterns.Gst,
+        ErrorMessage = "GST number must be in the format 22AAAAA0000A1Z5 (15 characters).")]
+                                                                                  string  GstNumber,
+    [Required, MaxLength(10), RegularExpression(ValidationPatterns.Pan,
+        ErrorMessage = "PAN card must be in the format ABCDE1234F (10 characters).")]
+                                                                                  string  PanCard,
+    [Required, MaxLength(500)]                                                    string  AddressDetails,
+    [Required, MaxLength(100)]                                                    string  City,
+    [Required, MaxLength(100)]                                                    string  Locality,
+    [MaxLength(200)]                                                              string? MaterialGroup,
+    [MaxLength(10)]                                                               string? PostalCode,
+    [MaxLength(100)]                                                              string? State,
+    [MaxLength(100)]                                                              string? Country,
+    [MaxLength(10)]                                                               string? Currency,
+    [MaxLength(200)]                                                              string? PaymentTerms,
+    [MaxLength(200)]                                                              string? Incoterms,
+    [MaxLength(1000)]                                                             string? Reason,
+    [MaxLength(100)]                                                              string? YearlyPvo,
+                                                                                  bool?   IsOneTimeVendor,
+    [MaxLength(200)]                                                              string? ProposedBy,
+    [Required, MinLength(1)]                                                      List<string> ApproverUserIds
 );
 
 public record ResubmitRequestDto(
-    [Required, MaxLength(200)] string  VendorName,
-    [Required]                 string  ContactPerson,
-                               string? Telephone,
-    [Required]                 string  GstNumber,
-    [Required]                 string  PanCard,
-    [Required]                 string  AddressDetails,
-    [Required]                 string  City,
-    [Required]                 string  Locality,
-                               string? MaterialGroup,
-                               string? PostalCode,
-                               string? State,
-                               string? Country,
-                               string? Currency,
-                               string? PaymentTerms,
-                               string? Incoterms,
-                               string? Reason,
-                               string? YearlyPvo,
-                               bool?   IsOneTimeVendor,
-                               string? ProposedBy
+    [Required, MaxLength(200)]                                                    string  VendorName,
+    [Required, MaxLength(100)]                                                    string  ContactPerson,
+    [MaxLength(30)]                                                               string? Telephone,
+    [Required, MaxLength(15), RegularExpression(ValidationPatterns.Gst,
+        ErrorMessage = "GST number must be in the format 22AAAAA0000A1Z5 (15 characters).")]
+                                                                                  string  GstNumber,
+    [Required, MaxLength(10), RegularExpression(ValidationPatterns.Pan,
+        ErrorMessage = "PAN card must be in the format ABCDE1234F (10 characters).")]
+                                                                                  string  PanCard,
+    [Required, MaxLength(500)]                                                    string  AddressDetails,
+    [Required, MaxLength(100)]                                                    string  City,
+    [Required, MaxLength(100)]                                                    string  Locality,
+    [MaxLength(200)]                                                              string? MaterialGroup,
+    [MaxLength(10)]                                                               string? PostalCode,
+    [MaxLength(100)]                                                              string? State,
+    [MaxLength(100)]                                                              string? Country,
+    [MaxLength(10)]                                                               string? Currency,
+    [MaxLength(200)]                                                              string? PaymentTerms,
+    [MaxLength(200)]                                                              string? Incoterms,
+    [MaxLength(1000)]                                                             string? Reason,
+    [MaxLength(100)]                                                              string? YearlyPvo,
+                                                                                  bool?   IsOneTimeVendor,
+    [MaxLength(200)]                                                              string? ProposedBy
 );
 
 public record AdminEditVendorRequestDto(
-    [Required, MaxLength(200)] string  VendorName,
-    [Required]                 string  ContactPerson,
-                               string? Telephone,
-    [Required]                 string  GstNumber,
-    [Required]                 string  PanCard,
-    [Required]                 string  AddressDetails,
-    [Required]                 string  City,
-    [Required]                 string  Locality,
-                               string? MaterialGroup,
-                               string? PostalCode,
-                               string? State,
-                               string? Country,
-                               string? Currency,
-                               string? PaymentTerms,
-                               string? Incoterms,
-                               string? Reason,
-                               string? YearlyPvo,
-                               bool?   IsOneTimeVendor,
-                               string? ProposedBy
+    [Required, MaxLength(200)]                                                    string  VendorName,
+    [Required, MaxLength(100)]                                                    string  ContactPerson,
+    [MaxLength(30)]                                                               string? Telephone,
+    [Required, MaxLength(15), RegularExpression(ValidationPatterns.Gst,
+        ErrorMessage = "GST number must be in the format 22AAAAA0000A1Z5 (15 characters).")]
+                                                                                  string  GstNumber,
+    [Required, MaxLength(10), RegularExpression(ValidationPatterns.Pan,
+        ErrorMessage = "PAN card must be in the format ABCDE1234F (10 characters).")]
+                                                                                  string  PanCard,
+    [Required, MaxLength(500)]                                                    string  AddressDetails,
+    [Required, MaxLength(100)]                                                    string  City,
+    [Required, MaxLength(100)]                                                    string  Locality,
+    [MaxLength(200)]                                                              string? MaterialGroup,
+    [MaxLength(10)]                                                               string? PostalCode,
+    [MaxLength(100)]                                                              string? State,
+    [MaxLength(100)]                                                              string? Country,
+    [MaxLength(10)]                                                               string? Currency,
+    [MaxLength(200)]                                                              string? PaymentTerms,
+    [MaxLength(200)]                                                              string? Incoterms,
+    [MaxLength(1000)]                                                             string? Reason,
+    [MaxLength(100)]                                                              string? YearlyPvo,
+                                                                                  bool?   IsOneTimeVendor,
+    [MaxLength(200)]                                                              string? ProposedBy
 );
 
 public record ClassifyVendorRequestDto(bool IsOneTimeVendor);
 
-public record ApproveRequestDto(string? Comment);
+public record ApproveRequestDto([MaxLength(500)] string? Comment);
 
-public record RejectRequestDto([Required] string Comment);
+public record RejectRequestDto([Required, MaxLength(500)] string Comment);
 
 public record CompleteRequestDto(
     [Required, MaxLength(50)] string VendorCode

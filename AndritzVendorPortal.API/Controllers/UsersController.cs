@@ -1,3 +1,4 @@
+using AndritzVendorPortal.API.Data;
 using AndritzVendorPortal.API.DTOs;
 using AndritzVendorPortal.API.Infrastructure;
 using AndritzVendorPortal.API.Models;
@@ -11,7 +12,9 @@ namespace AndritzVendorPortal.API.Controllers;
 [ApiController]
 [Route("api/users")]
 [Authorize]
-public class UsersController(UserManager<ApplicationUser> userManager) : ControllerBase
+public class UsersController(
+    UserManager<ApplicationUser> userManager,
+    ApplicationDbContext db) : ControllerBase
 {
     // ─────────────────────────────────────────────────────────────────────────
     // GET /api/users/approvers
@@ -38,21 +41,25 @@ public class UsersController(UserManager<ApplicationUser> userManager) : Control
     [Authorize(Roles = Roles.Admin)]
     public async Task<IActionResult> GetAll()
     {
-        var users = await userManager.Users
-            .OrderBy(u => u.FullName)
-            .ToListAsync();
+        // Single query: join Users → UserRoles → Roles to avoid N+1
+        var rows = await (
+            from u  in db.Users.OrderBy(u => u.FullName)
+            join ur in db.UserRoles on u.Id equals ur.UserId into userRoles
+            from ur in userRoles.DefaultIfEmpty()
+            join r  in db.Roles on ur.RoleId equals r.Id into roles
+            from r  in roles.DefaultIfEmpty()
+            select new { User = u, RoleName = r.Name }
+        ).ToListAsync();
 
-        var result = new List<UserDto>();
-        foreach (var user in users)
-        {
-            var roles = await userManager.GetRolesAsync(user);
-            result.Add(new UserDto(
-                user.Id,
-                user.FullName,
-                user.Email          ?? string.Empty,
-                user.Designation,
-                roles.ToList()));
-        }
+        var result = rows
+            .GroupBy(x => x.User)
+            .Select(g => new UserDto(
+                g.Key.Id,
+                g.Key.FullName,
+                g.Key.Email ?? string.Empty,
+                g.Key.Designation,
+                g.Where(x => x.RoleName != null).Select(x => x.RoleName!).ToList()))
+            .ToList();
 
         return Ok(result);
     }

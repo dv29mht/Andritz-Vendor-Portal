@@ -19,10 +19,32 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         {
             e.HasKey(x => x.Id);
             e.Property(x => x.VendorName).IsRequired().HasMaxLength(200);
+            e.Property(x => x.ContactPerson).HasMaxLength(100);
+            e.Property(x => x.Telephone).HasMaxLength(30);
             e.Property(x => x.GstNumber).HasMaxLength(15);
             e.Property(x => x.PanCard).HasMaxLength(10);
+            e.Property(x => x.AddressDetails).HasMaxLength(500);
+            e.Property(x => x.City).HasMaxLength(100);
+            e.Property(x => x.Locality).HasMaxLength(100);
+            e.Property(x => x.MaterialGroup).HasMaxLength(200);
+            e.Property(x => x.PostalCode).HasMaxLength(10);
+            e.Property(x => x.State).HasMaxLength(100);
+            e.Property(x => x.Country).HasMaxLength(100);
+            e.Property(x => x.Currency).HasMaxLength(10);
+            e.Property(x => x.PaymentTerms).HasMaxLength(200);
+            e.Property(x => x.Incoterms).HasMaxLength(200);
+            e.Property(x => x.Reason).HasMaxLength(1000);
+            e.Property(x => x.YearlyPvo).HasMaxLength(100);
+            e.Property(x => x.ProposedBy).HasMaxLength(200);
             e.Property(x => x.VendorCode).HasMaxLength(50);
+            e.Property(x => x.VendorCodeAssignedBy).HasMaxLength(200);
             e.Property(x => x.CreatedByName).HasMaxLength(200);
+
+            // Partial unique index: vendor codes must be unique, but only among non-null values.
+            // Fixes the TOCTOU race condition on concurrent Complete calls.
+            e.HasIndex(x => x.VendorCode)
+             .IsUnique()
+             .HasFilter("\"VendorCode\" IS NOT NULL");
 
             e.HasOne(x => x.CreatedBy)
              .WithMany(u => u.CreatedRequests)
@@ -45,6 +67,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             e.HasKey(x => x.Id);
             e.Property(x => x.ApproverName).HasMaxLength(200);
             e.HasIndex(x => new { x.VendorRequestId, x.StepOrder }).IsUnique();
+            e.HasIndex(x => x.ApproverUserId);   // speeds up pending-step lookups
         });
 
         builder.Entity<VendorRevision>(e =>
