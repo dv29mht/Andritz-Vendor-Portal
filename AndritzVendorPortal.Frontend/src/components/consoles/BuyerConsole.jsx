@@ -190,9 +190,29 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
     return e
   }
 
+  const hasFormChanged = () => {
+    if (!editingRequest) return true
+    const fields = [
+      'vendorName','contactPerson','telephone','gstNumber','panCard',
+      'addressDetails','postalCode','city','locality','state','country',
+      'currency','paymentTerms','incoterms','materialGroup','reason',
+      'yearlyPvo','proposedBy',
+    ]
+    const boolFields = ['isOneTimeVendor']
+    return fields.some(f => (form[f] ?? '') !== (editingRequest[f] ?? ''))
+        || boolFields.some(f => (form[f] ?? false) !== (editingRequest[f] ?? false))
+  }
+
   const handleSubmitForm = async () => {
     const e = validate()
     if (Object.keys(e).length) { setErrors(e); return }
+
+    // Block resubmit if buyer changed nothing
+    if (editingRequest && editingRequest.status !== 'Completed' && !hasFormChanged()) {
+      setApiError('No changes detected. Please update at least one field before resubmitting.')
+      return
+    }
+
     setSubmitting(true)
     setApiError(null)
     try {
