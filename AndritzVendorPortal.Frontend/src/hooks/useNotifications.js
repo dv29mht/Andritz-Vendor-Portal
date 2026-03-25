@@ -58,10 +58,12 @@ function deriveEvents(requests, role, userId) {
     // Buyer sees events on their own requests
     for (const req of requests) {
       // Step approvals (intermediate steps)
+      // ID uses step.decidedAt (not req.revisionNo) so buyer post-completion edits
+      // that bump revisionNo don't re-surface already-read step notifications.
       for (const step of req.approvalSteps ?? []) {
         if (step.decision === 'Approved' && step.decidedAt && !step.isFinalApproval) {
           events.push({
-            id: `step-approved-${step.id}-${req.revisionNo}`,
+            id: `step-approved-${step.id}-${step.decidedAt}`,
             title: 'Step Approved',
             body: `${step.approverName} approved your request for ${req.vendorName}`,
             timestamp: new Date(step.decidedAt).getTime(),
@@ -81,13 +83,14 @@ function deriveEvents(requests, role, userId) {
         })
       }
 
-      // Fully approved
+      // Fully approved — use vendorCodeAssignedAt so timestamp stays stable
+      // when buyer later edits the form (which updates req.updatedAt).
       if (req.status === 'Completed') {
         events.push({
           id: `completed-${req.id}`,
           title: 'Vendor Approved!',
           body: `${req.vendorName} fully approved — Vendor Code: ${req.vendorCode}`,
-          timestamp: new Date(req.updatedAt).getTime(),
+          timestamp: new Date(req.vendorCodeAssignedAt ?? req.updatedAt).getTime(),
           type: 'success',
         })
       }
@@ -175,6 +178,16 @@ export function useNotifications(requests, userId, role) {
     })
   }, [storageKey])
 
+  const markOneUnread = useCallback((id) => {
+    setReadIds(prev => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      localStorage.setItem(storageKey, JSON.stringify([...next]))
+      return next
+    })
+  }, [storageKey])
+
   const markAllRead = useCallback(() => {
     setReadIds(prev => {
       const allIds = events.map(e => e.id)
@@ -184,5 +197,5 @@ export function useNotifications(requests, userId, role) {
     })
   }, [storageKey, events])
 
-  return { notifications: annotated, unreadCount, markOneRead, markAllRead }
+  return { notifications: annotated, unreadCount, markOneRead, markOneUnread, markAllRead }
 }

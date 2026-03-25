@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { BellIcon, CheckIcon } from '@heroicons/react/24/outline'
+import { BellIcon, CheckIcon, ArrowUturnLeftIcon } from '@heroicons/react/24/outline'
 import { BellAlertIcon } from '@heroicons/react/24/solid'
 
 function timeAgo(ts) {
@@ -19,7 +19,7 @@ const DOT = {
   info:    'bg-blue-400',
 }
 
-export default function NotificationBell({ notifications, unreadCount, onMarkOneRead, onMarkAllRead, label = 'Notifications', variant = 'dark' }) {
+export default function NotificationBell({ notifications, unreadCount, onMarkOneRead, onMarkOneUnread, onMarkAllRead, label = 'Notifications', variant = 'dark' }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const isLight = variant === 'light'
@@ -99,13 +99,21 @@ export default function NotificationBell({ notifications, unreadCount, onMarkOne
                     <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.body}</p>
                     <p className="text-[11px] text-gray-400 mt-1">{timeAgo(n.timestamp)}</p>
                   </div>
-                  {n.isUnread && (
+                  {n.isUnread ? (
                     <button
                       onClick={() => onMarkOneRead(n.id)}
                       title="Mark as read"
                       className="flex-shrink-0 mt-1 p-1 rounded-full text-[#096fb3]/60 hover:text-[#096fb3] hover:bg-[#096fb3]/10 transition-colors"
                     >
                       <CheckIcon className="h-3.5 w-3.5" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => onMarkOneUnread(n.id)}
+                      title="Mark as unread"
+                      className="flex-shrink-0 mt-1 p-1 rounded-full text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors"
+                    >
+                      <ArrowUturnLeftIcon className="h-3 w-3" />
                     </button>
                   )}
                 </div>
