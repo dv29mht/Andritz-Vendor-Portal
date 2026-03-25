@@ -327,6 +327,14 @@ export default function BuyerConsole({ workflow, currentUser, activePage }) {
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
+  if (workflow.loading && workflow.requests.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="h-8 w-8 rounded-full border-2 border-[#096fb3] border-t-transparent animate-spin" />
+      </div>
+    )
+  }
+
   const recentReqs = [...myRequests]
     .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
     .slice(0, 4)
