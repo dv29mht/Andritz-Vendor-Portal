@@ -201,15 +201,19 @@ using (var scope = app.Services.CreateScope())
     try { context.Database.EnsureCreated(); }
     catch (Exception ex) { Console.Error.WriteLine($"[STARTUP] EnsureCreated failed: {ex.Message}"); }
 
-    // Step 2: add new columns — each statement isolated so one failure doesn't block the other
+    // Step 2: add new columns/indexes — each statement isolated so one failure doesn't block the other
     foreach (var sql in new[]
     {
         """ALTER TABLE "VendorRequests" ADD COLUMN IF NOT EXISTS "IsOneTimeVendor" boolean NOT NULL DEFAULT false""",
         """ALTER TABLE "VendorRequests" ADD COLUMN IF NOT EXISTS "ProposedBy" text NOT NULL DEFAULT ''""",
+        // Partial unique index: vendor codes must be unique among non-null values (fixes TOCTOU race)
+        """CREATE UNIQUE INDEX IF NOT EXISTS "IX_VendorRequests_VendorCode" ON "VendorRequests" ("VendorCode") WHERE "VendorCode" IS NOT NULL""",
+        // Index on ApproverUserId for faster pending-step lookups
+        """CREATE INDEX IF NOT EXISTS "IX_ApprovalSteps_ApproverUserId" ON "ApprovalSteps" ("ApproverUserId")""",
     })
     {
         try { context.Database.ExecuteSqlRaw(sql); }
-        catch (Exception ex) { Console.Error.WriteLine($"[STARTUP] Column migration failed ({sql[..40]}…): {ex.Message}"); }
+        catch (Exception ex) { Console.Error.WriteLine($"[STARTUP] Migration failed ({sql[..60]}…): {ex.Message}"); }
     }
 
     // Step 3: ensure roles
