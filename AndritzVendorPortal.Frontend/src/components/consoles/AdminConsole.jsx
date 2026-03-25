@@ -329,7 +329,13 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                   <BarChart data={materialData} layout="vertical" barSize={16} margin={{ top: 0, right: 16, left: 8, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
                     <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="name" width={130} axisLine={false} tickLine={false}
+                      tick={({ x, y, payload }) => (
+                        <text x={x} y={y} dy={4} textAnchor="end" fontSize={11} fill="#64748b">
+                          {payload.value.length > 16 ? payload.value.slice(0, 15) + '…' : payload.value}
+                        </text>
+                      )}
+                    />
                     <Tooltip
                       contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
                       cursor={{ fill: '#f8fafc' }}
