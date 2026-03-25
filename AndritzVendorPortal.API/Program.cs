@@ -219,4 +219,5 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex) { Console.Error.WriteLine($"[STARTUP] Password reset failed: {ex.Message}"); }
 }
 
-app.Run();
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+app.Run($"http://0.0.0.0:{port}");
