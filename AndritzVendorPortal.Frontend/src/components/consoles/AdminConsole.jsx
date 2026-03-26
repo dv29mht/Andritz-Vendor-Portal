@@ -372,13 +372,13 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 )}
                 {recentRequests.map(req => (
                   <tr key={req.id} className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => setViewingRequest(req)}>
-                    <td className="px-5 py-3">
-                      <p className="font-medium text-gray-900">{req.vendorName}</p>
-                      {req.vendorCode && <p className="text-xs text-emerald-600 font-mono">{req.vendorCode}</p>}
+                    <td className="px-5 py-3.5 align-top">
+                      <p className="font-medium text-gray-900 leading-snug">{req.vendorName}</p>
+                      {req.vendorCode && <p className="text-xs text-emerald-600 font-mono mt-0.5">{req.vendorCode}</p>}
                     </td>
-                    <td className="px-5 py-3 text-gray-500 whitespace-nowrap">{req.createdByName}</td>
-                    <td className="px-5 py-3"><StatusBadge status={req.status} /></td>
-                    <td className="px-5 py-3 text-gray-400 text-xs whitespace-nowrap">{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</td>
+                    <td className="px-5 py-3.5 align-top text-gray-500 whitespace-nowrap">{req.createdByName}</td>
+                    <td className="px-5 py-3.5 align-top"><StatusBadge status={req.status} /></td>
+                    <td className="px-5 py-3.5 align-top text-gray-400 text-xs whitespace-nowrap">{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</td>
                   </tr>
                 ))}
               </tbody>
@@ -436,24 +436,24 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 )}
                 {visible.map(req => (
                   <tr key={req.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs text-gray-400">#{req.id}</td>
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-gray-900 whitespace-nowrap">{req.vendorName}</p>
-                      {req.vendorCode && <p className="text-xs text-emerald-600 font-mono">{req.vendorCode}</p>}
+                    <td className="px-4 py-3.5 align-top font-mono text-xs text-gray-400">#{req.id}</td>
+                    <td className="px-4 py-3.5 align-top">
+                      <p className="font-medium text-gray-900 whitespace-nowrap leading-snug">{req.vendorName}</p>
+                      {req.vendorCode && <p className="text-xs text-emerald-600 font-mono mt-0.5">{req.vendorCode}</p>}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{req.createdByName}</td>
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{req.city}, {req.locality}</td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3.5 align-top text-gray-600 whitespace-nowrap">{req.createdByName}</td>
+                    <td className="px-4 py-3.5 align-top text-gray-500 whitespace-nowrap">{req.city}, {req.locality}</td>
+                    <td className="px-4 py-3.5 align-top text-center">
                       {req.revisionNo > 0
                         ? <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
                         : <span className="text-xs text-gray-400">—</span>
                       }
                     </td>
-                    <td className="px-4 py-3"><StatusBadge status={req.status} /></td>
-                    <td className="px-4 py-3 text-gray-400 whitespace-nowrap text-xs">
+                    <td className="px-4 py-3.5 align-top"><StatusBadge status={req.status} /></td>
+                    <td className="px-4 py-3.5 align-top text-gray-400 whitespace-nowrap text-xs">
                       {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3.5 align-top">
                       <div className="flex items-center gap-1.5">
                         <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
                           <EyeIcon className="h-3.5 w-3.5" />
