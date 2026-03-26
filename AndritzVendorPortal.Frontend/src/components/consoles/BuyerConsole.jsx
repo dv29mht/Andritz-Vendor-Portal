@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
-         ClockIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
+         ClockIcon, ExclamationCircleIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
 import { ExclamationTriangleIcon, CheckBadgeIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
          Cell } from 'recharts'
@@ -509,26 +509,36 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             })()}
             {/* Workflow guide */}
             <div className="bg-white rounded-2xl ring-1 ring-gray-200 p-5 flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Workflow</p>
-              <ol className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-5">Workflow</p>
+              <div className="flex flex-col">
                 {[
-                  ['Submit',         'Fill in vendor details and assign approvers'],
-                  ['Approver Review','Each approver reviews sequentially'],
-                  ['Final Approval', 'Pardeep Sharma assigns SAP vendor code'],
-                  ['Completed',      'Vendor is onboarded and record is stored'],
-                ].map(([title, desc], i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold text-white"
-                      style={{ background: '#096fb3' }}>
-                      {i + 1}
+                  { icon: PaperAirplaneIcon, title: 'Submit',          desc: 'Fill in vendor details and assign approvers' },
+                  { icon: EyeIcon,           title: 'Approver Review', desc: 'Each approver reviews sequentially'          },
+                  { icon: CheckBadgeIcon,    title: 'Final Approval',  desc: 'Pardeep Sharma assigns SAP vendor code'     },
+                  { icon: CheckCircleIcon,   title: 'Completed',       desc: 'Vendor is onboarded and record is stored'   },
+                ].map(({ icon: Icon, title, desc }, i, arr) => (
+                  <div key={i}>
+                    {/* Step */}
+                    <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                         style={{ background: 'linear-gradient(135deg,#eef5fb 0%,#f7fafd 100%)', border: '1px solid #d0e4f5' }}>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                           style={{ background: '#096fb3' }}>
+                        <Icon className="h-4 w-4 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-800 leading-tight">{title}</p>
+                        <p className="text-[10px] text-gray-400 leading-relaxed mt-0.5">{desc}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-700">{title}</p>
-                      <p className="text-[11px] text-gray-400 leading-relaxed">{desc}</p>
-                    </div>
-                  </li>
+                    {/* Arrow connector */}
+                    {i < arr.length - 1 && (
+                      <div className="flex items-center justify-center py-0.5">
+                        <ChevronDownIcon className="h-4 w-4" style={{ color: '#096fb3' }} />
+                      </div>
+                    )}
+                  </div>
                 ))}
-              </ol>
+              </div>
             </div>
           </div>
 
