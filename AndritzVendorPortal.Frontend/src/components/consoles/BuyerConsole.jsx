@@ -383,7 +383,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
 
           {/* ── Left column (main) ── */}
-          <div className="lg:col-span-2 space-y-5">
+          <div className="lg:col-span-2 flex flex-col gap-5">
             {/* Stat cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4">
@@ -438,7 +438,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             </div>
 
             {/* Recent activity */}
-            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden flex-1">
               <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-gray-900">Recent Activity</h3>
                 {myRequests.length > 4 && (
@@ -491,7 +491,13 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                     <BarChart data={barData} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
                       <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} domain={[0, 'dataMax+1']} />
-                      <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 10, fill: '#6b7280', width: 105 }} axisLine={false} tickLine={false} />
+                      <YAxis type="category" dataKey="name" width={130} axisLine={false} tickLine={false}
+                        tick={({ x, y, payload }) => (
+                          <text x={x} y={y} dy={4} textAnchor="end" fill="#6b7280" fontSize={10}>
+                            {payload.value.length > 18 ? payload.value.slice(0, 17) + '…' : payload.value}
+                          </text>
+                        )}
+                      />
                       <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={v => [v, 'Requests']} />
                       <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={18}>
                         {barData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
@@ -501,27 +507,6 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 </div>
               )
             })()}
-            {/* New request CTA */}
-            <div className="bg-white rounded-2xl ring-1 ring-gray-200 p-5">
-              <p className="text-sm font-semibold text-gray-900 mb-1">Register a Vendor</p>
-              <p className="text-xs text-gray-400 mb-4 leading-relaxed">
-                Submit a new vendor registration request for approval and SAP onboarding.
-              </p>
-              <button className="w-full btn-primary justify-center" onClick={openCreate}>
-                <PlusIcon className="h-4 w-4" />
-                New Request
-              </button>
-              {rejectedReqs.length > 0 && (
-                <button
-                  onClick={() => onNavigate('revision')}
-                  className="w-full mt-2 flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm font-medium py-2 hover:bg-red-100 transition-colors"
-                >
-                  <ExclamationCircleIcon className="h-4 w-4" />
-                  {rejectedReqs.length} Awaiting Revision
-                </button>
-              )}
-            </div>
-
             {/* Workflow guide */}
             <div className="bg-white rounded-2xl ring-1 ring-gray-200 p-5 flex-1">
               <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Workflow</p>
