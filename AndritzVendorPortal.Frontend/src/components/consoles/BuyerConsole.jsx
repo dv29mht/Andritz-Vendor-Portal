@@ -139,7 +139,15 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     api.get('/master-data/proposed-by').then(r => setProposedByNames(r.data)).catch(() => {})
   }, [])
 
-  const set = (field, value) => setForm(f => ({ ...f, [field]: value }))
+  const set = (field, value) => {
+    setForm(f => ({ ...f, [field]: value }))
+    setErrors(prev => {
+      if (!prev[field]) return prev
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
+  }
 
   const openCreate = () => {
     setEditingRequest(null)
@@ -604,6 +612,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   value={form.city} onChange={e => {
                     const city = e.target.value
                     setForm(f => ({ ...f, city, locality: '', ...(CITY_STATE_MAP[city] ? { state: CITY_STATE_MAP[city] } : {}) }))
+                    setErrors(prev => { if (!prev.city) return prev; const n = { ...prev }; delete n.city; return n })
                   }} />
                 <datalist id="city-list">
                   {Object.keys(CITIES).map(c => <option key={c} value={c} />)}

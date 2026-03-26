@@ -2,17 +2,68 @@
 export const CITIES = {
   Mumbai:    ['Andheri', 'Bandra', 'Worli', 'Powai', 'Dadar'],
   Pune:      ['Hinjewadi', 'Kothrud', 'Viman Nagar', 'Hadapsar', 'Shivajinagar'],
-  Delhi:     ['Connaught Place', 'Gurugram', 'Noida', 'Dwarka', 'Rohini'],
+  Delhi:     ['Connaught Place', 'Dwarka', 'Rohini', 'Lajpat Nagar', 'Saket'],
+  'New Delhi': ['Connaught Place', 'Karol Bagh', 'Dwarka', 'Rohini', 'Saket'],
+  Noida:     ['Sector 18', 'Sector 62', 'Sector 63', 'Greater Noida'],
+  Gurugram:  ['DLF Phase 1', 'Cyber City', 'Sohna Road', 'Golf Course Road'],
+  Gurgaon:   ['DLF Phase 1', 'Cyber City', 'Sohna Road', 'Golf Course Road'],
   Bengaluru: ['Whitefield', 'Electronic City', 'Koramangala', 'HSR Layout', 'Indiranagar'],
+  Bangalore: ['Whitefield', 'Electronic City', 'Koramangala', 'HSR Layout', 'Indiranagar'],
   Chennai:   ['Anna Nagar', 'Adyar', 'T. Nagar', 'Velachery', 'Tambaram'],
+  Hyderabad: ['Hitech City', 'Banjara Hills', 'Jubilee Hills', 'Secunderabad', 'Gachibowli'],
+  Kolkata:   ['Salt Lake', 'Park Street', 'Howrah', 'Dum Dum', 'Rajarhat'],
+  Ahmedabad: ['Navrangpura', 'Vastrapur', 'Bopal', 'SG Highway', 'Chandkheda'],
+  Surat:     ['Adajan', 'Vesu', 'Katargam', 'Udhna'],
+  Jaipur:    ['Malviya Nagar', 'Vaishali Nagar', 'Mansarovar', 'C-Scheme'],
+  Lucknow:   ['Gomti Nagar', 'Hazratganj', 'Aliganj', 'Indira Nagar'],
+  Chandigarh:['Sector 17', 'Sector 22', 'Industrial Area', 'Mohali'],
+  Kochi:     ['Ernakulam', 'Kakkanad', 'Edapally', 'Fort Kochi'],
 }
 
 export const CITY_STATE_MAP = {
-  Mumbai:    'Maharashtra',
-  Pune:      'Maharashtra',
-  Delhi:     'Delhi',
-  Bengaluru: 'Karnataka',
-  Chennai:   'Tamil Nadu',
+  // Maharashtra
+  Mumbai: 'Maharashtra', Pune: 'Maharashtra', Nagpur: 'Maharashtra',
+  Nashik: 'Maharashtra', Aurangabad: 'Maharashtra', Solapur: 'Maharashtra',
+  Thane: 'Maharashtra', Navi_Mumbai: 'Maharashtra',
+  // Delhi / NCR
+  Delhi: 'Delhi', 'New Delhi': 'Delhi', Noida: 'Uttar Pradesh',
+  Gurugram: 'Haryana', Gurgaon: 'Haryana', Faridabad: 'Haryana',
+  Ghaziabad: 'Uttar Pradesh',
+  // Karnataka
+  Bengaluru: 'Karnataka', Bangalore: 'Karnataka', Mysuru: 'Karnataka',
+  Mysore: 'Karnataka', Hubli: 'Karnataka', Mangalore: 'Karnataka',
+  // Tamil Nadu
+  Chennai: 'Tamil Nadu', Coimbatore: 'Tamil Nadu', Madurai: 'Tamil Nadu',
+  Salem: 'Tamil Nadu', Tiruchirappalli: 'Tamil Nadu',
+  // Telangana / Andhra Pradesh
+  Hyderabad: 'Telangana', Secunderabad: 'Telangana',
+  Visakhapatnam: 'Andhra Pradesh', Vijayawada: 'Andhra Pradesh',
+  // West Bengal
+  Kolkata: 'West Bengal', Howrah: 'West Bengal', Durgapur: 'West Bengal',
+  // Gujarat
+  Ahmedabad: 'Gujarat', Surat: 'Gujarat', Vadodara: 'Gujarat',
+  Rajkot: 'Gujarat', Gandhinagar: 'Gujarat',
+  // Rajasthan
+  Jaipur: 'Rajasthan', Jodhpur: 'Rajasthan', Udaipur: 'Rajasthan',
+  Kota: 'Rajasthan',
+  // Madhya Pradesh
+  Indore: 'Madhya Pradesh', Bhopal: 'Madhya Pradesh', Gwalior: 'Madhya Pradesh',
+  Jabalpur: 'Madhya Pradesh',
+  // Uttar Pradesh
+  Lucknow: 'Uttar Pradesh', Kanpur: 'Uttar Pradesh', Agra: 'Uttar Pradesh',
+  Varanasi: 'Uttar Pradesh', Prayagraj: 'Uttar Pradesh', Allahabad: 'Uttar Pradesh',
+  // Punjab / Haryana / Himachal
+  Chandigarh: 'Chandigarh', Ludhiana: 'Punjab', Amritsar: 'Punjab',
+  Jalandhar: 'Punjab', Ambala: 'Haryana', Shimla: 'Himachal Pradesh',
+  // Bihar / Jharkhand
+  Patna: 'Bihar', Ranchi: 'Jharkhand', Jamshedpur: 'Jharkhand',
+  Dhanbad: 'Jharkhand',
+  // Odisha / Assam / North East
+  Bhubaneswar: 'Odisha', Cuttack: 'Odisha', Guwahati: 'Assam',
+  // Kerala
+  Kochi: 'Kerala', Thiruvananthapuram: 'Kerala', Kozhikode: 'Kerala',
+  // Goa / Others
+  Panaji: 'Goa', Dehradun: 'Uttarakhand', Raipur: 'Chhattisgarh',
 }
 
 // ── Users (maps to .NET Identity roles) ──────────────────────────────────────
