@@ -509,7 +509,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             })()}
             {/* Workflow guide */}
             <div className="bg-white rounded-2xl ring-1 ring-gray-200 p-5 flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-5">Workflow</p>
+              <p className="text-sm font-semibold text-gray-900 mb-5">Workflow</p>
               <div className="flex flex-col">
                 {[
                   { icon: PaperAirplaneIcon, title: 'Submit',          desc: 'Fill in vendor details and assign approvers' },
