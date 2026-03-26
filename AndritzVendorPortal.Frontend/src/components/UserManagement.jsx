@@ -5,6 +5,7 @@ import {
   ShieldCheckIcon, ClipboardDocumentIcon,
   PencilSquareIcon, TrashIcon, EyeIcon,
   EnvelopeIcon, BriefcaseIcon, ComputerDesktopIcon, FingerPrintIcon,
+  ChevronLeftIcon,
 } from '@heroicons/react/24/outline'
 import api from '../services/api'
 
@@ -519,8 +520,19 @@ export default function UserManagement() {
       {showForm && (
         <div className="card mb-5 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900 text-sm">New User</h3>
-            <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#096fb3] transition-colors font-medium"
+              >
+                <ChevronLeftIcon className="h-3.5 w-3.5" />
+                User Management
+              </button>
+              <span className="text-gray-200 text-sm">/</span>
+              <h3 className="font-semibold text-gray-900 text-sm">New User</h3>
+            </div>
+            <button type="button" onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
               <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
