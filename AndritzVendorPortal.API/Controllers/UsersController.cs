@@ -41,9 +41,38 @@ public class UsersController(
     [Authorize(Roles = Roles.Admin)]
     public async Task<IActionResult> GetAll()
     {
-        // Single query: join Users → UserRoles → Roles to avoid N+1
         var rows = await (
-            from u  in db.Users.OrderBy(u => u.FullName)
+            from u  in db.Users.Where(u => !u.IsArchived).OrderBy(u => u.FullName)
+            join ur in db.UserRoles on u.Id equals ur.UserId into userRoles
+            from ur in userRoles.DefaultIfEmpty()
+            join r  in db.Roles on ur.RoleId equals r.Id into roles
+            from r  in roles.DefaultIfEmpty()
+            select new { User = u, RoleName = r.Name }
+        ).ToListAsync();
+
+        var result = rows
+            .GroupBy(x => x.User)
+            .Select(g => new UserDto(
+                g.Key.Id,
+                g.Key.FullName,
+                g.Key.Email ?? string.Empty,
+                g.Key.Designation,
+                g.Where(x => x.RoleName != null).Select(x => x.RoleName!).ToList()))
+            .ToList();
+
+        return Ok(result);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // GET /api/users/archived
+    // Admin-only: returns soft-deleted (archived) user accounts.
+    // ─────────────────────────────────────────────────────────────────────────
+    [HttpGet("archived")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> GetArchived()
+    {
+        var rows = await (
+            from u  in db.Users.Where(u => u.IsArchived).OrderBy(u => u.FullName)
             join ur in db.UserRoles on u.Id equals ur.UserId into userRoles
             from ur in userRoles.DefaultIfEmpty()
             join r  in db.Roles on ur.RoleId equals r.Id into roles
@@ -164,7 +193,9 @@ public class UsersController(
         if (user.Email?.Equals("pardeep.sharma@andritz.com", StringComparison.OrdinalIgnoreCase) == true)
             return BadRequest("The Final Approver account cannot be deleted.");
 
-        var result = await userManager.DeleteAsync(user);
+        // Soft-delete: mark as archived so vendor request history is preserved
+        user.IsArchived = true;
+        var result = await userManager.UpdateAsync(user);
         if (!result.Succeeded)
             return BadRequest(result.Errors.Select(e => e.Description).ToList());
 

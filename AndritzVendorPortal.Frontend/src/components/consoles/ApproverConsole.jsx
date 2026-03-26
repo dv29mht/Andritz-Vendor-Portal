@@ -266,6 +266,12 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
       {/* ── History ─────────────────────────────────────────────────────────── */}
       {activePage === 'history' && (
         <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 select-none">
+              <CheckIcon className="h-4 w-4" />
+              {history.length} Approved
+            </span>
+          </div>
           {history.length === 0 && (
             <div className="card p-12 text-center">
               <ArchiveBoxIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />

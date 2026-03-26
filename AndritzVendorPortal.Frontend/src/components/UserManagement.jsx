@@ -8,6 +8,7 @@ import {
   ChevronLeftIcon,
 } from '@heroicons/react/24/outline'
 import api from '../services/api'
+import { useAuth } from '../contexts/AuthContext'
 
 const ROLES = ['Buyer', 'Approver', 'Admin']
 
@@ -337,26 +338,33 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
 // ── Main UserManagement component ─────────────────────────────────────────────
 
 export default function UserManagement() {
-  const [users, setUsers]           = useState([])
-  const [loading, setLoading]       = useState(true)
-  const [fetchError, setFetchError] = useState(null)
-  const [search, setSearch]         = useState('')
-  const [showForm, setShowForm]     = useState(false)
-  const [form, setForm]             = useState(EMPTY_FORM)
-  const [formErrors, setFormErrors] = useState([])
-  const [saving, setSaving]         = useState(false)
-  const [syncing, setSyncing]       = useState(false)
-  const [syncMsg, setSyncMsg]       = useState(null)
-  const [successMsg, setSuccessMsg] = useState(null)
-  const [copiedPwd, setCopiedPwd]   = useState(false)
-  const [detailUser, setDetailUser] = useState(null)
+  const { currentUser, updateUser } = useAuth()
+  const [users, setUsers]               = useState([])
+  const [archivedUsers, setArchivedUsers] = useState([])
+  const [showArchived, setShowArchived] = useState(false)
+  const [loading, setLoading]           = useState(true)
+  const [fetchError, setFetchError]     = useState(null)
+  const [search, setSearch]             = useState('')
+  const [showForm, setShowForm]         = useState(false)
+  const [form, setForm]                 = useState(EMPTY_FORM)
+  const [formErrors, setFormErrors]     = useState([])
+  const [saving, setSaving]             = useState(false)
+  const [syncing, setSyncing]           = useState(false)
+  const [syncMsg, setSyncMsg]           = useState(null)
+  const [successMsg, setSuccessMsg]     = useState(null)
+  const [copiedPwd, setCopiedPwd]       = useState(false)
+  const [detailUser, setDetailUser]     = useState(null)
 
   const fetchUsers = async () => {
     setLoading(true)
     setFetchError(null)
     try {
-      const { data } = await api.get('/users')
-      setUsers(data)
+      const [{ data: active }, { data: archived }] = await Promise.all([
+        api.get('/users'),
+        api.get('/users/archived'),
+      ])
+      setUsers(active)
+      setArchivedUsers(archived)
     } catch {
       setFetchError('Could not load users. The server may be starting up — please retry in a moment.')
     } finally {
@@ -443,10 +451,16 @@ export default function UserManagement() {
 
   const handleUserUpdated = (updated) => {
     setUsers(prev => prev.map(u => u.id === updated.id ? updated : u).sort((a, b) => a.fullName.localeCompare(b.fullName)))
+    // If the admin edited their own account, sync the auth context so the header updates
+    if (currentUser && updated.id === currentUser.id) {
+      updateUser({ name: updated.fullName, fullName: updated.fullName })
+    }
   }
 
   const handleUserDeleted = (id) => {
+    const deleted = users.find(u => u.id === id)
     setUsers(prev => prev.filter(u => u.id !== id))
+    if (deleted) setArchivedUsers(prev => [...prev, deleted].sort((a, b) => a.fullName.localeCompare(b.fullName)))
   }
 
   return (
@@ -682,15 +696,57 @@ export default function UserManagement() {
             })}
           </tbody>
         </table>
-        <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400">
-          Showing {visible.length} of {users.length} user{users.length !== 1 ? 's' : ''}
-          <span className="ml-3 text-gray-300">·</span>
-          <span className="ml-3">
-            <ShieldCheckIcon className="inline h-3 w-3 text-rose-400 mr-0.5" />
-            email-gated = final approval restricted to pardeep.sharma@andritz.com by server policy
+        <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400 flex items-center justify-between flex-wrap gap-2">
+          <span>
+            Showing {visible.length} of {users.length} user{users.length !== 1 ? 's' : ''}
+            <span className="ml-3 text-gray-300">·</span>
+            <span className="ml-3">
+              <ShieldCheckIcon className="inline h-3 w-3 text-rose-400 mr-0.5" />
+              email-gated = final approval restricted to pardeep.sharma@andritz.com by server policy
+            </span>
           </span>
+          {archivedUsers.length > 0 && (
+            <button
+              onClick={() => setShowArchived(v => !v)}
+              className="text-xs text-gray-500 hover:text-gray-700 underline underline-offset-2"
+            >
+              {showArchived ? 'Hide' : 'View'} archived accounts ({archivedUsers.length})
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Archived accounts */}
+      {showArchived && archivedUsers.length > 0 && (
+        <div className="mt-4 rounded-xl ring-1 ring-gray-200 overflow-hidden">
+          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Archived Accounts ({archivedUsers.length})</p>
+          </div>
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-gray-100">
+              <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500">Name</th>
+              <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500">Email</th>
+              <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500">Role</th>
+            </tr></thead>
+            <tbody className="divide-y divide-gray-50">
+              {archivedUsers.map(u => {
+                const role = u.roles[0]
+                return (
+                  <tr key={u.id} className="opacity-60">
+                    <td className="px-4 py-3 font-medium text-gray-700 line-through">{u.fullName}</td>
+                    <td className="px-4 py-3 text-gray-500 font-mono text-xs">{u.email}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${ROLE_BADGE[role] ?? 'bg-gray-50 text-gray-600 ring-gray-200'}`}>
+                        {ROLE_DISPLAY[role] ?? role}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
       </>)}
 
       {/* User Detail Modal */}

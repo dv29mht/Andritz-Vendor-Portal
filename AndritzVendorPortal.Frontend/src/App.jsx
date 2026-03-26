@@ -8,6 +8,48 @@ import ApproverConsole from './components/consoles/ApproverConsole'
 import FinalApproverConsole from './components/consoles/FinalApproverConsole'
 import AdminConsole from './components/consoles/AdminConsole'
 import SettingsPage from './pages/SettingsPage'
+import StatusBadge from './components/shared/StatusBadge'
+import VendorDetailModal from './components/VendorDetailModal'
+
+function OneTimeVendorPage({ workflow }) {
+  const [viewing, setViewing] = useState(null)
+  const oneTime = workflow.requests.filter(r => r.isOneTimeVendor)
+  return (
+    <div className="p-6 max-w-5xl mx-auto space-y-4">
+      <div className="flex items-center gap-3 mb-2">
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 ring-1 ring-amber-200 text-amber-700 text-sm font-semibold px-4 py-2 select-none">
+          {oneTime.length} One-Time Vendor{oneTime.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+      {oneTime.length === 0 && (
+        <div className="bg-white rounded-2xl ring-1 ring-gray-200 p-12 text-center">
+          <p className="text-sm text-gray-400">No one-time vendor requests found.</p>
+        </div>
+      )}
+      {oneTime.map(req => (
+        <div key={req.id} className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-start justify-between gap-4 flex-wrap">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <p className="font-semibold text-gray-900">{req.vendorName}</p>
+              <StatusBadge status={req.status} />
+              <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full font-medium">One-Time</span>
+              {req.vendorCode && (
+                <span className="text-xs bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 ring-inset px-2 py-0.5 rounded-full font-mono">{req.vendorCode}</span>
+              )}
+            </div>
+            <p className="text-sm text-gray-500">{req.contactPerson} · {req.contactInformation}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{[req.city, req.locality, req.state].filter(Boolean).join(', ')} · {req.materialGroup || '—'}</p>
+            <p className="text-xs text-gray-400 mt-0.5">Submitted by {req.createdByName} · {new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</p>
+          </div>
+          <button className="btn-secondary flex-shrink-0" onClick={() => setViewing(req)}>
+            View
+          </button>
+        </div>
+      ))}
+      {viewing && <VendorDetailModal request={viewing} onClose={() => setViewing(null)} />}
+    </div>
+  )
+}
 
 // ── Welcome screen shown for ~3s after login ──────────────────────────────────
 
@@ -96,6 +138,9 @@ export default function App() {
   function renderPage() {
     if (activePage === 'settings') {
       return <SettingsPage currentUser={currentUser} onUpdate={updateUser} />
+    }
+    if (activePage === 'onetime' && (role === 'Admin' || role === 'FinalApprover')) {
+      return <OneTimeVendorPage workflow={workflow} />
     }
     if (role === 'Buyer') {
       return <BuyerConsole activePage={activePage} onNavigate={setActivePage} workflow={workflow} currentUser={currentUser} />

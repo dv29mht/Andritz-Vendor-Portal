@@ -187,10 +187,10 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
               </div>
               <div className="px-2 py-4">
                 <ResponsiveContainer width="100%" height={160}>
-                  <BarChart data={buildMaterialData(workflow.requests)} layout="vertical" barSize={14} margin={{ top: 4, right: 16, left: 4, bottom: 0 }}>
+                  <BarChart data={buildMaterialData(workflow.requests)} layout="vertical" barSize={14} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
                     <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10, fill: '#6b7280', width: 115 }} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
                     <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} />
                   </BarChart>
@@ -268,6 +268,12 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
       {/* ── History ─────────────────────────────────────────────────────────── */}
       {activePage === 'history' && (
         <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 select-none">
+              <CheckIcon className="h-4 w-4" />
+              {history.length} Completed
+            </span>
+          </div>
           {history.length === 0 && (
             <div className="card p-12 text-center">
               <ArchiveBoxIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />

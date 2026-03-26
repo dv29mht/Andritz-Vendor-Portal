@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
          ClockIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
 import { ExclamationTriangleIcon, CheckBadgeIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+         PieChart, Pie, Cell, Legend } from 'recharts'
 import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
@@ -471,6 +472,30 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
           {/* ── Right column (actions + guide) ── */}
           <div className="space-y-5">
+            {/* Material type pie chart */}
+            {myRequests.length > 0 && (() => {
+              const PIE_COLORS = ['#096fb3','#10b981','#f59e0b','#6366f1','#ef4444','#8b5cf6','#14b8a6','#f97316']
+              const counts = {}
+              myRequests.forEach(r => {
+                const k = r.materialGroup?.trim() || 'Unspecified'
+                counts[k] = (counts[k] ?? 0) + 1
+              })
+              const pieData = Object.entries(counts).map(([name, value]) => ({ name, value }))
+              return (
+                <div className="bg-white rounded-2xl ring-1 ring-gray-200 p-5">
+                  <p className="text-sm font-semibold text-gray-900 mb-3">My Requests by Material</p>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie data={pieData} dataKey="value" cx="50%" cy="50%" outerRadius={70} strokeWidth={1.5}>
+                        {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v, n) => [v, n]} />
+                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              )
+            })()}
             {/* New request CTA */}
             <div className="bg-white rounded-2xl ring-1 ring-gray-200 p-5">
               <p className="text-sm font-semibold text-gray-900 mb-1">Register a Vendor</p>
@@ -542,6 +567,12 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       {/* ── Waiting Revision ────────────────────────────────────────────────── */}
       {activePage === 'revision' && (
         <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 ring-1 ring-red-200 text-red-700 text-sm font-semibold px-4 py-2 select-none">
+              <ExclamationCircleIcon className="h-4 w-4" />
+              {rejectedReqs.length} Awaiting Revision
+            </span>
+          </div>
           {rejectedReqs.length === 0 && (
             <div className="card p-12 text-center">
               <ExclamationCircleIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />

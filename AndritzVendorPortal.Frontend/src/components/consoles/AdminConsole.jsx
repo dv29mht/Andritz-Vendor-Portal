@@ -324,9 +324,9 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
               </div>
               <div className="px-4 py-4">
                 <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={materialData} layout="vertical" barSize={16} margin={{ top: 0, right: 16, left: 8, bottom: 0 }}>
+                  <BarChart data={materialData} layout="vertical" barSize={16} margin={{ top: 0, right: 32, left: 8, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                    <XAxis type="number" allowDecimals={false} domain={[0, 'dataMax+1']} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis type="category" dataKey="name" width={130} axisLine={false} tickLine={false}
                       tick={({ x, y, payload }) => (
                         <text x={x} y={y} dy={4} textAnchor="end" fontSize={11} fill="#64748b">

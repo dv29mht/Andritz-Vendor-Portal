@@ -3,7 +3,7 @@ import {
   HomeIcon, DocumentTextIcon, ClockIcon, ArchiveBoxIcon,
   ExclamationCircleIcon, BuildingOfficeIcon, TableCellsIcon,
   UserGroupIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon,
-  ChevronRightIcon, ChevronLeftIcon, Bars3Icon,
+  ChevronRightIcon, ChevronLeftIcon, Bars3Icon, StarIcon,
 } from '@heroicons/react/24/outline'
 import NotificationBell from './shared/NotificationBell'
 import { useNotifications } from '../hooks/useNotifications'
@@ -23,18 +23,20 @@ const NAV = {
     { id: 'settings',  label: 'Settings',          icon: Cog6ToothIcon },
   ],
   FinalApprover: [
-    { id: 'dashboard', label: 'Dashboard',        icon: HomeIcon },
-    { id: 'pending',   label: 'Pending Queue',    icon: ClockIcon },
-    { id: 'history',   label: 'History',          icon: ArchiveBoxIcon },
-    { id: 'vendors',   label: 'Vendor Database',  icon: BuildingOfficeIcon },
-    { id: 'settings',  label: 'Settings',          icon: Cog6ToothIcon },
+    { id: 'dashboard',   label: 'Dashboard',         icon: HomeIcon },
+    { id: 'pending',     label: 'Pending Queue',     icon: ClockIcon },
+    { id: 'history',     label: 'History',           icon: ArchiveBoxIcon },
+    { id: 'vendors',     label: 'Vendor Database',   icon: BuildingOfficeIcon },
+    { id: 'onetime',     label: 'One-Time Vendors',  icon: StarIcon },
+    { id: 'settings',    label: 'Settings',           icon: Cog6ToothIcon },
   ],
   Admin: [
-    { id: 'dashboard', label: 'Dashboard',        icon: HomeIcon },
-    { id: 'requests',  label: 'All Requests',     icon: TableCellsIcon },
-    { id: 'vendors',   label: 'Vendor Database',  icon: BuildingOfficeIcon },
-    { id: 'users',     label: 'User Management',  icon: UserGroupIcon },
-    { id: 'settings',  label: 'Settings',          icon: Cog6ToothIcon },
+    { id: 'dashboard',   label: 'Dashboard',         icon: HomeIcon },
+    { id: 'requests',    label: 'All Requests',      icon: TableCellsIcon },
+    { id: 'vendors',     label: 'Vendor Database',   icon: BuildingOfficeIcon },
+    { id: 'users',       label: 'User Management',   icon: UserGroupIcon },
+    { id: 'onetime',     label: 'One-Time Vendors',  icon: StarIcon },
+    { id: 'settings',    label: 'Settings',           icon: Cog6ToothIcon },
   ],
 }
 
