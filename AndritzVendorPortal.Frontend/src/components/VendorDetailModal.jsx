@@ -221,6 +221,45 @@ function downloadRevisionCsv(request) {
   URL.revokeObjectURL(url)
 }
 
+function downloadRevisionPdf(request) {
+  const history = request.revisionHistory ?? []
+  const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+  const revRows = history.length === 0
+    ? `<tr><td>0 (Original)</td><td>${esc(request.createdByName)}</td><td>${esc(fmtDate(request.createdAt))}</td><td></td><td>(original)</td><td></td><td></td></tr>`
+    : [
+        `<tr><td>0 (Original)</td><td>${esc(request.createdByName)}</td><td>${esc(fmtDate(request.createdAt))}</td><td></td><td></td><td></td><td></td></tr>`,
+        ...history.flatMap(e => e.changes.length === 0
+          ? [`<tr><td>REV ${e.revisionNo}</td><td>${esc(e.changedByName)}</td><td>${esc(fmtDate(e.changedAt))}</td><td>${esc(e.rejectionComment)}</td><td>(no field changes)</td><td></td><td></td></tr>`]
+          : e.changes.map((c, i) => `<tr><td>${i === 0 ? `REV ${e.revisionNo}` : ''}</td><td>${i === 0 ? esc(e.changedByName) : ''}</td><td>${i === 0 ? esc(fmtDate(e.changedAt)) : ''}</td><td>${i === 0 ? esc(e.rejectionComment) : ''}</td><td>${esc(c.fieldLabel)}</td><td>${esc(c.oldValue)}</td><td>${esc(c.newValue)}</td></tr>`)
+        )
+      ].join('')
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Revision History — ${esc(request.vendorName)}</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 11px; margin: 24px; color: #1f2937; }
+  h1 { font-size: 16px; margin-bottom: 4px; }
+  p.sub { color: #6b7280; margin: 0 0 16px; font-size: 11px; }
+  table { border-collapse: collapse; width: 100%; }
+  th { background: #064e80; color: white; padding: 6px 8px; text-align: left; font-size: 10px; }
+  td { padding: 5px 8px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  tr:nth-child(even) td { background: #f9fafb; }
+  @media print { body { margin: 12px; } }
+</style></head><body>
+<h1>Revision History — ${esc(request.vendorName)}</h1>
+<p class="sub">Generated on ${new Date().toLocaleDateString('en-IN', { dateStyle: 'long' })} &nbsp;·&nbsp; Status: ${esc(request.status)}</p>
+<table><thead><tr><th>Revision</th><th>Changed By</th><th>Changed At</th><th>Rejection Reason</th><th>Field</th><th>Old Value</th><th>New Value</th></tr></thead>
+<tbody>${revRows}</tbody></table>
+</body></html>`
+
+  const w = window.open('', '_blank', 'width=900,height=650')
+  if (!w) return
+  w.document.write(html)
+  w.document.close()
+  w.focus()
+  setTimeout(() => { w.print() }, 400)
+}
+
 function RevisionsTab({ request }) {
   const history = request.revisionHistory ?? []
 
@@ -238,8 +277,15 @@ function RevisionsTab({ request }) {
 
   return (
     <div className="space-y-5">
-      {/* Download button */}
-      <div className="flex justify-end -mt-1">
+      {/* Download buttons */}
+      <div className="flex justify-end gap-2 -mt-1">
+        <button
+          onClick={() => downloadRevisionPdf(request)}
+          className="flex items-center gap-1.5 rounded-lg border border-gray-200 text-gray-600 text-xs font-semibold px-3 py-1.5 hover:bg-gray-50 transition-colors"
+        >
+          <PrinterIcon className="h-3.5 w-3.5" />
+          Download PDF
+        </button>
         <button
           onClick={() => downloadRevisionCsv(request)}
           className="flex items-center gap-1.5 rounded-lg border border-gray-200 text-gray-600 text-xs font-semibold px-3 py-1.5 hover:bg-gray-50 transition-colors"

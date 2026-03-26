@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
          ClockIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
 import { ExclamationTriangleIcon, CheckBadgeIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
 import { CITIES, CITY_STATE_MAP } from '../../data/mockData'
 import api from '../../services/api'
+import { buildMonthlyData } from '../../utils/statsUtils'
 
 const EMPTY_FORM = {
   vendorName: '', materialGroup: '', reason: '',
@@ -409,6 +411,28 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   <p className="text-2xl font-bold text-gray-900">{completedReqs.length}</p>
                   <p className="text-xs text-gray-500 mt-0.5">Completed</p>
                 </div>
+              </div>
+            </div>
+
+            {/* Monthly requests chart */}
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-900">My Requests — Last 6 Months</h3>
+              </div>
+              <div className="px-2 py-4">
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={buildMonthlyData(myRequests)} barSize={28} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                    <Tooltip
+                      cursor={{ fill: '#f0f7ff' }}
+                      contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
+                      formatter={(v) => [v, 'Requests']}
+                    />
+                    <Bar dataKey="count" fill="#096fb3" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
 

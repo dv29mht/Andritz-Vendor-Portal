@@ -36,7 +36,7 @@ public static class SeedData
              "Vikram Nair",    "Buyer@123!",     Roles.Buyer,         "Purchase Officer"),
             ("rajesh.kumar@andritz.com",
              "Rajesh Kumar",   "Approver@123!",  Roles.Approver,      "Purchase Manager"),
-            ("sunita.rao@andritz.com",
+            ("admin@andritz.com",
              "Sunita Rao",     "Admin@123!",     Roles.Admin,         "System Administrator"),
         };
 

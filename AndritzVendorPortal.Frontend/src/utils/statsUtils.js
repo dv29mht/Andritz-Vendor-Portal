@@ -1,4 +1,29 @@
 /**
+ * Builds monthly counts for the last 6 months from a list of requests.
+ * Uses createdAt by default; pass a dateField to use a different date.
+ */
+export function buildMonthlyData(requests, dateField = 'createdAt') {
+  const counts = {}
+  requests.forEach(r => {
+    const raw = r[dateField]
+    if (!raw) return
+    const d = new Date(raw)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    counts[key] = (counts[key] ?? 0) + 1
+  })
+  const months = []
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(1)
+    d.setMonth(d.getMonth() - i)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const label = d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })
+    months.push({ key, label, count: counts[key] ?? 0 })
+  }
+  return months
+}
+
+/**
  * Computes summary statistics from a list of vendor requests.
  * Returns keys used by both AdminConsole (final) and FinalApproverConsole (finalPending).
  */

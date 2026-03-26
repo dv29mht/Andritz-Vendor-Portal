@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { UserIcon, EnvelopeIcon, KeyIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
+import { UserIcon, EnvelopeIcon, KeyIcon, CheckCircleIcon, ExclamationCircleIcon,
+         EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import api from '../services/api'
 
 export default function SettingsPage({ currentUser, onUpdate }) {
@@ -10,6 +11,9 @@ export default function SettingsPage({ currentUser, onUpdate }) {
   const [saving,     setSaving]     = useState(false)
   const [error,      setError]      = useState(null)
   const [success,    setSuccess]    = useState(false)
+  const [showCur,    setShowCur]    = useState(false)
+  const [showNew,    setShowNew]    = useState(false)
+  const [showCfm,    setShowCfm]    = useState(false)
 
   const handleSave = async () => {
     setError(null)
@@ -96,21 +100,29 @@ export default function SettingsPage({ currentUser, onUpdate }) {
           </div>
           <div className="px-6 py-5 space-y-4 flex-1">
             {[
-              { label: 'Current Password',    value: curPwd,     set: setCurPwd,     ph: 'Current password' },
-              { label: 'New Password',         value: newPwd,     set: setNewPwd,     ph: 'New password (min. 8 chars)' },
-              { label: 'Confirm New Password', value: confirmPwd, set: setConfirmPwd, ph: 'Repeat new password' },
-            ].map(({ label, value, set, ph }) => (
+              { label: 'Current Password',    value: curPwd,     set: setCurPwd,     ph: 'Current password',           show: showCur, toggle: () => setShowCur(v => !v) },
+              { label: 'New Password',         value: newPwd,     set: setNewPwd,     ph: 'New password (min. 8 chars)', show: showNew, toggle: () => setShowNew(v => !v) },
+              { label: 'Confirm New Password', value: confirmPwd, set: setConfirmPwd, ph: 'Repeat new password',        show: showCfm, toggle: () => setShowCfm(v => !v) },
+            ].map(({ label, value, set, ph, show, toggle }) => (
               <div key={label}>
                 <label className="form-label">{label}</label>
                 <div className="relative">
                   <KeyIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   <input
-                    type="password"
-                    className="form-input pl-9"
+                    type={show ? 'text' : 'password'}
+                    className="form-input pl-9 pr-10"
                     value={value}
                     onChange={e => set(e.target.value)}
                     placeholder={ph}
                   />
+                  <button
+                    type="button"
+                    onClick={toggle}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {show ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
             ))}

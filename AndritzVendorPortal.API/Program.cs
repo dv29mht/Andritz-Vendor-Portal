@@ -211,6 +211,8 @@ using (var scope = app.Services.CreateScope())
         """CREATE UNIQUE INDEX IF NOT EXISTS "IX_VendorRequests_VendorCode" ON "VendorRequests" ("VendorCode") WHERE "VendorCode" IS NOT NULL""",
         // Index on ApproverUserId for faster pending-step lookups
         """CREATE INDEX IF NOT EXISTS "IX_ApprovalSteps_ApproverUserId" ON "ApprovalSteps" ("ApproverUserId")""",
+        // Rename admin email from sunita.rao to admin@andritz.com
+        """UPDATE "AspNetUsers" SET "Email"='admin@andritz.com', "NormalizedEmail"='ADMIN@ANDRITZ.COM', "UserName"='admin@andritz.com', "NormalizedUserName"='ADMIN@ANDRITZ.COM' WHERE "NormalizedEmail"='SUNITA.RAO@ANDRITZ.COM'""",
     })
     {
         try { context.Database.ExecuteSqlRaw(sql); }

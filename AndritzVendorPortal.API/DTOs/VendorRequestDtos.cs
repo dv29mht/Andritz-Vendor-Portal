@@ -114,29 +114,25 @@ public record ResubmitRequestDto(
 );
 
 public record AdminEditVendorRequestDto(
-    [Required, MaxLength(200)]                                                    string  VendorName,
-    [Required, MaxLength(100)]                                                    string  ContactPerson,
-    [MaxLength(30)]                                                               string? Telephone,
-    [Required, RegularExpression(ValidationPatterns.Gst,
-        ErrorMessage = "GST number must be in the format 22AAAAA0000A1Z5 (15 characters).")]
-                                                                                  string  GstNumber,
-    [Required, RegularExpression(ValidationPatterns.Pan,
-        ErrorMessage = "PAN card must be in the format ABCDE1234F (10 characters).")]
-                                                                                  string  PanCard,
-    [Required, MaxLength(500)]                                                    string  AddressDetails,
-    [Required, MaxLength(100)]                                                    string  City,
-    [Required, MaxLength(100)]                                                    string  Locality,
-    [MaxLength(200)]                                                              string? MaterialGroup,
-    [MaxLength(10)]                                                               string? PostalCode,
-    [MaxLength(100)]                                                              string? State,
-    [MaxLength(100)]                                                              string? Country,
-    [MaxLength(10)]                                                               string? Currency,
-    [MaxLength(200)]                                                              string? PaymentTerms,
-    [MaxLength(200)]                                                              string? Incoterms,
-    [MaxLength(1000)]                                                             string? Reason,
-    [MaxLength(100)]                                                              string? YearlyPvo,
-                                                                                  bool?   IsOneTimeVendor,
-    [MaxLength(200)]                                                              string? ProposedBy
+    [Required, MaxLength(200)]  string  VendorName,
+    [Required, MaxLength(100)]  string  ContactPerson,
+    [MaxLength(30)]             string? Telephone,
+    [Required, MaxLength(15)]   string  GstNumber,
+    [Required, MaxLength(10)]   string  PanCard,
+    [Required, MaxLength(500)]  string  AddressDetails,
+    [Required, MaxLength(100)]  string  City,
+    [Required, MaxLength(100)]  string  Locality,
+    [MaxLength(200)]            string? MaterialGroup,
+    [MaxLength(10)]             string? PostalCode,
+    [MaxLength(100)]            string? State,
+    [MaxLength(100)]            string? Country,
+    [MaxLength(10)]             string? Currency,
+    [MaxLength(200)]            string? PaymentTerms,
+    [MaxLength(200)]            string? Incoterms,
+    [MaxLength(1000)]           string? Reason,
+    [MaxLength(100)]            string? YearlyPvo,
+                                bool?   IsOneTimeVendor,
+    [MaxLength(200)]            string? ProposedBy
 );
 
 public record ClassifyVendorRequestDto(bool IsOneTimeVendor);
@@ -146,7 +142,7 @@ public record ApproveRequestDto([MaxLength(500)] string? Comment);
 public record RejectRequestDto([Required, MaxLength(500)] string Comment);
 
 public record CompleteRequestDto(
-    [Required, MaxLength(50)] string VendorCode
+    [Required, RegularExpression(@"^\d{1,10}$", ErrorMessage = "Vendor code must be 1–10 digits.")] string VendorCode
 );
 
 // ── Outbound ─────────────────────────────────────────────────────────────────

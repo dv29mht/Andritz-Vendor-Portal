@@ -43,6 +43,7 @@ public class VendorRequestController(
         new("paymentTerms",  "Payment Terms",  r => r.PaymentTerms,  d => d.PaymentTerms  ?? string.Empty),
         new("incoterms",     "Incoterms",      r => r.Incoterms,     d => d.Incoterms     ?? string.Empty),
         new("yearlyPvo",     "Yearly PVO",     r => r.YearlyPvo,     d => d.YearlyPvo     ?? string.Empty),
+        new("proposedBy",    "Proposed By",    r => r.ProposedBy    ?? string.Empty, d => d.ProposedBy    ?? string.Empty),
     ];
 
     private static readonly JsonSerializerOptions JsonOpts = new()

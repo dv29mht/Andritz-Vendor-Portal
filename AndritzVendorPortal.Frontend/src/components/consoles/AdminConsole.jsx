@@ -130,7 +130,14 @@ function AdminEditModal({ request, onClose, onSaved }) {
       onClose()
     } catch (err) {
       const detail = err.response?.data
-      setError(Array.isArray(detail) ? detail.join(' ') : typeof detail === 'string' ? detail : 'Save failed.')
+      if (Array.isArray(detail))             setError(detail.join(' '))
+      else if (typeof detail === 'string')   setError(detail)
+      else if (detail?.errors) {
+        const msgs = Object.values(detail.errors).flat()
+        setError(msgs.join(' '))
+      }
+      else if (detail?.title)                setError(detail.title)
+      else                                   setError('Save failed. Please check all required fields.')
     } finally {
       setSaving(false)
     }

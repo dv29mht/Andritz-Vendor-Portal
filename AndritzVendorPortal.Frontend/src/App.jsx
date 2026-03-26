@@ -118,7 +118,7 @@ export default function App() {
       <AppShell
         workflow={workflow}
         currentUser={currentUser}
-        onLogout={logout}
+        onLogout={() => { logout(); setActivePage('dashboard') }}
         activePage={activePage}
         setActivePage={setActivePage}
       >

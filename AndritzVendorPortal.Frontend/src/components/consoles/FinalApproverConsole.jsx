@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CheckBadgeIcon, StarIcon } from '@heroicons/react/24/solid'
 import { XMarkIcon, EyeIcon, CheckIcon, ClockIcon, ArchiveBoxIcon,
          UsersIcon, ArrowPathIcon, NoSymbolIcon, TrophyIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import VendorDatabase from '../VendorDatabase'
 import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
@@ -9,7 +10,19 @@ import ApprovalTimeline from '../shared/ApprovalTimeline'
 import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
 import { useViewedRequests } from '../../hooks/useViewedRequests'
-import { buildStats } from '../../utils/statsUtils'
+import { buildStats, buildMonthlyData } from '../../utils/statsUtils'
+
+function buildMaterialData(requests) {
+  const counts = {}
+  requests.forEach(r => {
+    const key = r.materialGroup?.trim() || 'Unspecified'
+    counts[key] = (counts[key] ?? 0) + 1
+  })
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([name, count]) => ({ name, count }))
+}
 
 const METRICS = [
   { label: 'Total Assigned', key: 'total',        icon: UsersIcon,       bg: 'bg-blue-50',    ic: 'text-blue-500',    text: 'text-blue-700'    },
@@ -50,9 +63,11 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
   }
 
   const handleComplete = async () => {
-    if (!vendorCode.trim()) { setVendorCodeErr('SAP Vendor Code is required.'); return }
+    const trimmed = vendorCode.trim()
+    if (!trimmed)                    { setVendorCodeErr('SAP Vendor Code is required.'); return }
+    if (!/^\d{1,10}$/.test(trimmed)) { setVendorCodeErr('Vendor code must be 1–10 digits only.'); return }
     const name = reviewing.vendorName
-    const code = vendorCode.trim()
+    const code = trimmed
     try {
       await workflow.complete(reviewing.id, code)
       setReviewing(null)
@@ -118,7 +133,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-gray-900">{req.vendorName}</p>
                         {isNew(req) && (
-                          <span className="text-xs bg-blue-500 text-white font-bold px-2 py-0.5 rounded-full">NEW</span>
+                          <span className="text-xs bg-indigo-500 text-white font-bold px-2 py-0.5 rounded-full">NEW</span>
                         )}
                       </div>
                       <p className="text-xs text-gray-400 mt-0.5">{req.city}, {req.locality}</p>
@@ -144,6 +159,45 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
               <p className="text-sm text-gray-500">No requests awaiting your approval.</p>
             </div>
           )}
+
+          {/* Charts row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Monthly requests chart */}
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-900">Requests — Last 6 Months</h3>
+              </div>
+              <div className="px-2 py-4">
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={buildMonthlyData(workflow.requests)} barSize={24} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                    <Tooltip cursor={{ fill: '#eef2ff' }} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
+                    <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Material group chart */}
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-900">Requests by Material Group</h3>
+              </div>
+              <div className="px-2 py-4">
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={buildMaterialData(workflow.requests)} layout="vertical" barSize={14} margin={{ top: 4, right: 16, left: 4, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
+                    <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -178,7 +232,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                           <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
                         )}
                         {isNew(req) && (
-                          <span className="text-xs bg-blue-500 text-white font-bold px-2 py-0.5 rounded-full">NEW</span>
+                          <span className="text-xs bg-indigo-500 text-white font-bold px-2 py-0.5 rounded-full">NEW</span>
                         )}
                       </div>
                       <p className="text-sm text-gray-500 mt-1">{req.contactInformation}</p>
@@ -304,7 +358,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                 <label className="form-label">SAP Vendor Code <span className="text-red-500">*</span></label>
                 <input
                   className="form-input font-mono text-base tracking-widest"
-                  placeholder="e.g. SAP-V-20240117-001"
+                  placeholder="e.g. 1234567890 (1–10 digits)"
                   value={vendorCode}
                   onChange={e => { setVendorCode(e.target.value); setVendorCodeErr('') }}
                   autoFocus
