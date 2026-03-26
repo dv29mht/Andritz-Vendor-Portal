@@ -167,7 +167,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       vendorName:     req.vendorName     ?? '',
       materialGroup:  req.materialGroup  ?? '',
       reason:         req.reason         ?? '',
-      contactPerson:  req.contactPerson  ?? '',
+      contactPerson:  req.contactPerson  || req.contactInformation || '',
       telephone:      req.telephone      ?? '',
       gstNumber:      req.gstNumber      ?? '',
       panCard:        req.panCard        ?? '',
@@ -221,7 +221,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
   const handleSubmitForm = async () => {
     const e = validate()
-    if (Object.keys(e).length) { setErrors(e); return }
+    if (Object.keys(e).length) { setErrors(e); setApiError('Please fill in all required fields highlighted below.'); return }
 
     // Block resubmit if buyer changed nothing
     if (editingRequest && editingRequest.status !== 'Completed' && !hasFormChanged()) {
