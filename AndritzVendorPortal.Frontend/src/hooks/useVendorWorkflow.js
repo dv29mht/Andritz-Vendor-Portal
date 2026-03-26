@@ -7,12 +7,16 @@ export function useVendorWorkflow() {
   const [requests,       setRequests]       = useState([])
   const [loading,        setLoading]        = useState(false)
   const [actionLoading,  setActionLoading]  = useState(false)
+  const [fetchError,     setFetchError]     = useState(null)
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const { data } = await api.get('/vendor-requests')
       setRequests(data)
+    } catch (err) {
+      setFetchError(err?.response?.data?.message ?? 'Failed to load requests. Please refresh.')
     } finally {
       setLoading(false)
     }
@@ -85,8 +89,11 @@ export function useVendorWorkflow() {
   }
 
   const submit = async (requestId) => {
-    await api.post(`/vendor-requests/${requestId}/submit`)
-    await fetchAll()
+    setActionLoading(true)
+    try {
+      await api.post(`/vendor-requests/${requestId}/submit`)
+      await fetchAll()
+    } finally { setActionLoading(false) }
   }
 
   const resubmit = async (requestId, form) => {
@@ -118,6 +125,8 @@ export function useVendorWorkflow() {
   }
 
   const updateCompleted = async (requestId, form) => {
+    setActionLoading(true)
+    try {
     await api.put(`/vendor-requests/${requestId}/buyer-update`, {
       vendorName:      form.vendorName,
       contactPerson:   form.contactPerson,
@@ -140,6 +149,7 @@ export function useVendorWorkflow() {
       proposedBy:      form.proposedBy     || null,
     })
     await fetchAll()
+    } finally { setActionLoading(false) }
   }
 
   // ── Approver actions ─────────────────────────────────────────────────────
@@ -173,6 +183,7 @@ export function useVendorWorkflow() {
   return {
     requests,
     loading,
+    fetchError,
     actionLoading,
     fetchAll,
     fetchDetail,

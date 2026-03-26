@@ -2,12 +2,11 @@ namespace AndritzVendorPortal.API.Models;
 
 public enum VendorRequestStatus
 {
-    Draft               = 0,
-    PendingApproval     = 1,
-    Approved            = 2,   // Intermediate approver(s) approved
-    Rejected            = 3,
+    Draft                = 0,
+    PendingApproval      = 1,
+    Rejected             = 3,
     PendingFinalApproval = 4,  // Forwarded to Pardeep Sharma
-    Completed           = 5    // Vendor code assigned; workflow done
+    Completed            = 5   // Vendor code assigned; workflow done
 }
 
 public class VendorRequest

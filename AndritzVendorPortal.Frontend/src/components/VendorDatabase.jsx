@@ -7,6 +7,7 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
   const vendors = requests.filter(r => r.status === 'Completed' && !r.isOneTimeVendor)
   const [viewingRequest, setViewingRequest] = useState(null)
   const [reclassifying, setReclassifying]   = useState(null)
+  const [reclassifyError, setReclassifyError] = useState(null)
   const [search, setSearch]                 = useState('')
 
   const visible = vendors.filter(r => {
@@ -20,9 +21,12 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
 
   const handleMoveToOneTime = async (req) => {
     setReclassifying(req.id)
+    setReclassifyError(null)
     try {
       const { data } = await api.patch(`/vendor-requests/${req.id}/classify`, { isOneTimeVendor: true })
       onReclassified?.(data)
+    } catch (err) {
+      setReclassifyError(err?.response?.data?.message ?? err?.response?.data ?? 'Failed to reclassify vendor. Please try again.')
     } finally {
       setReclassifying(null)
     }
@@ -107,6 +111,11 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
         <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400">
           Showing {visible.length} of {vendors.length} permanent vendor{vendors.length !== 1 ? 's' : ''}
         </div>
+        {reclassifyError && (
+          <div className="px-4 py-2.5 border-t border-red-100 bg-red-50 text-xs text-red-700">
+            {reclassifyError}
+          </div>
+        )}
       </div>
 
       {viewingRequest && (

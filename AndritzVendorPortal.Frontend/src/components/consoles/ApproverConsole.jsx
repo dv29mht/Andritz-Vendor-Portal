@@ -49,17 +49,25 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
 
   const handleApprove = async () => {
     const name = reviewing.vendorName
-    await workflow.approveStep(reviewing.id, approveComment)
-    setReviewing(null)
-    setToast({ type: 'success', title: 'Request Approved', body: `You approved the vendor request for ${name}. It has moved to the next step.` })
+    try {
+      await workflow.approveStep(reviewing.id, approveComment)
+      setReviewing(null)
+      setToast({ type: 'success', title: 'Request Approved', body: `You approved the vendor request for ${name}. It has moved to the next step.` })
+    } catch (err) {
+      setToast({ type: 'error', title: 'Action Failed', body: err?.response?.data?.message ?? err?.response?.data ?? 'Failed to approve request. Please try again.' })
+    }
   }
 
   const handleReject = async () => {
     if (!rejectComment.trim()) { setRejectError('A comment is required when rejecting.'); return }
     const name = reviewing.vendorName
-    await workflow.reject(reviewing.id, rejectComment)
-    setReviewing(null)
-    setToast({ type: 'error', title: 'Request Rejected', body: `You rejected the vendor request for ${name}. The buyer will be notified to revise and resubmit.` })
+    try {
+      await workflow.reject(reviewing.id, rejectComment)
+      setReviewing(null)
+      setToast({ type: 'error', title: 'Request Rejected', body: `You rejected the vendor request for ${name}. The buyer will be notified to revise and resubmit.` })
+    } catch (err) {
+      setToast({ type: 'error', title: 'Action Failed', body: err?.response?.data?.message ?? err?.response?.data ?? 'Failed to reject request. Please try again.' })
+    }
   }
 
   const myStepFor = (req) => req.approvalSteps.find(s => s.approverUserId === currentUser.id)

@@ -37,7 +37,7 @@ function OneTimeVendorPage({ workflow }) {
                 <span className="text-xs bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 ring-inset px-2 py-0.5 rounded-full font-mono">{req.vendorCode}</span>
               )}
             </div>
-            <p className="text-sm text-gray-500">{req.contactPerson} · {req.contactInformation}</p>
+            <p className="text-sm text-gray-500">{req.contactPerson}{req.telephone ? ` · ${req.telephone}` : ''}</p>
             <p className="text-xs text-gray-400 mt-0.5">{[req.city, req.locality, req.state].filter(Boolean).join(', ')} · {req.materialGroup || '—'}</p>
             <p className="text-xs text-gray-400 mt-0.5">Submitted by {req.createdByName} · {new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</p>
           </div>

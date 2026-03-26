@@ -15,7 +15,7 @@ import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
 import UserManagement from '../UserManagement'
 import api from '../../services/api'
-import { buildStats } from '../../utils/statsUtils'
+import { buildStats, buildMonthlyData } from '../../utils/statsUtils'
 
 const STATUS_FILTERS = ['All', 'PendingApproval', 'PendingFinalApproval', 'Rejected', 'Completed']
 
@@ -45,26 +45,6 @@ function buildMaterialData(requests) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8)
     .map(([name, count]) => ({ name, count }))
-}
-
-function buildMonthlyData(requests) {
-  const counts = {}
-  requests.forEach(r => {
-    const d = new Date(r.createdAt)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    counts[key] = (counts[key] ?? 0) + 1
-  })
-  // Fill last 6 months even if zero
-  const months = []
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(1)
-    d.setMonth(d.getMonth() - i)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const label = d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })
-    months.push({ key, label, count: counts[key] ?? 0 })
-  }
-  return months
 }
 
 // ── Admin Edit Form Modal ─────────────────────────────────────────────────────
@@ -156,7 +136,7 @@ function AdminEditModal({ request, onClose, onSaved }) {
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div>
             <h2 className="font-semibold text-gray-900">Admin Edit — {request.vendorName}</h2>
-            <p className="text-xs text-gray-400 mt-0.5">#{request.id} · All fields editable regardless of status</p>
+            <p className="text-xs text-gray-400 mt-0.5">#{request.id} · All fields editable (Completed requests only)</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><XMarkIcon className="h-5 w-5" /></button>
         </div>

@@ -24,6 +24,9 @@ public class AuthController(
         if (user is null || !await userManager.CheckPasswordAsync(user, dto.Password))
             return Unauthorized(new { message = "Invalid email or password." });
 
+        if (user.IsArchived)
+            return Unauthorized(new { message = "This account has been deactivated. Contact your administrator." });
+
         var roles = (await userManager.GetRolesAsync(user)).ToList();
 
         var claims = new List<Claim>
@@ -52,6 +55,6 @@ public class AuthController(
         return Ok(new AuthResponseDto(
             Token:     new JwtSecurityTokenHandler().WriteToken(token),
             ExpiresAt: expires,
-            User:      new AuthUserDto(user.Id, user.Email!, user.FullName, roles)));
+            User:      new AuthUserDto(user.Id, user.Email!, user.FullName, roles, user.Designation)));
     }
 }

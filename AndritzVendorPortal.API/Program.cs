@@ -31,7 +31,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
             Username           = userInfo[0],
             Password           = Uri.UnescapeDataString(userInfo.Length > 1 ? userInfo[1] : ""),
             SslMode            = SslMode.Require,
-            IncludeErrorDetail = true,   // surfaces full PG error detail in logs
+            IncludeErrorDetail = false,  // do not surface PG error detail to the application
         };
         options.UseNpgsql(csb.ConnectionString);
     }
@@ -180,8 +180,8 @@ app.Use(async (ctx, next) =>
         {
             ctx.Response.StatusCode  = 500;
             ctx.Response.ContentType = "application/json";
-            await ctx.Response.WriteAsync(
-                $"{{\"error\":\"Internal server error: {ex.Message.Replace("\"", "'")}\"}}");
+            Console.Error.WriteLine($"[ERROR] Unhandled exception: {ex}");
+            await ctx.Response.WriteAsync("{\"error\":\"An unexpected error occurred. Please try again later.\"}");
         }
     }
 });

@@ -5,12 +5,13 @@ const AuthContext = createContext(null)
 
 function normalizeUser(apiUser) {
   return {
-    id:       apiUser.id,
-    email:    apiUser.email,
-    name:     apiUser.fullName,
-    fullName: apiUser.fullName,
-    role:     apiUser.roles?.[0] ?? '',
-    roles:    apiUser.roles ?? [],
+    id:          apiUser.id,
+    email:       apiUser.email,
+    name:        apiUser.fullName,
+    fullName:    apiUser.fullName,
+    role:        apiUser.roles?.[0] ?? '',
+    roles:       apiUser.roles ?? [],
+    designation: apiUser.designation ?? '',
   }
 }
 

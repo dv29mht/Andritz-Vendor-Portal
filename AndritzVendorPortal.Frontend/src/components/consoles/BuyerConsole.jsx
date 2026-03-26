@@ -189,12 +189,17 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     setShowForm(true)
   }
 
+  const GST_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/
+  const PAN_RE = /^[A-Z]{5}[0-9]{4}[A-Z]$/
+
   const validate = () => {
     const e = {}
     if (!form.vendorName.trim())     e.vendorName     = 'Vendor name is required.'
     if (!form.contactPerson.trim())  e.contactPerson  = 'Contact person is required.'
     if (!form.gstNumber.trim())      e.gstNumber      = 'GST Number is required.'
+    else if (!GST_RE.test(form.gstNumber.trim())) e.gstNumber = 'GST must be in the format 22AAAAA0000A1Z5 (15 characters).'
     if (!form.panCard.trim())        e.panCard        = 'PAN Card is required.'
+    else if (!PAN_RE.test(form.panCard.trim()))   e.panCard   = 'PAN must be in the format ABCDE1234F (10 characters).'
     if (!form.addressDetails.trim()) e.addressDetails = 'Address is required.'
     if (!form.city.trim())           e.city           = 'City is required.'
     if (!form.locality.trim())       e.locality       = 'Locality is required.'

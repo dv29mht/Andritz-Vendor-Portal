@@ -1,12 +1,11 @@
 import clsx from 'clsx'
 
 const CONFIG = {
-  Draft:                { label: 'Draft',                 cls: 'bg-gray-100   text-gray-600   ring-gray-200'   },
-  PendingApproval:      { label: 'Pending',               cls: 'bg-amber-50   text-amber-700  ring-amber-200'  },
-  PendingFinalApproval: { label: 'Final Review',          cls: 'bg-blue-50    text-blue-700   ring-blue-200'   },
-  Approved:             { label: 'Approved',              cls: 'bg-green-50   text-green-700  ring-green-200'  },
-  Rejected:             { label: 'Rejected',              cls: 'bg-red-50     text-red-700    ring-red-200'    },
-  Completed:            { label: 'Completed',             cls: 'bg-emerald-50 text-emerald-700ring-emerald-200'},
+  Draft:                { label: 'Draft',        cls: 'bg-gray-100   text-gray-600   ring-gray-200'   },
+  PendingApproval:      { label: 'Pending',      cls: 'bg-amber-50   text-amber-700  ring-amber-200'  },
+  PendingFinalApproval: { label: 'Final Review', cls: 'bg-blue-50    text-blue-700   ring-blue-200'   },
+  Rejected:             { label: 'Rejected',     cls: 'bg-red-50     text-red-700    ring-red-200'    },
+  Completed:            { label: 'Completed',    cls: 'bg-emerald-50 text-emerald-700 ring-emerald-200'},
 }
 
 export default function StatusBadge({ status, size = 'sm' }) {

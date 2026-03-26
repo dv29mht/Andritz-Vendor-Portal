@@ -132,7 +132,7 @@ function DetailsTab({ request }) {
               <p className="text-xs text-emerald-600 font-semibold uppercase tracking-wider mb-0.5">SAP Vendor Code</p>
               <p className="font-mono text-lg font-bold text-emerald-700 tracking-widest">{request.vendorCode}</p>
               <p className="text-xs text-gray-400 mt-0.5">
-                Assigned by Pardeep Sharma · {fmtDate(request.vendorCodeAssignedAt)}
+                Assigned by {request.vendorCodeAssignedBy ?? 'Final Approver'} · {fmtDate(request.vendorCodeAssignedAt)}
               </p>
             </div>
           </div>
@@ -379,29 +379,97 @@ function PreviewTab({ request }) {
   const formNo = `VRF-${String(request.id).padStart(4, '0')}`
 
   const handleDownloadPdf = () => {
-    const el = paperRef.current
-    if (!el) return
-    const win = window.open('', '_blank', 'width=820,height=1000')
-    win.document.write(`<!DOCTYPE html>
+    // Build PDF HTML from data — never from DOM serialization — to prevent XSS
+    // and avoid any CDN dependency.
+    const esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    const row = (no, label, value, mono = false) => `
+      <tr>
+        <td style="padding:4px 8px;border:1px solid #ddd;font-size:10px;color:#666;width:30%">${esc(no)}. ${esc(label)}</td>
+        <td style="padding:4px 8px;border:1px solid #ddd;font-size:11px;${mono ? 'font-family:monospace;' : ''}">${esc(value)}</td>
+      </tr>`
+    const sec = (letter, title) => `
+      <tr><td colspan="2" style="padding:6px 8px;background:#f3f4f6;font-weight:700;font-size:11px;border:1px solid #ddd;letter-spacing:.05em">
+        ${esc(letter)}. ${esc(title)}
+      </td></tr>`
+    const stepDecision = (d) => d === 'Approved' ? '✓ Approved' : d === 'Rejected' ? '✗ Rejected' : '— Pending'
+
+    const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>${formNo} — Vendor Registration Form</title>
-  <script src="https://cdn.tailwindcss.com"><\/script>
+  <title>${esc(formNo)} — Vendor Registration Form</title>
   <style>
-    body { font-family: Georgia, 'Times New Roman', serif; background: white; }
-    @media print { @page { margin: 1cm; size: A4; } body { margin: 0; } }
+    body{font-family:Georgia,'Times New Roman',serif;background:#fff;color:#111;margin:0;padding:32px 40px}
+    h1{font-size:18px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;margin:0}
+    table{width:100%;border-collapse:collapse;margin-bottom:12px}
+    th{padding:5px 8px;background:#e5e7eb;font-size:10px;border:1px solid #ccc;text-align:left}
+    @media print{@page{margin:1cm;size:A4}body{margin:0;padding:20px}}
   </style>
 </head>
-<body class="p-8">
-  ${el.outerHTML}
-  <script>
-    window.addEventListener('load', function() {
-      setTimeout(function() { window.print(); }, 800);
-    });
-  <\/script>
+<body>
+  <div style="text-align:center;border-bottom:2px solid #222;padding-bottom:12px;margin-bottom:16px">
+    <h1>ANDRITZ</h1>
+    <p style="font-size:10px;color:#666;letter-spacing:.15em;margin:2px 0">INDIA PRIVATE LIMITED</p>
+    <p style="font-size:13px;font-weight:700;letter-spacing:.1em;margin-top:8px">VENDOR REGISTRATION FORM</p>
+  </div>
+  <table>
+    <tr>
+      <td style="padding:4px 8px;font-size:10px;color:#666;width:50%">Form No.: <strong>${esc(formNo)}</strong></td>
+      <td style="padding:4px 8px;font-size:10px;color:#666">Date: <strong>${esc(fmtDateFull(request.createdAt))}</strong></td>
+    </tr>
+    <tr>
+      <td style="padding:4px 8px;font-size:10px;color:#666">Status: <strong>${esc(request.status.replace(/([A-Z])/g,' $1').trim())}</strong></td>
+      <td style="padding:4px 8px;font-size:10px;color:#666">Revision: <strong>${esc(request.revisionNo === 0 ? 'Original' : `REV ${request.revisionNo}`)}</strong></td>
+    </tr>
+  </table>
+  <table>
+    ${sec('A','Vendor Particulars')}
+    ${row(1,'Vendor / Company Name',request.vendorName)}
+    ${row(2,'Material Group',request.materialGroup)}
+    ${row(3,'Reason',request.reason)}
+    ${row(4,'GST Number',request.gstNumber,true)}
+    ${row(5,'PAN Card',request.panCard,true)}
+    ${row(6,'Proposed By',request.proposedBy)}
+    ${row(7,'One-Time Vendor',request.isOneTimeVendor ? 'Yes' : 'No')}
+    ${sec('B','Address Details')}
+    ${row(8,'Street / Building / Plot',request.addressDetails)}
+    ${row(9,'Postal Code',request.postalCode)}
+    ${row(10,'City',request.city)}
+    ${row(11,'Locality',request.locality)}
+    ${row(12,'State',request.state)}
+    ${row(13,'Country',request.country || 'India')}
+    ${sec('C','Commercial Terms')}
+    ${row(14,'Currency',request.currency || 'INR')}
+    ${row(15,'Payment Terms',request.paymentTerms)}
+    ${row(16,'Incoterms',request.incoterms)}
+    ${row(17,'Yearly PVO',request.yearlyPvo)}
+    ${sec('D','Contact Details')}
+    ${row(18,'Contact Person',request.contactPerson)}
+    ${row(19,'Telephone',request.telephone)}
+  </table>
+  <p style="font-size:11px;font-weight:700;letter-spacing:.05em;margin-bottom:6px">E. APPROVAL RECORD</p>
+  <table>
+    <thead><tr>
+      <th>Step</th><th>Approver</th><th>Decision</th><th>Date</th><th>Remarks</th>
+    </tr></thead>
+    <tbody>
+      ${sorted.map(s => `<tr>
+        <td style="padding:4px 8px;border:1px solid #ddd;font-size:10px">${esc(s.isFinalApproval ? 'Final' : `Step ${s.stepOrder}`)}</td>
+        <td style="padding:4px 8px;border:1px solid #ddd;font-size:10px">${esc(s.approverName)}${s.isFinalApproval ? ' (FA)' : ''}</td>
+        <td style="padding:4px 8px;border:1px solid #ddd;font-size:10px">${esc(stepDecision(s.decision))}</td>
+        <td style="padding:4px 8px;border:1px solid #ddd;font-size:10px">${s.decidedAt ? esc(new Date(s.decidedAt).toLocaleDateString('en-IN',{dateStyle:'medium'})) : '—'}</td>
+        <td style="padding:4px 8px;border:1px solid #ddd;font-size:10px">${esc(s.comment ?? '')}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+  ${request.vendorCode ? `<p style="margin-top:16px;font-size:11px">SAP Vendor Code: <strong style="font-family:monospace;font-size:14px">${esc(request.vendorCode)}</strong></p>` : ''}
+  <script>window.addEventListener('load',function(){setTimeout(function(){window.print()},600)});<\/script>
 </body>
-</html>`)
+</html>`
+
+    const win = window.open('', '_blank', 'width=820,height=1000')
+    if (!win) return
+    win.document.write(html)
     win.document.close()
   }
 

@@ -81,9 +81,13 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
   const handleReject = async () => {
     if (!rejectComment.trim()) { setRejectError('A rejection reason is required.'); return }
     const name = reviewing.vendorName
-    await workflow.reject(reviewing.id, rejectComment)
-    setReviewing(null)
-    setToast({ type: 'error', title: 'Request Rejected', body: `You rejected the vendor request for ${name}. The buyer will be notified to revise and resubmit.` })
+    try {
+      await workflow.reject(reviewing.id, rejectComment)
+      setReviewing(null)
+      setToast({ type: 'error', title: 'Request Rejected', body: `You rejected the vendor request for ${name}. The buyer will be notified to revise and resubmit.` })
+    } catch (err) {
+      setRejectError(err?.response?.data?.message ?? err?.response?.data ?? 'Failed to reject request. Please try again.')
+    }
   }
 
   const myStepFor = (req) => req.approvalSteps.find(s => s.approverUserId === currentUser.id)

@@ -309,8 +309,8 @@ public class VendorRequestController(
         if (step is null)
             return Forbid("No pending approval step assigned to you for this request.");
 
-        if (request.Status is not (VendorRequestStatus.PendingApproval or VendorRequestStatus.PendingFinalApproval))
-            return BadRequest("Request is not in an approvable state.");
+        if (request.Status != VendorRequestStatus.PendingApproval)
+            return BadRequest("Request is not in an approvable state. Use /complete for final approval.");
 
         step.Decision  = ApprovalDecision.Approved;
         step.Comment   = dto.Comment;
@@ -503,30 +503,36 @@ public class VendorRequestController(
                 f.GetFromDto(dto)))
             .ToList();
 
-        var newRevNo  = request.RevisionNo + 1;
-        var changedBy = await db.Users.FindAsync(UserId());
-
-        var revision = new VendorRevision
+        // Only create a revision entry if something actually changed
+        VendorRevision? revision = null;
+        if (changes.Count > 0)
         {
-            VendorRequestId  = request.Id,
-            RevisionNo       = newRevNo,
-            ChangedByUserId  = UserId(),
-            ChangedByName    = changedBy?.FullName ?? string.Empty,
-            ChangedAt        = DateTime.UtcNow,
-            RejectionComment = null,
-            ChangesJson      = JsonSerializer.Serialize(changes, JsonOpts),
-        };
-        db.VendorRevisions.Add(revision);
+            var newRevNo  = request.RevisionNo + 1;
+            var changedBy = await db.Users.FindAsync(UserId());
+
+            revision = new VendorRevision
+            {
+                VendorRequestId  = request.Id,
+                RevisionNo       = newRevNo,
+                ChangedByUserId  = UserId(),
+                ChangedByName    = changedBy?.FullName ?? string.Empty,
+                ChangedAt        = DateTime.UtcNow,
+                RejectionComment = null,
+                ChangesJson      = JsonSerializer.Serialize(changes, JsonOpts),
+            };
+            db.VendorRevisions.Add(revision);
+            request.RevisionNo = newRevNo;
+        }
 
         ApplyVendorFields(request, dto);
 
         // Status stays Completed; VendorCode stays assigned
-        request.RevisionNo = newRevNo;
-        request.UpdatedAt  = DateTime.UtcNow;
+        request.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync();
 
-        request.RevisionHistory.Add(revision);
+        if (revision is not null)
+            request.RevisionHistory.Add(revision);
         return Ok(MapToDetail(request));
     }
 
