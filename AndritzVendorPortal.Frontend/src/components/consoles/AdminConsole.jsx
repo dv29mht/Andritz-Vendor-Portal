@@ -163,7 +163,7 @@ function AdminEditModal({ request, onClose, onSaved }) {
         <div className="px-6 py-5 space-y-5">
           {error && <div className="rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3 text-sm text-red-700">{error}</div>}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Vendor Information</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Vendor Information</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {fi('Supplier Name *', 'vendorName')}
               {fi('Contact Person *', 'contactPerson')}
@@ -181,7 +181,7 @@ function AdminEditModal({ request, onClose, onSaved }) {
             </div>
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Compliance</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Compliance</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {fi('GST Number *', 'gstNumber')}
               {fi('PAN Card *', 'panCard')}
@@ -189,7 +189,7 @@ function AdminEditModal({ request, onClose, onSaved }) {
             </div>
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Address</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Address</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">{fi('Street / Building / Plot *', 'addressDetails')}</div>
               {fi('City *', 'city')}
@@ -200,7 +200,7 @@ function AdminEditModal({ request, onClose, onSaved }) {
             </div>
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Commercial</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Commercial</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {fi('Currency', 'currency')}
               {fi('Payment Terms', 'paymentTerms')}

@@ -35,7 +35,7 @@ const INDIAN_STATES = [
 function FormSection({ title, children }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3 border-b border-gray-100 pb-1.5">{title}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3 border-b border-gray-100 pb-1.5">{title}</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{children}</div>
     </div>
   )
