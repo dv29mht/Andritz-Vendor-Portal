@@ -3,7 +3,7 @@ import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
          ClockIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
 import { ExclamationTriangleIcon, CheckBadgeIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-         PieChart, Pie, Cell, Legend } from 'recharts'
+         Cell } from 'recharts'
 import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
@@ -380,7 +380,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
       {/* ── Dashboard ───────────────────────────────────────────────────────── */}
       {activePage === 'dashboard' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
 
           {/* ── Left column (main) ── */}
           <div className="lg:col-span-2 space-y-5">
@@ -471,27 +471,32 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           </div>
 
           {/* ── Right column (actions + guide) ── */}
-          <div className="space-y-5">
-            {/* Material type pie chart */}
+          <div className="flex flex-col gap-5">
+            {/* Material type horizontal bar chart */}
             {myRequests.length > 0 && (() => {
-              const PIE_COLORS = ['#096fb3','#f59e0b','#10b981','#ef4444','#8b5cf6','#f97316','#06b6d4','#84cc16']
+              const BAR_COLORS = ['#096fb3','#f59e0b','#10b981','#ef4444','#8b5cf6','#f97316','#06b6d4','#84cc16']
               const counts = {}
               myRequests.forEach(r => {
                 const k = r.materialGroup?.trim() || 'Unspecified'
                 counts[k] = (counts[k] ?? 0) + 1
               })
-              const pieData = Object.entries(counts).map(([name, value]) => ({ name, value }))
+              const barData = Object.entries(counts)
+                .map(([name, value], i) => ({ name, value, fill: BAR_COLORS[i % BAR_COLORS.length] }))
+                .sort((a, b) => b.value - a.value)
+              const chartHeight = Math.max(160, barData.length * 36)
               return (
                 <div className="bg-white rounded-2xl ring-1 ring-gray-200 p-5">
                   <p className="text-sm font-semibold text-gray-900 mb-3">My Requests by Material</p>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie data={pieData} dataKey="value" cx="50%" cy="50%" outerRadius={70} strokeWidth={1.5}>
-                        {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                      </Pie>
-                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v, n) => [v, n]} />
-                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-                    </PieChart>
+                  <ResponsiveContainer width="100%" height={chartHeight}>
+                    <BarChart data={barData} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
+                      <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} domain={[0, 'dataMax+1']} />
+                      <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 10, fill: '#6b7280', width: 105 }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={v => [v, 'Requests']} />
+                      <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={18}>
+                        {barData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                      </Bar>
+                    </BarChart>
                   </ResponsiveContainer>
                 </div>
               )
@@ -518,7 +523,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             </div>
 
             {/* Workflow guide */}
-            <div className="bg-white rounded-2xl ring-1 ring-gray-200 p-5">
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 p-5 flex-1">
               <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Workflow</p>
               <ol className="space-y-3">
                 {[
@@ -549,7 +554,10 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       {activePage === 'requests' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">{activeReqs.length} request{activeReqs.length !== 1 ? 's' : ''}</p>
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 ring-1 ring-blue-200 text-blue-700 text-sm font-semibold px-4 py-2 select-none">
+              <ClockIcon className="h-4 w-4" />
+              {activeReqs.length} Request{activeReqs.length !== 1 ? 's' : ''}
+            </span>
             <button className="btn-primary" onClick={openCreate}>
               <PlusIcon className="h-4 w-4" />
               New Request
