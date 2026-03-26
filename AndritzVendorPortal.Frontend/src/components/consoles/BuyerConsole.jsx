@@ -373,7 +373,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
   const recentReqs = [...myRequests]
     .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-    .slice(0, 4)
+    .slice(0, 5)
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -474,7 +474,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           <div className="space-y-5">
             {/* Material type pie chart */}
             {myRequests.length > 0 && (() => {
-              const PIE_COLORS = ['#096fb3','#10b981','#f59e0b','#6366f1','#ef4444','#8b5cf6','#14b8a6','#f97316']
+              const PIE_COLORS = ['#096fb3','#f59e0b','#10b981','#ef4444','#8b5cf6','#f97316','#06b6d4','#84cc16']
               const counts = {}
               myRequests.forEach(r => {
                 const k = r.materialGroup?.trim() || 'Unspecified'
