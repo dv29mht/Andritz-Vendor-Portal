@@ -178,7 +178,12 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
               </button>
             )}
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-400 text-xs font-medium">{ROLE_LABELS[role] ?? role}</span>
+              <button
+                onClick={() => setActivePage('dashboard')}
+                className="text-gray-400 text-xs font-medium hover:text-[#096fb3] transition-colors"
+              >
+                {ROLE_LABELS[role] ?? role}
+              </button>
               <ChevronRightIcon className="h-3 w-3 text-gray-300" />
               <span className="font-semibold text-gray-900">{activeItem?.label ?? 'Dashboard'}</span>
             </div>

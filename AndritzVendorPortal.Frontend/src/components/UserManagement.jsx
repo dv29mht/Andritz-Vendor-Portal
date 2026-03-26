@@ -8,7 +8,11 @@ import {
 } from '@heroicons/react/24/outline'
 import api from '../services/api'
 
-const ROLES = ['Buyer', 'Approver', 'FinalApprover', 'Admin']
+const ROLES = ['Buyer', 'Approver', 'Admin']
+
+const ROLE_DISPLAY = {
+  Admin: 'Admin', Buyer: 'Buyer', Approver: 'Approver', FinalApprover: 'Final Approver',
+}
 
 const ROLE_BADGE = {
   Admin:         'bg-purple-50 text-purple-700 ring-purple-200',
@@ -147,7 +151,7 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 {user.roles.map(role => (
                   <span key={role} className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/20 text-white">
-                    {role}
+                    {ROLE_DISPLAY[role] ?? role}
                   </span>
                 ))}
                 {hasEmailGuard && (
@@ -245,7 +249,7 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
                   value={form.role}
                   onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
                 >
-                  {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                  {ROLES.map(r => <option key={r} value={r}>{ROLE_DISPLAY[r] ?? r}</option>)}
                 </select>
               </div>
               <div>
@@ -484,7 +488,7 @@ export default function UserManagement() {
         <div className="mb-4 rounded-lg bg-emerald-50 ring-1 ring-inset ring-emerald-200 px-4 py-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800 mb-1">
             <CheckIcon className="h-4 w-4 flex-shrink-0" />
-            {successMsg.name} added as {successMsg.role}
+            {successMsg.name} added as {ROLE_DISPLAY[successMsg.role] ?? successMsg.role}
             {successMsg.designation && (
               <span className="font-normal text-emerald-600">· {successMsg.designation}</span>
             )}
@@ -550,7 +554,7 @@ export default function UserManagement() {
             <div>
               <label className="form-label">Role <span className="text-red-500">*</span></label>
               <select className="form-input" value={form.role} onChange={e => handleFormChange('role', e.target.value)}>
-                {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                {ROLES.map(r => <option key={r} value={r}>{ROLE_DISPLAY[r] ?? r}</option>)}
               </select>
             </div>
             <div className="sm:col-span-2">
@@ -637,7 +641,7 @@ export default function UserManagement() {
                     <div className="flex flex-wrap gap-1">
                       {user.roles.map(role => (
                         <span key={role} className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ring-1 ring-inset ${ROLE_BADGE[role] ?? 'bg-gray-100 text-gray-600 ring-gray-200'}`}>
-                          {role}
+                          {ROLE_DISPLAY[role] ?? role}
                         </span>
                       ))}
                     </div>
