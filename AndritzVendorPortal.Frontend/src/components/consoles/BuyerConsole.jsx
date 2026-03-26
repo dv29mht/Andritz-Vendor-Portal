@@ -132,7 +132,9 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const [toast, setToast]                           = useState(null)
 
   useEffect(() => {
-    api.get('/users/approvers').then(r => setAvailableApprovers(r.data)).catch(() => {})
+    api.get('/users/approvers')
+      .then(r => setAvailableApprovers(r.data))
+      .catch(() => setToast({ type: 'error', title: 'Could not load approvers', body: 'Failed to fetch the approver list. Please refresh the page.' }))
     api.get('/master-data/material-groups').then(r => setMaterialGroups(r.data)).catch(() => {})
     api.get('/master-data/proposed-by').then(r => setProposedByNames(r.data)).catch(() => {})
   }, [])

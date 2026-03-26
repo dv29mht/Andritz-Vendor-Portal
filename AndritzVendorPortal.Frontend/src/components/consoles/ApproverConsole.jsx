@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { CheckIcon, XMarkIcon, EyeIcon, ClockIcon, ArchiveBoxIcon,
          ExclamationCircleIcon } from '@heroicons/react/24/outline'
 import Modal from '../shared/Modal'
@@ -6,34 +6,7 @@ import StatusBadge from '../shared/StatusBadge'
 import ApprovalTimeline from '../shared/ApprovalTimeline'
 import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
-
-function useViewedRequests(userId) {
-  const key = `viewed_reqs_${userId}`
-  const load = () => {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(key) ?? '{}')
-      // Migrate old format (was a Set stored as array)
-      if (Array.isArray(parsed)) return {}
-      return parsed
-    }
-    catch { return {} }
-  }
-  const [viewed, setViewed] = useState(load)
-  // markViewed stores { [id]: revisionNo } so re-submissions (new revisionNo) show NEW again
-  const markViewed = useCallback((req) => {
-    setViewed(prev => {
-      if (prev[req.id] === req.revisionNo) return prev
-      const next = { ...prev, [req.id]: req.revisionNo }
-      localStorage.setItem(key, JSON.stringify(next))
-      return next
-    })
-  }, [key])
-  // NEW if never seen OR seen at a lower revisionNo (i.e. buyer revised and resubmitted)
-  const isNew = useCallback((req) => {
-    return viewed[req.id] === undefined || viewed[req.id] < req.revisionNo
-  }, [viewed])
-  return { isNew, markViewed }
-}
+import { useViewedRequests } from '../../hooks/useViewedRequests'
 
 export default function ApproverConsole({ workflow, currentUser, activePage }) {
   const pending         = workflow.getPendingFor(currentUser.id)
@@ -343,16 +316,17 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
                   value={approveComment} onChange={e => setApproveComment(e.target.value)} />
               </div>
               <div className="flex justify-end gap-3">
-                <button className="btn-danger" onClick={() => setRejectMode(true)}>
+                <button className="btn-danger" disabled={workflow.actionLoading} onClick={() => setRejectMode(true)}>
                   <XMarkIcon className="h-4 w-4" />
                   Reject
                 </button>
                 <button
-                  className="inline-flex items-center gap-1.5 rounded-md bg-[#096fb3] hover:bg-[#075d99] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-[#096fb3] hover:bg-[#075d99] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors disabled:opacity-60"
+                  disabled={workflow.actionLoading}
                   onClick={handleApprove}
                 >
                   <CheckIcon className="h-4 w-4" />
-                  Approve
+                  {workflow.actionLoading ? 'Saving…' : 'Approve'}
                 </button>
               </div>
             </div>
@@ -369,10 +343,10 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
                 {rejectError && <p className="mt-1 text-xs text-red-600">{rejectError}</p>}
               </div>
               <div className="flex justify-end gap-3">
-                <button className="btn-secondary" onClick={() => setRejectMode(false)}>Back</button>
-                <button className="btn-danger" onClick={handleReject}>
+                <button className="btn-secondary" disabled={workflow.actionLoading} onClick={() => setRejectMode(false)}>Back</button>
+                <button className="btn-danger disabled:opacity-60" disabled={workflow.actionLoading} onClick={handleReject}>
                   <XMarkIcon className="h-4 w-4" />
-                  Confirm Rejection
+                  {workflow.actionLoading ? 'Saving…' : 'Confirm Rejection'}
                 </button>
               </div>
             </div>

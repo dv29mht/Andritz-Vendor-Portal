@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { CheckBadgeIcon, StarIcon } from '@heroicons/react/24/solid'
 import { XMarkIcon, EyeIcon, CheckIcon, ClockIcon, ArchiveBoxIcon,
          UsersIcon, ArrowPathIcon, NoSymbolIcon, TrophyIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'
@@ -8,49 +8,8 @@ import StatusBadge from '../shared/StatusBadge'
 import ApprovalTimeline from '../shared/ApprovalTimeline'
 import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
-
-function useViewedRequests(userId) {
-  const key = `viewed_reqs_${userId}`
-  const load = () => {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(key) ?? '{}')
-      if (Array.isArray(parsed)) return {}
-      return parsed
-    }
-    catch { return {} }
-  }
-  const [viewed, setViewed] = useState(load)
-  const markViewed = useCallback((req) => {
-    setViewed(prev => {
-      if (prev[req.id] === req.revisionNo) return prev
-      const next = { ...prev, [req.id]: req.revisionNo }
-      localStorage.setItem(key, JSON.stringify(next))
-      return next
-    })
-  }, [key])
-  const isNew = useCallback((req) => {
-    return viewed[req.id] === undefined || viewed[req.id] < req.revisionNo
-  }, [viewed])
-  return { isNew, markViewed }
-}
-
-function buildStats(requests) {
-  const total     = requests.length
-  const completed = requests.filter(r => r.status === 'Completed').length
-  const rejected  = requests.filter(r => r.status === 'Rejected').length
-  const reEdited  = requests.filter(r => r.revisionNo > 0).length
-  const pct = n => total === 0 ? '—' : `${Math.round((n / total) * 100)}%`
-  return {
-    total,
-    pending:       requests.filter(r => r.status === 'PendingApproval').length,
-    finalPending:  requests.filter(r => r.status === 'PendingFinalApproval').length,
-    rejected,
-    completed,
-    approvalRate:  pct(completed),
-    reEditRate:    pct(reEdited),
-    rejectionRate: pct(rejected),
-  }
-}
+import { useViewedRequests } from '../../hooks/useViewedRequests'
+import { buildStats } from '../../utils/statsUtils'
 
 const METRICS = [
   { label: 'Total Assigned', key: 'total',        icon: UsersIcon,       bg: 'bg-blue-50',    ic: 'text-blue-500',    text: 'text-blue-700'    },
@@ -353,17 +312,18 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                 {vendorCodeErr && <p className="mt-1 text-xs text-red-600">{vendorCodeErr}</p>}
               </div>
               <div className="flex justify-end gap-3">
-                <button className="btn-danger" onClick={() => setRejectMode(true)}>
+                <button className="btn-danger" disabled={workflow.actionLoading} onClick={() => setRejectMode(true)}>
                   <XMarkIcon className="h-4 w-4" />
                   Reject
                 </button>
                 {isAuthorizedFinalApprover && (
                   <button
-                    className="inline-flex items-center gap-1.5 rounded-md bg-[#096fb3] hover:bg-[#075d99] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-[#096fb3] hover:bg-[#075d99] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors disabled:opacity-60"
+                    disabled={workflow.actionLoading}
                     onClick={handleComplete}
                   >
                     <CheckBadgeIcon className="h-4 w-4" />
-                    Approve &amp; Assign Vendor Code
+                    {workflow.actionLoading ? 'Saving…' : 'Approve & Assign Vendor Code'}
                   </button>
                 )}
               </div>
@@ -381,10 +341,10 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                 {rejectError && <p className="mt-1 text-xs text-red-600">{rejectError}</p>}
               </div>
               <div className="flex justify-end gap-3">
-                <button className="btn-secondary" onClick={() => setRejectMode(false)}>Back</button>
-                <button className="btn-danger" onClick={handleReject}>
+                <button className="btn-secondary" disabled={workflow.actionLoading} onClick={() => setRejectMode(false)}>Back</button>
+                <button className="btn-danger disabled:opacity-60" disabled={workflow.actionLoading} onClick={handleReject}>
                   <XMarkIcon className="h-4 w-4" />
-                  Confirm Rejection
+                  {workflow.actionLoading ? 'Saving…' : 'Confirm Rejection'}
                 </button>
               </div>
             </div>

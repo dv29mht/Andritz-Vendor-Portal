@@ -72,7 +72,7 @@ public class UsersController(
     [Authorize(Roles = Roles.Admin)]
     public async Task<IActionResult> Create([FromBody] CreateUserDto dto)
     {
-        var validRoles = new[] { Roles.Admin, Roles.Buyer, Roles.Approver, Roles.FinalApprover };
+        var validRoles = new[] { Roles.Admin, Roles.Buyer, Roles.Approver };
         if (!validRoles.Contains(dto.Role))
             return BadRequest($"Invalid role. Must be one of: {string.Join(", ", validRoles)}.");
 
@@ -117,7 +117,11 @@ public class UsersController(
         var user = await userManager.FindByIdAsync(id);
         if (user is null) return NotFound("User not found.");
 
-        var validRoles = new[] { Roles.Admin, Roles.Buyer, Roles.Approver, Roles.FinalApprover };
+        // Protect Pardeep Sharma — FinalApprover is a fixed role, not reassignable via UI.
+        if (user.Email?.Equals("pardeep.sharma@andritz.com", StringComparison.OrdinalIgnoreCase) == true)
+            return BadRequest("The Final Approver account cannot be modified through User Management.");
+
+        var validRoles = new[] { Roles.Admin, Roles.Buyer, Roles.Approver };
         if (!validRoles.Contains(dto.Role))
             return BadRequest($"Invalid role. Must be one of: {string.Join(", ", validRoles)}.");
 
@@ -156,6 +160,9 @@ public class UsersController(
     {
         var user = await userManager.FindByIdAsync(id);
         if (user is null) return NotFound("User not found.");
+
+        if (user.Email?.Equals("pardeep.sharma@andritz.com", StringComparison.OrdinalIgnoreCase) == true)
+            return BadRequest("The Final Approver account cannot be deleted.");
 
         var result = await userManager.DeleteAsync(user);
         if (!result.Succeeded)
@@ -202,18 +209,4 @@ public class UsersController(
         });
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // POST /api/users/sync-ad
-    // Placeholder for future Azure AD synchronisation (BRD future scope).
-    // ─────────────────────────────────────────────────────────────────────────
-    [HttpPost("sync-ad")]
-    [Authorize(Roles = Roles.Admin)]
-    public IActionResult SyncFromAd()
-    {
-        return Ok(new
-        {
-            message  = "Azure AD sync is not yet configured. This feature is planned for a future release.",
-            syncedAt = DateTime.UtcNow,
-        });
-    }
 }

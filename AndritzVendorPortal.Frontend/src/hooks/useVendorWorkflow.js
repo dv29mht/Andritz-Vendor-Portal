@@ -4,8 +4,9 @@ import { useAuth } from '../contexts/AuthContext'
 
 export function useVendorWorkflow() {
   const { isAuthenticated } = useAuth()
-  const [requests, setRequests] = useState([])
-  const [loading,  setLoading]  = useState(false)
+  const [requests,       setRequests]       = useState([])
+  const [loading,        setLoading]        = useState(false)
+  const [actionLoading,  setActionLoading]  = useState(false)
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -53,6 +54,8 @@ export function useVendorWorkflow() {
   // ── Buyer actions ────────────────────────────────────────────────────────
 
   const createRequest = async (form, approvers) => {
+    setActionLoading(true)
+    try {
     const { data } = await api.post('/vendor-requests', {
       vendorName:     form.vendorName,
       contactPerson:  form.contactPerson,
@@ -78,6 +81,7 @@ export function useVendorWorkflow() {
     // Auto-submit immediately so the request enters the approval queue
     await api.post(`/vendor-requests/${data.id}/submit`)
     await fetchAll()
+    } finally { setActionLoading(false) }
   }
 
   const submit = async (requestId) => {
@@ -86,6 +90,8 @@ export function useVendorWorkflow() {
   }
 
   const resubmit = async (requestId, form) => {
+    setActionLoading(true)
+    try {
     await api.post(`/vendor-requests/${requestId}/resubmit`, {
       vendorName:     form.vendorName,
       contactPerson:  form.contactPerson,
@@ -108,6 +114,7 @@ export function useVendorWorkflow() {
       proposedBy:      form.proposedBy     || null,
     })
     await fetchAll()
+    } finally { setActionLoading(false) }
   }
 
   const updateCompleted = async (requestId, form) => {
@@ -138,25 +145,35 @@ export function useVendorWorkflow() {
   // ── Approver actions ─────────────────────────────────────────────────────
 
   const approveStep = async (requestId, comment) => {
-    await api.post(`/vendor-requests/${requestId}/approve`, { comment: comment || null })
-    await fetchAll()
+    setActionLoading(true)
+    try {
+      await api.post(`/vendor-requests/${requestId}/approve`, { comment: comment || null })
+      await fetchAll()
+    } finally { setActionLoading(false) }
   }
 
   const reject = async (requestId, comment) => {
-    await api.post(`/vendor-requests/${requestId}/reject`, { comment })
-    await fetchAll()
+    setActionLoading(true)
+    try {
+      await api.post(`/vendor-requests/${requestId}/reject`, { comment })
+      await fetchAll()
+    } finally { setActionLoading(false) }
   }
 
   // ── Final Approver action ────────────────────────────────────────────────
 
   const complete = async (requestId, vendorCode) => {
-    await api.post(`/vendor-requests/${requestId}/complete`, { vendorCode })
-    await fetchAll()
+    setActionLoading(true)
+    try {
+      await api.post(`/vendor-requests/${requestId}/complete`, { vendorCode })
+      await fetchAll()
+    } finally { setActionLoading(false) }
   }
 
   return {
     requests,
     loading,
+    actionLoading,
     fetchAll,
     fetchDetail,
     getPendingFor,

@@ -15,6 +15,7 @@ import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
 import UserManagement from '../UserManagement'
 import api from '../../services/api'
+import { buildStats } from '../../utils/statsUtils'
 
 const STATUS_FILTERS = ['All', 'Draft', 'PendingApproval', 'PendingFinalApproval', 'Rejected', 'Completed']
 
@@ -32,24 +33,6 @@ const STAT_CARDS = [
 const STAT_KEY_TO_FILTER = {
   pending: 'PendingApproval', final: 'PendingFinalApproval',
   rejected: 'Rejected', completed: 'Completed',
-}
-
-function buildStats(requests) {
-  const total     = requests.length
-  const completed = requests.filter(r => r.status === 'Completed').length
-  const rejected  = requests.filter(r => r.status === 'Rejected').length
-  const reEdited  = requests.filter(r => r.revisionNo > 0).length
-  const pct = (n) => total === 0 ? '—' : `${Math.round((n / total) * 100)}%`
-  return {
-    total,
-    pending:       requests.filter(r => r.status === 'PendingApproval').length,
-    final:         requests.filter(r => r.status === 'PendingFinalApproval').length,
-    rejected,
-    completed,
-    approvalRate:  pct(completed),
-    reEditRate:    pct(reEdited),
-    rejectionRate: pct(rejected),
-  }
 }
 
 function buildMaterialData(requests) {
@@ -471,7 +454,8 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                         </button>
                         <button
                           className={`btn-secondary !py-1 !px-2 !text-xs transition-all ${req.status !== 'Completed' ? 'opacity-30 cursor-not-allowed' : ''}`}
-                          onClick={() => req.status === 'Completed' && setEditingRequest(req)}
+                          disabled={req.status !== 'Completed'}
+                          onClick={() => setEditingRequest(req)}
                           title={req.status !== 'Completed' ? 'Only SAP-approved (Completed) forms can be edited' : 'Edit form'}
                         >
                           <PencilSquareIcon className="h-3.5 w-3.5" />

@@ -25,12 +25,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         var userInfo = uri.UserInfo.Split(':', 2);
         var csb = new NpgsqlConnectionStringBuilder
         {
-            Host = uri.Host,
-            Port = uri.Port > 0 ? uri.Port : 5432,
-            Database = uri.AbsolutePath.TrimStart('/'),
-            Username = userInfo[0],
-            Password = Uri.UnescapeDataString(userInfo.Length > 1 ? userInfo[1] : ""),
-            SslMode = SslMode.Require
+            Host               = uri.Host,
+            Port               = uri.Port > 0 ? uri.Port : 5432,
+            Database           = uri.AbsolutePath.TrimStart('/'),
+            Username           = userInfo[0],
+            Password           = Uri.UnescapeDataString(userInfo.Length > 1 ? userInfo[1] : ""),
+            SslMode            = SslMode.Require,
+            IncludeErrorDetail = true,   // surfaces full PG error detail in logs
         };
         options.UseNpgsql(csb.ConnectionString);
     }
