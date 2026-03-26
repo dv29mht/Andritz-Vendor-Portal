@@ -17,7 +17,7 @@ import UserManagement from '../UserManagement'
 import api from '../../services/api'
 import { buildStats } from '../../utils/statsUtils'
 
-const STATUS_FILTERS = ['All', 'Draft', 'PendingApproval', 'PendingFinalApproval', 'Rejected', 'Completed']
+const STATUS_FILTERS = ['All', 'PendingApproval', 'PendingFinalApproval', 'Rejected', 'Completed']
 
 const STAT_CARDS = [
   { label: 'Total',          key: 'total',        icon: UsersIcon,       bg: 'bg-blue-50',    text: 'text-blue-700',    ic: 'text-blue-500'    },

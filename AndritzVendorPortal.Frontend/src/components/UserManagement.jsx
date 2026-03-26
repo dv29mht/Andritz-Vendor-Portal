@@ -594,7 +594,8 @@ export default function UserManagement() {
         </div>
       )}
 
-      {/* Search */}
+      {/* Search + table — hidden while Add User form is open */}
+      {!showForm && (<>
       <div className="relative max-w-xs mb-4">
         <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
         <input className="form-input pl-9" placeholder="Search by name, email, role…"
@@ -690,6 +691,7 @@ export default function UserManagement() {
           </span>
         </div>
       </div>
+      </>)}
 
       {/* User Detail Modal */}
       {detailUser && (
