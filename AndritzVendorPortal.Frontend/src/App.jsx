@@ -32,7 +32,6 @@ function OneTimeVendorPage({ workflow }) {
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <p className="font-semibold text-gray-900">{req.vendorName}</p>
               <StatusBadge status={req.status} />
-              <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full font-medium">One-Time</span>
               {req.vendorCode && (
                 <span className="text-xs bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 ring-inset px-2 py-0.5 rounded-full font-mono">{req.vendorCode}</span>
               )}
