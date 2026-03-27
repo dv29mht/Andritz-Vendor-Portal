@@ -12,13 +12,13 @@ const NAV = {
   Buyer: [
     { id: 'dashboard', label: 'Dashboard',        icon: HomeIcon },
     { id: 'requests',  label: 'My Requests',      icon: DocumentTextIcon },
-    { id: 'revision',  label: 'Waiting Revision', icon: ExclamationCircleIcon },
+    { id: 'revision',  label: 'Awaiting Revision', icon: ExclamationCircleIcon },
     { id: 'settings',  label: 'Settings',          icon: Cog6ToothIcon },
   ],
   Approver: [
     { id: 'dashboard', label: 'Dashboard',        icon: HomeIcon },
     { id: 'pending',   label: 'Pending Approval', icon: ClockIcon },
-    { id: 'waiting',   label: 'Waiting Revision', icon: ExclamationCircleIcon },
+    { id: 'waiting',   label: 'Awaiting Revision', icon: ExclamationCircleIcon },
     { id: 'history',   label: 'History',          icon: ArchiveBoxIcon },
     { id: 'settings',  label: 'Settings',          icon: Cog6ToothIcon },
   ],
