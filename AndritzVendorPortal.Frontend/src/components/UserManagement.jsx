@@ -635,7 +635,7 @@ export default function UserManagement() {
             value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {['All', 'Admin', 'Buyer', 'Approver', 'FinalApprover'].map(r => (
+          {['All', 'Buyer', 'Approver', 'FinalApprover'].map(r => (
             <button
               key={r}
               onClick={() => setRoleFilter(r)}
@@ -725,11 +725,6 @@ export default function UserManagement() {
         <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400 flex items-center justify-between flex-wrap gap-2">
           <span>
             Showing {visible.length} of {users.length} user{users.length !== 1 ? 's' : ''}
-            <span className="ml-3 text-gray-300">·</span>
-            <span className="ml-3">
-              <ShieldCheckIcon className="inline h-3 w-3 text-rose-400 mr-0.5" />
-              email-gated = final approval restricted to pardeep.sharma@andritz.com by server policy
-            </span>
           </span>
           {archivedUsers.length > 0 && (
             <button
