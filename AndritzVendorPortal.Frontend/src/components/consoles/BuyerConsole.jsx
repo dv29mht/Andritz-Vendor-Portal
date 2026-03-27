@@ -8,7 +8,11 @@ import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
-import { CITIES, CITY_STATE_MAP } from '../../data/mockData'
+import { CITIES } from '../../data/mockData'
+import { Country, State } from 'country-state-city'
+
+const ALL_COUNTRIES = Country.getAllCountries()
+const getStates = (isoCode) => State.getStatesOfCountry(isoCode)
 import api from '../../services/api'
 import { buildMonthlyData } from '../../utils/statsUtils'
 
@@ -16,21 +20,14 @@ const EMPTY_FORM = {
   vendorName: '', materialGroup: '', reason: '',
   contactPerson: '', telephone: '',
   gstNumber: '', panCard: '',
-  addressDetails: '', postalCode: '', city: '', locality: '', state: '', country: 'India',
+  addressDetails: '', postalCode: '', city: '', locality: '', state: '', country: 'IN',
   currency: 'INR', paymentTerms: '', incoterms: '', yearlyPvo: '',
   isOneTimeVendor: false, proposedBy: '',
 }
 
 const CURRENCIES    = ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'SGD', 'AED']
 const INCOTERMS     = ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FAS','FOB','CFR','CIF']
-const INDIAN_STATES = [
-  'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat',
-  'Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh',
-  'Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan',
-  'Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal',
-  'Andaman and Nicobar Islands','Chandigarh','Dadra and Nagar Haveli and Daman and Diu',
-  'Delhi','Jammu and Kashmir','Ladakh','Lakshadweep','Puducherry',
-]
+const ALL_LOCALITIES = [...new Set(Object.values(CITIES).flat())]
 
 function FormSection({ title, children }) {
   return (
@@ -177,7 +174,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       city:           req.city           ?? '',
       locality:       req.locality       ?? '',
       state:          req.state          ?? '',
-      country:        req.country        ?? 'India',
+      country:        ALL_COUNTRIES.find(c => c.name === req.country)?.isoCode ?? 'IN',
       currency:       req.currency       ?? 'INR',
       paymentTerms:   req.paymentTerms   ?? '',
       incoterms:      req.incoterms      ?? '',
@@ -234,20 +231,21 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
     setSubmitting(true)
     setApiError(null)
+    const payload = { ...form, country: Country.getCountryByCode(form.country)?.name ?? form.country }
     try {
       if (editingRequest && editingRequest.status === 'Completed') {
         const name = editingRequest.vendorName
-        await workflow.updateCompleted(editingRequest.id, form)
+        await workflow.updateCompleted(editingRequest.id, payload)
         setShowForm(false)
         setToast({ type: 'success', title: 'Details Updated', body: `Vendor details for ${name} have been updated. Final Approver and Admin have been notified.` })
       } else if (editingRequest) {
         const name = editingRequest.vendorName
-        await workflow.resubmit(editingRequest.id, form)
+        await workflow.resubmit(editingRequest.id, payload)
         setShowForm(false)
         setToast({ type: 'success', title: 'Revision Submitted', body: `Your updated request for ${name} has been resubmitted for approval.` })
       } else {
         const name = form.vendorName
-        await workflow.createRequest(form, selectedApprovers)
+        await workflow.createRequest(payload, selectedApprovers)
         setShowForm(false)
         setToast({ type: 'success', title: 'Request Submitted', body: `Your vendor registration request for ${name} has been submitted for approval.` })
       }
@@ -705,40 +703,32 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 <input className="form-input" placeholder="e.g. 400001" maxLength={10}
                   value={form.postalCode} onChange={e => set('postalCode', e.target.value.replace(/\D/g, ''))} />
               </Field>
-              <Field label="City" required error={errors.city}>
-                <select className="form-input" value={form.city} onChange={e => {
-                  const city = e.target.value
-                  setForm(f => ({ ...f, city, locality: '', state: CITY_STATE_MAP[city] ?? '' }))
-                  setErrors(prev => { if (!prev.city) return prev; const n = { ...prev }; delete n.city; return n })
+              <Field label="Country" error={errors.country}>
+                <select className="form-input" value={form.country} onChange={e => {
+                  setForm(f => ({ ...f, country: e.target.value, state: '', city: '', locality: '' }))
                 }}>
-                  <option value="">Select City</option>
-                  {Object.keys(CITIES).sort().map(c => <option key={c} value={c}>{c}</option>)}
+                  {ALL_COUNTRIES.map(c => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
                 </select>
-              </Field>
-              <Field label="Locality" required error={errors.locality}>
-                <input className="form-input" list="locality-list"
-                  placeholder={form.city ? 'Type or select locality' : 'Select city first'}
-                  disabled={!form.city}
-                  value={form.locality} onChange={e => set('locality', e.target.value)} />
-                <datalist id="locality-list">
-                  {(CITIES[form.city] ?? []).map(l => <option key={l} value={l} />)}
-                </datalist>
               </Field>
               <Field label="State" error={errors.state}>
-                <select className="form-input" value={form.state} onChange={e => set('state', e.target.value)}
-                  disabled={!!CITY_STATE_MAP[form.city]}>
-                  <option value="">Select State</option>
-                  {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-                {CITY_STATE_MAP[form.city] && (
-                  <p className="mt-1 text-xs text-gray-400">Auto-set from city selection</p>
+                {getStates(form.country).length > 0 ? (
+                  <select className="form-input" value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value, city: '', locality: '' }))}>
+                    <option value="">Select State</option>
+                    {getStates(form.country).map(s => <option key={s.isoCode} value={s.name}>{s.name}</option>)}
+                  </select>
+                ) : (
+                  <input className="form-input" placeholder="Enter state / province" value={form.state} onChange={e => set('state', e.target.value)} />
                 )}
               </Field>
-              <Field label="Country" error={errors.country}>
-                <select className="form-input" value={form.country} onChange={e => set('country', e.target.value)}>
-                  <option value="India">India</option>
-                  <option value="Other">Other</option>
-                </select>
+              <Field label="City" required error={errors.city}>
+                <input className="form-input" placeholder="Enter city" value={form.city} onChange={e => set('city', e.target.value)} />
+              </Field>
+              <Field label="Locality" required error={errors.locality}>
+                <input className="form-input" list="locality-list" placeholder="Type or select locality"
+                  value={form.locality} onChange={e => set('locality', e.target.value)} />
+                <datalist id="locality-list">
+                  {ALL_LOCALITIES.map(l => <option key={l} value={l} />)}
+                </datalist>
               </Field>
             </FormSection>
 
