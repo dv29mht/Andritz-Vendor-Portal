@@ -131,8 +131,8 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
   const initials    = getInitials(user.fullName)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden my-auto max-h-[calc(100vh-2rem)] flex flex-col">
 
         {/* ── Gradient profile header ── */}
         <div className={`relative bg-gradient-to-br ${headerGrad} px-6 pt-5 pb-8`}>
@@ -168,6 +168,9 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
             </div>
           </div>
         </div>
+
+        {/* ── Scrollable body ── */}
+        <div className="flex-1 overflow-y-auto">
 
         {/* ── Errors ── */}
         {errors.length > 0 && (
@@ -352,6 +355,7 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
             </div>
           </div>
         )}
+        </div>{/* end scrollable body */}
       </div>
     </div>
   )
