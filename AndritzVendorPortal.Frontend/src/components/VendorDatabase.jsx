@@ -75,8 +75,11 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
               <tr key={req.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-3 font-mono text-xs font-semibold text-emerald-700">{req.vendorCode}</td>
                 <td className="px-4 py-3">
-                  <p className="font-medium text-gray-900">{req.vendorName}</p>
-                  <p className="text-xs text-gray-400">{req.contactPerson}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-medium text-gray-900">{req.vendorName}</p>
+                    <span className="text-xs bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 ring-inset px-2 py-0.5 rounded-full font-medium">Permanent</span>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-0.5">{req.contactPerson}</p>
                 </td>
                 <td className="px-4 py-3 text-gray-500 text-xs">{req.city}, {req.locality}</td>
                 <td className="px-4 py-3 font-mono text-xs text-gray-600">{req.gstNumber}</td>
