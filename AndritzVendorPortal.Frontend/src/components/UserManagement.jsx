@@ -211,19 +211,26 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
             </div>
 
             {/* Actions */}
-            <div className="flex justify-between gap-3 pt-1">
-              <button
-                onClick={() => setMode('delete')}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-red-600 rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
-              >
-                <TrashIcon className="h-4 w-4" />
-                Delete
-              </button>
-              <button onClick={() => setMode('edit')} className="btn-primary">
-                <PencilSquareIcon className="h-4 w-4" />
-                Edit User
-              </button>
-            </div>
+            {primaryRole === 'FinalApprover' ? (
+              <div className="flex items-center gap-2 rounded-xl bg-amber-50 ring-1 ring-amber-200 px-3.5 py-3">
+                <ShieldCheckIcon className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                <p className="text-xs text-amber-700">This account is protected and cannot be modified or deleted.</p>
+              </div>
+            ) : (
+              <div className="flex justify-between gap-3 pt-1">
+                <button
+                  onClick={() => setMode('delete')}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-red-600 rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                  Delete
+                </button>
+                <button onClick={() => setMode('edit')} className="btn-primary">
+                  <PencilSquareIcon className="h-4 w-4" />
+                  Edit User
+                </button>
+              </div>
+            )}
           </div>
         )}
 
