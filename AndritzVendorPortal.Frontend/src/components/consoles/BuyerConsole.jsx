@@ -124,6 +124,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const [showForm, setShowForm]                     = useState(false)
   const [editingRequest, setEditingRequest]         = useState(null)
   const [form, setForm]                             = useState(EMPTY_FORM)
+  const [requestsFilter, setRequestsFilter]         = useState('All')
   const [selectedApprovers, setSelectedApprovers]   = useState([])
   const [availableApprovers, setAvailableApprovers] = useState([])
   const [viewingRequest, setViewingRequest]         = useState(null)
@@ -203,9 +204,6 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     if (!form.addressDetails.trim()) e.addressDetails = 'Address is required.'
     if (!form.city.trim())           e.city           = 'City is required.'
     if (!form.locality.trim())       e.locality       = 'Locality is required.'
-    const expectedState = CITY_STATE_MAP[form.city]
-    if (expectedState && form.state && form.state !== expectedState)
-      e.state = `${form.city} is in ${expectedState}, not ${form.state}.`
     if (!editingRequest && selectedApprovers.length === 0)
       e.approvers = 'Select at least one approver.'
     return e
@@ -391,7 +389,10 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           <div className="lg:col-span-2 flex flex-col gap-5">
             {/* Stat cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4">
+              <button
+                onClick={() => { setRequestsFilter('Pending'); onNavigate('requests') }}
+                className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4 hover:ring-2 hover:ring-slate-600 transition-all text-left"
+              >
                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
                   <ClockIcon className="h-5 w-5 text-[#096fb3]" />
                 </div>
@@ -399,8 +400,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   <p className="text-2xl font-bold text-gray-900">{inProgressReqs.length}</p>
                   <p className="text-xs text-gray-500 mt-0.5">In Progress</p>
                 </div>
-              </div>
-              <div className={`bg-white rounded-xl ring-1 px-5 py-4 flex items-center gap-4 ${rejectedReqs.length > 0 ? 'ring-red-200' : 'ring-gray-200'}`}>
+              </button>
+              <button
+                onClick={() => onNavigate('revision')}
+                className={`bg-white rounded-xl ring-1 px-5 py-4 flex items-center gap-4 hover:ring-2 hover:ring-slate-600 transition-all text-left ${rejectedReqs.length > 0 ? 'ring-red-200' : 'ring-gray-200'}`}
+              >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${rejectedReqs.length > 0 ? 'bg-red-50' : 'bg-gray-50'}`}>
                   <ExclamationCircleIcon className={`h-5 w-5 ${rejectedReqs.length > 0 ? 'text-red-500' : 'text-gray-400'}`} />
                 </div>
@@ -408,8 +412,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   <p className="text-2xl font-bold text-gray-900">{rejectedReqs.length}</p>
                   <p className={`text-xs mt-0.5 ${rejectedReqs.length > 0 ? 'text-red-600 font-medium' : 'text-gray-500'}`}>Awaiting Revision</p>
                 </div>
-              </div>
-              <div className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4">
+              </button>
+              <button
+                onClick={() => { setRequestsFilter('Completed'); onNavigate('requests') }}
+                className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4 hover:ring-2 hover:ring-slate-600 transition-all text-left"
+              >
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
                   <CheckCircleIcon className="h-5 w-5 text-emerald-600" />
                 </div>
@@ -417,7 +424,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   <p className="text-2xl font-bold text-gray-900">{completedReqs.length}</p>
                   <p className="text-xs text-gray-500 mt-0.5">Completed</p>
                 </div>
-              </div>
+              </button>
             </div>
 
             {/* Monthly requests chart */}
@@ -551,26 +558,54 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       )}
 
       {/* ── My Requests ─────────────────────────────────────────────────────── */}
-      {activePage === 'requests' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 ring-1 ring-blue-200 text-blue-700 text-sm font-semibold px-4 py-2 select-none">
-              <ClockIcon className="h-4 w-4" />
-              {activeReqs.length} Request{activeReqs.length !== 1 ? 's' : ''}
-            </span>
-            <button className="btn-primary" onClick={openCreate}>
-              <PlusIcon className="h-4 w-4" />
-              New Request
-            </button>
-          </div>
-          {activeReqs.length === 0 && (
-            <div className="card p-12 text-center text-gray-400">
-              <p className="text-sm">No active requests. Click "New Request" to get started.</p>
+      {activePage === 'requests' && (() => {
+        const filteredReqs = activeReqs.filter(r => {
+          if (requestsFilter === 'Pending')   return r.status !== 'Completed'
+          if (requestsFilter === 'Completed') return r.status === 'Completed'
+          return true
+        })
+        return (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 ring-1 ring-blue-200 text-blue-700 text-sm font-semibold px-4 py-2 select-none">
+                  <ClockIcon className="h-4 w-4" />
+                  {filteredReqs.length} Request{filteredReqs.length !== 1 ? 's' : ''}
+                </span>
+                <div className="flex gap-1.5">
+                  {['All', 'Pending', 'Completed'].map(f => (
+                    <button
+                      key={f}
+                      onClick={() => setRequestsFilter(f)}
+                      className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
+                        requestsFilter === f
+                          ? 'bg-slate-700 text-white ring-slate-700'
+                          : 'bg-white text-gray-600 ring-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button className="btn-primary" onClick={openCreate}>
+                <PlusIcon className="h-4 w-4" />
+                New Request
+              </button>
             </div>
-          )}
-          {activeReqs.map(req => <RequestCard key={req.id} req={req} />)}
-        </div>
-      )}
+            {filteredReqs.length === 0 && (
+              <div className="card p-12 text-center text-gray-400">
+                <p className="text-sm">
+                  {activeReqs.length === 0
+                    ? 'No active requests. Click "New Request" to get started.'
+                    : `No ${requestsFilter.toLowerCase()} requests.`}
+                </p>
+              </div>
+            )}
+            {filteredReqs.map(req => <RequestCard key={req.id} req={req} />)}
+          </div>
+        )
+      })()}
 
       {/* ── Waiting Revision ────────────────────────────────────────────────── */}
       {activePage === 'revision' && (
@@ -668,35 +703,40 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               </Field>
               <Field label="Postal Code" error={errors.postalCode}>
                 <input className="form-input" placeholder="e.g. 400001" maxLength={10}
-                  value={form.postalCode} onChange={e => set('postalCode', e.target.value)} />
+                  value={form.postalCode} onChange={e => set('postalCode', e.target.value.replace(/\D/g, ''))} />
               </Field>
               <Field label="City" required error={errors.city}>
-                <input className="form-input" list="city-list" placeholder="e.g. Mumbai"
-                  value={form.city} onChange={e => {
-                    const city = e.target.value
-                    setForm(f => ({ ...f, city, locality: '', ...(CITY_STATE_MAP[city] ? { state: CITY_STATE_MAP[city] } : {}) }))
-                    setErrors(prev => { if (!prev.city) return prev; const n = { ...prev }; delete n.city; return n })
-                  }} />
-                <datalist id="city-list">
-                  {Object.keys(CITIES).map(c => <option key={c} value={c} />)}
-                </datalist>
+                <select className="form-input" value={form.city} onChange={e => {
+                  const city = e.target.value
+                  setForm(f => ({ ...f, city, locality: '', state: CITY_STATE_MAP[city] ?? '' }))
+                  setErrors(prev => { if (!prev.city) return prev; const n = { ...prev }; delete n.city; return n })
+                }}>
+                  <option value="">Select City</option>
+                  {Object.keys(CITIES).sort().map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
               </Field>
               <Field label="Locality" required error={errors.locality}>
-                <input className="form-input" list="locality-list" placeholder="e.g. Andheri"
-                  value={form.locality} onChange={e => set('locality', e.target.value)} />
-                <datalist id="locality-list">
-                  {(CITIES[form.city] ?? []).map(l => <option key={l} value={l} />)}
-                </datalist>
+                <select className="form-input" value={form.locality} onChange={e => set('locality', e.target.value)}
+                  disabled={!form.city}>
+                  <option value="">{form.city ? 'Select Locality' : 'Select city first'}</option>
+                  {(CITIES[form.city] ?? []).map(l => <option key={l} value={l}>{l}</option>)}
+                </select>
               </Field>
-              <Field label="State" error={errors.state || (CITY_STATE_MAP[form.city] && form.state && form.state !== CITY_STATE_MAP[form.city] ? `${form.city} belongs to ${CITY_STATE_MAP[form.city]}` : null)}>
-                <select className="form-input" value={form.state} onChange={e => set('state', e.target.value)}>
+              <Field label="State" error={errors.state}>
+                <select className="form-input" value={form.state} onChange={e => set('state', e.target.value)}
+                  disabled={!!CITY_STATE_MAP[form.city]}>
                   <option value="">Select State</option>
                   {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
+                {CITY_STATE_MAP[form.city] && (
+                  <p className="mt-1 text-xs text-gray-400">Auto-set from city selection</p>
+                )}
               </Field>
               <Field label="Country" error={errors.country}>
-                <input className="form-input" placeholder="India"
-                  value={form.country} onChange={e => set('country', e.target.value)} />
+                <select className="form-input" value={form.country} onChange={e => set('country', e.target.value)}>
+                  <option value="India">India</option>
+                  <option value="Other">Other</option>
+                </select>
               </Field>
             </FormSection>
 
@@ -736,11 +776,13 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             <FormSection title="Contact Details">
               <Field label="Contact Person" required error={errors.contactPerson}>
                 <input className="form-input" placeholder="e.g. Rahul Verma"
-                  value={form.contactPerson} onChange={e => set('contactPerson', e.target.value)} />
+                  value={form.contactPerson}
+                  onChange={e => set('contactPerson', e.target.value.replace(/[^a-zA-Z\s.''-]/g, ''))} />
               </Field>
               <Field label="Telephone / Mobile" error={errors.telephone}>
-                <input className="form-input" placeholder="e.g. +91 98765 43210"
-                  value={form.telephone} onChange={e => set('telephone', e.target.value)} />
+                <input className="form-input" placeholder="e.g. 9876543210" inputMode="numeric"
+                  value={form.telephone}
+                  onChange={e => set('telephone', e.target.value.replace(/[^0-9+\-() ]/g, ''))} />
               </Field>
             </FormSection>
 

@@ -146,7 +146,7 @@ export default function App() {
       return <BuyerConsole activePage={activePage} onNavigate={setActivePage} workflow={workflow} currentUser={currentUser} />
     }
     if (role === 'Approver') {
-      return <ApproverConsole activePage={activePage} workflow={workflow} currentUser={currentUser} />
+      return <ApproverConsole activePage={activePage} onNavigate={setActivePage} workflow={workflow} currentUser={currentUser} />
     }
     if (role === 'FinalApprover') {
       return <FinalApproverConsole activePage={activePage} workflow={workflow} currentUser={currentUser} />

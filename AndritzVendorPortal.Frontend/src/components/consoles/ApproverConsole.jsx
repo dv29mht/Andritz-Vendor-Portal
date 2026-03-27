@@ -10,7 +10,7 @@ import Toast from '../shared/Toast'
 import { useViewedRequests } from '../../hooks/useViewedRequests'
 import { buildMonthlyData } from '../../utils/statsUtils'
 
-export default function ApproverConsole({ workflow, currentUser, activePage }) {
+export default function ApproverConsole({ workflow, currentUser, activePage, onNavigate }) {
   const pending         = workflow.getPendingFor(currentUser.id)
   const allActedOn      = workflow.getHistoryFor(currentUser.id)
 
@@ -90,7 +90,10 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
         <div className="space-y-5">
           {/* Stat cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4">
+            <button
+              onClick={() => onNavigate?.('pending')}
+              className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4 hover:ring-2 hover:ring-slate-600 transition-all text-left"
+            >
               <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center flex-shrink-0">
                 <ClockIcon className="h-5 w-5 text-[#096fb3]" />
               </div>
@@ -98,8 +101,11 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
                 <p className="text-2xl font-bold text-gray-900">{pending.length}</p>
                 <p className="text-xs text-gray-500 mt-0.5">Pending Review</p>
               </div>
-            </div>
-            <div className={`bg-white rounded-xl ring-1 px-5 py-4 flex items-center gap-4 ${waitingRevision.length > 0 ? 'ring-amber-200' : 'ring-gray-200'}`}>
+            </button>
+            <button
+              onClick={() => onNavigate?.('waiting')}
+              className={`bg-white rounded-xl ring-1 px-5 py-4 flex items-center gap-4 hover:ring-2 hover:ring-slate-600 transition-all text-left ${waitingRevision.length > 0 ? 'ring-amber-200' : 'ring-gray-200'}`}
+            >
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${waitingRevision.length > 0 ? 'bg-amber-50' : 'bg-gray-50'}`}>
                 <ExclamationCircleIcon className={`h-5 w-5 ${waitingRevision.length > 0 ? 'text-amber-500' : 'text-gray-400'}`} />
               </div>
@@ -107,8 +113,11 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
                 <p className="text-2xl font-bold text-gray-900">{waitingRevision.length}</p>
                 <p className="text-xs text-gray-500 mt-0.5">Awaiting Buyer Revision</p>
               </div>
-            </div>
-            <div className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4">
+            </button>
+            <button
+              onClick={() => onNavigate?.('history')}
+              className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4 hover:ring-2 hover:ring-slate-600 transition-all text-left"
+            >
               <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
                 <CheckIcon className="h-5 w-5 text-emerald-600" />
               </div>
@@ -116,7 +125,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage }) {
                 <p className="text-2xl font-bold text-gray-900">{history.length}</p>
                 <p className="text-xs text-gray-500 mt-0.5">Approved</p>
               </div>
-            </div>
+            </button>
           </div>
 
           {/* Monthly approvals chart */}

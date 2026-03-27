@@ -31,7 +31,7 @@ export default function Toast({ message, title, body, type = 'success', onClose,
   const detail  = message?.body  ?? body
 
   return (
-    <div className={`fixed bottom-6 right-6 z-50 flex items-start gap-3.5 rounded-2xl
+    <div className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 flex items-start gap-3.5 rounded-2xl
                      shadow-2xl ring-1 px-5 py-4 max-w-sm w-full ${v.wrap}`}
          role="alert"
     >

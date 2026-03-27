@@ -26,6 +26,7 @@ public class UsersController(
     {
         var approvers = await userManager.GetUsersInRoleAsync(Roles.Approver);
         var result = approvers
+            .Where(u => !u.IsArchived)
             .Select(u => new { id = u.Id, name = u.FullName, email = u.Email })
             .OrderBy(u => u.name)
             .ToList();
@@ -161,6 +162,17 @@ public class UsersController(
         if (!updateResult.Succeeded)
             return BadRequest(updateResult.Errors.Select(e => e.Description).ToList());
 
+        // Propagate new name to all denormalized snapshots
+        await db.VendorRequests
+            .Where(r => r.CreatedByUserId == user.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(r => r.CreatedByName, user.FullName));
+        await db.VendorRevisions
+            .Where(v => v.ChangedByUserId == user.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(v => v.ChangedByName, user.FullName));
+        await db.ApprovalSteps
+            .Where(a => a.ApproverUserId == user.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(a => a.ApproverName, user.FullName));
+
         // Update role — remove all existing roles, add the new one
         var currentRoles = await userManager.GetRolesAsync(user);
         await userManager.RemoveFromRolesAsync(user, currentRoles);
@@ -221,6 +233,17 @@ public class UsersController(
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
             return BadRequest(updateResult.Errors.Select(e => e.Description).ToList());
+
+        // Propagate new name to all denormalized snapshots
+        await db.VendorRequests
+            .Where(r => r.CreatedByUserId == user.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(r => r.CreatedByName, user.FullName));
+        await db.VendorRevisions
+            .Where(v => v.ChangedByUserId == user.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(v => v.ChangedByName, user.FullName));
+        await db.ApprovalSteps
+            .Where(a => a.ApproverUserId == user.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(a => a.ApproverName, user.FullName));
 
         // Password change is optional — only attempted when both fields are provided.
         if (!string.IsNullOrWhiteSpace(dto.CurrentPassword) && !string.IsNullOrWhiteSpace(dto.NewPassword))

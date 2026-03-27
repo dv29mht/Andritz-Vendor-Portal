@@ -3,7 +3,7 @@ import {
   UserPlusIcon, ArrowPathIcon, MagnifyingGlassIcon,
   XMarkIcon, CheckIcon, ExclamationCircleIcon,
   ShieldCheckIcon, ClipboardDocumentIcon,
-  PencilSquareIcon, TrashIcon, EyeIcon,
+  PencilSquareIcon, TrashIcon, EyeIcon, EyeSlashIcon,
   EnvelopeIcon, BriefcaseIcon, ComputerDesktopIcon, FingerPrintIcon,
   ChevronLeftIcon,
 } from '@heroicons/react/24/outline'
@@ -74,9 +74,11 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
     newPassword:     '',
     confirmPassword: '',
   })
-  const [errors, setErrors]  = useState([])
-  const [saving, setSaving]  = useState(false)
+  const [errors, setErrors]    = useState([])
+  const [saving, setSaving]    = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [showNewPwd, setShowNewPwd]         = useState(false)
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false)
 
   const primaryRole = user.roles[0]
   const hasEmailGuard = primaryRole === 'FinalApprover'
@@ -258,24 +260,45 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
                   New Password
                   <span className="ml-1 text-gray-400 font-normal">(leave blank to keep current)</span>
                 </label>
-                <input
-                  type="password"
-                  className="form-input"
-                  placeholder="Min 8 characters"
-                  value={form.newPassword}
-                  onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))}
-                />
+                <div className="relative">
+                  <input
+                    type={showNewPwd ? 'text' : 'password'}
+                    className="form-input pr-10"
+                    placeholder="Min 8 characters"
+                    value={form.newPassword}
+                    onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPwd(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showNewPwd ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="form-label">Confirm New Password</label>
-                <input
-                  type="password"
-                  className="form-input"
-                  placeholder="Repeat new password"
-                  value={form.confirmPassword}
-                  onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
-                  disabled={!form.newPassword}
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPwd ? 'text' : 'password'}
+                    className="form-input pr-10"
+                    placeholder="Repeat new password"
+                    value={form.confirmPassword}
+                    onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
+                    disabled={!form.newPassword}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPwd(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    tabIndex={-1}
+                    disabled={!form.newPassword}
+                  >
+                    {showConfirmPwd ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -344,6 +367,7 @@ export default function UserManagement() {
   const [loading, setLoading]           = useState(true)
   const [fetchError, setFetchError]     = useState(null)
   const [search, setSearch]             = useState('')
+  const [roleFilter, setRoleFilter]     = useState('All')
   const [showForm, setShowForm]         = useState(false)
   const [form, setForm]                 = useState(EMPTY_FORM)
   const [formErrors, setFormErrors]     = useState([])
@@ -375,11 +399,13 @@ export default function UserManagement() {
 
   const visible = users.filter(u => {
     const q = search.toLowerCase()
-    return !q
+    const matchSearch = !q
       || u.fullName.toLowerCase().includes(q)
       || u.email.toLowerCase().includes(q)
       || (u.designation ?? '').toLowerCase().includes(q)
       || u.roles.some(r => r.toLowerCase().includes(q))
+    const matchRole = roleFilter === 'All' || u.roles.includes(roleFilter)
+    return matchSearch && matchRole
   })
 
   const handleFormChange = (field, value) => {
@@ -602,10 +628,27 @@ export default function UserManagement() {
 
       {/* Search + table — hidden while Add User form is open */}
       {!showForm && (<>
-      <div className="relative max-w-xs mb-4">
-        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-        <input className="form-input pl-9" placeholder="Search by name, email, role…"
-          value={search} onChange={e => setSearch(e.target.value)} />
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+        <div className="relative max-w-xs flex-shrink-0">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+          <input className="form-input pl-9" placeholder="Search by name, email, role…"
+            value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {['All', 'Admin', 'Buyer', 'Approver', 'FinalApprover'].map(r => (
+            <button
+              key={r}
+              onClick={() => setRoleFilter(r)}
+              className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
+                roleFilter === r
+                  ? 'bg-slate-700 text-white ring-slate-700'
+                  : 'bg-white text-gray-600 ring-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              {r === 'FinalApprover' ? 'Final Approver' : r}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Users table */}
