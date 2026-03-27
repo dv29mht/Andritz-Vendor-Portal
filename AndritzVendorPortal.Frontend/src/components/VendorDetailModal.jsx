@@ -21,11 +21,12 @@ const TABS = [
 
 export default function VendorDetailModal({ request, onClose, initialTab = 'details' }) {
   const { currentUser } = useAuth()
-  // Prefer the live name of the currently logged-in user if they are the creator,
-  // so name changes are reflected immediately without a page reload.
-  const buyerName = (currentUser?.id && currentUser.id === request.createdByUserId)
-    ? (currentUser.name ?? currentUser.fullName ?? buyerName)
-    : buyerName
+  // If the viewer is the creator, use their live auth-context name so stale
+  // DB snapshots don't show an outdated display name.
+  const liveCreatorName = (currentUser?.id && currentUser.id === request.createdByUserId)
+    ? (currentUser.name ?? currentUser.fullName ?? request.createdByName)
+    : request.createdByName
+  const req = { ...request, createdByName: liveCreatorName }
 
   const [activeTab, setActiveTab] = useState(initialTab)
 
@@ -85,9 +86,9 @@ export default function VendorDetailModal({ request, onClose, initialTab = 'deta
       </div>
 
       {/* Tab panels */}
-      {activeTab === 'details'   && <DetailsTab   request={request} />}
-      {activeTab === 'revisions' && <RevisionsTab request={request} />}
-      {activeTab === 'preview'   && <PreviewTab   request={request} />}
+      {activeTab === 'details'   && <DetailsTab   request={req} />}
+      {activeTab === 'revisions' && <RevisionsTab request={req} />}
+      {activeTab === 'preview'   && <PreviewTab   request={req} />}
     </Modal>
   )
 }
@@ -128,7 +129,7 @@ function DetailsTab({ request }) {
         ]} />
 
         <InfoTable title="Submission" rows={[
-          ['Submitted By',  buyerName],
+          ['Submitted By',  request.createdByName],
           ['Created',       fmtDate(request.createdAt)],
           ['Last Updated',  fmtDate(request.updatedAt)],
         ]} />
@@ -197,9 +198,9 @@ function downloadRevisionCsv(request) {
   const rows = [['Revision', 'Changed By', 'Changed At', 'Rejection Reason', 'Field', 'Old Value', 'New Value']]
 
   if (history.length === 0) {
-    rows.push(['Original Submission', buyerName, fmtDate(request.createdAt), '', '', '', ''])
+    rows.push(['Original Submission', request.createdByName, fmtDate(request.createdAt), '', '', '', ''])
   } else {
-    rows.push(['0 (Original)', buyerName, fmtDate(request.createdAt), '', '', '', ''])
+    rows.push(['0 (Original)', request.createdByName, fmtDate(request.createdAt), '', '', '', ''])
     history.forEach(entry => {
       if (entry.changes.length === 0) {
         rows.push([`REV ${entry.revisionNo}`, entry.changedByName, fmtDate(entry.changedAt), entry.rejectionComment ?? '', '(no field changes)', '', ''])
@@ -234,9 +235,9 @@ function downloadRevisionPdf(request) {
   const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
   const revRows = history.length === 0
-    ? `<tr><td>0 (Original)</td><td>${esc(buyerName)}</td><td>${esc(fmtDate(request.createdAt))}</td><td></td><td>(original)</td><td></td><td></td></tr>`
+    ? `<tr><td>0 (Original)</td><td>${esc(request.createdByName)}</td><td>${esc(fmtDate(request.createdAt))}</td><td></td><td>(original)</td><td></td><td></td></tr>`
     : [
-        `<tr><td>0 (Original)</td><td>${esc(buyerName)}</td><td>${esc(fmtDate(request.createdAt))}</td><td></td><td></td><td></td><td></td></tr>`,
+        `<tr><td>0 (Original)</td><td>${esc(request.createdByName)}</td><td>${esc(fmtDate(request.createdAt))}</td><td></td><td></td><td></td><td></td></tr>`,
         ...history.flatMap(e => e.changes.length === 0
           ? [`<tr><td>REV ${e.revisionNo}</td><td>${esc(e.changedByName)}</td><td>${esc(fmtDate(e.changedAt))}</td><td>${esc(e.rejectionComment)}</td><td>(no field changes)</td><td></td><td></td></tr>`]
           : e.changes.map((c, i) => `<tr><td>${i === 0 ? `REV ${e.revisionNo}` : ''}</td><td>${i === 0 ? esc(e.changedByName) : ''}</td><td>${i === 0 ? esc(fmtDate(e.changedAt)) : ''}</td><td>${i === 0 ? esc(e.rejectionComment) : ''}</td><td>${esc(c.fieldLabel)}</td><td>${esc(c.oldValue)}</td><td>${esc(c.newValue)}</td></tr>`)
@@ -314,7 +315,7 @@ function RevisionsTab({ request }) {
         <div className="pb-4 pt-1">
           <p className="text-sm font-semibold text-gray-700">Original Submission</p>
           <p className="text-xs text-gray-400 mt-0.5">
-            {buyerName} · {fmtDate(request.createdAt)}
+            {request.createdByName} · {fmtDate(request.createdAt)}
           </p>
         </div>
       </div>
@@ -648,7 +649,7 @@ function PreviewTab({ request }) {
 
           {/* ── Signature blocks ── */}
           <div className="grid grid-cols-2 gap-8 font-sans text-xs">
-            <SignatureBlock label="Buyer Signature" name={buyerName} />
+            <SignatureBlock label="Buyer Signature" name={request.createdByName} />
             <SignatureBlock label="Final Approver Signature" name="Pardeep Sharma" />
           </div>
         </div>
