@@ -303,8 +303,8 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 <p className="text-xs text-gray-400 mt-0.5">Top 8 material categories</p>
               </div>
               <div className="px-4 py-4">
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={materialData} layout="vertical" barSize={16} margin={{ top: 0, right: 32, left: 8, bottom: 0 }}>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={materialData} layout="vertical" barSize={16} margin={{ top: 10, right: 32, left: 8, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
                     <XAxis type="number" allowDecimals={false} domain={[0, 'dataMax+1']} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis type="category" dataKey="name" width={130} axisLine={false} tickLine={false}
