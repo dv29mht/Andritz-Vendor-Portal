@@ -31,36 +31,38 @@ export default function Toast({ message, title, body, type = 'success', onClose,
   const detail  = message?.body  ?? body
 
   return (
-    <div className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 flex items-start gap-3.5 rounded-2xl
-                     shadow-2xl ring-1 px-5 py-4 max-w-sm w-full ${v.wrap}`}
-         role="alert"
-    >
-      {v.icon}
-      <div className="flex-1 min-w-0 pt-0.5">
-        <p className="text-sm font-semibold text-gray-900 leading-snug">{heading}</p>
-        {detail && (
-          <p className="text-xs text-gray-500 mt-1 leading-relaxed">{detail}</p>
-        )}
-      </div>
-      <button
-        onClick={onClose}
-        className="flex-shrink-0 rounded-md p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+      <div className={`relative flex items-start gap-3.5 rounded-2xl
+                       shadow-2xl ring-1 px-5 py-4 max-w-sm w-full ${v.wrap}`}
+           role="alert"
       >
-        <XMarkIcon className="h-4 w-4" />
-      </button>
+        {v.icon}
+        <div className="flex-1 min-w-0 pt-0.5">
+          <p className="text-sm font-semibold text-gray-900 leading-snug">{heading}</p>
+          {detail && (
+            <p className="text-xs text-gray-500 mt-1 leading-relaxed">{detail}</p>
+          )}
+        </div>
+        <button
+          onClick={onClose}
+          className="flex-shrink-0 rounded-md p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+        >
+          <XMarkIcon className="h-4 w-4" />
+        </button>
 
-      {/* Progress bar */}
-      <div
-        className={`absolute bottom-0 left-0 h-1 rounded-b-2xl ${v.bar} origin-left`}
-        style={{ animation: `shrink ${duration}ms linear forwards` }}
-      />
+        {/* Progress bar */}
+        <div
+          className={`absolute bottom-0 left-0 h-1 rounded-b-2xl ${v.bar} origin-left`}
+          style={{ animation: `shrink ${duration}ms linear forwards` }}
+        />
 
-      <style>{`
-        @keyframes shrink {
-          from { width: 100%; }
-          to   { width: 0%; }
-        }
-      `}</style>
+        <style>{`
+          @keyframes shrink {
+            from { width: 100%; }
+            to   { width: 0%; }
+          }
+        `}</style>
+      </div>
     </div>
   )
 }
