@@ -458,7 +458,7 @@ public class VendorRequestController(
                 VendorRequestId  = request.Id,
                 RevisionNo       = newRevNo,
                 ChangedByUserId  = UserId(),
-                ChangedByName    = $"[Admin] {adminUser?.FullName ?? string.Empty}",
+                ChangedByName    = adminUser?.FullName ?? string.Empty,
                 ChangedAt        = DateTime.UtcNow,
                 RejectionComment = null,
                 ChangesJson      = JsonSerializer.Serialize(changes, JsonOpts),
