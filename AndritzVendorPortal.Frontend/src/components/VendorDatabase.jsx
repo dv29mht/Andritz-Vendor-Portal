@@ -41,9 +41,11 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
             <BuildingOfficeIcon className="h-5 w-5 text-[#0062AC]" />
             Permanent Vendor Master
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {vendors.length} SAP-registered vendor{vendors.length !== 1 ? 's' : ''} · fully approved, not one-time
-          </p>
+          <div className="flex items-center gap-3 mt-1.5">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 select-none">
+              {vendors.length} Permanent Vendor{vendors.length !== 1 ? 's' : ''}
+            </span>
+          </div>
         </div>
         <input
           className="form-input max-w-xs"
@@ -75,11 +77,8 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
               <tr key={req.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-3 font-mono text-xs font-semibold text-emerald-700">{req.vendorCode}</td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-medium text-gray-900">{req.vendorName}</p>
-                    <span className="text-xs bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 ring-inset px-2 py-0.5 rounded-full font-medium">Permanent</span>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-0.5">{req.contactPerson}</p>
+                  <p className="font-medium text-gray-900">{req.vendorName}</p>
+                  <p className="text-xs text-gray-400">{req.contactPerson}</p>
                 </td>
                 <td className="px-4 py-3 text-gray-500 text-xs">{req.city}, {req.locality}</td>
                 <td className="px-4 py-3 font-mono text-xs text-gray-600">{req.gstNumber}</td>
