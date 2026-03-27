@@ -239,7 +239,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         const name = editingRequest.vendorName
         await workflow.updateCompleted(editingRequest.id, form)
         setShowForm(false)
-        setToast({ type: 'success', title: 'Details Updated', body: `Vendor details for ${name} have been updated. FinalApprover and Admin have been notified.` })
+        setToast({ type: 'success', title: 'Details Updated', body: `Vendor details for ${name} have been updated. Final Approver and Admin have been notified.` })
       } else if (editingRequest) {
         const name = editingRequest.vendorName
         await workflow.resubmit(editingRequest.id, form)
@@ -803,7 +803,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             {editingRequest && editingRequest.status === 'Completed' && (
               <div className="rounded-lg bg-emerald-50 ring-1 ring-emerald-200 p-3">
                 <p className="text-xs text-emerald-700">
-                  This request is already completed with SAP Vendor Code <strong>{editingRequest.vendorCode}</strong>. Saving will update the vendor details and notify the FinalApprover and Admin. The vendor code and completed status will be preserved.
+                  This request is already completed with SAP Vendor Code <strong>{editingRequest.vendorCode}</strong>. Saving will update the vendor details and notify the Final Approver and Admin. The vendor code and completed status will be preserved.
                 </p>
               </div>
             )}

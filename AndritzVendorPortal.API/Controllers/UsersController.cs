@@ -215,6 +215,28 @@ public class UsersController(
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // DELETE /api/users/{id}/purge
+    // Admin-only: permanently and irreversibly removes a user record from the DB.
+    // Use only for accounts that should be fully erased (e.g. test/duplicate accounts).
+    // ─────────────────────────────────────────────────────────────────────────
+    [HttpDelete("{id}/purge")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> Purge(string id)
+    {
+        var user = await userManager.FindByIdAsync(id);
+        if (user is null) return NotFound("User not found.");
+
+        if (user.Email?.Equals("pardeep.sharma@andritz.com", StringComparison.OrdinalIgnoreCase) == true)
+            return BadRequest("The Final Approver account cannot be deleted.");
+
+        var result = await userManager.DeleteAsync(user);
+        if (!result.Succeeded)
+            return BadRequest(result.Errors.Select(e => e.Description).ToList());
+
+        return NoContent();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // PUT /api/users/profile
     // Any authenticated user: update their own display name and optionally password.
     // ─────────────────────────────────────────────────────────────────────────

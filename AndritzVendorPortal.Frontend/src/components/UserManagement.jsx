@@ -10,7 +10,7 @@ import {
 import api from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 
-const ROLES = ['Buyer', 'Approver', 'Admin']
+const ROLES = ['Buyer', 'Approver']
 
 const ROLE_DISPLAY = {
   Admin: 'Admin', Buyer: 'Buyer', Approver: 'Approver', FinalApprover: 'Final Approver',
@@ -656,7 +656,7 @@ export default function UserManagement() {
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
-              {['Full Name', 'Designation', 'Email', 'Role(s)', 'Console Access', 'Actions'].map(h => (
+              {['Full Name', 'Designation', 'Email', 'Role(s)', 'Actions'].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   {h}
                 </th>
@@ -665,11 +665,11 @@ export default function UserManagement() {
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
             {loading && (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">Loading users…</td></tr>
+              <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-400">Loading users…</td></tr>
             )}
             {!loading && fetchError && (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center">
+                <td colSpan={5} className="px-4 py-10 text-center">
                   <p className="text-sm text-red-600 mb-3">{fetchError}</p>
                   <button onClick={fetchUsers} className="btn-primary !text-xs !py-1.5 !px-4">
                     <ArrowPathIcon className="h-3.5 w-3.5" />
@@ -679,7 +679,7 @@ export default function UserManagement() {
               </tr>
             )}
             {!loading && !fetchError && visible.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">No users match the search.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-400">No users match the search.</td></tr>
             )}
             {!loading && !fetchError && visible.map(user => {
               const primaryRole = user.roles[0]
@@ -707,15 +707,6 @@ export default function UserManagement() {
                         </span>
                       ))}
                     </div>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
-                    {consoleLabel}
-                    {hasEmailGuard && (
-                      <span className="ml-1.5 inline-flex items-center gap-0.5 text-xs text-rose-600 font-medium">
-                        <ShieldCheckIcon className="h-3 w-3" />
-                        email-gated
-                      </span>
-                    )}
                   </td>
                   <td className="px-4 py-3">
                     <button
