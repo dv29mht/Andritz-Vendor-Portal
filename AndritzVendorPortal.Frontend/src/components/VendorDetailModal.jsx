@@ -261,12 +261,20 @@ function downloadRevisionPdf(request) {
 <tbody>${revRows}</tbody></table>
 </body></html>`
 
-  const w = window.open('', '_blank', 'width=900,height=650')
-  if (!w) return
-  w.document.write(html)
-  w.document.close()
-  w.focus()
-  setTimeout(() => { w.print() }, 400)
+  const blob = new Blob([html], { type: 'text/html' })
+  const url  = URL.createObjectURL(blob)
+  const iframe = document.createElement('iframe')
+  iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;visibility:hidden'
+  document.body.appendChild(iframe)
+  iframe.onload = () => {
+    iframe.contentWindow.focus()
+    iframe.contentWindow.print()
+    setTimeout(() => {
+      document.body.removeChild(iframe)
+      URL.revokeObjectURL(url)
+    }, 2000)
+  }
+  iframe.src = url
 }
 
 function RevisionsTab({ request }) {
@@ -472,14 +480,24 @@ function PreviewTab({ request }) {
     </tbody>
   </table>
   ${request.vendorCode ? `<p style="margin-top:16px;font-size:11px">SAP Vendor Code: <strong style="font-family:monospace;font-size:14px">${esc(request.vendorCode)}</strong></p>` : ''}
-  <script>window.addEventListener('load',function(){setTimeout(function(){window.print()},600)});<\/script>
 </body>
 </html>`
 
-    const win = window.open('', '_blank', 'width=820,height=1000')
-    if (!win) return
-    win.document.write(html)
-    win.document.close()
+    // Use a hidden iframe so popup blockers cannot interfere
+    const blob = new Blob([html], { type: 'text/html' })
+    const url  = URL.createObjectURL(blob)
+    const iframe = document.createElement('iframe')
+    iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;visibility:hidden'
+    document.body.appendChild(iframe)
+    iframe.onload = () => {
+      iframe.contentWindow.focus()
+      iframe.contentWindow.print()
+      setTimeout(() => {
+        document.body.removeChild(iframe)
+        URL.revokeObjectURL(url)
+      }, 2000)
+    }
+    iframe.src = url
   }
 
   return (
