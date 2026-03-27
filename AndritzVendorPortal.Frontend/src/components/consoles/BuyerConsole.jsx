@@ -716,11 +716,13 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 </select>
               </Field>
               <Field label="Locality" required error={errors.locality}>
-                <select className="form-input" value={form.locality} onChange={e => set('locality', e.target.value)}
-                  disabled={!form.city}>
-                  <option value="">{form.city ? 'Select Locality' : 'Select city first'}</option>
-                  {(CITIES[form.city] ?? []).map(l => <option key={l} value={l}>{l}</option>)}
-                </select>
+                <input className="form-input" list="locality-list"
+                  placeholder={form.city ? 'Type or select locality' : 'Select city first'}
+                  disabled={!form.city}
+                  value={form.locality} onChange={e => set('locality', e.target.value)} />
+                <datalist id="locality-list">
+                  {(CITIES[form.city] ?? []).map(l => <option key={l} value={l} />)}
+                </datalist>
               </Field>
               <Field label="State" error={errors.state}>
                 <select className="form-input" value={form.state} onChange={e => set('state', e.target.value)}
