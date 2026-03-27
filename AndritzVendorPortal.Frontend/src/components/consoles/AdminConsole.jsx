@@ -271,7 +271,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
           </div>
 
           {/* Charts row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
 
             {/* Monthly requests */}
             <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
@@ -279,10 +279,10 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 <h3 className="text-sm font-semibold text-gray-900">Monthly Requests</h3>
                 <p className="text-xs text-gray-400 mt-0.5">Requests submitted over the last 6 months</p>
               </div>
-              <div className="px-4 py-4">
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={monthlyData} barSize={28} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <div className="px-4 py-5">
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={monthlyData} barSize={32} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <Tooltip
@@ -302,15 +302,21 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 <h3 className="text-sm font-semibold text-gray-900">Requests by Material Group</h3>
                 <p className="text-xs text-gray-400 mt-0.5">Top 8 material categories</p>
               </div>
-              <div className="px-4 py-4">
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={materialData} layout="vertical" barSize={16} margin={{ top: 10, right: 32, left: 8, bottom: 0 }}>
+              <div className="px-4 py-5">
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={materialData} layout="vertical" barSize={18} margin={{ top: 4, right: 36, left: 8, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
                     <XAxis type="number" allowDecimals={false} domain={[0, 'dataMax+1']} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="name" width={130} axisLine={false} tickLine={false}
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      width={140}
+                      interval={0}
+                      axisLine={false}
+                      tickLine={false}
                       tick={({ x, y, payload }) => (
-                        <text x={x} y={y} dy={4} textAnchor="end" fontSize={11} fill="#64748b">
-                          {payload.value.length > 16 ? payload.value.slice(0, 15) + '…' : payload.value}
+                        <text x={x} y={y} dy={5} textAnchor="end" fontSize={11} fill="#64748b">
+                          {payload.value.length > 17 ? payload.value.slice(0, 16) + '…' : payload.value}
                         </text>
                       )}
                     />
