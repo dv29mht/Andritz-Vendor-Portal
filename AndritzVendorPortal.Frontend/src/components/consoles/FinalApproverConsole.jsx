@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { CheckBadgeIcon, StarIcon } from '@heroicons/react/24/solid'
 import { XMarkIcon, EyeIcon, CheckIcon, ClockIcon, ArchiveBoxIcon,
-         UsersIcon, ArrowPathIcon, NoSymbolIcon, TrophyIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'
+         UsersIcon, ArrowPathIcon, NoSymbolIcon, TrophyIcon, BuildingOfficeIcon,
+         ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+
+const PAGE_SIZE = 10
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import VendorDatabase from '../VendorDatabase'
 import Modal from '../shared/Modal'
@@ -48,6 +51,8 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
   const [rejectError, setRejectError]       = useState('')
   const [viewingRequest, setViewingRequest] = useState(null)
   const [toast, setToast]                   = useState(null)
+  const [queuePage, setQueuePage]           = useState(1)
+  const [historyPage, setHistoryPage]       = useState(1)
 
   const isAuthorizedFinalApprover = currentUser?.email === 'pardeep.sharma@andritz.com'
   const { isNew, markViewed } = useViewedRequests(currentUser.id)
@@ -206,7 +211,10 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
       )}
 
       {/* ── Pending Queue ───────────────────────────────────────────────────── */}
-      {activePage === 'pending' && (
+      {activePage === 'pending' && (() => {
+        const totalPages = Math.max(1, Math.ceil(queue.length / PAGE_SIZE))
+        const paginated  = queue.slice((queuePage - 1) * PAGE_SIZE, queuePage * PAGE_SIZE)
+        return (
         <div className="space-y-4">
           {queue.length === 0 && (
             <div className="card p-12 text-center">
@@ -214,7 +222,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
               <p className="text-sm text-gray-500">No requests awaiting your approval.</p>
             </div>
           )}
-          {queue.map(req => {
+          {paginated.map(req => {
             const intermediateSteps = req.approvalSteps.filter(s => !s.isFinalApproval)
             const allIntermediate   = intermediateSteps.every(s => s.decision === 'Approved')
             return (
@@ -266,11 +274,25 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
               </div>
             )
           })}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
+              <span className="text-xs text-gray-400">Showing {(queuePage - 1) * PAGE_SIZE + 1}–{Math.min(queuePage * PAGE_SIZE, queue.length)} of {queue.length}</span>
+              <div className="flex items-center gap-1.5">
+                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={queuePage === 1} onClick={() => setQueuePage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
+                <span className="text-xs text-gray-500 px-1">Page {queuePage} of {totalPages}</span>
+                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={queuePage === totalPages} onClick={() => setQueuePage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+        )
+      })()}
 
       {/* ── History ─────────────────────────────────────────────────────────── */}
-      {activePage === 'history' && (
+      {activePage === 'history' && (() => {
+        const totalPages = Math.max(1, Math.ceil(history.length / PAGE_SIZE))
+        const paginated  = history.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE)
+        return (
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 select-none">
@@ -284,7 +306,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
               <p className="text-sm text-gray-500">No vendor registrations acted upon yet.</p>
             </div>
           )}
-          {history.map(req => {
+          {paginated.map(req => {
             const step       = myStepFor(req)
             const isApproved = step?.decision === 'Approved'
             return (
@@ -322,8 +344,19 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
               </div>
             )
           })}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
+              <span className="text-xs text-gray-400">Showing {(historyPage - 1) * PAGE_SIZE + 1}–{Math.min(historyPage * PAGE_SIZE, history.length)} of {history.length}</span>
+              <div className="flex items-center gap-1.5">
+                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === 1} onClick={() => setHistoryPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
+                <span className="text-xs text-gray-500 px-1">Page {historyPage} of {totalPages}</span>
+                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === totalPages} onClick={() => setHistoryPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+        )
+      })()}
 
       {/* ── Vendor Database ─────────────────────────────────────────────────── */}
       {activePage === 'vendors' && (

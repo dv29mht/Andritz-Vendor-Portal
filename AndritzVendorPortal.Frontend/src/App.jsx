@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { ChevronLeftIcon, ChevronRightIcon, ArchiveBoxIcon, ArchiveBoxArrowDownIcon } from '@heroicons/react/24/outline'
+import { ChevronLeftIcon, ChevronRightIcon, ArchiveBoxIcon, ArrowPathIcon, EyeIcon } from '@heroicons/react/24/outline'
+import api from './services/api'
 import { useAuth } from './contexts/AuthContext'
 import { ROLES } from './constants/roles'
 import { useVendorWorkflow } from './hooks/useVendorWorkflow'
@@ -17,11 +18,13 @@ const OTV_PAGE_SIZE = 10
 
 function OneTimeVendorPage({ workflow, currentUser }) {
   const isAdmin = currentUser?.role === 'Admin'
-  const [viewing,         setViewing]         = useState(null)
-  const [page,            setPage]            = useState(1)
-  const [archiving,       setArchiving]       = useState(null)
-  const [archiveLoading,  setArchiveLoading]  = useState(false)
-  const [archiveError,    setArchiveError]    = useState(null)
+  const [viewing,          setViewing]          = useState(null)
+  const [page,             setPage]             = useState(1)
+  const [archiving,        setArchiving]        = useState(null)
+  const [archiveLoading,   setArchiveLoading]   = useState(false)
+  const [archiveError,     setArchiveError]     = useState(null)
+  const [movingId,         setMovingId]         = useState(null)
+  const [moveError,        setMoveError]        = useState(null)
 
   const oneTime    = workflow.requests.filter(r => r.isOneTimeVendor && !r.isArchived)
   const totalPages = Math.max(1, Math.ceil(oneTime.length / OTV_PAGE_SIZE))
@@ -41,73 +44,137 @@ function OneTimeVendorPage({ workflow, currentUser }) {
     }
   }
 
+  const handleMoveToPermanent = async (req) => {
+    setMovingId(req.id)
+    setMoveError(null)
+    try {
+      await api.patch(`/vendor-requests/${req.id}/classify`, { isOneTimeVendor: false })
+      await workflow.fetchAll()
+    } catch (err) {
+      setMoveError(err?.response?.data?.message ?? 'Failed to move vendor. Please try again.')
+    } finally {
+      setMovingId(null)
+    }
+  }
+
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-4">
-      <div className="flex items-center gap-3 mb-2">
-        <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 ring-1 ring-amber-200 text-amber-700 text-sm font-semibold px-4 py-2 select-none">
-          {oneTime.length} One-Time Vendor{oneTime.length !== 1 ? 's' : ''}
-        </span>
+    <div className="p-6 max-w-6xl mx-auto space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">One-Time Vendors</h2>
+          <div className="flex items-center gap-3 mt-1.5">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 ring-1 ring-amber-200 text-amber-700 text-sm font-semibold px-4 py-2 select-none">
+              {oneTime.length} One-Time Vendor{oneTime.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+        </div>
       </div>
-      {oneTime.length === 0 && (
-        <div className="bg-white rounded-2xl ring-1 ring-gray-200 p-12 text-center">
-          <p className="text-sm text-gray-400">No one-time vendor requests found.</p>
-        </div>
+
+      {moveError && (
+        <div className="text-xs text-red-700 bg-red-50 ring-1 ring-red-200 rounded-lg px-3 py-2">{moveError}</div>
       )}
-      {paginated.map(req => (
-        <div key={req.id} className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-start justify-between gap-4 flex-wrap">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <p className="font-semibold text-gray-900">{req.vendorName}</p>
-              <StatusBadge status={req.status} />
-              {req.vendorCode && (
-                <span className="text-xs bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 ring-inset px-2 py-0.5 rounded-full font-mono">{req.vendorCode}</span>
-              )}
-            </div>
-            <p className="text-sm text-gray-500">{req.contactPerson}{req.telephone ? ` · ${req.telephone}` : ''}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{[req.city, req.locality, req.state].filter(Boolean).join(', ')} · {req.materialGroup || '—'}</p>
-            <p className="text-xs text-gray-400 mt-0.5">Submitted by {req.createdByName} · {new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</p>
-          </div>
-          <div className="flex flex-col gap-1 flex-shrink-0">
-            <button className="btn-secondary !py-1 !px-3 !text-xs" onClick={() => setViewing(req)}>
-              View
-            </button>
-            {isAdmin && (
-              <button
-                className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors"
-                onClick={() => { setArchiving(req); setArchiveError(null) }}
-                title="Archive this one-time vendor — record is retained and can be restored"
-              >
-                <ArchiveBoxIcon className="h-3.5 w-3.5" />
-                Archive
-              </button>
+
+      {/* Table */}
+      <div className="card overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              {['Vendor Name', 'Status', 'City', 'GST Number', 'Submitted On', 'Actions'].map(h => (
+                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 bg-white">
+            {paginated.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">
+                  No one-time vendor requests found.
+                </td>
+              </tr>
             )}
-          </div>
-        </div>
-      ))}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
+            {paginated.map(req => (
+              <tr key={req.id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-4 py-3">
+                  <p className="font-medium text-gray-900">{req.vendorName}</p>
+                  <p className="text-xs text-gray-400">{req.contactPerson}</p>
+                </td>
+                <td className="px-4 py-3">
+                  <StatusBadge status={req.status} />
+                </td>
+                <td className="px-4 py-3 text-xs text-gray-500">
+                  {[req.city, req.locality].filter(Boolean).join(', ') || '—'}
+                </td>
+                <td className="px-4 py-3 font-mono text-xs text-gray-600">{req.gstNumber || '—'}</td>
+                <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                  {new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      className="btn-secondary !py-1 !px-2 !text-xs"
+                      onClick={() => setViewing(req)}
+                    >
+                      <EyeIcon className="h-3.5 w-3.5" />
+                      View
+                    </button>
+                    {isAdmin && req.status === 'Completed' && (
+                      <button
+                        className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                        onClick={() => handleMoveToPermanent(req)}
+                        disabled={movingId === req.id}
+                        title="Move to Permanent Vendor Master"
+                      >
+                        <ArrowPathIcon className="h-3.5 w-3.5" />
+                        {movingId === req.id ? 'Moving…' : 'Move to Permanent'}
+                      </button>
+                    )}
+                    {isAdmin && (
+                      <button
+                        className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors"
+                        onClick={() => { setArchiving(req); setArchiveError(null) }}
+                        title="Archive this one-time vendor — record is retained and can be restored"
+                      >
+                        <ArchiveBoxIcon className="h-3.5 w-3.5" />
+                        Archive
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Footer / pagination */}
+        <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
           <span className="text-xs text-gray-400">
-            Showing {(page - 1) * OTV_PAGE_SIZE + 1}–{Math.min(page * OTV_PAGE_SIZE, oneTime.length)} of {oneTime.length}
+            {oneTime.length === 0
+              ? 'No records'
+              : `Showing ${(page - 1) * OTV_PAGE_SIZE + 1}–${Math.min(page * OTV_PAGE_SIZE, oneTime.length)} of ${oneTime.length}`}
           </span>
-          <div className="flex items-center gap-1.5">
-            <button
-              className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              disabled={page === 1}
-              onClick={() => setPage(p => p - 1)}
-            >
-              <ChevronLeftIcon className="h-4 w-4" />
-            </button>
-            <span className="text-xs text-gray-500 px-1">Page {page} of {totalPages}</span>
-            <button
-              className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              disabled={page === totalPages}
-              onClick={() => setPage(p => p + 1)}
-            >
-              <ChevronRightIcon className="h-4 w-4" />
-            </button>
-          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5">
+              <button
+                className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                disabled={page === 1}
+                onClick={() => setPage(p => p - 1)}
+              >
+                <ChevronLeftIcon className="h-4 w-4" />
+              </button>
+              <span className="text-xs text-gray-500 px-1">Page {page} of {totalPages}</span>
+              <button
+                className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                disabled={page === totalPages}
+                onClick={() => setPage(p => p + 1)}
+              >
+                <ChevronRightIcon className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
+
       {viewing && <VendorDetailModal request={viewing} onClose={() => setViewing(null)} />}
 
       {/* Archive confirmation modal */}

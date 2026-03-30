@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { CheckIcon, XMarkIcon, EyeIcon, ClockIcon, ArchiveBoxIcon,
-         ExclamationCircleIcon } from '@heroicons/react/24/outline'
+         ExclamationCircleIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+
+const PAGE_SIZE = 10
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
@@ -30,6 +32,9 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
   const [rejectError, setRejectError]       = useState('')
   const [viewingRequest, setViewingRequest] = useState(null)
   const [toast, setToast]                   = useState(null)
+  const [pendingPage, setPendingPage]       = useState(1)
+  const [waitingPage, setWaitingPage]       = useState(1)
+  const [historyPage, setHistoryPage]       = useState(1)
 
   const { isNew, markViewed } = useViewedRequests(currentUser.id)
 
@@ -196,7 +201,10 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
       )}
 
       {/* ── Pending Approval ────────────────────────────────────────────────── */}
-      {activePage === 'pending' && (
+      {activePage === 'pending' && (() => {
+        const totalPages = Math.max(1, Math.ceil(pending.length / PAGE_SIZE))
+        const paginated  = pending.slice((pendingPage - 1) * PAGE_SIZE, pendingPage * PAGE_SIZE)
+        return (
         <div className="space-y-4">
           {pending.length === 0 && (
             <div className="card p-12 text-center">
@@ -204,7 +212,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               <p className="text-sm text-gray-500">All caught up — no requests pending your review.</p>
             </div>
           )}
-          {pending.map(req => (
+          {paginated.map(req => (
             <div key={req.id} className="card px-5 py-4">
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div className="min-w-0">
@@ -239,11 +247,25 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               </div>
             </div>
           ))}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
+              <span className="text-xs text-gray-400">Showing {(pendingPage - 1) * PAGE_SIZE + 1}–{Math.min(pendingPage * PAGE_SIZE, pending.length)} of {pending.length}</span>
+              <div className="flex items-center gap-1.5">
+                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={pendingPage === 1} onClick={() => setPendingPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
+                <span className="text-xs text-gray-500 px-1">Page {pendingPage} of {totalPages}</span>
+                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={pendingPage === totalPages} onClick={() => setPendingPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+        )
+      })()}
 
       {/* ── Waiting Revision ────────────────────────────────────────────────── */}
-      {activePage === 'waiting' && (
+      {activePage === 'waiting' && (() => {
+        const totalPages = Math.max(1, Math.ceil(waitingRevision.length / PAGE_SIZE))
+        const paginated  = waitingRevision.slice((waitingPage - 1) * PAGE_SIZE, waitingPage * PAGE_SIZE)
+        return (
         <div className="space-y-4">
           {waitingRevision.length === 0 && (
             <div className="card p-12 text-center">
@@ -251,7 +273,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               <p className="text-sm text-gray-500">No rejected requests waiting for buyer revision.</p>
             </div>
           )}
-          {waitingRevision.map(req => {
+          {paginated.map(req => {
             const step = myStepFor(req)
             return (
               <div key={req.id} className="card overflow-hidden">
@@ -277,11 +299,25 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               </div>
             )
           })}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
+              <span className="text-xs text-gray-400">Showing {(waitingPage - 1) * PAGE_SIZE + 1}–{Math.min(waitingPage * PAGE_SIZE, waitingRevision.length)} of {waitingRevision.length}</span>
+              <div className="flex items-center gap-1.5">
+                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={waitingPage === 1} onClick={() => setWaitingPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
+                <span className="text-xs text-gray-500 px-1">Page {waitingPage} of {totalPages}</span>
+                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={waitingPage === totalPages} onClick={() => setWaitingPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+        )
+      })()}
 
       {/* ── History ─────────────────────────────────────────────────────────── */}
-      {activePage === 'history' && (
+      {activePage === 'history' && (() => {
+        const totalPages = Math.max(1, Math.ceil(history.length / PAGE_SIZE))
+        const paginated  = history.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE)
+        return (
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 select-none">
@@ -295,7 +331,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               <p className="text-sm text-gray-500">No requests approved yet.</p>
             </div>
           )}
-          {history.map(req => {
+          {paginated.map(req => {
             const step = myStepFor(req)
             return (
               <div key={req.id} className="card px-5 py-4">
@@ -327,8 +363,19 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               </div>
             )
           })}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
+              <span className="text-xs text-gray-400">Showing {(historyPage - 1) * PAGE_SIZE + 1}–{Math.min(historyPage * PAGE_SIZE, history.length)} of {history.length}</span>
+              <div className="flex items-center gap-1.5">
+                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === 1} onClick={() => setHistoryPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
+                <span className="text-xs text-gray-500 px-1">Page {historyPage} of {totalPages}</span>
+                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === totalPages} onClick={() => setHistoryPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+        )
+      })()}
 
       {/* ── Modals ──────────────────────────────────────────────────────────── */}
       {viewingRequest && (

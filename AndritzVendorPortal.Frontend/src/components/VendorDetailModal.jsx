@@ -261,20 +261,17 @@ function downloadRevisionPdf(request) {
 <tbody>${revRows}</tbody></table>
 </body></html>`
 
-  const blob = new Blob([html], { type: 'text/html' })
-  const url  = URL.createObjectURL(blob)
   const iframe = document.createElement('iframe')
-  iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;visibility:hidden'
+  iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;height:600px;border:0'
+  iframe.srcdoc = html
   document.body.appendChild(iframe)
   iframe.onload = () => {
     iframe.contentWindow.focus()
     iframe.contentWindow.print()
     setTimeout(() => {
-      document.body.removeChild(iframe)
-      URL.revokeObjectURL(url)
+      if (document.body.contains(iframe)) document.body.removeChild(iframe)
     }, 2000)
   }
-  iframe.src = url
 }
 
 function RevisionsTab({ request }) {
@@ -483,21 +480,18 @@ function PreviewTab({ request }) {
 </body>
 </html>`
 
-    // Use a hidden iframe so popup blockers cannot interfere
-    const blob = new Blob([html], { type: 'text/html' })
-    const url  = URL.createObjectURL(blob)
+    // Use an off-screen iframe — Chrome silently ignores print() on zero-size/hidden iframes
     const iframe = document.createElement('iframe')
-    iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;visibility:hidden'
+    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;height:600px;border:0'
+    iframe.srcdoc = html
     document.body.appendChild(iframe)
     iframe.onload = () => {
       iframe.contentWindow.focus()
       iframe.contentWindow.print()
       setTimeout(() => {
-        document.body.removeChild(iframe)
-        URL.revokeObjectURL(url)
+        if (document.body.contains(iframe)) document.body.removeChild(iframe)
       }, 2000)
     }
-    iframe.src = url
   }
 
   return (

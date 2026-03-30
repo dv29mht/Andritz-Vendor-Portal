@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
-         ClockIcon, ExclamationCircleIcon, ChevronDownIcon, ArrowUpTrayIcon, ArrowDownTrayIcon, XMarkIcon } from '@heroicons/react/24/outline'
+         ClockIcon, ExclamationCircleIcon, ChevronDownIcon, ArrowUpTrayIcon, ArrowDownTrayIcon, XMarkIcon,
+         ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { ExclamationTriangleIcon, CheckBadgeIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
          Cell } from 'recharts'
@@ -207,6 +208,10 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const [showImportDialog, setShowImportDialog]     = useState(false)
   const [importErrors, setImportErrors]             = useState([])
   const importFileRef                               = useRef(null)
+  const [reqsPage, setReqsPage]                     = useState(1)
+  const [revPage, setRevPage]                       = useState(1)
+
+  const PAGE_SIZE = 10
 
   const handleImportExcel = (e) => {
     const file = e.target.files?.[0]
@@ -732,7 +737,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   {['All', 'In Progress', 'Completed'].map(f => (
                     <button
                       key={f}
-                      onClick={() => setRequestsFilter(f)}
+                      onClick={() => { setRequestsFilter(f); setReqsPage(1) }}
                       className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
                         requestsFilter === f
                           ? 'bg-slate-700 text-white ring-slate-700'
@@ -768,7 +773,37 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 </p>
               </div>
             )}
-            {filteredReqs.map(req => <RequestCard key={req.id} req={req} />)}
+            {(() => {
+              const totalPages = Math.max(1, Math.ceil(filteredReqs.length / PAGE_SIZE))
+              const paginated  = filteredReqs.slice((reqsPage - 1) * PAGE_SIZE, reqsPage * PAGE_SIZE)
+              return (<>
+                {paginated.map(req => <RequestCard key={req.id} req={req} />)}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
+                    <span className="text-xs text-gray-400">
+                      Showing {(reqsPage - 1) * PAGE_SIZE + 1}–{Math.min(reqsPage * PAGE_SIZE, filteredReqs.length)} of {filteredReqs.length}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        disabled={reqsPage === 1}
+                        onClick={() => setReqsPage(p => p - 1)}
+                      >
+                        <ChevronLeftIcon className="h-4 w-4" />
+                      </button>
+                      <span className="text-xs text-gray-500 px-1">Page {reqsPage} of {totalPages}</span>
+                      <button
+                        className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        disabled={reqsPage === totalPages}
+                        onClick={() => setReqsPage(p => p + 1)}
+                      >
+                        <ChevronRightIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>)
+            })()}
           </div>
         )
       })()}
@@ -788,7 +823,37 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               <p className="text-sm text-gray-500">No requests waiting for revision.</p>
             </div>
           )}
-          {rejectedReqs.map(req => <RejectedCard key={req.id} req={req} />)}
+          {(() => {
+            const totalPages = Math.max(1, Math.ceil(rejectedReqs.length / PAGE_SIZE))
+            const paginated  = rejectedReqs.slice((revPage - 1) * PAGE_SIZE, revPage * PAGE_SIZE)
+            return (<>
+              {paginated.map(req => <RejectedCard key={req.id} req={req} />)}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
+                  <span className="text-xs text-gray-400">
+                    Showing {(revPage - 1) * PAGE_SIZE + 1}–{Math.min(revPage * PAGE_SIZE, rejectedReqs.length)} of {rejectedReqs.length}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      disabled={revPage === 1}
+                      onClick={() => setRevPage(p => p - 1)}
+                    >
+                      <ChevronLeftIcon className="h-4 w-4" />
+                    </button>
+                    <span className="text-xs text-gray-500 px-1">Page {revPage} of {totalPages}</span>
+                    <button
+                      className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      disabled={revPage === totalPages}
+                      onClick={() => setRevPage(p => p + 1)}
+                    >
+                      <ChevronRightIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>)
+          })()}
         </div>
       )}
 

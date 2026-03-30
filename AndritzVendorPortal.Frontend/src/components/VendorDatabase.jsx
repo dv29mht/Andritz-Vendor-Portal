@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { BuildingOfficeIcon, ArrowPathIcon, EyeIcon, ArchiveBoxIcon, ArchiveBoxArrowDownIcon } from '@heroicons/react/24/outline'
+import { BuildingOfficeIcon, ArrowPathIcon, EyeIcon, ArchiveBoxIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import VendorDetailModal from './VendorDetailModal'
 import api from '../services/api'
+
+const PAGE_SIZE = 10
 
 export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
   const vendors = requests.filter(r => r.status === 'Completed' && !r.isOneTimeVendor && !r.isArchived)
@@ -9,7 +11,8 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
   const [reclassifying, setReclassifying]     = useState(null)
   const [reclassifyError, setReclassifyError] = useState(null)
   const [search, setSearch]                   = useState('')
-  const [invalidating, setInvalidating]       = useState(null)   // req being confirmed
+  const [page, setPage]                       = useState(1)
+  const [invalidating, setInvalidating]       = useState(null)
   const [invalidateLoading, setInvalidateLoading] = useState(false)
   const [invalidateError, setInvalidateError] = useState(null)
 
@@ -69,7 +72,7 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
           className="form-input max-w-xs"
           placeholder="Search vendor, code, city, GST…"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => { setSearch(e.target.value); setPage(1) }}
         />
       </div>
 
@@ -84,14 +87,18 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
-            {visible.length === 0 && (
+            {(() => {
+              const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
+              const paginated  = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+              return (<>
+            {paginated.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">
                   {vendors.length === 0 ? 'No permanent vendors yet — appears once a form is fully approved.' : 'No vendors match the search.'}
                 </td>
               </tr>
             )}
-            {visible.map(req => (
+            {paginated.map(req => (
               <tr key={req.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-3 font-mono text-xs font-semibold text-emerald-700">{req.vendorCode}</td>
                 <td className="px-4 py-3">
@@ -136,10 +143,35 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
                 </td>
               </tr>
             ))}
+              </>)
+            })()}
           </tbody>
         </table>
-        <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400">
-          Showing {visible.length} of {vendors.length} permanent vendor{vendors.length !== 1 ? 's' : ''}
+        <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+          <span className="text-xs text-gray-400">
+            {visible.length === 0
+              ? `0 of ${vendors.length} vendor${vendors.length !== 1 ? 's' : ''}`
+              : `Showing ${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, visible.length)} of ${visible.length} vendor${visible.length !== 1 ? 's' : ''}`}
+          </span>
+          {Math.ceil(visible.length / PAGE_SIZE) > 1 && (
+            <div className="flex items-center gap-1.5">
+              <button
+                className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                disabled={page === 1}
+                onClick={() => setPage(p => p - 1)}
+              >
+                <ChevronLeftIcon className="h-4 w-4" />
+              </button>
+              <span className="text-xs text-gray-500 px-1">Page {page} of {Math.max(1, Math.ceil(visible.length / PAGE_SIZE))}</span>
+              <button
+                className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                disabled={page >= Math.ceil(visible.length / PAGE_SIZE)}
+                onClick={() => setPage(p => p + 1)}
+              >
+                <ChevronRightIcon className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
         {reclassifyError && (
           <div className="px-4 py-2.5 border-t border-red-100 bg-red-50 text-xs text-red-700">
