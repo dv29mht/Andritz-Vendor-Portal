@@ -515,7 +515,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                           </div>
                           {req.status === 'Completed' && (
                             <button
-                              className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors w-fit"
+                              className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition-colors w-fit"
                               onClick={() => setArchivingRequest(req)}
                               title="Archive this request — record is retained and can be restored"
                             >
