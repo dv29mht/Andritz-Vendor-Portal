@@ -546,7 +546,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             {/* Stat cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <button
-                onClick={() => { setRequestsFilter('Pending'); onNavigate('requests') }}
+                onClick={() => { setRequestsFilter('In Progress'); onNavigate('requests') }}
                 className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4 hover:ring-2 hover:ring-slate-600 transition-all text-left"
               >
                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
@@ -716,7 +716,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       {/* ── My Requests ─────────────────────────────────────────────────────── */}
       {activePage === 'requests' && (() => {
         const filteredReqs = activeReqs.filter(r => {
-          if (requestsFilter === 'Pending')   return r.status !== 'Completed'
+          if (requestsFilter === 'In Progress') return r.status !== 'Completed'
           if (requestsFilter === 'Completed') return r.status === 'Completed'
           return true
         })
@@ -729,7 +729,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   {filteredReqs.length} Request{filteredReqs.length !== 1 ? 's' : ''}
                 </span>
                 <div className="flex gap-1.5">
-                  {['All', 'Pending', 'Completed'].map(f => (
+                  {['All', 'In Progress', 'Completed'].map(f => (
                     <button
                       key={f}
                       onClick={() => setRequestsFilter(f)}

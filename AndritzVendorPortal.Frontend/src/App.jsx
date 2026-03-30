@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+import { ChevronLeftIcon, ChevronRightIcon, ArchiveBoxIcon, ArchiveBoxArrowDownIcon } from '@heroicons/react/24/outline'
 import { useAuth } from './contexts/AuthContext'
 import { ROLES } from './constants/roles'
 import { useVendorWorkflow } from './hooks/useVendorWorkflow'
@@ -15,12 +15,31 @@ import VendorDetailModal from './components/VendorDetailModal'
 
 const OTV_PAGE_SIZE = 10
 
-function OneTimeVendorPage({ workflow }) {
-  const [viewing, setViewing] = useState(null)
-  const [page,    setPage]    = useState(1)
-  const oneTime    = workflow.requests.filter(r => r.isOneTimeVendor)
+function OneTimeVendorPage({ workflow, currentUser }) {
+  const isAdmin = currentUser?.role === 'Admin'
+  const [viewing,         setViewing]         = useState(null)
+  const [page,            setPage]            = useState(1)
+  const [archiving,       setArchiving]       = useState(null)
+  const [archiveLoading,  setArchiveLoading]  = useState(false)
+  const [archiveError,    setArchiveError]    = useState(null)
+
+  const oneTime    = workflow.requests.filter(r => r.isOneTimeVendor && !r.isArchived)
   const totalPages = Math.max(1, Math.ceil(oneTime.length / OTV_PAGE_SIZE))
   const paginated  = oneTime.slice((page - 1) * OTV_PAGE_SIZE, page * OTV_PAGE_SIZE)
+
+  const handleArchive = async () => {
+    if (!archiving) return
+    setArchiveLoading(true)
+    setArchiveError(null)
+    try {
+      await workflow.deleteRequest(archiving.id)
+      setArchiving(null)
+    } catch (err) {
+      setArchiveError(err?.response?.data?.message ?? 'Failed to archive. Please try again.')
+    } finally {
+      setArchiveLoading(false)
+    }
+  }
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-4">
@@ -48,9 +67,21 @@ function OneTimeVendorPage({ workflow }) {
             <p className="text-xs text-gray-400 mt-0.5">{[req.city, req.locality, req.state].filter(Boolean).join(', ')} · {req.materialGroup || '—'}</p>
             <p className="text-xs text-gray-400 mt-0.5">Submitted by {req.createdByName} · {new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</p>
           </div>
-          <button className="btn-secondary flex-shrink-0" onClick={() => setViewing(req)}>
-            View
-          </button>
+          <div className="flex flex-col gap-1 flex-shrink-0">
+            <button className="btn-secondary !py-1 !px-3 !text-xs" onClick={() => setViewing(req)}>
+              View
+            </button>
+            {isAdmin && (
+              <button
+                className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors"
+                onClick={() => { setArchiving(req); setArchiveError(null) }}
+                title="Archive this one-time vendor — record is retained and can be restored"
+              >
+                <ArchiveBoxIcon className="h-3.5 w-3.5" />
+                Archive
+              </button>
+            )}
+          </div>
         </div>
       ))}
       {totalPages > 1 && (
@@ -78,6 +109,35 @@ function OneTimeVendorPage({ workflow }) {
         </div>
       )}
       {viewing && <VendorDetailModal request={viewing} onClose={() => setViewing(null)} />}
+
+      {/* Archive confirmation modal */}
+      {archiving && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Archive this one-time vendor?</h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              <strong>{archiving.vendorName}</strong> will be removed from the One-Time Vendors list.
+              The full record is retained and can be restored by an admin at any time.
+            </p>
+            {archiveError && (
+              <p className="text-xs text-red-600 bg-red-50 ring-1 ring-red-200 rounded-lg px-3 py-2">{archiveError}</p>
+            )}
+            <div className="flex justify-end gap-3 pt-2">
+              <button className="btn-secondary" onClick={() => setArchiving(null)} disabled={archiveLoading}>
+                Cancel
+              </button>
+              <button
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 transition-colors disabled:opacity-60"
+                onClick={handleArchive}
+                disabled={archiveLoading}
+              >
+                <ArchiveBoxIcon className="h-4 w-4" />
+                {archiveLoading ? 'Archiving…' : 'Yes, archive'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -205,7 +265,7 @@ export default function App() {
       return <SettingsPage currentUser={currentUser} onUpdate={updateUser} />
     }
     if (activePage === 'onetime' && (role === ROLES.Admin || role === ROLES.FinalApprover)) {
-      return <OneTimeVendorPage workflow={workflow} />
+      return <OneTimeVendorPage workflow={workflow} currentUser={currentUser} />
     }
     if (role === ROLES.Buyer) {
       return <BuyerConsole activePage={activePage} onNavigate={setActivePage} workflow={workflow} currentUser={currentUser} />
