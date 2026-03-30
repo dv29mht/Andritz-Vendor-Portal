@@ -198,6 +198,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const [requestsFilter, setRequestsFilter]         = useState('All')
   const [selectedApprovers, setSelectedApprovers]   = useState([])
   const [availableApprovers, setAvailableApprovers] = useState([])
+  const [chainNeedsRebuild, setChainNeedsRebuild]   = useState(false)
   const [viewingRequest, setViewingRequest]         = useState(null)
   const [errors, setErrors]                         = useState({})
   const [submitting, setSubmitting]                 = useState(false)
@@ -320,6 +321,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     setEditingRequest(null)
     setForm(EMPTY_FORM)
     setSelectedApprovers([])
+    setChainNeedsRebuild(false)
     setErrors({})
     setApiError(null)
     setShowForm(true)
@@ -327,6 +329,27 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
   const openEdit = (req) => {
     setEditingRequest(req)
+
+    // Detect stale approvers: intermediate steps whose userId is no longer in availableApprovers
+    const intermediateSteps = (req.approvalSteps ?? []).filter(s => !s.isFinalApproval)
+    const availableIds = new Set(availableApprovers.map(a => a.id))
+    const stale = intermediateSteps.filter(s => !availableIds.has(s.approverUserId))
+    const needsRebuild = stale.length > 0
+    setChainNeedsRebuild(needsRebuild)
+
+    if (needsRebuild) {
+      // Pre-populate with the still-valid approvers in original order
+      const validSteps = intermediateSteps
+        .filter(s => availableIds.has(s.approverUserId))
+        .sort((a, b) => a.stepOrder - b.stepOrder)
+      setSelectedApprovers(validSteps.map(s => ({
+        id: s.approverUserId, name: s.approverName,
+        email: availableApprovers.find(a => a.id === s.approverUserId)?.email ?? '',
+      })))
+    } else {
+      setSelectedApprovers([])
+    }
+
     setForm({
       vendorName:     req.vendorName     ?? '',
       materialGroup:  req.materialGroup  ?? '',
@@ -364,7 +387,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     if (!form.addressDetails.trim()) e.addressDetails = 'Address is required.'
     if (!form.city.trim())           e.city           = 'City is required.'
     if (!form.locality.trim())       e.locality       = 'Locality is required.'
-    if (!editingRequest && selectedApprovers.length === 0)
+    if ((!editingRequest || chainNeedsRebuild) && selectedApprovers.length === 0)
       e.approvers = 'Select at least one approver.'
     return e
   }
@@ -403,7 +426,10 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         setToast({ type: 'success', title: 'Details Updated', body: `Vendor details for ${name} have been updated. Final Approver and Admin have been notified.` })
       } else if (editingRequest) {
         const name = editingRequest.vendorName
-        await workflow.resubmit(editingRequest.id, payload)
+        const resubmitPayload = chainNeedsRebuild
+          ? { ...payload, approverUserIds: selectedApprovers.map(a => a.id) }
+          : payload
+        await workflow.resubmit(editingRequest.id, resubmitPayload)
         setShowForm(false)
         setToast({ type: 'success', title: 'Revision Submitted', body: `Your updated request for ${name} has been resubmitted for approval.` })
       } else {
@@ -1011,9 +1037,16 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               </Field>
             </FormSection>
 
-            {!editingRequest && (
+            {(!editingRequest || chainNeedsRebuild) && (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3 border-b border-gray-100 pb-1.5">Approvers</p>
+                {chainNeedsRebuild && (
+                  <div className="rounded-lg bg-amber-50 ring-1 ring-amber-300 p-3 mb-3">
+                    <p className="text-xs text-amber-800 font-medium">
+                      One or more approvers from the original chain have been removed. Please confirm the new approval chain before resubmitting.
+                    </p>
+                  </div>
+                )}
                 <ApprovalChainBuilder
                   approvers={availableApprovers}
                   selected={selectedApprovers}
@@ -1030,7 +1063,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 </p>
               </div>
             )}
-            {editingRequest && editingRequest.status !== 'Completed' && (
+            {editingRequest && editingRequest.status !== 'Completed' && !chainNeedsRebuild && (
               <div className="rounded-lg bg-blue-50 ring-1 ring-blue-200 p-3">
                 <p className="text-xs text-[#096fb3]">
                   The approval chain is preserved from the original request. Submitting will reset all approver decisions and increment the revision number.

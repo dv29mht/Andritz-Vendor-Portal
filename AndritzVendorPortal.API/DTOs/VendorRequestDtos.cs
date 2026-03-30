@@ -116,7 +116,10 @@ public record ResubmitRequestDto(
     [MaxLength(1000)]                                                             string? Reason,
     [MaxLength(100)]                                                              string? YearlyPvo,
                                                                                   bool?   IsOneTimeVendor,
-    [MaxLength(200)]                                                              string? ProposedBy
+    [MaxLength(200)]                                                              string? ProposedBy,
+    // Optional: if any approver in the original chain no longer exists the buyer
+    // must supply a replacement chain. When null the original chain is reused.
+                                                                                  List<string>? ApproverUserIds
 );
 
 public record AdminEditVendorRequestDto(

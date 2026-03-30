@@ -281,6 +281,98 @@ public class VendorRequestController(
         if (request.Status != VendorRequestStatus.Rejected)
             return BadRequest("Only Rejected requests can be resubmitted.");
 
+        // ── Chain integrity check ────────────────────────────────────────────
+        // Find intermediate (non-final) approver steps and verify each user
+        // still exists. A deleted approver has no user record.
+        var intermediateSteps = request.ApprovalSteps
+            .Where(s => !s.IsFinalApproval)
+            .OrderBy(s => s.StepOrder)
+            .ToList();
+
+        var existingUserIds = intermediateSteps.Count > 0
+            ? (await db.Users
+                .Where(u => intermediateSteps.Select(s => s.ApproverUserId).Contains(u.Id))
+                .Select(u => u.Id)
+                .ToListAsync())
+              .ToHashSet()
+            : new HashSet<string>();
+
+        var staleApprovers = intermediateSteps
+            .Where(s => !existingUserIds.Contains(s.ApproverUserId))
+            .Select(s => s.ApproverName)
+            .ToList();
+
+        if (staleApprovers.Count > 0 && (dto.ApproverUserIds is null || dto.ApproverUserIds.Count == 0))
+        {
+            // Buyer must supply a new chain — return 409 with names of deleted approvers
+            return Conflict(new
+            {
+                message      = "One or more approvers in the original chain no longer exist. Please provide a new approval chain.",
+                staleApprovers,
+            });
+        }
+
+        // ── If a new chain was supplied, validate and replace ────────────────
+        if (dto.ApproverUserIds is { Count: > 0 })
+        {
+            var newApproverIds = dto.ApproverUserIds.Distinct().ToList();
+
+            var approverRoleId = await db.Roles
+                .Where(r => r.Name == Roles.Approver)
+                .Select(r => r.Id)
+                .FirstOrDefaultAsync();
+
+            var approverMap = await db.Users
+                .Where(u => newApproverIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id);
+
+            foreach (var aid in newApproverIds)
+                if (!approverMap.ContainsKey(aid))
+                    return BadRequest($"Approver ID '{aid}' does not exist.");
+
+            var usersWithRole = (await db.UserRoles
+                .Where(ur => newApproverIds.Contains(ur.UserId) && ur.RoleId == approverRoleId)
+                .Select(ur => ur.UserId)
+                .ToListAsync())
+                .ToHashSet();
+
+            foreach (var aid in newApproverIds)
+                if (!usersWithRole.Contains(aid))
+                    return BadRequest($"User '{approverMap[aid].FullName}' does not have the Approver role.");
+
+            // Remove old intermediate steps and replace with new ones
+            var finalStep = request.ApprovalSteps.First(s => s.IsFinalApproval);
+            db.ApprovalSteps.RemoveRange(intermediateSteps);
+
+            int stepOrder = 1;
+            foreach (var aid in newApproverIds)
+            {
+                request.ApprovalSteps.Add(new ApprovalStep
+                {
+                    ApproverUserId  = aid,
+                    ApproverName    = approverMap[aid].FullName,
+                    StepOrder       = stepOrder++,
+                    IsFinalApproval = false,
+                });
+            }
+
+            // Keep final step's order consistent
+            finalStep.StepOrder = stepOrder;
+            finalStep.Decision  = ApprovalDecision.Pending;
+            finalStep.Comment   = null;
+            finalStep.DecidedAt = null;
+        }
+        else
+        {
+            // Reuse original chain — just reset decisions
+            foreach (var step in request.ApprovalSteps)
+            {
+                step.Decision  = ApprovalDecision.Pending;
+                step.Comment   = null;
+                step.DecidedAt = null;
+            }
+        }
+
         // Compute field-level diff (same logic as the frontend RESUBMIT reducer)
         var changes = TrackedFields
             .Where(f => f.GetFromRequest(request) != f.GetFromDto(dto))
@@ -307,18 +399,10 @@ public class VendorRequestController(
 
         ApplyVendorFields(request, dto);
 
-        // Reset workflow state
         request.RevisionNo       = newRevNo;
         request.RejectionComment = null;
         request.Status           = VendorRequestStatus.PendingApproval;
         request.UpdatedAt        = DateTime.UtcNow;
-
-        foreach (var step in request.ApprovalSteps)
-        {
-            step.Decision  = ApprovalDecision.Pending;
-            step.Comment   = null;
-            step.DecidedAt = null;
-        }
 
         await db.SaveChangesAsync();
 

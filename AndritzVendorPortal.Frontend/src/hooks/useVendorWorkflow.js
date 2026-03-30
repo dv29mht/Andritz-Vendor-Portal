@@ -116,9 +116,10 @@ export function useVendorWorkflow() {
       paymentTerms:   form.paymentTerms  || null,
       incoterms:      form.incoterms     || null,
       reason:         form.reason        || null,
-      yearlyPvo:       form.yearlyPvo      || null,
-      isOneTimeVendor: form.isOneTimeVendor ?? false,
-      proposedBy:      form.proposedBy     || null,
+      yearlyPvo:        form.yearlyPvo       || null,
+      isOneTimeVendor:  form.isOneTimeVendor ?? false,
+      proposedBy:       form.proposedBy      || null,
+      ...(form.approverUserIds ? { approverUserIds: form.approverUserIds } : {}),
     })
     await fetchAll()
     } finally { setActionLoading(false) }
