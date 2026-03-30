@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
-         ClockIcon, ExclamationCircleIcon, ChevronDownIcon, ArrowUpTrayIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
+         ClockIcon, ExclamationCircleIcon, ChevronDownIcon, ArrowUpTrayIcon, ArrowDownTrayIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { ExclamationTriangleIcon, CheckBadgeIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
          Cell } from 'recharts'
@@ -30,7 +30,10 @@ const CURRENCIES    = ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'SGD', 'AED']
 const INCOTERMS     = ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FAS','FOB','CFR','CIF']
 const ALL_LOCALITIES = [...new Set(Object.values(CITIES).flat())]
 
-// Maps Excel column headers (lowercase) → EMPTY_FORM field names
+const GST_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/
+const PAN_RE = /^[A-Z]{5}[0-9]{4}[A-Z]$/
+
+// Maps Excel column headers (lowercase, asterisks stripped) → EMPTY_FORM field names
 const EXCEL_COL_MAP = {
   'vendor name':        'vendorName',
   'material group':     'materialGroup',
@@ -53,22 +56,48 @@ const EXCEL_COL_MAP = {
   'is one-time vendor': 'isOneTimeVendor',
 }
 
-// Generates and downloads a blank .xlsx template with a sample row
+// Required fields get a red asterisk in the template header
+const TEMPLATE_HEADERS = [
+  { label: 'Vendor Name *',     required: true  },
+  { label: 'Material Group',    required: false },
+  { label: 'Reason',            required: false },
+  { label: 'Contact Person *',  required: true  },
+  { label: 'Telephone',         required: false },
+  { label: 'GST Number *',      required: true  },
+  { label: 'PAN Card *',        required: true  },
+  { label: 'Address Details *', required: true  },
+  { label: 'Postal Code',       required: false },
+  { label: 'City *',            required: true  },
+  { label: 'Locality *',        required: true  },
+  { label: 'State',             required: false },
+  { label: 'Country',           required: false },
+  { label: 'Currency',          required: false },
+  { label: 'Payment Terms',     required: false },
+  { label: 'Incoterms',         required: false },
+  { label: 'Yearly PVO',        required: false },
+  { label: 'Proposed By',       required: false },
+  { label: 'Is One-Time Vendor',required: false },
+]
+
+// Generates and downloads a blank .xlsx template with required-field asterisks
 function downloadTemplate() {
-  const headers = [
-    'Vendor Name', 'Material Group', 'Reason', 'Contact Person', 'Telephone',
-    'GST Number', 'PAN Card', 'Address Details', 'Postal Code', 'City', 'Locality',
-    'State', 'Country', 'Currency', 'Payment Terms', 'Incoterms', 'Yearly PVO',
-    'Proposed By', 'Is One-Time Vendor',
-  ]
+  const headers = TEMPLATE_HEADERS.map(h => h.label)
   const sample = [
     'Acme Supplies Pvt Ltd', 'Raw Materials', 'New strategic supplier', 'Rajiv Mehta', '9876543210',
     '27AAAAA0000A1Z5', 'AAAAA1234A', 'Plot 12, Industrial Area, Phase 2', '400001', 'Mumbai', 'Andheri',
     'Maharashtra', 'India', 'INR', 'Net 30', 'FOB', '50,00,000', 'Vikram Nair', 'FALSE',
   ]
-  const ws = XLSX.utils.aoa_to_sheet([headers, sample])
-  ws['!cols'] = headers.map(() => ({ wch: 22 }))
   const wb = XLSX.utils.book_new()
+  const ws = XLSX.utils.aoa_to_sheet([headers, sample])
+
+  // Style required-field headers red (xlsx supports limited cell styles via xlsx-style or SheetJS Pro;
+  // we use a note in the sample row instead to stay with the free SheetJS package)
+  ws['!cols'] = headers.map(() => ({ wch: 24 }))
+
+  // Add a legend row below the sample so the user knows * = required
+  XLSX.utils.sheet_add_aoa(ws, [['* = Required field. Do not change column headers.']], { origin: 'A3' })
+  ws['A3'] = { v: '* = Required field. Do not change column headers.', t: 's' }
+
   XLSX.utils.book_append_sheet(wb, ws, 'Vendor Request')
   XLSX.writeFile(wb, 'Andritz_Vendor_Request_Template.xlsx')
 }
@@ -175,12 +204,13 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const [materialGroups, setMaterialGroups]         = useState([])
   const [proposedByNames, setProposedByNames]       = useState([])
   const [toast, setToast]                           = useState(null)
+  const [showImportDialog, setShowImportDialog]     = useState(false)
+  const [importErrors, setImportErrors]             = useState([])
   const importFileRef                               = useRef(null)
 
   const handleImportExcel = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    // Reset so selecting the same file again triggers onChange
     e.target.value = ''
 
     const reader = new FileReader()
@@ -188,33 +218,60 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       try {
         const wb   = XLSX.read(evt.target.result, { type: 'array' })
         const ws   = wb.Sheets[wb.SheetNames[0]]
+        // skip rows that are the legend line (no mapped columns)
         const rows = XLSX.utils.sheet_to_json(ws, { defval: '' })
-        if (!rows.length) {
-          setToast({ type: 'error', title: 'Empty file', body: 'The spreadsheet has no data rows.' })
+        const dataRows = rows.filter(row =>
+          Object.keys(row).some(k => EXCEL_COL_MAP[k.trim().replace(/\s*\*\s*$/, '').toLowerCase()])
+        )
+        if (!dataRows.length) {
+          setImportErrors(['The spreadsheet has no data rows. Please fill in row 2 of the template.'])
           return
         }
-        const row    = rows[0]
+        const row    = dataRows[0]
         const parsed = { ...EMPTY_FORM }
         for (const [col, val] of Object.entries(row)) {
-          const field = EXCEL_COL_MAP[col.trim().toLowerCase()]
+          // Strip trailing asterisk from header before lookup
+          const key   = col.trim().replace(/\s*\*\s*$/, '').toLowerCase()
+          const field = EXCEL_COL_MAP[key]
           if (!field) continue
           if (field === 'isOneTimeVendor') {
             parsed[field] = String(val).toLowerCase() === 'true' || val === 1 || val === '1'
           } else if (field === 'country') {
-            // Accept full country name → convert to ISO code
             parsed[field] = ALL_COUNTRIES.find(c => c.name === String(val))?.isoCode ?? 'IN'
           } else {
             parsed[field] = String(val)
           }
         }
+
+        // Validate required fields + formats
+        const errs = []
+        if (!parsed.vendorName.trim())     errs.push('Vendor Name is required.')
+        if (!parsed.contactPerson.trim())  errs.push('Contact Person is required.')
+        if (!parsed.gstNumber.trim())      errs.push('GST Number is required.')
+        else if (!GST_RE.test(parsed.gstNumber.trim()))
+          errs.push('GST Number format is invalid (expected: 22AAAAA0000A1Z5).')
+        if (!parsed.panCard.trim())        errs.push('PAN Card is required.')
+        else if (!PAN_RE.test(parsed.panCard.trim()))
+          errs.push('PAN Card format is invalid (expected: ABCDE1234F).')
+        if (!parsed.addressDetails.trim()) errs.push('Address Details is required.')
+        if (!parsed.city.trim())           errs.push('City is required.')
+        if (!parsed.locality.trim())       errs.push('Locality is required.')
+
+        if (errs.length) {
+          setImportErrors(errs)
+          return
+        }
+
+        // All good — close dialog, open form pre-filled
+        setShowImportDialog(false)
+        setImportErrors([])
         openCreate()
-        // Defer so the modal state settles before overwriting the form
         setTimeout(() => {
           setForm(parsed)
           setToast({ type: 'success', title: 'Form pre-filled from Excel', body: 'Please review all fields before submitting.' })
         }, 50)
       } catch {
-        setToast({ type: 'error', title: 'Could not read file', body: 'Make sure you are uploading the official Andritz template (.xlsx).' })
+        setImportErrors(['Could not read the file. Make sure you are uploading the official Andritz template (.xlsx).'])
       }
     }
     reader.readAsArrayBuffer(file)
@@ -274,9 +331,6 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     setApiError(null)
     setShowForm(true)
   }
-
-  const GST_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/
-  const PAN_RE = /^[A-Z]{5}[0-9]{4}[A-Z]$/
 
   const validate = () => {
     const e = {}
@@ -675,21 +729,14 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button className="btn-secondary" onClick={downloadTemplate} title="Download blank Excel template">
-                  <ArrowDownTrayIcon className="h-4 w-4" />
-                  Template
-                </button>
-                <button className="btn-secondary" onClick={() => importFileRef.current?.click()} title="Import from filled Excel template">
+                <button
+                  className="btn-secondary"
+                  onClick={() => { setImportErrors([]); setShowImportDialog(true) }}
+                  title="Import vendor data from Excel template"
+                >
                   <ArrowUpTrayIcon className="h-4 w-4" />
                   Import Excel
                 </button>
-                <input
-                  ref={importFileRef}
-                  type="file"
-                  accept=".xlsx,.xls"
-                  className="hidden"
-                  onChange={handleImportExcel}
-                />
                 <button className="btn-primary" onClick={openCreate}>
                   <PlusIcon className="h-4 w-4" />
                   New Request
@@ -924,6 +971,77 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       )}
 
       {toast && <Toast type={toast.type} title={toast.title} body={toast.body} onClose={() => setToast(null)} />}
+
+      {/* ── Excel Import Dialog ─────────────────────────────────────────────── */}
+      {showImportDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-5">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900">Import Vendor from Excel</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Fill in the template and upload it to pre-fill the form.</p>
+              </div>
+              <button
+                onClick={() => setShowImportDialog(false)}
+                className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Step 1 */}
+            <div className="rounded-xl border border-gray-200 p-4 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Step 1 — Download Template</p>
+              <p className="text-sm text-gray-600">
+                Download the official template. Fields marked with <span className="text-red-500 font-semibold">*</span> are required.
+              </p>
+              <button
+                className="btn-secondary w-full justify-center"
+                onClick={downloadTemplate}
+              >
+                <ArrowDownTrayIcon className="h-4 w-4" />
+                Download Template (.xlsx)
+              </button>
+            </div>
+
+            {/* Step 2 */}
+            <div className="rounded-xl border border-gray-200 p-4 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Step 2 — Upload Filled Template</p>
+              <p className="text-sm text-gray-600">Select the filled template to pre-fill the vendor form.</p>
+              <button
+                className="btn-secondary w-full justify-center"
+                onClick={() => importFileRef.current?.click()}
+              >
+                <ArrowUpTrayIcon className="h-4 w-4" />
+                Choose File (.xlsx / .xls)
+              </button>
+              <input
+                ref={importFileRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={handleImportExcel}
+              />
+            </div>
+
+            {/* Validation errors */}
+            {importErrors.length > 0 && (
+              <div className="rounded-xl bg-red-50 ring-1 ring-red-200 px-4 py-3 space-y-1">
+                <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-1">Please fix the following errors:</p>
+                <ul className="space-y-0.5">
+                  {importErrors.map((err, i) => (
+                    <li key={i} className="text-xs text-red-700 flex items-start gap-1.5">
+                      <span className="mt-0.5 flex-shrink-0">•</span>
+                      {err}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

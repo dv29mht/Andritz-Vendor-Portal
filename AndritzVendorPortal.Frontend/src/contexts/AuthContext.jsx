@@ -39,16 +39,16 @@ export function AuthProvider({ children }) {
   }, [])
 
   const logout = useCallback(async () => {
-    try {
-      // Ask the server to clear both cookies
-      await api.post('/auth/logout')
-    } catch (err) {
-      // Server-side cookie deletion failed; clear client state regardless
-      console.error('[AuthContext] logout API call failed:', err)
-    }
+    // Clear client state immediately so the UI responds at once
     localStorage.removeItem('authUser')
     setAuthUser(null)
     setShowWelcome(false)
+    // Best-effort: ask the server to expire the httpOnly cookies
+    try {
+      await api.post('/auth/logout')
+    } catch (err) {
+      console.error('[AuthContext] logout API call failed:', err)
+    }
   }, [])
 
   const updateUser = useCallback((partial) => {
