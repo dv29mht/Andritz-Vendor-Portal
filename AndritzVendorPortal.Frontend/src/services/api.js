@@ -28,16 +28,23 @@ const api = axios.create({
   withCredentials: true,
 })
 
+// Read the JWT token stored in localStorage at login time.
+// Vercel proxy rewrites forward request headers (including Authorization) to the
+// backend, but do not reliably forward httpOnly Set-Cookie response headers back to
+// the browser — so we cannot rely on the auth_token cookie being set. Sending the
+// JWT as a Bearer token in the Authorization header works through the proxy.
+function getToken() {
+  return localStorage.getItem('authToken') ?? ''
+}
+
 // Read the CSRF token that was stored in localStorage at login time.
-// The server returns it in the login response body because the frontend and backend
-// are on different domains — document.cookie can only read cookies for the current
-// domain, so the csrf_token cookie (set on the Render domain) is not readable here.
-// An attacker on another origin cannot read localStorage, so this is safe.
 function getCsrfToken() {
   return localStorage.getItem('csrfToken') ?? ''
 }
 
 api.interceptors.request.use(config => {
+  const token = getToken()
+  if (token) config.headers['Authorization'] = `Bearer ${token}`
   const csrf = getCsrfToken()
   if (csrf) config.headers['X-CSRF-Token'] = csrf
   return config

@@ -52,6 +52,7 @@ public record AuthUserDto(
 public record AuthResponseDto(
     DateTime    ExpiresAt,
     AuthUserDto User,
+    string      Token,      // JWT for Authorization: Bearer header (Vercel proxy cannot forward httpOnly cookies)
     string      CsrfToken   // returned in body so cross-domain SPAs can store it
 );
 

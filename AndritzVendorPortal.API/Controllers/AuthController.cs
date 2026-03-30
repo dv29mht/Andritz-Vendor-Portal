@@ -37,7 +37,7 @@ public class AuthController(
 
         var result = await signInManager.CheckPasswordSignInAsync(user, dto.Password, lockoutOnFailure: true);
         if (result.IsLockedOut)
-            return StatusCode(429, new { message = "Account locked due to too many failed attempts. Try again in 15 minutes." });
+            return StatusCode(429, new { message = "Account locked due to too many failed attempts. Try again in 5 minutes." });
         if (!result.Succeeded)
             return Unauthorized(new { message = "Invalid email or password." });
 
@@ -92,6 +92,7 @@ public class AuthController(
         return Ok(new AuthResponseDto(
             ExpiresAt: expires,
             User:      new AuthUserDto(user.Id, user.Email!, user.FullName, roles, user.Designation),
+            Token:     tokenString,  // also in body — Vercel proxy cannot reliably forward httpOnly Set-Cookie headers
             CsrfToken: csrfToken));  // also in body so cross-domain SPA can read it without cross-domain cookie access
     }
 

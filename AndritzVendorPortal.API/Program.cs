@@ -50,9 +50,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     options.Password.RequireUppercase       = true;
     options.Password.RequireLowercase       = true;
     options.User.RequireUniqueEmail         = true;
-    // Lock account for 15 min after 5 consecutive failed logins
-    options.Lockout.DefaultLockoutTimeSpan  = TimeSpan.FromMinutes(15);
-    options.Lockout.MaxFailedAccessAttempts = 5;
+    // Lock account for 5 min after 10 consecutive failed logins
+    options.Lockout.DefaultLockoutTimeSpan  = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 10;
     options.Lockout.AllowedForNewUsers      = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()

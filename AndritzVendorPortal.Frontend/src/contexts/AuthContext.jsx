@@ -31,10 +31,11 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password })
     const user = normalizeUser(data.user)
-    // Store user profile; JWT lives in httpOnly auth_token cookie
     localStorage.setItem('authUser', JSON.stringify(user))
-    // Store CSRF token from response body — cross-domain SPAs cannot read the
-    // csrf_token cookie (different domain), so the server returns it in the body too.
+    // JWT token — stored for Authorization: Bearer header on every request.
+    // Vercel proxy does not reliably forward httpOnly Set-Cookie headers from Render,
+    // so the cookie alone is not sufficient; Bearer header is the primary auth mechanism.
+    if (data.token) localStorage.setItem('authToken', data.token)
     if (data.csrfToken) localStorage.setItem('csrfToken', data.csrfToken)
     setAuthUser(user)
     setShowWelcome(true)
@@ -44,6 +45,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     // Clear client state immediately so the UI responds at once
     localStorage.removeItem('authUser')
+    localStorage.removeItem('authToken')
     localStorage.removeItem('csrfToken')
     setAuthUser(null)
     setShowWelcome(false)
