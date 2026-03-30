@@ -51,7 +51,8 @@ public record AuthUserDto(
 
 public record AuthResponseDto(
     DateTime    ExpiresAt,
-    AuthUserDto User
+    AuthUserDto User,
+    string      CsrfToken   // returned in body so cross-domain SPAs can store it
 );
 
 // ── Inbound ─────────────────────────────────────────────────────────────────

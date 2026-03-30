@@ -91,7 +91,8 @@ public class AuthController(
 
         return Ok(new AuthResponseDto(
             ExpiresAt: expires,
-            User:      new AuthUserDto(user.Id, user.Email!, user.FullName, roles, user.Designation)));
+            User:      new AuthUserDto(user.Id, user.Email!, user.FullName, roles, user.Designation),
+            CsrfToken: csrfToken));  // also in body so cross-domain SPA can read it without cross-domain cookie access
     }
 
     [HttpPost("logout")]

@@ -16,14 +16,13 @@ const api = axios.create({
   withCredentials: true,
 })
 
-// Read the non-httpOnly csrf_token cookie and attach it as a header on every
-// state-changing request. The backend CSRF middleware compares header to cookie —
-// an attacker on another origin cannot read the cookie so cannot forge the header.
+// Read the CSRF token that was stored in localStorage at login time.
+// The server returns it in the login response body because the frontend and backend
+// are on different domains — document.cookie can only read cookies for the current
+// domain, so the csrf_token cookie (set on the Render domain) is not readable here.
+// An attacker on another origin cannot read localStorage, so this is safe.
 function getCsrfToken() {
-  return document.cookie
-    .split('; ')
-    .find(row => row.startsWith('csrf_token='))
-    ?.split('=')[1] ?? ''
+  return localStorage.getItem('csrfToken') ?? ''
 }
 
 api.interceptors.request.use(config => {
