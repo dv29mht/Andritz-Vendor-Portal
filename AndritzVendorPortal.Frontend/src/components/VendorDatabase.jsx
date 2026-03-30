@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { BuildingOfficeIcon, ArrowPathIcon, EyeIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { BuildingOfficeIcon, ArrowPathIcon, EyeIcon, ArchiveBoxIcon, ArchiveBoxArrowDownIcon } from '@heroicons/react/24/outline'
 import VendorDetailModal from './VendorDetailModal'
 import api from '../services/api'
 
 export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
-  const vendors = requests.filter(r => r.status === 'Completed' && !r.isOneTimeVendor)
+  const vendors = requests.filter(r => r.status === 'Completed' && !r.isOneTimeVendor && !r.isArchived)
   const [viewingRequest, setViewingRequest]   = useState(null)
   const [reclassifying, setReclassifying]     = useState(null)
   const [reclassifyError, setReclassifyError] = useState(null)
@@ -44,7 +44,7 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
       onReclassified?.()   // triggers fetchAll in parent
       setInvalidating(null)
     } catch (err) {
-      setInvalidateError(err?.response?.data?.message ?? err?.response?.data ?? 'Failed to invalidate vendor. Please try again.')
+      setInvalidateError(err?.response?.data?.message ?? err?.response?.data ?? 'Failed to archive vendor. Please try again.')
     } finally {
       setInvalidateLoading(false)
     }
@@ -123,12 +123,12 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
                           {reclassifying === req.id ? 'Moving…' : 'Move to One-Time'}
                         </button>
                         <button
-                          className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-red-600 bg-red-50 ring-1 ring-red-200 hover:bg-red-100 transition-colors"
+                          className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors"
                           onClick={() => { setInvalidating(req); setInvalidateError(null) }}
-                          title="Permanently remove this vendor from the master — cannot be undone"
+                          title="Archive this vendor — record is retained and can be restored by admin"
                         >
-                          <TrashIcon className="h-3.5 w-3.5" />
-                          Invalidate
+                          <ArchiveBoxIcon className="h-3.5 w-3.5" />
+                          Archive
                         </button>
                       </>
                     )}
@@ -159,12 +159,11 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
       {invalidating && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Remove from Permanent Vendor Master?</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Archive this vendor?</h3>
             <p className="text-sm text-gray-600 leading-relaxed">
-              This will permanently delete <strong>{invalidating.vendorName}</strong> (SAP code:{' '}
-              <span className="font-mono">{invalidating.vendorCode}</span>) from the Permanent Vendor Master,
-              along with all approval steps and revision history.
-              This action cannot be undone.
+              <strong>{invalidating.vendorName}</strong> (SAP code:{' '}
+              <span className="font-mono">{invalidating.vendorCode}</span>) will be removed from the
+              Permanent Vendor Master. The full record is retained and can be restored by an admin at any time.
             </p>
             {invalidateError && (
               <p className="text-xs text-red-600 bg-red-50 ring-1 ring-red-200 rounded-lg px-3 py-2">{invalidateError}</p>
@@ -178,11 +177,12 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
                 Cancel
               </button>
               <button
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-60"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 transition-colors disabled:opacity-60"
                 onClick={handleInvalidate}
                 disabled={invalidateLoading}
               >
-                {invalidateLoading ? 'Deleting…' : 'Yes, invalidate permanently'}
+                <ArchiveBoxIcon className="h-4 w-4" />
+                {invalidateLoading ? 'Archiving…' : 'Yes, archive'}
               </button>
             </div>
           </div>

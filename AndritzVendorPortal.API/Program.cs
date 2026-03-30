@@ -268,8 +268,11 @@ using (var scope = app.Services.CreateScope())
         """CREATE INDEX IF NOT EXISTS "IX_ApprovalSteps_ApproverUserId" ON "ApprovalSteps" ("ApproverUserId")""",
         // Rename admin email from sunita.rao to admin@andritz.com
         """UPDATE "AspNetUsers" SET "Email"='admin@andritz.com', "NormalizedEmail"='ADMIN@ANDRITZ.COM', "UserName"='admin@andritz.com', "NormalizedUserName"='ADMIN@ANDRITZ.COM' WHERE "NormalizedEmail"='SUNITA.RAO@ANDRITZ.COM'""",
-        // Soft-delete support
+        // Soft-delete support (users)
         """ALTER TABLE "AspNetUsers" ADD COLUMN IF NOT EXISTS "IsArchived" boolean NOT NULL DEFAULT false""",
+        // Soft-delete support (vendor requests)
+        """ALTER TABLE "VendorRequests" ADD COLUMN IF NOT EXISTS "IsArchived" boolean NOT NULL DEFAULT false""",
+        """ALTER TABLE "VendorRequests" ADD COLUMN IF NOT EXISTS "ArchivedAt" timestamp with time zone""",
     })
     {
         try { context.Database.ExecuteSqlRaw(sql); }

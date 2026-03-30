@@ -194,6 +194,8 @@ public record VendorRequestDetailDto(
     string                  CreatedByName,
     DateTime                CreatedAt,
     DateTime                UpdatedAt,
+    bool                    IsArchived,
+    DateTime?               ArchivedAt,
     List<string>            PendingApproverUserIds,
     List<ApprovalStepDto>   ApprovalSteps,
     List<VendorRevisionDto> RevisionHistory

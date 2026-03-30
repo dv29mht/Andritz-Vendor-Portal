@@ -152,12 +152,20 @@ export function useVendorWorkflow() {
     } finally { setActionLoading(false) }
   }
 
-  // ── Admin hard-delete ────────────────────────────────────────────────────
+  // ── Admin archive / restore ──────────────────────────────────────────────
 
   const deleteRequest = async (requestId) => {
     setActionLoading(true)
     try {
       await api.delete(`/vendor-requests/${requestId}`)
+      await fetchAll()
+    } finally { setActionLoading(false) }
+  }
+
+  const restoreRequest = async (requestId) => {
+    setActionLoading(true)
+    try {
+      await api.post(`/vendor-requests/${requestId}/restore`)
       await fetchAll()
     } finally { setActionLoading(false) }
   }
@@ -207,5 +215,6 @@ export function useVendorWorkflow() {
     reject,
     complete,
     deleteRequest,
+    restoreRequest,
   }
 }

@@ -47,6 +47,10 @@ public class VendorRequest
     public DateTime? VendorCodeAssignedAt { get; set; }
     public string?   VendorCodeAssignedBy { get; set; }
 
+    // -- Soft-delete --
+    public bool      IsArchived { get; set; } = false;
+    public DateTime? ArchivedAt { get; set; }
+
     // -- Audit --
     public string           CreatedByUserId { get; set; } = string.Empty;
     public string           CreatedByName   { get; set; } = string.Empty;  // denormalized

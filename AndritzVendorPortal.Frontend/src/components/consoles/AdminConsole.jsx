@@ -3,7 +3,7 @@ import {
   UsersIcon, ClockIcon, CheckCircleIcon, XCircleIcon,
   CheckBadgeIcon, ArrowDownTrayIcon, MagnifyingGlassIcon, EyeIcon,
   TableCellsIcon, UserGroupIcon, ArrowPathIcon, TrophyIcon, NoSymbolIcon,
-  PencilSquareIcon, XMarkIcon, BuildingOfficeIcon,
+  PencilSquareIcon, XMarkIcon, BuildingOfficeIcon, ArchiveBoxIcon, ArchiveBoxArrowDownIcon,
 } from '@heroicons/react/24/outline'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -17,7 +17,7 @@ import UserManagement from '../UserManagement'
 import api from '../../services/api'
 import { buildStats, buildMonthlyData } from '../../utils/statsUtils'
 
-const STATUS_FILTERS = ['All', 'PendingApproval', 'PendingFinalApproval', 'Rejected', 'Completed']
+const STATUS_FILTERS = ['All', 'PendingApproval', 'PendingFinalApproval', 'Rejected', 'Completed', 'Archived']
 
 const STAT_CARDS = [
   { label: 'Total',          key: 'total',        icon: UsersIcon,       bg: 'bg-blue-50',    text: 'text-blue-700',    ic: 'text-blue-500'    },
@@ -210,21 +210,30 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
   const [viewingRequest, setViewingRequest] = useState(null)
   const [previewRequest, setPreviewRequest] = useState(null)
   const [editingRequest, setEditingRequest] = useState(null)
-  const [deletingRequest, setDeletingRequest] = useState(null)
-  const [deleteLoading, setDeleteLoading]   = useState(false)
-  const [toast, setToast]                   = useState(null)
+  const [archivingRequest, setArchivingRequest] = useState(null)
+  const [archiveLoading, setArchiveLoading]     = useState(false)
+  const [toast, setToast]                       = useState(null)
 
-  const handleDelete = async () => {
-    if (!deletingRequest) return
-    setDeleteLoading(true)
+  const handleArchive = async () => {
+    if (!archivingRequest) return
+    setArchiveLoading(true)
     try {
-      await workflow.deleteRequest(deletingRequest.id)
-      setDeletingRequest(null)
-      setToast({ type: 'success', title: 'Request deleted', body: `"${deletingRequest.vendorName}" has been permanently deleted.` })
+      await workflow.deleteRequest(archivingRequest.id)
+      setArchivingRequest(null)
+      setToast({ type: 'success', title: 'Request archived', body: `"${archivingRequest.vendorName}" has been archived and can be restored from the Archived filter.` })
     } catch {
-      setToast({ type: 'error', title: 'Delete failed', body: 'Could not delete the request. Please try again.' })
+      setToast({ type: 'error', title: 'Archive failed', body: 'Could not archive the request. Please try again.' })
     } finally {
-      setDeleteLoading(false)
+      setArchiveLoading(false)
+    }
+  }
+
+  const handleRestore = async (req) => {
+    try {
+      await workflow.restoreRequest(req.id)
+      setToast({ type: 'success', title: 'Request restored', body: `"${req.vendorName}" has been restored.` })
+    } catch {
+      setToast({ type: 'error', title: 'Restore failed', body: 'Could not restore the request. Please try again.' })
     }
   }
 
@@ -234,13 +243,17 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
   }
 
   const visible = requests.filter(r => {
-    const matchStatus = filterStatus === 'All' || r.status === filterStatus
-    const q = search.toLowerCase()
-    const matchSearch = !q
-      || r.vendorName.toLowerCase().includes(q)
-      || r.createdByName.toLowerCase().includes(q)
-      || (r.vendorCode ?? '').toLowerCase().includes(q)
-    return matchStatus && matchSearch
+    if (filterStatus === 'Archived') return r.isArchived
+    if (!r.isArchived) {
+      const matchStatus = filterStatus === 'All' || r.status === filterStatus
+      const q = search.toLowerCase()
+      const matchSearch = !q
+        || r.vendorName.toLowerCase().includes(q)
+        || r.createdByName.toLowerCase().includes(q)
+        || (r.vendorCode ?? '').toLowerCase().includes(q)
+      return matchStatus && matchSearch
+    }
+    return false
   })
 
   const recentRequests = [...requests]
@@ -456,35 +469,52 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                       {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
                     </td>
                     <td className="px-4 py-3.5 align-top">
-                      <div className="flex flex-col gap-1.5">
-                        <div className="flex items-center gap-1.5">
-                          <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
-                            <EyeIcon className="h-3.5 w-3.5" />
-                            View
-                          </button>
-                          <button
-                            className={`btn-secondary !py-1 !px-2 !text-xs transition-all ${req.status !== 'Completed' ? 'opacity-30 cursor-not-allowed' : ''}`}
-                            disabled={req.status !== 'Completed'}
-                            onClick={() => setEditingRequest(req)}
-                            title={req.status !== 'Completed' ? 'Only SAP-approved (Completed) forms can be edited' : 'Edit form'}
-                          >
-                            <PencilSquareIcon className="h-3.5 w-3.5" />
-                            Edit
-                          </button>
-                          <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setPreviewRequest(workflow.requests.find(r => r.id === req.id) ?? req)}>
-                            <ArrowDownTrayIcon className="h-3.5 w-3.5" />
-                            PDF
-                          </button>
-                        </div>
-                        {req.status === 'Rejected' && (
-                          <button
-                            className="self-start !py-1 !px-2 !text-xs inline-flex items-center gap-1 rounded-lg font-medium text-red-600 ring-1 ring-red-200 hover:bg-red-50 transition-colors"
-                            onClick={() => setDeletingRequest(req)}
-                            title="Permanently delete this rejected request"
-                          >
-                            <XMarkIcon className="h-3.5 w-3.5" />
-                            Delete permanently
-                          </button>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {req.isArchived ? (
+                          <>
+                            <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
+                              <EyeIcon className="h-3.5 w-3.5" />
+                              View
+                            </button>
+                            <button
+                              className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200 hover:bg-emerald-100 transition-colors"
+                              onClick={() => handleRestore(req)}
+                              title="Restore this archived request"
+                            >
+                              <ArchiveBoxArrowDownIcon className="h-3.5 w-3.5" />
+                              Restore
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
+                              <EyeIcon className="h-3.5 w-3.5" />
+                              View
+                            </button>
+                            <button
+                              className={`btn-secondary !py-1 !px-2 !text-xs transition-all ${req.status !== 'Completed' ? 'opacity-30 cursor-not-allowed' : ''}`}
+                              disabled={req.status !== 'Completed'}
+                              onClick={() => setEditingRequest(req)}
+                              title={req.status !== 'Completed' ? 'Only SAP-approved (Completed) forms can be edited' : 'Edit form'}
+                            >
+                              <PencilSquareIcon className="h-3.5 w-3.5" />
+                              Edit
+                            </button>
+                            <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setPreviewRequest(workflow.requests.find(r => r.id === req.id) ?? req)}>
+                              <ArrowDownTrayIcon className="h-3.5 w-3.5" />
+                              PDF
+                            </button>
+                            {(req.status === 'Rejected' || req.status === 'Completed') && (
+                              <button
+                                className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors"
+                                onClick={() => setArchivingRequest(req)}
+                                title="Archive this request — record is retained and can be restored"
+                              >
+                                <ArchiveBoxIcon className="h-3.5 w-3.5" />
+                                Archive
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>
@@ -524,30 +554,30 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
           onSaved={handleAdminSaved}
         />
       )}
-      {/* ── Delete confirmation ───────────────────────────────────────────── */}
-      {deletingRequest && (
+      {/* ── Archive confirmation ──────────────────────────────────────────── */}
+      {archivingRequest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Permanently delete request?</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Archive this request?</h3>
             <p className="text-sm text-gray-600 leading-relaxed">
-              This will permanently delete the rejected request for{' '}
-              <strong>{deletingRequest.vendorName}</strong>, including all approval steps and revision history.
-              This action cannot be undone.
+              <strong>{archivingRequest.vendorName}</strong> will be moved to the Archived view.
+              The record and its full history are retained and can be restored at any time.
             </p>
             <div className="flex justify-end gap-3 pt-2">
               <button
                 className="btn-secondary"
-                onClick={() => setDeletingRequest(null)}
-                disabled={deleteLoading}
+                onClick={() => setArchivingRequest(null)}
+                disabled={archiveLoading}
               >
                 Cancel
               </button>
               <button
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-60"
-                onClick={handleDelete}
-                disabled={deleteLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 transition-colors disabled:opacity-60"
+                onClick={handleArchive}
+                disabled={archiveLoading}
               >
-                {deleteLoading ? 'Deleting…' : 'Yes, delete permanently'}
+                <ArchiveBoxIcon className="h-4 w-4" />
+                {archiveLoading ? 'Archiving…' : 'Yes, archive'}
               </button>
             </div>
           </div>

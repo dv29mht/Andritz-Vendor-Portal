@@ -669,8 +669,8 @@ public class VendorRequestController(
 
     // ─────────────────────────────────────────────────────────────────────────
     // DELETE /api/vendor-requests/{id}
-    // Admin-only: permanently hard-delete a Rejected or Completed request.
-    // Cascading deletes on ApprovalSteps and VendorRevisions are handled by EF.
+    // Admin-only: soft-delete (archive) a request — record is retained in the DB
+    // and can be restored. Only Rejected or Completed requests may be archived.
     // ─────────────────────────────────────────────────────────────────────────
     [HttpDelete("{id:int}")]
     [Authorize(Roles = Roles.Admin)]
@@ -682,12 +682,33 @@ public class VendorRequestController(
 
         if (request.Status != VendorRequestStatus.Rejected &&
             request.Status != VendorRequestStatus.Completed)
-            return BadRequest("Only Rejected or Completed requests can be deleted.");
+            return BadRequest("Only Rejected or Completed requests can be archived.");
 
-        db.VendorRequests.Remove(request);
+        request.IsArchived = true;
+        request.ArchivedAt = DateTime.UtcNow;
+        request.UpdatedAt  = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // POST /api/vendor-requests/{id}/restore
+    // Admin-only: undo an archive — makes the record visible again.
+    // ─────────────────────────────────────────────────────────────────────────
+    [HttpPost("{id:int}/restore")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> Restore(int id)
+    {
+        var request = await db.VendorRequests.FindAsync(id);
+        if (request is null) return NotFound();
+
+        request.IsArchived = false;
+        request.ArchivedAt = null;
+        request.UpdatedAt  = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Ok(ToDetailDto(request, [], []));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -813,6 +834,7 @@ public class VendorRequestController(
             r.Status, r.RevisionNo, r.RejectionComment,
             r.VendorCode, r.VendorCodeAssignedAt, r.VendorCodeAssignedBy,
             r.CreatedByUserId, r.CreatedByName, r.CreatedAt, r.UpdatedAt,
+            r.IsArchived, r.ArchivedAt,
             pendingApproverUserIds,
             sortedSteps.Select(s => new ApprovalStepDto(
                 s.Id, s.ApproverUserId, s.ApproverName, s.StepOrder,
