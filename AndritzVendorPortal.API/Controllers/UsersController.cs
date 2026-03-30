@@ -224,6 +224,29 @@ public class UsersController(
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // PUT /api/users/{id}/restore
+    // Admin-only: un-archives a previously soft-deleted user account.
+    // ─────────────────────────────────────────────────────────────────────────
+    [HttpPut("{id}/restore")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> Restore(string id)
+    {
+        var user = await userManager.FindByIdAsync(id);
+        if (user is null) return NotFound("User not found.");
+
+        if (!user.IsArchived)
+            return BadRequest("This account is not archived.");
+
+        user.IsArchived = false;
+        var result = await userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+            return BadRequest(result.Errors.Select(e => e.Description).ToList());
+
+        var roles = await userManager.GetRolesAsync(user);
+        return Ok(new UserDto(user.Id, user.FullName, user.Email ?? string.Empty, user.Designation, roles.ToList()));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // DELETE /api/users/{id}/purge
     // Admin-only: permanently and irreversibly removes a user record from the DB.
     // Use only for accounts that should be fully erased (e.g. test/duplicate accounts).

@@ -5,7 +5,7 @@ import {
   ShieldCheckIcon, ClipboardDocumentIcon,
   PencilSquareIcon, TrashIcon, EyeIcon, EyeSlashIcon,
   EnvelopeIcon, BriefcaseIcon, ComputerDesktopIcon, FingerPrintIcon,
-  ChevronLeftIcon, ChevronRightIcon,
+  ChevronLeftIcon, ChevronRightIcon, ArrowUturnLeftIcon,
 } from '@heroicons/react/24/outline'
 import api from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
@@ -506,6 +506,18 @@ export default function UserManagement() {
     if (deleted) setArchivedUsers(prev => [...prev, deleted].sort((a, b) => a.fullName.localeCompare(b.fullName)))
   }
 
+  const handleRestore = async (u) => {
+    try {
+      const { data: restored } = await api.put(`/users/${u.id}/restore`)
+      setArchivedUsers(prev => prev.filter(a => a.id !== u.id))
+      setUsers(prev => [...prev, restored].sort((a, b) => a.fullName.localeCompare(b.fullName)))
+      setSuccessMsg(`${restored.fullName} has been restored.`)
+    } catch (err) {
+      setSuccessMsg(null)
+      alert(err?.response?.data || 'Failed to restore user.')
+    }
+  }
+
   return (
     <div>
       {/* Header row */}
@@ -791,18 +803,29 @@ export default function UserManagement() {
               <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500">Name</th>
               <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500">Email</th>
               <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500">Role</th>
+              <th className="px-4 py-2.5" />
             </tr></thead>
             <tbody className="divide-y divide-gray-50">
               {archivedUsers.map(u => {
                 const role = u.roles[0]
                 return (
-                  <tr key={u.id} className="opacity-60">
+                  <tr key={u.id} className="opacity-70">
                     <td className="px-4 py-3 font-medium text-gray-700 line-through">{u.fullName}</td>
                     <td className="px-4 py-3 text-gray-500 font-mono text-xs">{u.email}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${ROLE_BADGE[role] ?? 'bg-gray-50 text-gray-600 ring-gray-200'}`}>
                         {ROLE_DISPLAY[role] ?? role}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => handleRestore(u)}
+                        className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-green-700 bg-green-50 ring-1 ring-green-200 hover:bg-green-100 transition-colors"
+                        title="Restore this account"
+                      >
+                        <ArrowUturnLeftIcon className="w-3.5 h-3.5" />
+                        Restore
+                      </button>
                     </td>
                   </tr>
                 )
