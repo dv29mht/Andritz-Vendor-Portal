@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from './contexts/AuthContext'
+import { ROLES } from './constants/roles'
 import { useVendorWorkflow } from './hooks/useVendorWorkflow'
 import Login from './pages/Login'
 import AppShell from './components/AppShell'
@@ -63,8 +64,10 @@ function WelcomeScreen({ user, onDone }) {
   }, [onDone])
 
   const roleLabel = {
-    Admin: 'Administrator', Buyer: 'Buyer',
-    Approver: 'Approver', FinalApprover: 'Final Approver',
+    [ROLES.Admin]:         'Administrator',
+    [ROLES.Buyer]:         'Buyer',
+    [ROLES.Approver]:      'Approver',
+    [ROLES.FinalApprover]: 'Final Approver',
   }[user.role] ?? user.role
 
   return (
@@ -123,12 +126,44 @@ function WelcomeScreen({ user, onDone }) {
   )
 }
 
+// ── Session-expired banner ────────────────────────────────────────────────────
+
+function SessionExpiredBanner({ onDone }) {
+  const [count, setCount] = useState(3)
+
+  useEffect(() => {
+    if (count <= 0) { onDone(); return }
+    const t = setTimeout(() => setCount(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [count, onDone])
+
+  return (
+    <div className="fixed inset-x-0 top-0 z-[200] flex items-center justify-center px-4 py-3 bg-red-600 text-white text-sm font-medium shadow-lg">
+      Your session has expired. Redirecting to login in {count}s…
+    </div>
+  )
+}
+
 // ── Main App ──────────────────────────────────────────────────────────────────
 
 export default function App() {
   const { currentUser, isAuthenticated, logout, updateUser, showWelcome, dismissWelcome } = useAuth()
   const workflow = useVendorWorkflow()
-  const [activePage, setActivePage] = useState('dashboard')
+  const [activePage,      setActivePage]      = useState('dashboard')
+  const [sessionExpired,  setSessionExpired]  = useState(false)
+
+  // Listen for the 401 event fired by api.js interceptor
+  useEffect(() => {
+    const handler = () => setSessionExpired(true)
+    window.addEventListener('session-expired', handler)
+    return () => window.removeEventListener('session-expired', handler)
+  }, [])
+
+  function handleSessionExpiredDone() {
+    setSessionExpired(false)
+    logout()
+    setActivePage('dashboard')
+  }
 
   if (!isAuthenticated) return <Login />
 
@@ -138,19 +173,19 @@ export default function App() {
     if (activePage === 'settings') {
       return <SettingsPage currentUser={currentUser} onUpdate={updateUser} />
     }
-    if (activePage === 'onetime' && (role === 'Admin' || role === 'FinalApprover')) {
+    if (activePage === 'onetime' && (role === ROLES.Admin || role === ROLES.FinalApprover)) {
       return <OneTimeVendorPage workflow={workflow} />
     }
-    if (role === 'Buyer') {
+    if (role === ROLES.Buyer) {
       return <BuyerConsole activePage={activePage} onNavigate={setActivePage} workflow={workflow} currentUser={currentUser} />
     }
-    if (role === 'Approver') {
+    if (role === ROLES.Approver) {
       return <ApproverConsole activePage={activePage} onNavigate={setActivePage} workflow={workflow} currentUser={currentUser} />
     }
-    if (role === 'FinalApprover') {
+    if (role === ROLES.FinalApprover) {
       return <FinalApproverConsole activePage={activePage} workflow={workflow} currentUser={currentUser} />
     }
-    if (role === 'Admin') {
+    if (role === ROLES.Admin) {
       return <AdminConsole activePage={activePage} onNavigate={setActivePage} workflow={workflow} currentUser={currentUser} />
     }
     return null
@@ -158,6 +193,7 @@ export default function App() {
 
   return (
     <>
+      {sessionExpired && <SessionExpiredBanner onDone={handleSessionExpiredDone} />}
       {showWelcome && <WelcomeScreen user={currentUser} onDone={dismissWelcome} />}
       <AppShell
         workflow={workflow}

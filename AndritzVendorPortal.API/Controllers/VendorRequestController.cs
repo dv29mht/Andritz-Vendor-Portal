@@ -3,11 +3,11 @@ using AndritzVendorPortal.API.DTOs;
 using AndritzVendorPortal.API.Infrastructure;
 using AndritzVendorPortal.API.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json;
+using static AndritzVendorPortal.API.Infrastructure.EmailTemplates;
 
 namespace AndritzVendorPortal.API.Controllers;
 
@@ -16,7 +16,8 @@ namespace AndritzVendorPortal.API.Controllers;
 [Authorize]
 public class VendorRequestController(
     ApplicationDbContext db,
-    UserManager<ApplicationUser> userManager) : ControllerBase
+    IEmailService email,
+    IConfiguration config) : ControllerBase
 {
     // Tracks which fields are included in revision diffs — matches frontend TRACKED_FIELDS
     private record TrackedField(
@@ -138,15 +139,32 @@ public class VendorRequestController(
     [Authorize(Roles = Roles.Buyer)]
     public async Task<IActionResult> Create([FromBody] CreateVendorRequestDto dto)
     {
-        // Validate all approver IDs: must exist and have the Approver role
-        foreach (var approverId in dto.ApproverUserIds)
-        {
-            var approver = await userManager.FindByIdAsync(approverId);
-            if (approver is null)
+        // Batch-load all candidate approver users in a single WHERE Id IN (...) query
+        var approverIds = dto.ApproverUserIds.Distinct().ToList();
+        var approverMap = await db.Users
+            .Where(u => approverIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id);
+
+        // Validate existence in-memory
+        foreach (var approverId in approverIds)
+            if (!approverMap.ContainsKey(approverId))
                 return BadRequest($"Approver ID '{approverId}' does not exist.");
-            if (!await userManager.IsInRoleAsync(approver, Roles.Approver))
-                return BadRequest($"User '{approver.FullName}' does not have the Approver role.");
-        }
+
+        // Batch-check roles: one query to get the Approver role ID, one join query
+        var approverRoleId = await db.Roles
+            .Where(r => r.Name == Roles.Approver)
+            .Select(r => r.Id)
+            .FirstOrDefaultAsync();
+
+        var usersWithApproverRole = (await db.UserRoles
+            .Where(ur => approverIds.Contains(ur.UserId) && ur.RoleId == approverRoleId)
+            .Select(ur => ur.UserId)
+            .ToListAsync())
+            .ToHashSet();
+
+        foreach (var approverId in approverIds)
+            if (!usersWithApproverRole.Contains(approverId))
+                return BadRequest($"User '{approverMap[approverId].FullName}' does not have the Approver role.");
 
         var creator = await db.Users.FindAsync(UserId());
 
@@ -168,14 +186,15 @@ public class VendorRequestController(
 
         // Build approval chain: each approver gets a unique StepOrder (1, 2, 3...);
         // FinalApprover is always last at stepOrder = approverCount + 1.
+        // approverMap already loaded above — no further DB hits needed.
         int stepOrder = 1;
         foreach (var approverId in dto.ApproverUserIds)
         {
-            var approver = await db.Users.FindAsync(approverId);
+            var approver = approverMap[approverId];
             request.ApprovalSteps.Add(new ApprovalStep
             {
                 ApproverUserId  = approverId,
-                ApproverName    = approver?.FullName ?? approverId,
+                ApproverName    = approver.FullName,
                 StepOrder       = stepOrder++,
                 IsFinalApproval = false,
             });
@@ -222,6 +241,23 @@ public class VendorRequestController(
         request.Status    = VendorRequestStatus.PendingApproval;
         request.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
+
+        // Notify first approver(s) + admin
+        var adminEmail = await AdminEmailAsync();
+        var firstStep  = request.ApprovalSteps
+            .Where(s => !s.IsFinalApproval).OrderBy(s => s.StepOrder).FirstOrDefault();
+        if (firstStep is not null)
+        {
+            var approverEmail = await db.Users
+                .Where(u => u.Id == firstStep.ApproverUserId)
+                .Select(u => u.Email!)
+                .FirstOrDefaultAsync();
+            if (approverEmail is not null)
+                await SendEmailAsync(
+                    approverEmail,
+                    NewSubmission(ToSummary(request), firstStep.ApproverName, PortalUrl()),
+                    adminEmail);
+        }
 
         return Ok(MapToDetail(request));
     }
@@ -286,6 +322,23 @@ public class VendorRequestController(
 
         await db.SaveChangesAsync();
 
+        // Notify first approver + admin that the buyer has resubmitted
+        var adminEmailRs = await AdminEmailAsync();
+        var firstStepRs  = request.ApprovalSteps
+            .Where(s => !s.IsFinalApproval).OrderBy(s => s.StepOrder).FirstOrDefault();
+        if (firstStepRs is not null)
+        {
+            var approverEmailRs = await db.Users
+                .Where(u => u.Id == firstStepRs.ApproverUserId)
+                .Select(u => u.Email!)
+                .FirstOrDefaultAsync();
+            if (approverEmailRs is not null)
+                await SendEmailAsync(
+                    approverEmailRs,
+                    Resubmitted(ToSummary(request), firstStepRs.ApproverName, PortalUrl()),
+                    adminEmailRs);
+        }
+
         request.RevisionHistory.Add(revision);
         return Ok(MapToDetail(request));
     }
@@ -321,6 +374,45 @@ public class VendorRequestController(
         request.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
+        var adminEmailAp  = await AdminEmailAsync();
+        var buyerEmailAp  = await db.Users
+            .Where(u => u.Id == request.CreatedByUserId).Select(u => u.Email!).FirstOrDefaultAsync();
+        var summary       = ToSummary(request);
+        var url           = PortalUrl();
+
+        if (request.Status == VendorRequestStatus.PendingFinalApproval)
+        {
+            // All intermediate steps done — notify FinalApprover + admin
+            var finalStep     = request.ApprovalSteps.FirstOrDefault(s => s.IsFinalApproval);
+            var pardeepEmail  = await db.Users
+                .Where(u => u.Id == (finalStep!.ApproverUserId))
+                .Select(u => u.Email!)
+                .FirstOrDefaultAsync();
+            if (pardeepEmail is not null)
+                await SendEmailAsync(pardeepEmail, ReadyForFinalApproval(summary, url), adminEmailAp);
+        }
+        else
+        {
+            // Still more intermediate approvers — notify buyer + next approver + admin
+            var nextStep = request.ApprovalSteps
+                .Where(s => !s.IsFinalApproval && s.Decision == ApprovalDecision.Pending)
+                .OrderBy(s => s.StepOrder).FirstOrDefault();
+            var (apSubject, apBody) = StepApproved(summary, step.ApproverName, nextStep?.ApproverName, url);
+
+            var recipients = new HashSet<string>();
+            if (buyerEmailAp is not null)  recipients.Add(buyerEmailAp);
+            if (adminEmailAp is not null)  recipients.Add(adminEmailAp);
+            if (nextStep is not null)
+            {
+                var nextEmail = await db.Users
+                    .Where(u => u.Id == nextStep.ApproverUserId).Select(u => u.Email!).FirstOrDefaultAsync();
+                if (nextEmail is not null) recipients.Add(nextEmail);
+            }
+
+            foreach (var r in recipients)
+                await email.SendAsync(r, apSubject, apBody);
+        }
+
         return Ok(MapToDetail(request));
     }
 
@@ -353,6 +445,16 @@ public class VendorRequestController(
 
         await db.SaveChangesAsync();
 
+        // Notify buyer + admin of rejection
+        var buyerEmailRj = await db.Users
+            .Where(u => u.Id == request.CreatedByUserId).Select(u => u.Email!).FirstOrDefaultAsync();
+        var adminEmailRj = await AdminEmailAsync();
+        var (rjSubject, rjBody) = Rejected(ToSummary(request), step.ApproverName, dto.Comment, PortalUrl());
+        if (buyerEmailRj is not null)
+            await email.SendAsync(buyerEmailRj, rjSubject, rjBody);
+        if (adminEmailRj is not null && adminEmailRj != buyerEmailRj)
+            await email.SendAsync(adminEmailRj, rjSubject, rjBody);
+
         return Ok(MapToDetail(request));
     }
 
@@ -380,13 +482,8 @@ public class VendorRequestController(
         if (finalStep is null || !finalStep.IsFinalApproval)
             return Forbid("No pending final approval step assigned to you for this request.");
 
-        // Application-level uniqueness check (friendly error before hitting DB constraint)
-        var duplicate = await db.VendorRequests
-            .AnyAsync(r => r.Id != id && r.VendorCode == dto.VendorCode && r.VendorCode != null);
-        if (duplicate)
-            return BadRequest($"Vendor code '{dto.VendorCode}' is already assigned to another request.");
-
         // Atomically approve final step + assign vendor code
+        // (uniqueness enforced by DB partial unique index; DbUpdateException caught below)
         finalStep.Decision  = ApprovalDecision.Approved;
         finalStep.Comment   = "Final approval granted. Vendor code assigned from SAP.";
         finalStep.DecidedAt = DateTime.UtcNow;
@@ -406,6 +503,16 @@ public class VendorRequestController(
             // Unique constraint violation: two concurrent Complete calls raced
             return Conflict($"Vendor code '{dto.VendorCode}' was just assigned by a concurrent request. Use a different code.");
         }
+
+        // Notify buyer + admin that onboarding is complete with the SAP code
+        var buyerEmailCo = await db.Users
+            .Where(u => u.Id == request.CreatedByUserId).Select(u => u.Email!).FirstOrDefaultAsync();
+        var adminEmailCo = await AdminEmailAsync();
+        var (coSubject, coBody) = Completed(ToSummary(request), dto.VendorCode, finalStep.ApproverName, PortalUrl());
+        if (buyerEmailCo is not null)
+            await email.SendAsync(buyerEmailCo, coSubject, coBody);
+        if (adminEmailCo is not null && adminEmailCo != buyerEmailCo)
+            await email.SendAsync(adminEmailCo, coSubject, coBody);
 
         return Ok(MapToDetail(request));
     }
@@ -561,12 +668,61 @@ public class VendorRequestController(
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // DELETE /api/vendor-requests/{id}
+    // Admin-only: permanently hard-delete a Rejected or Completed request.
+    // Cascading deletes on ApprovalSteps and VendorRevisions are handled by EF.
+    // ─────────────────────────────────────────────────────────────────────────
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var request = await db.VendorRequests.FindAsync(id);
+
+        if (request is null) return NotFound();
+
+        if (request.Status != VendorRequestStatus.Rejected &&
+            request.Status != VendorRequestStatus.Completed)
+            return BadRequest("Only Rejected or Completed requests can be deleted.");
+
+        db.VendorRequests.Remove(request);
+        await db.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // Helpers
     // ─────────────────────────────────────────────────────────────────────────
 
     private string UserId() =>
         User.FindFirstValue(ClaimTypes.NameIdentifier)
         ?? throw new InvalidOperationException("Authenticated user has no NameIdentifier claim.");
+
+    private string PortalUrl() =>
+        config["PortalUrl"] ?? "https://andritz-portal-live.vercel.app";
+
+    private async Task<string?> AdminEmailAsync() =>
+        await db.Users
+            .Where(u => u.Email == "admin@andritz.com" && !u.IsArchived)
+            .Select(u => u.Email)
+            .FirstOrDefaultAsync();
+
+    private static VendorSummary ToSummary(VendorRequest r) => new(
+        r.Id, r.VendorName, r.MaterialGroup, r.GstNumber, r.PanCard,
+        r.City, r.State, r.Country, r.CreatedByName, r.RevisionNo);
+
+    /// <summary>
+    /// Sends an email to <paramref name="to"/> (and optionally admin) without blocking.
+    /// Errors are already swallowed inside SmtpEmailService.
+    /// </summary>
+    private async Task SendEmailAsync(
+        string to, (string Subject, string Body) template,
+        string? alsoNotifyAdmin = null)
+    {
+        await email.SendAsync(to, template.Subject, template.Body);
+        if (alsoNotifyAdmin is not null && alsoNotifyAdmin != to)
+            await email.SendAsync(alsoNotifyAdmin, template.Subject, template.Body);
+    }
 
     private bool CanViewRequest(VendorRequest request)
     {
@@ -576,34 +732,11 @@ public class VendorRequestController(
         return request.ApprovalSteps.Any(s => s.ApproverUserId == uid);
     }
 
-    private ApprovalStep? GetPendingStepForCurrentUser(VendorRequest request)
-    {
-        var uid = UserId();
-        var myStep = request.ApprovalSteps
-            .Where(s => s.ApproverUserId == uid && s.Decision == ApprovalDecision.Pending)
-            .OrderBy(s => s.StepOrder)
-            .FirstOrDefault();
+    private ApprovalStep? GetPendingStepForCurrentUser(VendorRequest request) =>
+        ApprovalChain.GetPendingStepForUser(request.ApprovalSteps, UserId());
 
-        if (myStep is null) return null;
-
-        // Sequential chain: block if any earlier step is still pending
-        bool blocked = request.ApprovalSteps
-            .Any(s => s.StepOrder < myStep.StepOrder && s.Decision == ApprovalDecision.Pending);
-
-        return blocked ? null : myStep;
-    }
-
-    private static void AdvanceWorkflow(VendorRequest request)
-    {
-        // A request advances to FinalApproval only when every non-final step is Approved.
-        var nonFinalSteps = request.ApprovalSteps.Where(s => !s.IsFinalApproval).ToList();
-        bool allTechnicalApproved = nonFinalSteps.Count > 0
-            && nonFinalSteps.All(s => s.Decision == ApprovalDecision.Approved);
-
-        if (allTechnicalApproved)
-            request.Status = VendorRequestStatus.PendingFinalApproval;
-        // else: status stays PendingApproval — remaining approvers still need to act
-    }
+    private static void AdvanceWorkflow(VendorRequest request) =>
+        ApprovalChain.AdvanceWorkflow(request);
 
     /// <summary>
     /// Applies all vendor detail fields from <paramref name="d"/> onto <paramref name="r"/>.

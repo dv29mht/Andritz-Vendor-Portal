@@ -16,8 +16,9 @@ function normalizeUser(apiUser) {
 }
 
 export function AuthProvider({ children }) {
-  const [authToken,    setAuthToken]    = useState(() => localStorage.getItem('authToken'))
-  const [authUser,     setAuthUser]     = useState(() => {
+  // Token is now an httpOnly cookie — we only persist user profile in localStorage
+  // so the app can restore the UI on refresh without a round-trip.
+  const [authUser, setAuthUser] = useState(() => {
     try {
       const stored = localStorage.getItem('authUser')
       return stored ? JSON.parse(stored) : null
@@ -30,20 +31,22 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password })
     const user = normalizeUser(data.user)
-    localStorage.setItem('authToken', data.token)
-    localStorage.setItem('authUser',  JSON.stringify(user))
-    // All three in the same microtask → React 18 batches into one re-render,
-    // so isAuthenticated and showWelcome become true simultaneously (no flash).
-    setAuthToken(data.token)
+    // Store only user profile — the JWT lives in the httpOnly auth_token cookie
+    localStorage.setItem('authUser', JSON.stringify(user))
     setAuthUser(user)
     setShowWelcome(true)
     return user
   }, [])
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('authToken')
+  const logout = useCallback(async () => {
+    try {
+      // Ask the server to clear both cookies
+      await api.post('/auth/logout')
+    } catch (err) {
+      // Server-side cookie deletion failed; clear client state regardless
+      console.error('[AuthContext] logout API call failed:', err)
+    }
     localStorage.removeItem('authUser')
-    setAuthToken(null)
     setAuthUser(null)
     setShowWelcome(false)
   }, [])
@@ -61,7 +64,9 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       currentUser:     authUser,
-      isAuthenticated: !!(authToken && authUser),
+      // Authenticated as long as we have a user profile stored; the first API
+      // call will surface a 401 (→ session-expired toast) if the cookie expired.
+      isAuthenticated: authUser !== null,
       showWelcome,
       dismissWelcome,
       login,

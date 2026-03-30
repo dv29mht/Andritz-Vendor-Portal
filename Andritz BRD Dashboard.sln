@@ -1,8 +1,10 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndritzVendorPortal.API", "AndritzVendorPortal.API\AndritzVendorPortal.API.csproj", "{30674ED9-CBF4-C213-C2C4-47F63A903929}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndritzVendorPortal.Tests", "AndritzVendorPortal.Tests\AndritzVendorPortal.Tests.csproj", "{4060D818-5546-4C48-8203-75F0C8F68AEF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,6 +16,10 @@ Global
 		{30674ED9-CBF4-C213-C2C4-47F63A903929}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30674ED9-CBF4-C213-C2C4-47F63A903929}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30674ED9-CBF4-C213-C2C4-47F63A903929}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4060D818-5546-4C48-8203-75F0C8F68AEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4060D818-5546-4C48-8203-75F0C8F68AEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4060D818-5546-4C48-8203-75F0C8F68AEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4060D818-5546-4C48-8203-75F0C8F68AEF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

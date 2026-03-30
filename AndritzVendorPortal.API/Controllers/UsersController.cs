@@ -147,6 +147,9 @@ public class UsersController(
         var user = await userManager.FindByIdAsync(id);
         if (user is null) return NotFound("User not found.");
 
+        if (user.IsArchived)
+            return BadRequest("Cannot modify an archived account.");
+
         // Protect Pardeep Sharma — FinalApprover is a fixed role, not reassignable via UI.
         if (user.Email?.Equals("pardeep.sharma@andritz.com", StringComparison.OrdinalIgnoreCase) == true)
             return BadRequest("The Final Approver account cannot be modified through User Management.");
@@ -246,6 +249,9 @@ public class UsersController(
         var userId = userManager.GetUserId(User);
         var user   = await userManager.FindByIdAsync(userId!);
         if (user is null) return NotFound("User not found.");
+
+        if (user.IsArchived)
+            return Unauthorized("This account has been deactivated. Contact your administrator.");
 
         if (string.IsNullOrWhiteSpace(dto.FullName))
             return BadRequest("Full name is required.");

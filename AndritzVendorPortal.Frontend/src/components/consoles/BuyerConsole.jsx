@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import * as XLSX from 'xlsx'
 import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
-         ClockIcon, ExclamationCircleIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
+         ClockIcon, ExclamationCircleIcon, ChevronDownIcon, ArrowUpTrayIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 import { ExclamationTriangleIcon, CheckBadgeIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
          Cell } from 'recharts'
@@ -28,6 +29,49 @@ const EMPTY_FORM = {
 const CURRENCIES    = ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'SGD', 'AED']
 const INCOTERMS     = ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FAS','FOB','CFR','CIF']
 const ALL_LOCALITIES = [...new Set(Object.values(CITIES).flat())]
+
+// Maps Excel column headers (lowercase) → EMPTY_FORM field names
+const EXCEL_COL_MAP = {
+  'vendor name':        'vendorName',
+  'material group':     'materialGroup',
+  'reason':             'reason',
+  'contact person':     'contactPerson',
+  'telephone':          'telephone',
+  'gst number':         'gstNumber',
+  'pan card':           'panCard',
+  'address details':    'addressDetails',
+  'postal code':        'postalCode',
+  'city':               'city',
+  'locality':           'locality',
+  'state':              'state',
+  'country':            'country',
+  'currency':           'currency',
+  'payment terms':      'paymentTerms',
+  'incoterms':          'incoterms',
+  'yearly pvo':         'yearlyPvo',
+  'proposed by':        'proposedBy',
+  'is one-time vendor': 'isOneTimeVendor',
+}
+
+// Generates and downloads a blank .xlsx template with a sample row
+function downloadTemplate() {
+  const headers = [
+    'Vendor Name', 'Material Group', 'Reason', 'Contact Person', 'Telephone',
+    'GST Number', 'PAN Card', 'Address Details', 'Postal Code', 'City', 'Locality',
+    'State', 'Country', 'Currency', 'Payment Terms', 'Incoterms', 'Yearly PVO',
+    'Proposed By', 'Is One-Time Vendor',
+  ]
+  const sample = [
+    'Acme Supplies Pvt Ltd', 'Raw Materials', 'New strategic supplier', 'Rajiv Mehta', '9876543210',
+    '27AAAAA0000A1Z5', 'AAAAA1234A', 'Plot 12, Industrial Area, Phase 2', '400001', 'Mumbai', 'Andheri',
+    'Maharashtra', 'India', 'INR', 'Net 30', 'FOB', '50,00,000', 'Vikram Nair', 'FALSE',
+  ]
+  const ws = XLSX.utils.aoa_to_sheet([headers, sample])
+  ws['!cols'] = headers.map(() => ({ wch: 22 }))
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Vendor Request')
+  XLSX.writeFile(wb, 'Andritz_Vendor_Request_Template.xlsx')
+}
 
 function FormSection({ title, children }) {
   return (
@@ -131,6 +175,50 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const [materialGroups, setMaterialGroups]         = useState([])
   const [proposedByNames, setProposedByNames]       = useState([])
   const [toast, setToast]                           = useState(null)
+  const importFileRef                               = useRef(null)
+
+  const handleImportExcel = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    // Reset so selecting the same file again triggers onChange
+    e.target.value = ''
+
+    const reader = new FileReader()
+    reader.onload = (evt) => {
+      try {
+        const wb   = XLSX.read(evt.target.result, { type: 'array' })
+        const ws   = wb.Sheets[wb.SheetNames[0]]
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' })
+        if (!rows.length) {
+          setToast({ type: 'error', title: 'Empty file', body: 'The spreadsheet has no data rows.' })
+          return
+        }
+        const row    = rows[0]
+        const parsed = { ...EMPTY_FORM }
+        for (const [col, val] of Object.entries(row)) {
+          const field = EXCEL_COL_MAP[col.trim().toLowerCase()]
+          if (!field) continue
+          if (field === 'isOneTimeVendor') {
+            parsed[field] = String(val).toLowerCase() === 'true' || val === 1 || val === '1'
+          } else if (field === 'country') {
+            // Accept full country name → convert to ISO code
+            parsed[field] = ALL_COUNTRIES.find(c => c.name === String(val))?.isoCode ?? 'IN'
+          } else {
+            parsed[field] = String(val)
+          }
+        }
+        openCreate()
+        // Defer so the modal state settles before overwriting the form
+        setTimeout(() => {
+          setForm(parsed)
+          setToast({ type: 'success', title: 'Form pre-filled from Excel', body: 'Please review all fields before submitting.' })
+        }, 50)
+      } catch {
+        setToast({ type: 'error', title: 'Could not read file', body: 'Make sure you are uploading the official Andritz template (.xlsx).' })
+      }
+    }
+    reader.readAsArrayBuffer(file)
+  }
 
   useEffect(() => {
     api.get('/users/approvers')
@@ -586,10 +674,27 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   ))}
                 </div>
               </div>
-              <button className="btn-primary" onClick={openCreate}>
-                <PlusIcon className="h-4 w-4" />
-                New Request
-              </button>
+              <div className="flex items-center gap-2">
+                <button className="btn-secondary" onClick={downloadTemplate} title="Download blank Excel template">
+                  <ArrowDownTrayIcon className="h-4 w-4" />
+                  Template
+                </button>
+                <button className="btn-secondary" onClick={() => importFileRef.current?.click()} title="Import from filled Excel template">
+                  <ArrowUpTrayIcon className="h-4 w-4" />
+                  Import Excel
+                </button>
+                <input
+                  ref={importFileRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  className="hidden"
+                  onChange={handleImportExcel}
+                />
+                <button className="btn-primary" onClick={openCreate}>
+                  <PlusIcon className="h-4 w-4" />
+                  New Request
+                </button>
+              </div>
             </div>
             {filteredReqs.length === 0 && (
               <div className="card p-12 text-center text-gray-400">

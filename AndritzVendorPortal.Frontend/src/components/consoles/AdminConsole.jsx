@@ -210,7 +210,23 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
   const [viewingRequest, setViewingRequest] = useState(null)
   const [previewRequest, setPreviewRequest] = useState(null)
   const [editingRequest, setEditingRequest] = useState(null)
+  const [deletingRequest, setDeletingRequest] = useState(null)
+  const [deleteLoading, setDeleteLoading]   = useState(false)
   const [toast, setToast]                   = useState(null)
+
+  const handleDelete = async () => {
+    if (!deletingRequest) return
+    setDeleteLoading(true)
+    try {
+      await workflow.deleteRequest(deletingRequest.id)
+      setDeletingRequest(null)
+      setToast({ type: 'success', title: 'Request deleted', body: `"${deletingRequest.vendorName}" has been permanently deleted.` })
+    } catch {
+      setToast({ type: 'error', title: 'Delete failed', body: 'Could not delete the request. Please try again.' })
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
 
   const handleAdminSaved = (updated) => {
     workflow.fetchAll?.()
@@ -458,6 +474,16 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                           <ArrowDownTrayIcon className="h-3.5 w-3.5" />
                           PDF
                         </button>
+                        {req.status === 'Rejected' && (
+                          <button
+                            className="!py-1 !px-2 !text-xs inline-flex items-center gap-1 rounded-lg font-medium text-red-600 ring-1 ring-red-200 hover:bg-red-50 transition-colors"
+                            onClick={() => setDeletingRequest(req)}
+                            title="Permanently delete this rejected request"
+                          >
+                            <XMarkIcon className="h-3.5 w-3.5" />
+                            Delete
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -496,6 +522,36 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
           onSaved={handleAdminSaved}
         />
       )}
+      {/* ── Delete confirmation ───────────────────────────────────────────── */}
+      {deletingRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Permanently delete request?</h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              This will permanently delete the rejected request for{' '}
+              <strong>{deletingRequest.vendorName}</strong>, including all approval steps and revision history.
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                className="btn-secondary"
+                onClick={() => setDeletingRequest(null)}
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-60"
+                onClick={handleDelete}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Deleting…' : 'Yes, delete permanently'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
     </div>
   )

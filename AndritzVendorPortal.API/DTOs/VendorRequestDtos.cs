@@ -50,7 +50,6 @@ public record AuthUserDto(
 );
 
 public record AuthResponseDto(
-    string      Token,
     DateTime    ExpiresAt,
     AuthUserDto User
 );

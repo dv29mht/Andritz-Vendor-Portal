@@ -1,14 +1,17 @@
 import { useState } from 'react'
-import { BuildingOfficeIcon, ArrowPathIcon, EyeIcon } from '@heroicons/react/24/outline'
+import { BuildingOfficeIcon, ArrowPathIcon, EyeIcon, TrashIcon } from '@heroicons/react/24/outline'
 import VendorDetailModal from './VendorDetailModal'
 import api from '../services/api'
 
 export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
   const vendors = requests.filter(r => r.status === 'Completed' && !r.isOneTimeVendor)
-  const [viewingRequest, setViewingRequest] = useState(null)
-  const [reclassifying, setReclassifying]   = useState(null)
+  const [viewingRequest, setViewingRequest]   = useState(null)
+  const [reclassifying, setReclassifying]     = useState(null)
   const [reclassifyError, setReclassifyError] = useState(null)
-  const [search, setSearch]                 = useState('')
+  const [search, setSearch]                   = useState('')
+  const [invalidating, setInvalidating]       = useState(null)   // req being confirmed
+  const [invalidateLoading, setInvalidateLoading] = useState(false)
+  const [invalidateError, setInvalidateError] = useState(null)
 
   const visible = vendors.filter(r => {
     const q = search.toLowerCase()
@@ -29,6 +32,21 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
       setReclassifyError(err?.response?.data?.message ?? err?.response?.data ?? 'Failed to reclassify vendor. Please try again.')
     } finally {
       setReclassifying(null)
+    }
+  }
+
+  const handleInvalidate = async () => {
+    if (!invalidating) return
+    setInvalidateLoading(true)
+    setInvalidateError(null)
+    try {
+      await api.delete(`/vendor-requests/${invalidating.id}`)
+      onReclassified?.()   // triggers fetchAll in parent
+      setInvalidating(null)
+    } catch (err) {
+      setInvalidateError(err?.response?.data?.message ?? err?.response?.data ?? 'Failed to invalidate vendor. Please try again.')
+    } finally {
+      setInvalidateLoading(false)
     }
   }
 
@@ -94,15 +112,25 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
                       View
                     </button>
                     {isAdmin && (
-                      <button
-                        className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-50"
-                        onClick={() => handleMoveToOneTime(req)}
-                        disabled={reclassifying === req.id}
-                        title="Move to One-Time vendor — removes from permanent master"
-                      >
-                        <ArrowPathIcon className="h-3.5 w-3.5" />
-                        {reclassifying === req.id ? 'Moving…' : 'Move to One-Time'}
-                      </button>
+                      <>
+                        <button
+                          className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-50"
+                          onClick={() => handleMoveToOneTime(req)}
+                          disabled={reclassifying === req.id}
+                          title="Move to One-Time vendor — removes from permanent master"
+                        >
+                          <ArrowPathIcon className="h-3.5 w-3.5" />
+                          {reclassifying === req.id ? 'Moving…' : 'Move to One-Time'}
+                        </button>
+                        <button
+                          className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-red-600 bg-red-50 ring-1 ring-red-200 hover:bg-red-100 transition-colors"
+                          onClick={() => { setInvalidating(req); setInvalidateError(null) }}
+                          title="Permanently remove this vendor from the master — cannot be undone"
+                        >
+                          <TrashIcon className="h-3.5 w-3.5" />
+                          Invalidate
+                        </button>
+                      </>
                     )}
                   </div>
                 </td>
@@ -125,6 +153,40 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
           request={viewingRequest}
           onClose={() => setViewingRequest(null)}
         />
+      )}
+
+      {/* Invalidate confirmation modal */}
+      {invalidating && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Remove from Permanent Vendor Master?</h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              This will permanently delete <strong>{invalidating.vendorName}</strong> (SAP code:{' '}
+              <span className="font-mono">{invalidating.vendorCode}</span>) from the Permanent Vendor Master,
+              along with all approval steps and revision history.
+              This action cannot be undone.
+            </p>
+            {invalidateError && (
+              <p className="text-xs text-red-600 bg-red-50 ring-1 ring-red-200 rounded-lg px-3 py-2">{invalidateError}</p>
+            )}
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                className="btn-secondary"
+                onClick={() => setInvalidating(null)}
+                disabled={invalidateLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-60"
+                onClick={handleInvalidate}
+                disabled={invalidateLoading}
+              >
+                {invalidateLoading ? 'Deleting…' : 'Yes, invalidate permanently'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

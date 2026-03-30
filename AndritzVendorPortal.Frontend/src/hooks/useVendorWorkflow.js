@@ -152,6 +152,16 @@ export function useVendorWorkflow() {
     } finally { setActionLoading(false) }
   }
 
+  // ── Admin hard-delete ────────────────────────────────────────────────────
+
+  const deleteRequest = async (requestId) => {
+    setActionLoading(true)
+    try {
+      await api.delete(`/vendor-requests/${requestId}`)
+      await fetchAll()
+    } finally { setActionLoading(false) }
+  }
+
   // ── Approver actions ─────────────────────────────────────────────────────
 
   const approveStep = async (requestId, comment) => {
@@ -196,5 +206,6 @@ export function useVendorWorkflow() {
     approveStep,
     reject,
     complete,
+    deleteRequest,
   }
 }

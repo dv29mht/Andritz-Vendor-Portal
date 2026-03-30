@@ -49,7 +49,11 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     options.Password.RequireNonAlphanumeric = true;
     options.Password.RequireUppercase       = true;
     options.Password.RequireLowercase       = true;
-    options.User.RequireUniqueEmail = true;
+    options.User.RequireUniqueEmail         = true;
+    // Lock account for 15 min after 5 consecutive failed logins
+    options.Lockout.DefaultLockoutTimeSpan  = TimeSpan.FromMinutes(15);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers      = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
@@ -94,10 +98,23 @@ builder.Services.AddAuthentication(options =>
         ValidAudience            = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
+    // Read JWT from httpOnly cookie when no Authorization header is present
+    options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+    {
+        OnMessageReceived = ctx =>
+        {
+            if (string.IsNullOrEmpty(ctx.Token) &&
+                ctx.Request.Cookies.TryGetValue("auth_token", out var cookieToken))
+                ctx.Token = cookieToken;
+            return Task.CompletedTask;
+        }
+    };
 });
 
 // ── 3. POLICIES & API SERVICES ───────────────────────────────────────────────
 builder.Services.AddSingleton<IAuthorizationHandler, FinalApproverHandler>();
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy(Policies.FinalApproverOnly, policy => {
         policy.RequireAuthenticatedUser()
@@ -135,8 +152,7 @@ var allowedOrigins = builder.Configuration
 app.Use(async (ctx, next) =>
 {
     var origin = ctx.Request.Headers.Origin.ToString();
-    bool isAllowed = allowedOrigins.Contains(origin)
-                  || (origin.StartsWith("https://andritz-portal-live-") && origin.EndsWith(".vercel.app"));
+    bool isAllowed = allowedOrigins.Contains(origin);
 
     // Set headers now (before pipeline runs)
     if (isAllowed)
@@ -144,7 +160,7 @@ app.Use(async (ctx, next) =>
         ctx.Response.Headers["Access-Control-Allow-Origin"]      = origin;
         ctx.Response.Headers["Access-Control-Allow-Credentials"] = "true";
         ctx.Response.Headers["Access-Control-Allow-Methods"]     = "GET,POST,PUT,DELETE,OPTIONS,PATCH";
-        ctx.Response.Headers["Access-Control-Allow-Headers"]     = "Authorization,Content-Type,Accept";
+        ctx.Response.Headers["Access-Control-Allow-Headers"]     = "Authorization,Content-Type,Accept,X-CSRF-Token";
         ctx.Response.Headers["Vary"]                             = "Origin";
     }
 
@@ -156,7 +172,7 @@ app.Use(async (ctx, next) =>
             ctx.Response.Headers["Access-Control-Allow-Origin"]      = origin;
             ctx.Response.Headers["Access-Control-Allow-Credentials"] = "true";
             ctx.Response.Headers["Access-Control-Allow-Methods"]     = "GET,POST,PUT,DELETE,OPTIONS,PATCH";
-            ctx.Response.Headers["Access-Control-Allow-Headers"]     = "Authorization,Content-Type,Accept";
+            ctx.Response.Headers["Access-Control-Allow-Headers"]     = "Authorization,Content-Type,Accept,X-CSRF-Token";
             ctx.Response.Headers["Vary"]                             = "Origin";
         }
         return Task.CompletedTask;
@@ -186,8 +202,45 @@ app.Use(async (ctx, next) =>
     }
 });
 
+// ── SECURITY HEADERS ─────────────────────────────────────────────────────────
+app.Use(async (ctx, next) =>
+{
+    ctx.Response.Headers["X-Content-Type-Options"]    = "nosniff";
+    ctx.Response.Headers["X-Frame-Options"]           = "DENY";
+    ctx.Response.Headers["X-XSS-Protection"]          = "1; mode=block";
+    ctx.Response.Headers["Referrer-Policy"]           = "strict-origin-when-cross-origin";
+    ctx.Response.Headers["Permissions-Policy"]        = "camera=(), microphone=(), geolocation=()";
+    ctx.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+    await next();
+});
+
 app.UseRouting();
 app.UseAuthentication();
+
+// ── CSRF VALIDATION ───────────────────────────────────────────────────────────
+// For authenticated state-changing requests, verify the X-CSRF-Token header
+// matches the csrf_token cookie (double-submit cookie pattern).
+// Attackers on other origins cannot read the csrf_token cookie, so they cannot
+// forge the header value — this stops cross-site request forgery.
+app.Use(async (ctx, next) =>
+{
+    var method = ctx.Request.Method;
+    bool isSafe = method == "GET" || method == "HEAD" || method == "OPTIONS";
+    if (!isSafe && ctx.User.Identity?.IsAuthenticated == true)
+    {
+        var csrfHeader = ctx.Request.Headers["X-CSRF-Token"].ToString();
+        var csrfCookie = ctx.Request.Cookies["csrf_token"] ?? "";
+        if (string.IsNullOrEmpty(csrfHeader) || csrfHeader != csrfCookie)
+        {
+            ctx.Response.StatusCode  = 403;
+            ctx.Response.ContentType = "application/json";
+            await ctx.Response.WriteAsync("{\"error\":\"CSRF token validation failed.\"}");
+            return;
+        }
+    }
+    await next();
+});
+
 app.UseAuthorization();
 app.UseRateLimiter();
 app.MapControllers();

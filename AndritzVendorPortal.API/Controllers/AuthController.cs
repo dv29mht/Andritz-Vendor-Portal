@@ -14,6 +14,7 @@ namespace AndritzVendorPortal.API.Controllers;
 [Route("api/auth")]
 public class AuthController(
     UserManager<ApplicationUser> userManager,
+    SignInManager<ApplicationUser> signInManager,
     IConfiguration configuration) : ControllerBase
 {
     [HttpPost("login")]
@@ -21,11 +22,24 @@ public class AuthController(
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
         var user = await userManager.FindByEmailAsync(dto.Email);
-        if (user is null || !await userManager.CheckPasswordAsync(user, dto.Password))
-            return Unauthorized(new { message = "Invalid email or password." });
 
-        if (user.IsArchived)
+        // Check archived before lockout so we don't leak account existence
+        if (user is not null && user.IsArchived)
             return Unauthorized(new { message = "This account has been deactivated. Contact your administrator." });
+
+        // Use SignInManager so failed attempts increment the lockout counter
+        if (user is null)
+        {
+            // Still perform a dummy check to keep constant-time behaviour
+            await userManager.CheckPasswordAsync(new ApplicationUser(), dto.Password);
+            return Unauthorized(new { message = "Invalid email or password." });
+        }
+
+        var result = await signInManager.CheckPasswordSignInAsync(user, dto.Password, lockoutOnFailure: true);
+        if (result.IsLockedOut)
+            return StatusCode(429, new { message = "Account locked due to too many failed attempts. Try again in 15 minutes." });
+        if (!result.Succeeded)
+            return Unauthorized(new { message = "Invalid email or password." });
 
         var roles = (await userManager.GetRolesAsync(user)).ToList();
 
@@ -52,9 +66,54 @@ public class AuthController(
             expires:            expires,
             signingCredentials: creds);
 
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+        var csrfToken   = Guid.NewGuid().ToString("N");
+
+        // auth_token: httpOnly so JS cannot read it (XSS protection)
+        Response.Cookies.Append("auth_token", tokenString, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure   = true,
+            SameSite = SameSiteMode.None,
+            Path     = "/",
+            Expires  = expires,
+        });
+
+        // csrf_token: NOT httpOnly so JS can read it and attach as X-CSRF-Token header
+        Response.Cookies.Append("csrf_token", csrfToken, new CookieOptions
+        {
+            HttpOnly = false,
+            Secure   = true,
+            SameSite = SameSiteMode.None,
+            Path     = "/",
+            Expires  = expires,
+        });
+
         return Ok(new AuthResponseDto(
-            Token:     new JwtSecurityTokenHandler().WriteToken(token),
             ExpiresAt: expires,
             User:      new AuthUserDto(user.Id, user.Email!, user.FullName, roles, user.Designation)));
+    }
+
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        var expired = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure   = true,
+            SameSite = SameSiteMode.None,
+            Path     = "/",
+            Expires  = DateTime.UtcNow.AddDays(-1),
+        };
+        Response.Cookies.Append("auth_token", "", expired);
+        Response.Cookies.Append("csrf_token", "", new CookieOptions
+        {
+            HttpOnly = false,
+            Secure   = true,
+            SameSite = SameSiteMode.None,
+            Path     = "/",
+            Expires  = DateTime.UtcNow.AddDays(-1),
+        });
+        return Ok();
     }
 }
