@@ -341,7 +341,7 @@ export default function App() {
       return <ApproverConsole activePage={activePage} onNavigate={setActivePage} workflow={workflow} currentUser={currentUser} />
     }
     if (role === ROLES.FinalApprover) {
-      return <FinalApproverConsole activePage={activePage} workflow={workflow} currentUser={currentUser} />
+      return <FinalApproverConsole activePage={activePage} onNavigate={setActivePage} workflow={workflow} currentUser={currentUser} />
     }
     if (role === ROLES.Admin) {
       return <AdminConsole activePage={activePage} onNavigate={setActivePage} workflow={workflow} currentUser={currentUser} />

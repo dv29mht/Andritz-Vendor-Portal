@@ -30,17 +30,17 @@ function buildMaterialData(requests) {
 }
 
 const METRICS = [
-  { label: 'Total Assigned', key: 'total',        icon: UsersIcon,       bg: 'bg-blue-50',    ic: 'text-blue-500',    text: 'text-blue-700'    },
-  { label: 'Pending',        key: 'pending',       icon: ClockIcon,       bg: 'bg-amber-50',   ic: 'text-amber-500',   text: 'text-amber-700'   },
-  { label: 'Awaiting Me',    key: 'finalPending',  icon: CheckBadgeIcon,  bg: 'bg-indigo-50',  ic: 'text-indigo-500',  text: 'text-indigo-700'  },
-  { label: 'Completed',      key: 'completed',     icon: CheckIcon,       bg: 'bg-emerald-50', ic: 'text-emerald-500', text: 'text-emerald-700' },
-  { label: 'Rejected',       key: 'rejected',      icon: NoSymbolIcon,    bg: 'bg-red-50',     ic: 'text-red-500',     text: 'text-red-700'     },
-  { label: 'Approval Rate',  key: 'approvalRate',  icon: TrophyIcon,      bg: 'bg-cyan-50',    ic: 'text-cyan-500',    text: 'text-cyan-700'    },
-  { label: 'Re-edit Rate',   key: 'reEditRate',    icon: ArrowPathIcon,   bg: 'bg-orange-50',  ic: 'text-orange-500',  text: 'text-orange-700'  },
-  { label: 'Rejection Rate', key: 'rejectionRate', icon: NoSymbolIcon,    bg: 'bg-rose-50',    ic: 'text-rose-500',    text: 'text-rose-700'    },
+  { label: 'Total Assigned', key: 'total',        icon: UsersIcon,       bg: 'bg-blue-50',    ic: 'text-blue-500',    text: 'text-blue-700',    navPage: 'pending'  },
+  { label: 'Pending',        key: 'pending',       icon: ClockIcon,       bg: 'bg-amber-50',   ic: 'text-amber-500',   text: 'text-amber-700',   navPage: 'pending'  },
+  { label: 'Awaiting Me',    key: 'finalPending',  icon: CheckBadgeIcon,  bg: 'bg-indigo-50',  ic: 'text-indigo-500',  text: 'text-indigo-700',  navPage: 'pending'  },
+  { label: 'Completed',      key: 'completed',     icon: CheckIcon,       bg: 'bg-emerald-50', ic: 'text-emerald-500', text: 'text-emerald-700', navPage: 'history'  },
+  { label: 'Rejected',       key: 'rejected',      icon: NoSymbolIcon,    bg: 'bg-red-50',     ic: 'text-red-500',     text: 'text-red-700',     navPage: 'history'  },
+  { label: 'Approval Rate',  key: 'approvalRate',  icon: TrophyIcon,      bg: 'bg-cyan-50',    ic: 'text-cyan-500',    text: 'text-cyan-700'                         },
+  { label: 'Re-edit Rate',   key: 'reEditRate',    icon: ArrowPathIcon,   bg: 'bg-orange-50',  ic: 'text-orange-500',  text: 'text-orange-700'                       },
+  { label: 'Rejection Rate', key: 'rejectionRate', icon: NoSymbolIcon,    bg: 'bg-rose-50',    ic: 'text-rose-500',    text: 'text-rose-700'                         },
 ]
 
-export default function FinalApproverConsole({ workflow, currentUser, activePage }) {
+export default function FinalApproverConsole({ workflow, currentUser, activePage, onNavigate }) {
   const queue   = workflow.getPendingFor(currentUser.id)
   const history = workflow.getHistoryFor(currentUser.id)
   const stats   = buildStats(workflow.requests)
@@ -122,12 +122,17 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
       {activePage === 'dashboard' && (
         <div className="space-y-5">
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-            {METRICS.map(({ label, key, icon: Icon, bg, ic, text }) => (
-              <div key={key} className={`card px-3 py-3.5 flex flex-col items-center gap-1.5 ${bg} text-center`}>
-                <Icon className={`h-5 w-5 ${ic} flex-shrink-0`} />
+            {METRICS.map(({ label, key, icon: Icon, bg, ic, text, navPage }) => (
+              <button
+                key={key}
+                onClick={() => { if (navPage) onNavigate(navPage) }}
+                className={`card px-3 py-3.5 flex flex-col items-center gap-1.5 ${bg} text-center w-full
+                            ${navPage ? 'hover:ring-2 hover:ring-slate-600' : 'cursor-default'} transition-all`}
+              >
+                <Icon className={`h-6 w-6 ${ic} flex-shrink-0`} />
                 <p className="text-xl font-bold text-gray-900 leading-none">{stats[key]}</p>
                 <p className={`text-xs font-medium ${text} leading-tight`}>{label}</p>
-              </div>
+              </button>
             ))}
           </div>
 
@@ -179,7 +184,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                 <h3 className="text-sm font-semibold text-gray-900">Requests — Last 6 Months</h3>
               </div>
               <div className="px-2 py-4">
-                <ResponsiveContainer width="100%" height={160}>
+                <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={buildMonthlyData(workflow.requests)} barSize={24} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
@@ -197,29 +202,23 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                 <h3 className="text-sm font-semibold text-gray-900">Requests by Material Group</h3>
               </div>
               <div className="px-2 py-4">
-                {(() => {
-                  const matData = buildMaterialData(workflow.requests)
-                  const chartHeight = Math.max(160, matData.length * 36)
-                  return (
-                    <ResponsiveContainer width="100%" height={chartHeight}>
-                      <BarChart data={matData} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
-                        <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} domain={[0, 'dataMax+1']} />
-                        <YAxis type="category" dataKey="name" width={130} axisLine={false} tickLine={false}
-                          tick={({ x, y, payload }) => (
-                            <text x={x} y={y} dy={4} textAnchor="end" fill="#6b7280" fontSize={10}>
-                              {payload.value.length > 18 ? payload.value.slice(0, 17) + '…' : payload.value}
-                            </text>
-                          )}
-                        />
-                        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
-                        <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={18}>
-                          {matData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )
-                })()}
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={buildMaterialData(workflow.requests)} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
+                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} domain={[0, 'dataMax+1']} />
+                    <YAxis type="category" dataKey="name" width={130} axisLine={false} tickLine={false}
+                      tick={({ x, y, payload }) => (
+                        <text x={x} y={y} dy={4} textAnchor="end" fill="#6b7280" fontSize={10}>
+                          {payload.value.length > 18 ? payload.value.slice(0, 17) + '…' : payload.value}
+                        </text>
+                      )}
+                    />
+                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
+                    <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={18}>
+                      {buildMaterialData(workflow.requests).map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </div>

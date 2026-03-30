@@ -306,15 +306,15 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
           </div>
 
           {/* Charts row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
 
             {/* Monthly requests */}
-            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden flex flex-col" style={{ minHeight: 340 }}>
               <div className="px-5 py-3.5 border-b border-gray-100">
                 <h3 className="text-sm font-semibold text-gray-900">Monthly Requests</h3>
               </div>
-              <div className="px-2 py-4">
-                <ResponsiveContainer width="100%" height={160}>
+              <div className="px-2 py-4 flex-1 min-h-0">
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={monthlyData} barSize={24} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
@@ -327,33 +327,28 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
             </div>
 
             {/* Requests by material group */}
-            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden flex flex-col" style={{ minHeight: 340 }}>
               <div className="px-5 py-3.5 border-b border-gray-100">
                 <h3 className="text-sm font-semibold text-gray-900">Requests by Material Group</h3>
               </div>
-              <div className="px-2 py-4">
-                {(() => {
-                  const chartHeight = Math.max(160, materialData.length * 36)
-                  return (
-                    <ResponsiveContainer width="100%" height={chartHeight}>
-                      <BarChart data={materialData} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
-                        <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} domain={[0, 'dataMax+1']} />
-                        <YAxis type="category" dataKey="name" width={130} axisLine={false} tickLine={false}
-                          tick={({ x, y, payload }) => (
-                            <text x={x} y={y} dy={4} textAnchor="end" fill="#6b7280" fontSize={10}>
-                              {payload.value.length > 18 ? payload.value.slice(0, 17) + '…' : payload.value}
-                            </text>
-                          )}
-                        />
-                        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
-                        <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={18}>
-                          {materialData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )
-                })()}
+              <div className="px-2 py-4 flex-1 min-h-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={materialData} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
+                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} domain={[0, 'dataMax+1']} />
+                    <YAxis type="category" dataKey="name" width={130} axisLine={false} tickLine={false}
+                      tick={({ x, y, payload }) => (
+                        <text x={x} y={y} dy={4} textAnchor="end" fill="#6b7280" fontSize={11}>
+                          {payload.value.length > 18 ? payload.value.slice(0, 17) + '…' : payload.value}
+                        </text>
+                      )}
+                    />
+                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
+                    <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={18}>
+                      {materialData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </div>
