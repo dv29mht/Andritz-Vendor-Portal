@@ -26,7 +26,7 @@ function OneTimeVendorPage({ workflow, currentUser }) {
   const [movingId,         setMovingId]         = useState(null)
   const [moveError,        setMoveError]        = useState(null)
 
-  const oneTime    = workflow.requests.filter(r => r.isOneTimeVendor && !r.isArchived)
+  const oneTime    = workflow.requests.filter(r => r.isOneTimeVendor && !r.isArchived && r.status === 'Completed')
   const totalPages = Math.max(1, Math.ceil(oneTime.length / OTV_PAGE_SIZE))
   const paginated  = oneTime.slice((page - 1) * OTV_PAGE_SIZE, page * OTV_PAGE_SIZE)
 
@@ -129,7 +129,7 @@ function OneTimeVendorPage({ workflow, currentUser }) {
                         {movingId === req.id ? 'Moving…' : 'Move to Permanent'}
                       </button>
                     )}
-                    {isAdmin && (
+                    {isAdmin && req.status === 'Completed' && (
                       <button
                         className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors"
                         onClick={() => { setArchiving(req); setArchiveError(null) }}

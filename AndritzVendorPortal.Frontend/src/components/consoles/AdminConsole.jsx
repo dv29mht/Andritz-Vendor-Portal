@@ -7,8 +7,7 @@ import {
   ChevronLeftIcon, ChevronRightIcon,
 } from '@heroicons/react/24/outline'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts'
 import VendorDatabase from '../VendorDatabase'
 import StatusBadge from '../shared/StatusBadge'
@@ -17,6 +16,8 @@ import Toast from '../shared/Toast'
 import UserManagement from '../UserManagement'
 import api from '../../services/api'
 import { buildStats, buildMonthlyData } from '../../utils/statsUtils'
+
+const BAR_COLORS = ['#096fb3','#f59e0b','#10b981','#ef4444','#8b5cf6','#f97316','#06b6d4','#84cc16']
 
 const STATUS_FILTERS = ['All', 'PendingApproval', 'PendingFinalApproval', 'Rejected', 'Completed', 'Archived']
 
@@ -45,7 +46,7 @@ function buildMaterialData(requests) {
   return Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8)
-    .map(([name, count]) => ({ name, count }))
+    .map(([name, value], i) => ({ name, value, fill: BAR_COLORS[i % BAR_COLORS.length] }))
 }
 
 // ── Admin Edit Form Modal ─────────────────────────────────────────────────────
@@ -311,19 +312,14 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
             <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
               <div className="px-5 py-3.5 border-b border-gray-100">
                 <h3 className="text-sm font-semibold text-gray-900">Monthly Requests</h3>
-                <p className="text-xs text-gray-400 mt-0.5">Requests submitted over the last 6 months</p>
               </div>
-              <div className="px-4 py-5">
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={monthlyData} barSize={32} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                    <Tooltip
-                      contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
-                      cursor={{ fill: '#f8fafc' }}
-                      formatter={(v) => [v, 'Requests']}
-                    />
+              <div className="px-2 py-4">
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={monthlyData} barSize={24} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                    <Tooltip cursor={{ fill: '#f0f7ff' }} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
                     <Bar dataKey="count" fill="#096fb3" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -334,34 +330,30 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
             <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
               <div className="px-5 py-3.5 border-b border-gray-100">
                 <h3 className="text-sm font-semibold text-gray-900">Requests by Material Group</h3>
-                <p className="text-xs text-gray-400 mt-0.5">Top 8 material categories</p>
               </div>
-              <div className="px-4 py-5">
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={materialData} layout="vertical" barSize={18} margin={{ top: 4, right: 36, left: 8, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                    <XAxis type="number" allowDecimals={false} domain={[0, 'dataMax+1']} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                    <YAxis
-                      type="category"
-                      dataKey="name"
-                      width={140}
-                      interval={0}
-                      axisLine={false}
-                      tickLine={false}
-                      tick={({ x, y, payload }) => (
-                        <text x={x} y={y} dy={5} textAnchor="end" fontSize={11} fill="#64748b">
-                          {payload.value.length > 17 ? payload.value.slice(0, 16) + '…' : payload.value}
-                        </text>
-                      )}
-                    />
-                    <Tooltip
-                      contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
-                      cursor={{ fill: '#f8fafc' }}
-                      formatter={(v) => [v, 'Requests']}
-                    />
-                    <Bar dataKey="count" fill="#096fb3" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="px-2 py-4">
+                {(() => {
+                  const chartHeight = Math.max(160, materialData.length * 36)
+                  return (
+                    <ResponsiveContainer width="100%" height={chartHeight}>
+                      <BarChart data={materialData} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
+                        <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} domain={[0, 'dataMax+1']} />
+                        <YAxis type="category" dataKey="name" width={130} axisLine={false} tickLine={false}
+                          tick={({ x, y, payload }) => (
+                            <text x={x} y={y} dy={4} textAnchor="end" fill="#6b7280" fontSize={10}>
+                              {payload.value.length > 18 ? payload.value.slice(0, 17) + '…' : payload.value}
+                            </text>
+                          )}
+                        />
+                        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
+                        <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={18}>
+                          {materialData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )
+                })()}
               </div>
             </div>
           </div>
