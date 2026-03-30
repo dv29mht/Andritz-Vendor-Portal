@@ -708,7 +708,7 @@ public class VendorRequestController(
         request.UpdatedAt  = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
-        return Ok(ToDetailDto(request, [], []));
+        return NoContent();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
