@@ -31,7 +31,7 @@ function buildMaterialData(requests) {
 
 const METRICS = [
   { label: 'Total Assigned', key: 'total',        icon: UsersIcon,       bg: 'bg-blue-50',    ic: 'text-blue-500',    text: 'text-blue-700'    },
-  { label: 'In Progress',    key: 'pending',       icon: ClockIcon,       bg: 'bg-amber-50',   ic: 'text-amber-500',   text: 'text-amber-700'   },
+  { label: 'Pending',        key: 'pending',       icon: ClockIcon,       bg: 'bg-amber-50',   ic: 'text-amber-500',   text: 'text-amber-700'   },
   { label: 'Awaiting Me',    key: 'finalPending',  icon: CheckBadgeIcon,  bg: 'bg-indigo-50',  ic: 'text-indigo-500',  text: 'text-indigo-700'  },
   { label: 'Completed',      key: 'completed',     icon: CheckIcon,       bg: 'bg-emerald-50', ic: 'text-emerald-500', text: 'text-emerald-700' },
   { label: 'Rejected',       key: 'rejected',      icon: NoSymbolIcon,    bg: 'bg-red-50',     ic: 'text-red-500',     text: 'text-red-700'     },
