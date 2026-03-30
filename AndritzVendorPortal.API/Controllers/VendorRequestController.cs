@@ -182,7 +182,7 @@ public class VendorRequestController(
             dto.City, dto.Locality, dto.MaterialGroup, dto.PostalCode,
             dto.State, dto.Country, dto.Currency, dto.PaymentTerms,
             dto.Incoterms, dto.Reason, dto.YearlyPvo,
-            dto.IsOneTimeVendor, dto.ProposedBy));
+            dto.IsOneTimeVendor, dto.ProposedBy, null));
 
         // Build approval chain: each approver gets a unique StepOrder (1, 2, 3...);
         // FinalApprover is always last at stepOrder = approverCount + 1.
@@ -627,7 +627,7 @@ public class VendorRequestController(
             dto.City, dto.Locality, dto.MaterialGroup, dto.PostalCode,
             dto.State, dto.Country, dto.Currency, dto.PaymentTerms,
             dto.Incoterms, dto.Reason, dto.YearlyPvo,
-            dto.IsOneTimeVendor, dto.ProposedBy);
+            dto.IsOneTimeVendor, dto.ProposedBy, null);
 
         // Compute field-level diff before applying changes
         var changes = TrackedFields
