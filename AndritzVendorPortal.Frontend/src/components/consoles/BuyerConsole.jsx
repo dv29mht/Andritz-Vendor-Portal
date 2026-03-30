@@ -85,7 +85,7 @@ function downloadTemplate() {
   const sample = [
     'Acme Supplies Pvt Ltd', 'Raw Materials', 'New strategic supplier', 'Rajiv Mehta', '9876543210',
     '27AAAAA0000A1Z5', 'AAAAA1234A', 'Plot 12, Industrial Area, Phase 2', '400001', 'Mumbai', 'Andheri',
-    'Maharashtra', 'India', 'INR', 'Net 30', 'FOB', '50,00,000', 'Vikram Nair', 'FALSE',
+    'Maharashtra', 'India', 'INR', 'Net 30', 'FOB', '50,00,000', 'Vikram Nair', 'No',
   ]
   const wb = XLSX.utils.book_new()
   const ws = XLSX.utils.aoa_to_sheet([headers, sample])
@@ -227,6 +227,12 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           setImportErrors(['The spreadsheet has no data rows. Please fill in row 2 of the template.'])
           return
         }
+        if (dataRows.length > 1) {
+          setImportErrors([
+            `The spreadsheet contains ${dataRows.length} data rows. Only 1 vendor can be imported at a time — each vendor requires its own approver chain. Please keep only one data row in the file.`,
+          ])
+          return
+        }
         const row    = dataRows[0]
         const parsed = { ...EMPTY_FORM }
         for (const [col, val] of Object.entries(row)) {
@@ -235,7 +241,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           const field = EXCEL_COL_MAP[key]
           if (!field) continue
           if (field === 'isOneTimeVendor') {
-            parsed[field] = String(val).toLowerCase() === 'true' || val === 1 || val === '1'
+            const v = String(val).trim().toLowerCase()
+            parsed[field] = v === 'true' || v === 'yes' || v === '1' || val === 1
           } else if (field === 'country') {
             parsed[field] = ALL_COUNTRIES.find(c => c.name === String(val))?.isoCode ?? 'IN'
           } else {
@@ -246,7 +253,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         // Validate required fields + formats
         const errs = []
         if (!parsed.vendorName.trim())     errs.push('Vendor Name is required.')
+        if (/\d/.test(parsed.vendorName))  errs.push('Vendor Name should not contain numbers.')
         if (!parsed.contactPerson.trim())  errs.push('Contact Person is required.')
+        else if (/\d/.test(parsed.contactPerson)) errs.push('Contact Person should not contain numbers — enter a person\'s name, not a number.')
+        if (parsed.telephone.trim() && !/^[0-9+\-()\s]+$/.test(parsed.telephone.trim()))
+          errs.push('Telephone / Mobile should contain only digits, spaces, and +, -, (, ) characters.')
         if (!parsed.gstNumber.trim())      errs.push('GST Number is required.')
         else if (!GST_RE.test(parsed.gstNumber.trim()))
           errs.push('GST Number format is invalid (expected: 22AAAAA0000A1Z5).')
