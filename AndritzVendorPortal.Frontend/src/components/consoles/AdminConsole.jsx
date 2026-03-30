@@ -4,6 +4,7 @@ import {
   CheckBadgeIcon, ArrowDownTrayIcon, MagnifyingGlassIcon, EyeIcon,
   TableCellsIcon, UserGroupIcon, ArrowPathIcon, TrophyIcon, NoSymbolIcon,
   PencilSquareIcon, XMarkIcon, BuildingOfficeIcon, ArchiveBoxIcon, ArchiveBoxArrowDownIcon,
+  ChevronLeftIcon, ChevronRightIcon,
 } from '@heroicons/react/24/outline'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -216,6 +217,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
   const [archivingRequest, setArchivingRequest] = useState(null)
   const [archiveLoading, setArchiveLoading]     = useState(false)
   const [toast, setToast]                       = useState(null)
+  const [reqPage, setReqPage]                   = useState(1)
 
   const handleArchive = async () => {
     if (!archivingRequest) return
@@ -418,14 +420,14 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 className="form-input pl-9"
                 placeholder="Search vendor, buyer, code..."
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={e => { setSearch(e.target.value); setReqPage(1) }}
               />
             </div>
             <div className="flex flex-wrap gap-1.5">
               {STATUS_FILTERS.map(s => (
                 <button
                   key={s}
-                  onClick={() => setFilterStatus(s)}
+                  onClick={() => { setFilterStatus(s); setReqPage(1) }}
                   className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
                     filterStatus === s
                       ? 'bg-slate-700 text-white ring-slate-700'
@@ -438,7 +440,23 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
             </div>
           </div>
 
+          {/* Archived banner */}
+          {filterStatus === 'Archived' && (
+            <div className="mb-4 flex items-center gap-3 rounded-xl bg-amber-50 ring-1 ring-amber-200 px-4 py-3">
+              <ArchiveBoxIcon className="h-5 w-5 text-amber-500 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Archived Requests</p>
+                <p className="text-xs text-amber-600 mt-0.5">Records are fully retained. Use Restore to return a request to the active view.</p>
+              </div>
+            </div>
+          )}
+
           {/* Table */}
+          {(() => {
+            const PAGE_SIZE  = 10
+            const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
+            const paginated  = visible.slice((reqPage - 1) * PAGE_SIZE, reqPage * PAGE_SIZE)
+            return (
           <div className="card overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
@@ -449,10 +467,10 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
-                {visible.length === 0 && (
+                {paginated.length === 0 && (
                   <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-400">No requests match the current filter.</td></tr>
                 )}
-                {visible.map(req => (
+                {paginated.map(req => (
                   <tr key={req.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3.5 align-top font-mono text-xs text-gray-400">#{req.id}</td>
                     <td className="px-4 py-3.5 align-top">
@@ -525,10 +543,34 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 ))}
               </tbody>
             </table>
-            <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400">
-              Showing {visible.length} of {requests.length} request{requests.length !== 1 ? 's' : ''}
+            <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+              <span className="text-xs text-gray-400">
+                {visible.length === 0
+                  ? 'No requests'
+                  : `Showing ${(reqPage - 1) * PAGE_SIZE + 1}–${Math.min(reqPage * PAGE_SIZE, visible.length)} of ${visible.length} request${visible.length !== 1 ? 's' : ''}`}
+              </span>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    disabled={reqPage === 1}
+                    onClick={() => setReqPage(p => p - 1)}
+                  >
+                    <ChevronLeftIcon className="h-4 w-4" />
+                  </button>
+                  <span className="text-xs text-gray-500 px-1">Page {reqPage} of {totalPages}</span>
+                  <button
+                    className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    disabled={reqPage === totalPages}
+                    onClick={() => setReqPage(p => p + 1)}
+                  >
+                    <ChevronRightIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
+          )})()}
         </>
       )}
 
