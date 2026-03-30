@@ -123,8 +123,10 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
       await api.delete(`/users/${user.id}`)
       onDeleted(user.id)
       onClose()
-    } catch {
-      setErrors(['Failed to delete user. Please try again.'])
+    } catch (err) {
+      const detail = err.response?.data
+      const msg = typeof detail === 'string' ? detail : 'Failed to delete user. Please try again.'
+      setErrors([msg])
       setMode('view')
     } finally {
       setDeleting(false)

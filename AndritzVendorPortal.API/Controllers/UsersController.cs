@@ -208,6 +208,12 @@ public class UsersController(
         if (user.Email?.Equals("pardeep.sharma@andritz.com", StringComparison.OrdinalIgnoreCase) == true)
             return BadRequest("The Final Approver account cannot be deleted.");
 
+        // Block deletion if the user has pending approval requests
+        var hasPending = await db.ApprovalSteps
+            .AnyAsync(s => s.ApproverUserId == id && s.Decision == ApprovalDecision.Pending);
+        if (hasPending)
+            return Conflict("This approver has pending vendor requests and cannot be deleted. Reassign or resolve those requests first.");
+
         // Soft-delete: mark as archived so vendor request history is preserved
         user.IsArchived = true;
         var result = await userManager.UpdateAsync(user);
