@@ -9,8 +9,11 @@ const renderUrl = 'https://andritz-vendor-portal.onrender.com/api'
 // restrictions (Privacy Sandbox, incognito) can never block it.
 //
 // In dev, fall back to the Render URL directly (or VITE_API_URL for local backend).
-const baseURL = import.meta.env.VITE_API_URL
-  ?? (import.meta.env.DEV ? renderUrl : '/api')
+// Production builds ALWAYS use the Vercel proxy (/api → Render via vercel.json rewrite).
+// VITE_API_URL is only honoured in dev so local development can target a local backend.
+const baseURL = import.meta.env.DEV
+  ? (import.meta.env.VITE_API_URL ?? renderUrl)
+  : '/api'
 
 if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
   console.warn(
