@@ -5,7 +5,7 @@ import { XMarkIcon, EyeIcon, CheckIcon, ClockIcon, ArchiveBoxIcon,
          ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 
 const PAGE_SIZE = 10
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts'
 import VendorDatabase from '../VendorDatabase'
 import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
@@ -14,6 +14,8 @@ import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
 import { useViewedRequests } from '../../hooks/useViewedRequests'
 import { buildStats, buildMonthlyData } from '../../utils/statsUtils'
+
+const BAR_COLORS = ['#096fb3','#f59e0b','#10b981','#ef4444','#8b5cf6','#f97316','#06b6d4','#84cc16']
 
 function buildMaterialData(requests) {
   const counts = {}
@@ -24,7 +26,7 @@ function buildMaterialData(requests) {
   return Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8)
-    .map(([name, count]) => ({ name, count }))
+    .map(([name, value], i) => ({ name, value, fill: BAR_COLORS[i % BAR_COLORS.length] }))
 }
 
 const METRICS = [
@@ -195,15 +197,29 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                 <h3 className="text-sm font-semibold text-gray-900">Requests by Material Group</h3>
               </div>
               <div className="px-2 py-4">
-                <ResponsiveContainer width="100%" height={160}>
-                  <BarChart data={buildMaterialData(workflow.requests)} layout="vertical" barSize={14} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10, fill: '#6b7280', width: 115 }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
-                    <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {(() => {
+                  const matData = buildMaterialData(workflow.requests)
+                  const chartHeight = Math.max(160, matData.length * 36)
+                  return (
+                    <ResponsiveContainer width="100%" height={chartHeight}>
+                      <BarChart data={matData} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
+                        <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} domain={[0, 'dataMax+1']} />
+                        <YAxis type="category" dataKey="name" width={130} axisLine={false} tickLine={false}
+                          tick={({ x, y, payload }) => (
+                            <text x={x} y={y} dy={4} textAnchor="end" fill="#6b7280" fontSize={10}>
+                              {payload.value.length > 18 ? payload.value.slice(0, 17) + '…' : payload.value}
+                            </text>
+                          )}
+                        />
+                        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
+                        <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={18}>
+                          {matData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )
+                })()}
               </div>
             </div>
           </div>
