@@ -1,18 +1,27 @@
 import axios from 'axios'
 
-const prodUrl = 'https://andritz-vendor-portal.onrender.com/api'
+const renderUrl = 'https://andritz-vendor-portal.onrender.com/api'
+
+// In production (Vercel), use a relative base URL so every request goes to
+// /api/... on the same origin. Vercel's proxy rewrite (vercel.json) forwards
+// these to the Render backend transparently. This means the auth_token cookie
+// is set on the Vercel domain — same-origin — so browser cross-site cookie
+// restrictions (Privacy Sandbox, incognito) can never block it.
+//
+// In dev, fall back to the Render URL directly (or VITE_API_URL for local backend).
+const baseURL = import.meta.env.VITE_API_URL
+  ?? (import.meta.env.DEV ? renderUrl : '/api')
 
 if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
   console.warn(
-    '[api] VITE_API_URL is not set — requests will go to the PRODUCTION backend (%s). ' +
+    '[api] VITE_API_URL is not set — dev requests will go to the PRODUCTION backend (%s). ' +
     'Set VITE_API_URL in .env.local to point at your local server.',
-    prodUrl
+    renderUrl
   )
 }
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? prodUrl,
-  // Required so the browser sends and receives httpOnly auth cookies cross-origin
+  baseURL,
   withCredentials: true,
 })
 
