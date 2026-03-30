@@ -565,7 +565,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
 
       {/* ── Vendor Database ────────────────────────────────────────────────── */}
       {activePage === 'vendors' && (
-        <VendorDatabase requests={requests} isAdmin={true} onReclassified={() => workflow.fetchAll()} />
+        <VendorDatabase requests={requests} isAdmin={true} onReclassified={() => workflow.fetchAll()} workflow={workflow} />
       )}
 
       {/* ── User Management ───────────────────────────────────────────────── */}

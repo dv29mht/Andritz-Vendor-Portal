@@ -5,8 +5,11 @@ import api from '../services/api'
 
 const PAGE_SIZE = 10
 
-export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
-  const vendors = requests.filter(r => r.status === 'Completed' && !r.isOneTimeVendor && !r.isArchived)
+export default function VendorDatabase({ requests, isAdmin, onReclassified, workflow }) {
+  const [showArchived, setShowArchived]       = useState(false)
+  const vendors = requests.filter(r =>
+    r.status === 'Completed' && !r.isOneTimeVendor && (showArchived ? r.isArchived : !r.isArchived)
+  )
   const [viewingRequest, setViewingRequest]   = useState(null)
   const [reclassifying, setReclassifying]     = useState(null)
   const [reclassifyError, setReclassifyError] = useState(null)
@@ -15,6 +18,25 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
   const [invalidating, setInvalidating]       = useState(null)
   const [invalidateLoading, setInvalidateLoading] = useState(false)
   const [invalidateError, setInvalidateError] = useState(null)
+  const [restoring, setRestoring]             = useState(null)
+  const [restoreLoading, setRestoreLoading]   = useState(false)
+  const [restoreError, setRestoreError]       = useState(null)
+
+  const archivedCount = requests.filter(r => r.status === 'Completed' && !r.isOneTimeVendor && r.isArchived).length
+
+  const handleRestore = async () => {
+    if (!restoring) return
+    setRestoreLoading(true)
+    setRestoreError(null)
+    try {
+      await workflow.restoreRequest(restoring.id)
+      setRestoring(null)
+    } catch (err) {
+      setRestoreError(err?.response?.data?.message ?? 'Failed to restore. Please try again.')
+    } finally {
+      setRestoreLoading(false)
+    }
+  }
 
   const visible = vendors.filter(r => {
     const q = search.toLowerCase()
@@ -63,9 +85,29 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
             Permanent Vendor Master
           </h2>
           <div className="flex items-center gap-3 mt-1.5">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 select-none">
-              {vendors.length} Permanent Vendor{vendors.length !== 1 ? 's' : ''}
-            </span>
+            <button
+              onClick={() => { setShowArchived(false); setPage(1) }}
+              className={`inline-flex items-center gap-1.5 rounded-lg text-sm font-semibold px-4 py-2 transition-colors select-none ${
+                !showArchived
+                  ? 'bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+            >
+              {requests.filter(r => r.status === 'Completed' && !r.isOneTimeVendor && !r.isArchived).length} Permanent Vendor{requests.filter(r => r.status === 'Completed' && !r.isOneTimeVendor && !r.isArchived).length !== 1 ? 's' : ''}
+            </button>
+            {archivedCount > 0 && (
+              <button
+                onClick={() => { setShowArchived(true); setPage(1) }}
+                className={`inline-flex items-center gap-1.5 rounded-lg text-sm font-semibold px-4 py-2 transition-colors select-none ${
+                  showArchived
+                    ? 'bg-amber-50 ring-1 ring-amber-200 text-amber-700'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+              >
+                <ArchiveBoxIcon className="h-4 w-4" />
+                {archivedCount} Archived
+              </button>
+            )}
           </div>
         </div>
         <input
@@ -94,7 +136,9 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
             {paginated.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">
-                  {vendors.length === 0 ? 'No permanent vendors yet — appears once a form is fully approved.' : 'No vendors match the search.'}
+                  {vendors.length === 0
+                    ? (showArchived ? 'No archived permanent vendors.' : 'No permanent vendors yet — appears once a form is fully approved.')
+                    : 'No vendors match the search.'}
                 </td>
               </tr>
             )}
@@ -118,7 +162,7 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
                       <EyeIcon className="h-3.5 w-3.5" />
                       View
                     </button>
-                    {isAdmin && (
+                    {isAdmin && !showArchived && (
                       <>
                         <button
                           className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-50"
@@ -138,6 +182,16 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
                           Archive
                         </button>
                       </>
+                    )}
+                    {isAdmin && showArchived && (
+                      <button
+                        className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200 hover:bg-emerald-100 transition-colors"
+                        onClick={() => { setRestoring(req); setRestoreError(null) }}
+                        title="Restore this vendor to the Permanent Vendor Master"
+                      >
+                        <ArrowPathIcon className="h-3.5 w-3.5" />
+                        Restore
+                      </button>
                     )}
                   </div>
                 </td>
@@ -215,6 +269,40 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified }) {
               >
                 <ArchiveBoxIcon className="h-4 w-4" />
                 {invalidateLoading ? 'Archiving…' : 'Yes, archive'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restore confirmation modal */}
+      {restoring && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Restore this vendor?</h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              <strong>{restoring.vendorName}</strong> (SAP code:{' '}
+              <span className="font-mono">{restoring.vendorCode}</span>) will be restored to the
+              Permanent Vendor Master.
+            </p>
+            {restoreError && (
+              <p className="text-xs text-red-600 bg-red-50 ring-1 ring-red-200 rounded-lg px-3 py-2">{restoreError}</p>
+            )}
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                className="btn-secondary"
+                onClick={() => setRestoring(null)}
+                disabled={restoreLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-60"
+                onClick={handleRestore}
+                disabled={restoreLoading}
+              >
+                <ArrowPathIcon className="h-4 w-4" />
+                {restoreLoading ? 'Restoring…' : 'Yes, restore'}
               </button>
             </div>
           </div>
