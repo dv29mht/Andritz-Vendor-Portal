@@ -203,7 +203,10 @@ function AdminEditModal({ request, onClose, onSaved }) {
 
 export default function AdminConsole({ workflow, currentUser, activePage, onNavigate }) {
   const { requests } = workflow
-  const stats = buildStats(requests)
+  // Exclude archived records from all stats, charts, and recent activity —
+  // they are only visible when the 'Archived' filter is explicitly selected.
+  const liveRequests = requests.filter(r => !r.isArchived)
+  const stats = buildStats(liveRequests)
 
   const [filterStatus, setFilterStatus]     = useState('All')
   const [search, setSearch]                 = useState('')
@@ -256,7 +259,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
     return false
   })
 
-  const recentRequests = [...requests]
+  const recentRequests = [...liveRequests]
     .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
     .slice(0, 5)
 
@@ -275,8 +278,8 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
 
       {/* ── Dashboard ─────────────────────────────────────────────────────── */}
       {activePage === 'dashboard' && (() => {
-        const materialData = buildMaterialData(requests)
-        const monthlyData  = buildMonthlyData(requests)
+        const materialData = buildMaterialData(liveRequests)
+        const monthlyData  = buildMonthlyData(liveRequests)
         return (
         <div className="space-y-5">
           {/* Clickable stat cards */}

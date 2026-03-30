@@ -185,7 +185,7 @@ function ApprovalChainBuilder({ approvers, selected, onChange, error }) {
 const revLabel = (n) => n === 0 ? 'Original' : `REV ${n}`
 
 export default function BuyerConsole({ workflow, currentUser, activePage, onNavigate }) {
-  const myRequests   = workflow.requests.filter(r => r.createdByUserId === currentUser.id)
+  const myRequests   = workflow.requests.filter(r => r.createdByUserId === currentUser.id && !r.isArchived)
   const activeReqs   = myRequests.filter(r => r.status !== 'Rejected')
   const rejectedReqs = myRequests.filter(r => r.status === 'Rejected')
   const completedReqs = myRequests.filter(r => r.status === 'Completed')
@@ -367,7 +367,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
     // Block resubmit if buyer changed nothing
     if (editingRequest && editingRequest.status !== 'Completed' && !hasFormChanged()) {
-      setApiError('No changes detected. Please update the required field before resubmitting.')
+      setApiError('No changes detected. Please modify at least one field before resubmitting.')
       return
     }
 

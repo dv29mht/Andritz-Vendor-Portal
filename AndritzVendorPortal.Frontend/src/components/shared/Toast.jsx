@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { CheckCircleIcon, ExclamationCircleIcon, XMarkIcon } from '@heroicons/react/24/solid'
+import { CheckCircleIcon, ExclamationCircleIcon, ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/solid'
 
 const VARIANTS = {
   success: {
@@ -12,11 +12,16 @@ const VARIANTS = {
     icon: <ExclamationCircleIcon className="h-6 w-6 text-red-500 flex-shrink-0" />,
     bar:  'bg-red-500',
   },
+  warning: {
+    wrap: 'bg-white ring-amber-200',
+    icon: <ExclamationTriangleIcon className="h-6 w-6 text-amber-500 flex-shrink-0" />,
+    bar:  'bg-amber-500',
+  },
 }
 
 /**
  * @param {{ title: string, body?: string }} message
- * @param {'success'|'error'} type
+ * @param {'success'|'error'|'warning'} type
  * @param {() => void} onClose
  * @param {number} [duration=4500]
  */
