@@ -456,32 +456,34 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                       {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
                     </td>
                     <td className="px-4 py-3.5 align-top">
-                      <div className="flex items-center gap-1.5">
-                        <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
-                          <EyeIcon className="h-3.5 w-3.5" />
-                          View
-                        </button>
-                        <button
-                          className={`btn-secondary !py-1 !px-2 !text-xs transition-all ${req.status !== 'Completed' ? 'opacity-30 cursor-not-allowed' : ''}`}
-                          disabled={req.status !== 'Completed'}
-                          onClick={() => setEditingRequest(req)}
-                          title={req.status !== 'Completed' ? 'Only SAP-approved (Completed) forms can be edited' : 'Edit form'}
-                        >
-                          <PencilSquareIcon className="h-3.5 w-3.5" />
-                          Edit
-                        </button>
-                        <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setPreviewRequest(workflow.requests.find(r => r.id === req.id) ?? req)}>
-                          <ArrowDownTrayIcon className="h-3.5 w-3.5" />
-                          PDF
-                        </button>
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
+                            <EyeIcon className="h-3.5 w-3.5" />
+                            View
+                          </button>
+                          <button
+                            className={`btn-secondary !py-1 !px-2 !text-xs transition-all ${req.status !== 'Completed' ? 'opacity-30 cursor-not-allowed' : ''}`}
+                            disabled={req.status !== 'Completed'}
+                            onClick={() => setEditingRequest(req)}
+                            title={req.status !== 'Completed' ? 'Only SAP-approved (Completed) forms can be edited' : 'Edit form'}
+                          >
+                            <PencilSquareIcon className="h-3.5 w-3.5" />
+                            Edit
+                          </button>
+                          <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setPreviewRequest(workflow.requests.find(r => r.id === req.id) ?? req)}>
+                            <ArrowDownTrayIcon className="h-3.5 w-3.5" />
+                            PDF
+                          </button>
+                        </div>
                         {req.status === 'Rejected' && (
                           <button
-                            className="!py-1 !px-2 !text-xs inline-flex items-center gap-1 rounded-lg font-medium text-red-600 ring-1 ring-red-200 hover:bg-red-50 transition-colors"
+                            className="self-start !py-1 !px-2 !text-xs inline-flex items-center gap-1 rounded-lg font-medium text-red-600 ring-1 ring-red-200 hover:bg-red-50 transition-colors"
                             onClick={() => setDeletingRequest(req)}
                             title="Permanently delete this rejected request"
                           >
                             <XMarkIcon className="h-3.5 w-3.5" />
-                            Delete
+                            Delete permanently
                           </button>
                         )}
                       </div>
