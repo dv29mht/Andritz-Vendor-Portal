@@ -5,7 +5,7 @@ import {
   ShieldCheckIcon, ClipboardDocumentIcon,
   PencilSquareIcon, TrashIcon, EyeIcon, EyeSlashIcon,
   EnvelopeIcon, BriefcaseIcon, ComputerDesktopIcon, FingerPrintIcon,
-  ChevronLeftIcon,
+  ChevronLeftIcon, ChevronRightIcon,
 } from '@heroicons/react/24/outline'
 import api from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
@@ -14,6 +14,11 @@ const ROLES = ['Buyer', 'Approver']
 
 const ROLE_DISPLAY = {
   Admin: 'Admin', Buyer: 'Buyer', Approver: 'Approver', FinalApprover: 'Final Approver',
+}
+
+function formatDesignation(d) {
+  if (!d) return null
+  return ROLE_DISPLAY[d] ?? d
 }
 
 const ROLE_BADGE = {
@@ -187,7 +192,7 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
             {/* Info fields */}
             <div className="grid grid-cols-1 divide-y divide-gray-50 rounded-xl bg-gray-50 ring-1 ring-gray-100 overflow-hidden">
               {[
-                { icon: BriefcaseIcon,       label: 'Designation',    value: user.designation || '—',              mono: false },
+                { icon: BriefcaseIcon,       label: 'Designation',    value: formatDesignation(user.designation) || '—', mono: false },
                 { icon: ComputerDesktopIcon, label: 'Console Access', value: CONSOLE_LABEL[primaryRole] ?? '—',    mono: false },
                 { icon: EnvelopeIcon,        label: 'Email',          value: user.email,                           mono: false },
                 { icon: FingerPrintIcon,     label: 'User ID',        value: user.id,                              mono: true  },
@@ -388,6 +393,7 @@ export default function UserManagement() {
   const [successMsg, setSuccessMsg]     = useState(null)
   const [copiedPwd, setCopiedPwd]       = useState(false)
   const [detailUser, setDetailUser]     = useState(null)
+  const [page,       setPage]           = useState(1)
 
   const fetchUsers = async () => {
     setLoading(true)
@@ -643,13 +649,13 @@ export default function UserManagement() {
         <div className="relative max-w-xs flex-shrink-0">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           <input className="form-input pl-9" placeholder="Search by name, email, role…"
-            value={search} onChange={e => setSearch(e.target.value)} />
+            value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} />
         </div>
         <div className="flex flex-wrap gap-1.5">
           {['All', 'Buyer', 'Approver', 'FinalApprover'].map(r => (
             <button
               key={r}
-              onClick={() => setRoleFilter(r)}
+              onClick={() => { setRoleFilter(r); setPage(1) }}
               className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
                 roleFilter === r
                   ? 'bg-slate-700 text-white ring-slate-700'
@@ -692,7 +698,10 @@ export default function UserManagement() {
             {!loading && !fetchError && visible.length === 0 && (
               <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-400">No users match the search.</td></tr>
             )}
-            {!loading && !fetchError && visible.map(user => {
+            {!loading && !fetchError && (() => {
+              const PAGE_SIZE = 10
+              return visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+            })().map(user => {
               const primaryRole = user.roles[0]
               const consoleLabel = CONSOLE_LABEL[primaryRole] ?? '—'
               const hasEmailGuard = primaryRole === 'FinalApprover'
@@ -707,7 +716,7 @@ export default function UserManagement() {
                     </button>
                   </td>
                   <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
-                    {user.designation || <span className="text-gray-300">—</span>}
+                    {formatDesignation(user.designation) || <span className="text-gray-300">—</span>}
                   </td>
                   <td className="px-4 py-3 text-gray-600 text-xs">{user.email}</td>
                   <td className="px-4 py-3">
@@ -734,8 +743,29 @@ export default function UserManagement() {
           </tbody>
         </table>
         <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400 flex items-center justify-between flex-wrap gap-2">
-          <span>
-            Showing {visible.length} of {users.length} user{users.length !== 1 ? 's' : ''}
+          <span className="flex items-center gap-3">
+            {(() => {
+              const PAGE_SIZE  = 10
+              const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
+              const start      = visible.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
+              const end        = Math.min(page * PAGE_SIZE, visible.length)
+              return (<>
+                <span>Showing {visible.length === 0 ? '0' : `${start}–${end}`} of {visible.length} user{visible.length !== 1 ? 's' : ''}</span>
+                {totalPages > 1 && (
+                  <span className="flex items-center gap-1">
+                    <button className="inline-flex items-center justify-center rounded p-0.5 text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      disabled={page === 1} onClick={() => setPage(p => p - 1)}>
+                      <ChevronLeftIcon className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="px-1">Page {page} of {totalPages}</span>
+                    <button className="inline-flex items-center justify-center rounded p-0.5 text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
+                      <ChevronRightIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                )}
+              </>)
+            })()}
           </span>
           {archivedUsers.length > 0 && (
             <button

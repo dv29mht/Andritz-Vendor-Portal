@@ -273,6 +273,8 @@ using (var scope = app.Services.CreateScope())
         // Soft-delete support (vendor requests)
         """ALTER TABLE "VendorRequests" ADD COLUMN IF NOT EXISTS "IsArchived" boolean NOT NULL DEFAULT false""",
         """ALTER TABLE "VendorRequests" ADD COLUMN IF NOT EXISTS "ArchivedAt" timestamp with time zone""",
+        // Fix designation stored as role key ("FinalApprover" → "Final Approver")
+        """UPDATE "AspNetUsers" SET "Designation"='Final Approver' WHERE "NormalizedEmail"='PARDEEP.SHARMA@ANDRITZ.COM' AND "Designation"='FinalApprover'""",
     })
     {
         try { context.Database.ExecuteSqlRaw(sql); }
