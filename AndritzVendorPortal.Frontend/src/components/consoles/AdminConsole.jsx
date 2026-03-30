@@ -489,25 +489,25 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                     <td className="px-4 py-3.5 align-top text-gray-400 whitespace-nowrap text-xs">
                       {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
                     </td>
-                    <td className="px-4 py-3.5 align-top">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {req.isArchived ? (
-                          <>
-                            <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
-                              <EyeIcon className="h-3.5 w-3.5" />
-                              View
-                            </button>
-                            <button
-                              className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200 hover:bg-emerald-100 transition-colors"
-                              onClick={() => handleRestore(req)}
-                              title="Restore this archived request"
-                            >
-                              <ArchiveBoxArrowDownIcon className="h-3.5 w-3.5" />
-                              Restore
-                            </button>
-                          </>
-                        ) : (
-                          <>
+                    <td className="px-4 py-3.5 align-middle">
+                      {req.isArchived ? (
+                        <div className="flex items-center gap-1">
+                          <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
+                            <EyeIcon className="h-3.5 w-3.5" />
+                            View
+                          </button>
+                          <button
+                            className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200 hover:bg-emerald-100 transition-colors"
+                            onClick={() => handleRestore(req)}
+                            title="Restore this archived request"
+                          >
+                            <ArchiveBoxArrowDownIcon className="h-3.5 w-3.5" />
+                            Restore
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1">
                             <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
                               <EyeIcon className="h-3.5 w-3.5" />
                               View
@@ -516,7 +516,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                               className={`btn-secondary !py-1 !px-2 !text-xs transition-all ${req.status !== 'Completed' ? 'opacity-30 cursor-not-allowed' : ''}`}
                               disabled={req.status !== 'Completed'}
                               onClick={() => setEditingRequest(req)}
-                              title={req.status !== 'Completed' ? 'Only SAP-approved (Completed) forms can be edited' : 'Edit form'}
+                              title={req.status !== 'Completed' ? 'Only Completed forms can be edited' : 'Edit form'}
                             >
                               <PencilSquareIcon className="h-3.5 w-3.5" />
                               Edit
@@ -525,19 +525,19 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                               <ArrowDownTrayIcon className="h-3.5 w-3.5" />
                               PDF
                             </button>
-                            {(req.status === 'Rejected' || req.status === 'Completed') && (
-                              <button
-                                className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors"
-                                onClick={() => setArchivingRequest(req)}
-                                title="Archive this request — record is retained and can be restored"
-                              >
-                                <ArchiveBoxIcon className="h-3.5 w-3.5" />
-                                Archive
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
+                          </div>
+                          {req.status === 'Completed' && (
+                            <button
+                              className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100 transition-colors w-fit"
+                              onClick={() => setArchivingRequest(req)}
+                              title="Archive this request — record is retained and can be restored"
+                            >
+                              <ArchiveBoxIcon className="h-3.5 w-3.5" />
+                              Archive
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
