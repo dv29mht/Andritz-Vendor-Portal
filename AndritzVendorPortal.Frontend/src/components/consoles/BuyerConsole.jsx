@@ -218,11 +218,16 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       try {
         const wb   = XLSX.read(evt.target.result, { type: 'array' })
         const ws   = wb.Sheets[wb.SheetNames[0]]
-        // skip rows that are the legend line (no mapped columns)
         const rows = XLSX.utils.sheet_to_json(ws, { defval: '' })
-        const dataRows = rows.filter(row =>
-          Object.keys(row).some(k => EXCEL_COL_MAP[k.trim().replace(/\s*\*\s*$/, '').toLowerCase()])
-        )
+        // Skip empty rows and the legend row ("* = Required field…" sits in the
+        // Vendor Name column — its value starts with "*").
+        const dataRows = rows.filter(row => {
+          const nameKey = Object.keys(row).find(k =>
+            EXCEL_COL_MAP[k.trim().replace(/\s*\*\s*$/, '').toLowerCase()] === 'vendorName'
+          )
+          const nameVal = nameKey ? String(row[nameKey]).trim() : ''
+          return nameVal && !nameVal.startsWith('*')
+        })
         if (!dataRows.length) {
           setImportErrors(['The spreadsheet has no data rows. Please fill in row 2 of the template.'])
           return
