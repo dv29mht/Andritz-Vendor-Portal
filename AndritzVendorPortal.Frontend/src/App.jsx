@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { useAuth } from './contexts/AuthContext'
 import { ROLES } from './constants/roles'
 import { useVendorWorkflow } from './hooks/useVendorWorkflow'
@@ -12,9 +13,15 @@ import SettingsPage from './pages/SettingsPage'
 import StatusBadge from './components/shared/StatusBadge'
 import VendorDetailModal from './components/VendorDetailModal'
 
+const OTV_PAGE_SIZE = 10
+
 function OneTimeVendorPage({ workflow }) {
   const [viewing, setViewing] = useState(null)
-  const oneTime = workflow.requests.filter(r => r.isOneTimeVendor)
+  const [page,    setPage]    = useState(1)
+  const oneTime    = workflow.requests.filter(r => r.isOneTimeVendor)
+  const totalPages = Math.max(1, Math.ceil(oneTime.length / OTV_PAGE_SIZE))
+  const paginated  = oneTime.slice((page - 1) * OTV_PAGE_SIZE, page * OTV_PAGE_SIZE)
+
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-4">
       <div className="flex items-center gap-3 mb-2">
@@ -27,7 +34,7 @@ function OneTimeVendorPage({ workflow }) {
           <p className="text-sm text-gray-400">No one-time vendor requests found.</p>
         </div>
       )}
-      {oneTime.map(req => (
+      {paginated.map(req => (
         <div key={req.id} className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -46,6 +53,30 @@ function OneTimeVendorPage({ workflow }) {
           </button>
         </div>
       ))}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
+          <span className="text-xs text-gray-400">
+            Showing {(page - 1) * OTV_PAGE_SIZE + 1}–{Math.min(page * OTV_PAGE_SIZE, oneTime.length)} of {oneTime.length}
+          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              disabled={page === 1}
+              onClick={() => setPage(p => p - 1)}
+            >
+              <ChevronLeftIcon className="h-4 w-4" />
+            </button>
+            <span className="text-xs text-gray-500 px-1">Page {page} of {totalPages}</span>
+            <button
+              className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              disabled={page === totalPages}
+              onClick={() => setPage(p => p + 1)}
+            >
+              <ChevronRightIcon className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
       {viewing && <VendorDetailModal request={viewing} onClose={() => setViewing(null)} />}
     </div>
   )
