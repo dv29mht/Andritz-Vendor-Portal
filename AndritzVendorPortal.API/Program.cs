@@ -225,8 +225,10 @@ app.UseAuthentication();
 app.Use(async (ctx, next) =>
 {
     var method = ctx.Request.Method;
-    bool isSafe = method == "GET" || method == "HEAD" || method == "OPTIONS";
-    if (!isSafe && ctx.User.Identity?.IsAuthenticated == true)
+    bool isSafe      = method == "GET" || method == "HEAD" || method == "OPTIONS";
+    // Auth endpoints generate/destroy credentials — never subject to CSRF checks
+    bool isAuthRoute = ctx.Request.Path.StartsWithSegments("/api/auth");
+    if (!isSafe && !isAuthRoute && ctx.User.Identity?.IsAuthenticated == true)
     {
         var csrfHeader = ctx.Request.Headers["X-CSRF-Token"].ToString();
         var csrfCookie = ctx.Request.Cookies["csrf_token"] ?? "";
