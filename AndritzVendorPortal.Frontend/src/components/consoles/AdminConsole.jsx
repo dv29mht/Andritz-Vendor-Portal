@@ -332,23 +332,29 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 <h3 className="text-sm font-semibold text-gray-900">Requests by Material Group</h3>
               </div>
               <div className="px-2 py-4 flex-1 min-h-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={materialData} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
-                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} domain={[0, 'dataMax+1']} />
-                    <YAxis type="category" dataKey="name" width={130} axisLine={false} tickLine={false}
-                      tick={({ x, y, payload }) => (
-                        <text x={x} y={y} dy={4} textAnchor="end" fill="#6b7280" fontSize={11}>
-                          {payload.value.length > 18 ? payload.value.slice(0, 17) + '…' : payload.value}
-                        </text>
-                      )}
-                    />
-                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={18}>
-                      {materialData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                {(() => {
+                  const maxLabelLen = materialData.reduce((m, d) => Math.max(m, d.name?.length ?? 0), 0)
+                  const yAxisWidth = Math.min(220, Math.max(80, maxLabelLen * 7))
+                  return (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={materialData} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
+                      <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} domain={[0, 'dataMax+1']} />
+                      <YAxis type="category" dataKey="name" width={yAxisWidth} axisLine={false} tickLine={false}
+                        tick={({ x, y, payload }) => (
+                          <text x={x} y={y} dy={4} textAnchor="end" fill="#6b7280" fontSize={11}>
+                            {payload.value}
+                          </text>
+                        )}
+                      />
+                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
+                      <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={18}>
+                        {materialData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                  )
+                })()}
               </div>
             </div>
           </div>

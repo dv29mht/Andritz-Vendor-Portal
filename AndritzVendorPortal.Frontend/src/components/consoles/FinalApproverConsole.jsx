@@ -30,14 +30,13 @@ function buildMaterialData(requests) {
 }
 
 const METRICS = [
-  { label: 'Total Assigned', key: 'total',        icon: UsersIcon,       bg: 'bg-blue-50',    ic: 'text-blue-500',    text: 'text-blue-700',    navPage: 'pending'  },
-  { label: 'Pending',        key: 'finalPending',  icon: ClockIcon,       bg: 'bg-amber-50',   ic: 'text-amber-500',   text: 'text-amber-700',   navPage: 'pending'  },
-  { label: 'Awaiting Me',    key: 'finalPending',  icon: CheckBadgeIcon,  bg: 'bg-indigo-50',  ic: 'text-indigo-500',  text: 'text-indigo-700',  navPage: 'pending'  },
-  { label: 'Completed',      key: 'completed',     icon: CheckIcon,       bg: 'bg-emerald-50', ic: 'text-emerald-500', text: 'text-emerald-700', navPage: 'history'  },
-  { label: 'Rejected',       key: 'rejected',      icon: NoSymbolIcon,    bg: 'bg-red-50',     ic: 'text-red-500',     text: 'text-red-700',     navPage: 'history'  },
-  { label: 'Approval Rate',  key: 'approvalRate',  icon: TrophyIcon,      bg: 'bg-cyan-50',    ic: 'text-cyan-500',    text: 'text-cyan-700'                         },
-  { label: 'Re-edit Rate',   key: 'reEditRate',    icon: ArrowPathIcon,   bg: 'bg-orange-50',  ic: 'text-orange-500',  text: 'text-orange-700'                       },
-  { label: 'Rejection Rate', key: 'rejectionRate', icon: NoSymbolIcon,    bg: 'bg-rose-50',    ic: 'text-rose-500',    text: 'text-rose-700'                         },
+  { label: 'Total Assigned', key: 'total',        icon: UsersIcon,       bg: 'bg-blue-50',    ic: 'text-blue-500',    text: 'text-blue-700'                                              },
+  { label: 'Pending',        key: 'finalPending',  icon: ClockIcon,       bg: 'bg-amber-50',   ic: 'text-amber-500',   text: 'text-amber-700',   navPage: 'pending',  historyFilter: null },
+  { label: 'Completed',      key: 'completed',     icon: CheckIcon,       bg: 'bg-emerald-50', ic: 'text-emerald-500', text: 'text-emerald-700', navPage: 'history',  historyFilter: 'Approved' },
+  { label: 'Rejected',       key: 'rejected',      icon: NoSymbolIcon,    bg: 'bg-red-50',     ic: 'text-red-500',     text: 'text-red-700',     navPage: 'history',  historyFilter: 'Rejected' },
+  { label: 'Approval Rate',  key: 'approvalRate',  icon: TrophyIcon,      bg: 'bg-cyan-50',    ic: 'text-cyan-500',    text: 'text-cyan-700'                                              },
+  { label: 'Re-edit Rate',   key: 'reEditRate',    icon: ArrowPathIcon,   bg: 'bg-orange-50',  ic: 'text-orange-500',  text: 'text-orange-700'                                            },
+  { label: 'Rejection Rate', key: 'rejectionRate', icon: NoSymbolIcon,    bg: 'bg-rose-50',    ic: 'text-rose-500',    text: 'text-rose-700'                                              },
 ]
 
 export default function FinalApproverConsole({ workflow, currentUser, activePage, onNavigate }) {
@@ -62,6 +61,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
   const [historyPage, setHistoryPage]       = useState(1)
   const [queueSearch, setQueueSearch]       = useState('')
   const [historySearch, setHistorySearch]   = useState('')
+  const [historyFilter, setHistoryFilter]   = useState('All')
 
   const isAuthorizedFinalApprover = currentUser?.email === 'pardeep.sharma@andritz.com'
   const { isNew, markViewed } = useViewedRequests(currentUser.id)
@@ -140,11 +140,15 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
       {/* ── Dashboard ───────────────────────────────────────────────────────── */}
       {activePage === 'dashboard' && (
         <div className="space-y-5">
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-            {METRICS.map(({ label, key, icon: Icon, bg, ic, text, navPage }) => (
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+            {METRICS.map(({ label, key, icon: Icon, bg, ic, text, navPage, historyFilter: hf }) => (
               <button
-                key={key}
-                onClick={() => { if (navPage) onNavigate(navPage) }}
+                key={label}
+                onClick={() => {
+                  if (!navPage) return
+                  if (navPage === 'history' && hf != null) setHistoryFilter(hf)
+                  onNavigate(navPage)
+                }}
                 className={`card px-3 py-3.5 flex flex-col items-center gap-1.5 ${bg} text-center w-full
                             ${navPage ? 'hover:ring-2 hover:ring-slate-600' : 'cursor-default'} transition-all`}
               >
@@ -200,7 +204,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
             {/* Monthly requests chart */}
             <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
               <div className="px-5 py-3.5 border-b border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-900">Requests — Last 6 Months</h3>
+                <h3 className="text-sm font-semibold text-gray-900">Requests Pipeline</h3>
               </div>
               <div className="px-2 py-4">
                 <ResponsiveContainer width="100%" height={280}>
@@ -351,16 +355,36 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
 
       {/* ── History ─────────────────────────────────────────────────────────── */}
       {activePage === 'history' && (() => {
-        const filtered   = history.filter(r => matchesSearch(r, historySearch))
+        const byDecision = history.filter(r => {
+          if (historyFilter === 'All') return true
+          const step = myStepFor(r)
+          return historyFilter === 'Approved' ? step?.decision === 'Approved' : step?.decision === 'Rejected'
+        })
+        const filtered   = byDecision.filter(r => matchesSearch(r, historySearch))
         const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
         const paginated  = filtered.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 select-none">
-              <CheckIcon className="h-4 w-4" />
-              {history.length} Completed
-            </span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+            <div className="flex gap-1.5">
+              {['All', 'Approved', 'Rejected'].map(f => (
+                <button
+                  key={f}
+                  onClick={() => { setHistoryFilter(f); setHistoryPage(1) }}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
+                    historyFilter === f
+                      ? f === 'Rejected'
+                        ? 'bg-red-600 text-white ring-red-600'
+                        : f === 'Approved'
+                        ? 'bg-emerald-600 text-white ring-emerald-600'
+                        : 'bg-slate-700 text-white ring-slate-700'
+                      : 'bg-white text-gray-600 ring-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  {f === 'All' ? `All (${history.length})` : f === 'Approved' ? `Completed (${history.filter(r => myStepFor(r)?.decision === 'Approved').length})` : `Rejected (${history.filter(r => myStepFor(r)?.decision === 'Rejected').length})`}
+                </button>
+              ))}
+            </div>
             <div className="relative flex-1 sm:max-w-xs">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <input
@@ -375,7 +399,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
           {filtered.length === 0 && (
             <div className="card p-12 text-center">
               <ArchiveBoxIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">{historySearch ? 'No results match your search.' : 'No vendor registrations acted upon yet.'}</p>
+              <p className="text-sm text-gray-500">{historySearch || historyFilter !== 'All' ? 'No results match the current filter.' : 'No vendor registrations acted upon yet.'}</p>
             </div>
           )}
           {filtered.length > 0 && (
