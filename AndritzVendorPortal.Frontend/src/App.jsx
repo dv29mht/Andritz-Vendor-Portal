@@ -115,16 +115,16 @@ function OneTimeVendorPage({ workflow, currentUser }) {
       )}
 
       {/* Table */}
-      <div className="card overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-50">
-            <tr>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-200">
               {['Vendor Name', 'Status', 'City', 'GST Number', 'Submitted On', 'Actions'].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 bg-white">
+          <tbody className="divide-y divide-gray-200 bg-white">
             {paginated.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">
@@ -196,7 +196,7 @@ function OneTimeVendorPage({ workflow, currentUser }) {
         </table>
 
         {/* Footer / pagination */}
-        <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+        <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
           <span className="text-xs text-gray-400">
             {oneTime.length === 0
               ? 'No records'

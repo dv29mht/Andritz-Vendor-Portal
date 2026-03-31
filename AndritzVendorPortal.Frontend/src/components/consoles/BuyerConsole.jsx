@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
          ClockIcon, ExclamationCircleIcon, ChevronDownIcon, ArrowUpTrayIcon, ArrowDownTrayIcon, XMarkIcon,
-         ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+         ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { ExclamationTriangleIcon, CheckBadgeIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
          Cell } from 'recharts'
@@ -211,6 +211,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const importFileRef                               = useRef(null)
   const [reqsPage, setReqsPage]                     = useState(1)
   const [revPage, setRevPage]                       = useState(1)
+  const [reqsSearch, setReqsSearch]                 = useState('')
+  const [revSearch, setRevSearch]                   = useState('')
 
   const PAGE_SIZE = 10
 
@@ -467,6 +469,18 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const matchesSearch = (req, q) => {
+    if (!q.trim()) return true
+    const lq = q.toLowerCase()
+    return (
+      req.vendorName?.toLowerCase().includes(lq) ||
+      req.contactPerson?.toLowerCase().includes(lq) ||
+      req.contactInformation?.toLowerCase().includes(lq) ||
+      req.city?.toLowerCase().includes(lq) ||
+      req.locality?.toLowerCase().includes(lq)
+    )
   }
 
   // ── Sub-components ───────────────────────────────────────────────────────────
@@ -747,9 +761,10 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       {/* ── My Requests ─────────────────────────────────────────────────────── */}
       {activePage === 'requests' && (() => {
         const filteredReqs = activeReqs.filter(r => {
-          if (requestsFilter === 'Pending') return r.status !== 'Completed'
-          if (requestsFilter === 'Completed') return r.status === 'Completed'
-          return true
+          const statusMatch = requestsFilter === 'Pending' ? r.status !== 'Completed'
+            : requestsFilter === 'Completed' ? r.status === 'Completed'
+            : true
+          return statusMatch && matchesSearch(r, reqsSearch)
         })
         return (
           <div className="space-y-4">
@@ -774,6 +789,16 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                     </button>
                   ))}
                 </div>
+                <div className="relative">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Search requests…"
+                    value={reqsSearch}
+                    onChange={e => { setReqsSearch(e.target.value); setReqsPage(1) }}
+                    className="form-input pl-9 text-sm"
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -793,9 +818,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             {filteredReqs.length === 0 && (
               <div className="card p-12 text-center text-gray-400">
                 <p className="text-sm">
-                  {activeReqs.length === 0
-                    ? 'No active requests. Click "New Request" to get started.'
-                    : `No ${requestsFilter.toLowerCase()} requests.`}
+                  {reqsSearch
+                    ? 'No results match your search.'
+                    : activeReqs.length === 0
+                      ? 'No active requests. Click "New Request" to get started.'
+                      : `No ${requestsFilter.toLowerCase()} requests.`}
                 </p>
               </div>
             )}
@@ -835,29 +862,41 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       })()}
 
       {/* ── Waiting Revision ────────────────────────────────────────────────── */}
-      {activePage === 'revision' && (
+      {activePage === 'revision' && (() => {
+        const filteredRev = rejectedReqs.filter(r => matchesSearch(r, revSearch))
+        return (
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 ring-1 ring-red-200 text-red-700 text-sm font-semibold px-4 py-2 select-none">
               <ExclamationCircleIcon className="h-4 w-4" />
               {rejectedReqs.length} Awaiting Revision
             </span>
+            <div className="relative flex-1 sm:max-w-xs">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search requests…"
+                value={revSearch}
+                onChange={e => { setRevSearch(e.target.value); setRevPage(1) }}
+                className="form-input pl-9 text-sm"
+              />
+            </div>
           </div>
-          {rejectedReqs.length === 0 && (
+          {filteredRev.length === 0 && (
             <div className="card p-12 text-center">
               <ExclamationCircleIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">No requests waiting for revision.</p>
+              <p className="text-sm text-gray-500">{revSearch ? 'No results match your search.' : 'No requests waiting for revision.'}</p>
             </div>
           )}
           {(() => {
-            const totalPages = Math.max(1, Math.ceil(rejectedReqs.length / PAGE_SIZE))
-            const paginated  = rejectedReqs.slice((revPage - 1) * PAGE_SIZE, revPage * PAGE_SIZE)
+            const totalPages = Math.max(1, Math.ceil(filteredRev.length / PAGE_SIZE))
+            const paginated  = filteredRev.slice((revPage - 1) * PAGE_SIZE, revPage * PAGE_SIZE)
             return (<>
               {paginated.map(req => <RejectedCard key={req.id} req={req} />)}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
                   <span className="text-xs text-gray-400">
-                    Showing {(revPage - 1) * PAGE_SIZE + 1}–{Math.min(revPage * PAGE_SIZE, rejectedReqs.length)} of {rejectedReqs.length}
+                    Showing {(revPage - 1) * PAGE_SIZE + 1}–{Math.min(revPage * PAGE_SIZE, filteredRev.length)} of {filteredRev.length}
                   </span>
                   <div className="flex items-center gap-1.5">
                     <button
@@ -881,7 +920,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             </>)
           })()}
         </div>
-      )}
+        )
+      })()}
 
       {/* ── Modals (always rendered regardless of active page) ──────────────── */}
       {viewingRequest && (

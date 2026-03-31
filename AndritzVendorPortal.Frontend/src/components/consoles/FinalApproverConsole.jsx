@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { CheckBadgeIcon, StarIcon } from '@heroicons/react/24/solid'
 import { XMarkIcon, EyeIcon, CheckIcon, ClockIcon, ArchiveBoxIcon,
          UsersIcon, ArrowPathIcon, NoSymbolIcon, TrophyIcon, BuildingOfficeIcon,
-         ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+         ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 
 const PAGE_SIZE = 10
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts'
@@ -55,6 +55,8 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
   const [toast, setToast]                   = useState(null)
   const [queuePage, setQueuePage]           = useState(1)
   const [historyPage, setHistoryPage]       = useState(1)
+  const [queueSearch, setQueueSearch]       = useState('')
+  const [historySearch, setHistorySearch]   = useState('')
 
   const isAuthorizedFinalApprover = currentUser?.email === 'pardeep.sharma@andritz.com'
   const { isNew, markViewed } = useViewedRequests(currentUser.id)
@@ -98,6 +100,18 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
   }
 
   const myStepFor = (req) => req.approvalSteps.find(s => s.approverUserId === currentUser.id)
+
+  const matchesSearch = (req, q) => {
+    if (!q.trim()) return true
+    const lq = q.toLowerCase()
+    return (
+      req.vendorName?.toLowerCase().includes(lq) ||
+      req.contactInformation?.toLowerCase().includes(lq) ||
+      req.city?.toLowerCase().includes(lq) ||
+      req.locality?.toLowerCase().includes(lq) ||
+      req.createdByName?.toLowerCase().includes(lq)
+    )
+  }
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
@@ -227,75 +241,102 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
 
       {/* ── Pending Queue ───────────────────────────────────────────────────── */}
       {activePage === 'pending' && (() => {
-        const totalPages = Math.max(1, Math.ceil(queue.length / PAGE_SIZE))
-        const paginated  = queue.slice((queuePage - 1) * PAGE_SIZE, queuePage * PAGE_SIZE)
+        const filtered   = queue.filter(r => matchesSearch(r, queueSearch))
+        const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+        const paginated  = filtered.slice((queuePage - 1) * PAGE_SIZE, queuePage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          {queue.length === 0 && (
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search by vendor, contact, city…"
+              value={queueSearch}
+              onChange={e => { setQueueSearch(e.target.value); setQueuePage(1) }}
+              className="form-input pl-9 text-sm"
+            />
+          </div>
+          {filtered.length === 0 && (
             <div className="card p-12 text-center">
               <CheckBadgeIcon className="h-10 w-10 text-emerald-400 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">No requests awaiting your approval.</p>
+              <p className="text-sm text-gray-500">{queueSearch ? 'No results match your search.' : 'No requests awaiting your approval.'}</p>
             </div>
           )}
-          {paginated.map(req => {
-            const intermediateSteps = req.approvalSteps.filter(s => !s.isFinalApproval)
-            const allIntermediate   = intermediateSteps.every(s => s.decision === 'Approved')
-            return (
-              <div key={req.id} className="card overflow-hidden">
-                <div className="bg-emerald-50 border-b border-emerald-100 px-5 py-2.5 flex items-center gap-3">
-                  <CheckBadgeIcon className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                  <p className="text-xs text-emerald-800 font-medium">
-                    {allIntermediate
-                      ? `All ${intermediateSteps.length} intermediate approval${intermediateSteps.length !== 1 ? 's' : ''} completed`
-                      : 'Some intermediate approvals still pending'}
-                  </p>
-                </div>
-                <div className="px-5 py-4">
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="font-semibold text-gray-900">{req.vendorName}</h2>
-                        {req.revisionNo > 0 && (
-                          <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
-                        )}
-                        {isNew(req) && (
-                          <span className="text-xs bg-indigo-500 text-white font-bold px-2 py-0.5 rounded-full">NEW</span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1">{req.contactInformation}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{req.addressDetails} · {req.city}, {req.locality}</p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <button className="btn-secondary" onClick={() => { markViewed(req); setViewingRequest(req) }}>
-                        <EyeIcon className="h-4 w-4" />
-                        View
-                      </button>
-                      {isAuthorizedFinalApprover && (
-                        <button
-                          className="inline-flex items-center gap-1.5 rounded-md bg-[#096fb3] hover:bg-[#075d99] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
-                          onClick={() => openReview(req)}
-                        >
-                          <StarIcon className="h-4 w-4" />
-                          Final Review
-                        </button>
-                      )}
-                    </div>
+          {filtered.length > 0 && (
+            <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Intermediates</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Submitted On</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {paginated.map(req => {
+                    const intermediateSteps = req.approvalSteps.filter(s => !s.isFinalApproval)
+                    const allIntermediate   = intermediateSteps.every(s => s.decision === 'Approved')
+                    return (
+                      <tr key={req.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3.5 align-top">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-gray-900">{req.vendorName}</p>
+                            {req.revisionNo > 0 && (
+                              <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
+                            )}
+                            {isNew(req) && (
+                              <span className="text-xs bg-indigo-500 text-white font-bold px-2 py-0.5 rounded-full">NEW</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-400 mt-0.5">{req.contactInformation}</p>
+                        </td>
+                        <td className="px-4 py-3.5 align-top text-xs text-gray-500">{req.city}, {req.locality}</td>
+                        <td className="px-4 py-3.5 align-top">
+                          <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ring-1 ring-inset ${
+                            allIntermediate
+                              ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                              : 'bg-amber-50 text-amber-700 ring-amber-200'
+                          }`}>
+                            <CheckBadgeIcon className="h-3 w-3" />
+                            {allIntermediate ? 'All approved' : 'In progress'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 align-top text-xs text-gray-400 whitespace-nowrap">
+                          {new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                        </td>
+                        <td className="px-4 py-3.5 align-middle">
+                          <div className="flex items-center gap-1.5">
+                            <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => { markViewed(req); setViewingRequest(req) }}>
+                              <EyeIcon className="h-3.5 w-3.5" />
+                              View
+                            </button>
+                            {isAuthorizedFinalApprover && (
+                              <button
+                                className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-semibold text-white bg-[#096fb3] hover:bg-[#075d99] transition-colors"
+                                onClick={() => openReview(req)}
+                              >
+                                <StarIcon className="h-3.5 w-3.5" />
+                                Final Review
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+                <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (queuePage - 1) * PAGE_SIZE + 1}–{Math.min(queuePage * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={queuePage === 1} onClick={() => setQueuePage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
+                    <span className="text-xs text-gray-500 px-1">Page {queuePage} of {totalPages}</span>
+                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={queuePage === totalPages} onClick={() => setQueuePage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
                   </div>
-                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-amber-50 ring-1 ring-amber-200 px-3 py-2">
-                    <span className="text-xs text-amber-700 font-medium">Awaiting SAP Vendor Code entry.</span>
-                    <span className="text-xs text-amber-500">Click "Final Review" to enter the code and complete.</span>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
-              <span className="text-xs text-gray-400">Showing {(queuePage - 1) * PAGE_SIZE + 1}–{Math.min(queuePage * PAGE_SIZE, queue.length)} of {queue.length}</span>
-              <div className="flex items-center gap-1.5">
-                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={queuePage === 1} onClick={() => setQueuePage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
-                <span className="text-xs text-gray-500 px-1">Page {queuePage} of {totalPages}</span>
-                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={queuePage === totalPages} onClick={() => setQueuePage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
+                )}
               </div>
             </div>
           )}
@@ -305,67 +346,95 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
 
       {/* ── History ─────────────────────────────────────────────────────────── */}
       {activePage === 'history' && (() => {
-        const totalPages = Math.max(1, Math.ceil(history.length / PAGE_SIZE))
-        const paginated  = history.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE)
+        const filtered   = history.filter(r => matchesSearch(r, historySearch))
+        const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+        const paginated  = filtered.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 select-none">
               <CheckIcon className="h-4 w-4" />
               {history.length} Completed
             </span>
+            <div className="relative flex-1 sm:max-w-xs">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search by vendor, contact, city…"
+                value={historySearch}
+                onChange={e => { setHistorySearch(e.target.value); setHistoryPage(1) }}
+                className="form-input pl-9 text-sm"
+              />
+            </div>
           </div>
-          {history.length === 0 && (
+          {filtered.length === 0 && (
             <div className="card p-12 text-center">
               <ArchiveBoxIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">No vendor registrations acted upon yet.</p>
+              <p className="text-sm text-gray-500">{historySearch ? 'No results match your search.' : 'No vendor registrations acted upon yet.'}</p>
             </div>
           )}
-          {paginated.map(req => {
-            const step       = myStepFor(req)
-            const isApproved = step?.decision === 'Approved'
-            return (
-              <div key={req.id} className="card px-5 py-4">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="font-semibold text-gray-900">{req.vendorName}</h2>
-                      <StatusBadge status={req.status} />
-                      {req.revisionNo > 0 && (
-                        <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
-                      )}
-                      <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ring-1 ring-inset ${
-                        isApproved ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-red-50 text-red-700 ring-red-200'
-                      }`}>
-                        {isApproved ? <CheckIcon className="h-3 w-3" /> : <XMarkIcon className="h-3 w-3" />}
-                        Final {isApproved ? 'approved' : 'rejected'}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">{req.contactInformation}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{req.addressDetails} · {req.city}, {req.locality}</p>
-                    {req.vendorCode && <p className="text-xs text-emerald-600 font-mono mt-1">Vendor Code: {req.vendorCode}</p>}
-                    {step?.comment && <p className="text-xs text-gray-500 mt-1 italic">Comment: "{step.comment}"</p>}
-                    {step?.decidedAt && (
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        Decided {new Date(step.decidedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
-                      </p>
-                    )}
+          {filtered.length > 0 && (
+            <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">SAP Code</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Decision</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Decided On</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {paginated.map(req => {
+                    const step       = myStepFor(req)
+                    const isApproved = step?.decision === 'Approved'
+                    return (
+                      <tr key={req.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3.5 align-top">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-gray-900">{req.vendorName}</p>
+                            <StatusBadge status={req.status} />
+                            {req.revisionNo > 0 && (
+                              <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
+                            )}
+                          </div>
+                          {step?.comment && <p className="text-xs text-gray-400 mt-0.5 italic">"{step.comment}"</p>}
+                        </td>
+                        <td className="px-4 py-3.5 align-top text-xs text-gray-500">{req.city}, {req.locality}</td>
+                        <td className="px-4 py-3.5 align-top font-mono text-xs text-emerald-600">{req.vendorCode || '—'}</td>
+                        <td className="px-4 py-3.5 align-top">
+                          <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ring-1 ring-inset ${
+                            isApproved ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-red-50 text-red-700 ring-red-200'
+                          }`}>
+                            {isApproved ? <CheckIcon className="h-3 w-3" /> : <XMarkIcon className="h-3 w-3" />}
+                            Final {isApproved ? 'approved' : 'rejected'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 align-top text-xs text-gray-400 whitespace-nowrap">
+                          {step?.decidedAt ? new Date(step.decidedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—'}
+                        </td>
+                        <td className="px-4 py-3.5 align-middle">
+                          <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
+                            <EyeIcon className="h-3.5 w-3.5" />
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+                <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (historyPage - 1) * PAGE_SIZE + 1}–{Math.min(historyPage * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === 1} onClick={() => setHistoryPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
+                    <span className="text-xs text-gray-500 px-1">Page {historyPage} of {totalPages}</span>
+                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === totalPages} onClick={() => setHistoryPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
                   </div>
-                  <button className="btn-secondary flex-shrink-0" onClick={() => setViewingRequest(req)}>
-                    <EyeIcon className="h-4 w-4" />
-                    View
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
-              <span className="text-xs text-gray-400">Showing {(historyPage - 1) * PAGE_SIZE + 1}–{Math.min(historyPage * PAGE_SIZE, history.length)} of {history.length}</span>
-              <div className="flex items-center gap-1.5">
-                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === 1} onClick={() => setHistoryPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
-                <span className="text-xs text-gray-500 px-1">Page {historyPage} of {totalPages}</span>
-                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === totalPages} onClick={() => setHistoryPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
+                )}
               </div>
             </div>
           )}

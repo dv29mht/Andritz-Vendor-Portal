@@ -683,10 +683,10 @@ export default function UserManagement() {
       </div>
 
       {/* Users table */}
-      <div className="card overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-50">
-            <tr>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-200">
               {['Full Name', 'Designation', 'Email', 'Role(s)', 'Actions'].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   {h}
@@ -694,7 +694,7 @@ export default function UserManagement() {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 bg-white">
+          <tbody className="divide-y divide-gray-200 bg-white">
             {loading && (
               <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-400">Loading users…</td></tr>
             )}
@@ -756,7 +756,7 @@ export default function UserManagement() {
             })}
           </tbody>
         </table>
-        <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-400 flex items-center justify-between flex-wrap gap-2">
+        <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 text-xs text-gray-400 flex items-center justify-between flex-wrap gap-2">
           <span className="flex items-center gap-3">
             {(() => {
               const PAGE_SIZE  = 10
@@ -799,13 +799,13 @@ export default function UserManagement() {
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Archived Accounts ({archivedUsers.length})</p>
           </div>
           <table className="w-full text-sm">
-            <thead><tr className="border-b border-gray-100">
+            <thead><tr className="bg-gray-50 border-b border-gray-200">
               <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500">Name</th>
               <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500">Email</th>
               <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500">Role</th>
               <th className="px-4 py-2.5" />
             </tr></thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-200">
               {archivedUsers.map(u => {
                 const role = u.roles[0]
                 return (

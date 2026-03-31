@@ -364,16 +364,16 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 View all →
               </button>
             </div>
-            <table className="w-full divide-y divide-gray-100 text-sm">
-              <thead className="bg-gray-50">
-                <tr>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
                   <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-40">Buyer</th>
                   <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-36">Status</th>
                   <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28 whitespace-nowrap">Updated</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 bg-white">
+              <tbody className="divide-y divide-gray-200 bg-white">
                 {recentRequests.length === 0 && (
                   <tr><td colSpan={4} className="px-5 py-8 text-center text-sm text-gray-400">No requests yet.</td></tr>
                 )}
@@ -446,16 +446,16 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
             const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
             const paginated  = visible.slice((reqPage - 1) * PAGE_SIZE, reqPage * PAGE_SIZE)
             return (
-          <div className="card overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50">
-                <tr>
+          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
                   {['ID', 'Vendor Name', 'Buyer', 'City', 'Revision', 'Status', 'Updated', 'Actions'].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 bg-white">
+              <tbody className="divide-y divide-gray-200 bg-white">
                 {paginated.length === 0 && (
                   <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-400">No requests match the current filter.</td></tr>
                 )}
@@ -532,7 +532,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 ))}
               </tbody>
             </table>
-            <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+            <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
               <span className="text-xs text-gray-400">
                 {visible.length === 0
                   ? 'No requests'

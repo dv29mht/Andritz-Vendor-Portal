@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CheckIcon, XMarkIcon, EyeIcon, ClockIcon, ArchiveBoxIcon,
-         ExclamationCircleIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+         ExclamationCircleIcon, ChevronLeftIcon, ChevronRightIcon,
+         MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 
 const PAGE_SIZE = 10
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
@@ -35,6 +36,9 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
   const [pendingPage, setPendingPage]       = useState(1)
   const [waitingPage, setWaitingPage]       = useState(1)
   const [historyPage, setHistoryPage]       = useState(1)
+  const [pendingSearch, setPendingSearch]   = useState('')
+  const [waitingSearch, setWaitingSearch]   = useState('')
+  const [historySearch, setHistorySearch]   = useState('')
 
   const { isNew, markViewed } = useViewedRequests(currentUser.id)
 
@@ -76,6 +80,18 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
   }
 
   const myStepFor = (req) => req.approvalSteps.find(s => s.approverUserId === currentUser.id)
+
+  const matchesSearch = (req, q) => {
+    if (!q.trim()) return true
+    const lq = q.toLowerCase()
+    return (
+      req.vendorName?.toLowerCase().includes(lq) ||
+      req.contactInformation?.toLowerCase().includes(lq) ||
+      req.city?.toLowerCase().includes(lq) ||
+      req.locality?.toLowerCase().includes(lq) ||
+      req.createdByName?.toLowerCase().includes(lq)
+    )
+  }
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
@@ -202,14 +218,25 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
 
       {/* ── Pending Approval ────────────────────────────────────────────────── */}
       {activePage === 'pending' && (() => {
-        const totalPages = Math.max(1, Math.ceil(pending.length / PAGE_SIZE))
-        const paginated  = pending.slice((pendingPage - 1) * PAGE_SIZE, pendingPage * PAGE_SIZE)
+        const filtered   = pending.filter(r => matchesSearch(r, pendingSearch))
+        const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+        const paginated  = filtered.slice((pendingPage - 1) * PAGE_SIZE, pendingPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          {pending.length === 0 && (
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search by vendor, contact, city…"
+              value={pendingSearch}
+              onChange={e => { setPendingSearch(e.target.value); setPendingPage(1) }}
+              className="form-input pl-9 text-sm"
+            />
+          </div>
+          {filtered.length === 0 && (
             <div className="card p-12 text-center">
               <CheckIcon className="h-10 w-10 text-emerald-400 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">All caught up — no requests pending your review.</p>
+              <p className="text-sm text-gray-500">{pendingSearch ? 'No results match your search.' : 'All caught up — no requests pending your review.'}</p>
             </div>
           )}
           {paginated.map(req => (
@@ -249,7 +276,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
           ))}
           {totalPages > 1 && (
             <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
-              <span className="text-xs text-gray-400">Showing {(pendingPage - 1) * PAGE_SIZE + 1}–{Math.min(pendingPage * PAGE_SIZE, pending.length)} of {pending.length}</span>
+              <span className="text-xs text-gray-400">Showing {(pendingPage - 1) * PAGE_SIZE + 1}–{Math.min(pendingPage * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
               <div className="flex items-center gap-1.5">
                 <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={pendingPage === 1} onClick={() => setPendingPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
                 <span className="text-xs text-gray-500 px-1">Page {pendingPage} of {totalPages}</span>
@@ -263,14 +290,25 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
 
       {/* ── Waiting Revision ────────────────────────────────────────────────── */}
       {activePage === 'waiting' && (() => {
-        const totalPages = Math.max(1, Math.ceil(waitingRevision.length / PAGE_SIZE))
-        const paginated  = waitingRevision.slice((waitingPage - 1) * PAGE_SIZE, waitingPage * PAGE_SIZE)
+        const filtered   = waitingRevision.filter(r => matchesSearch(r, waitingSearch))
+        const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+        const paginated  = filtered.slice((waitingPage - 1) * PAGE_SIZE, waitingPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          {waitingRevision.length === 0 && (
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search by vendor, contact, city…"
+              value={waitingSearch}
+              onChange={e => { setWaitingSearch(e.target.value); setWaitingPage(1) }}
+              className="form-input pl-9 text-sm"
+            />
+          </div>
+          {filtered.length === 0 && (
             <div className="card p-12 text-center">
               <ExclamationCircleIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">No rejected requests waiting for buyer revision.</p>
+              <p className="text-sm text-gray-500">{waitingSearch ? 'No results match your search.' : 'No rejected requests waiting for buyer revision.'}</p>
             </div>
           )}
           {paginated.map(req => {
@@ -301,7 +339,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
           })}
           {totalPages > 1 && (
             <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
-              <span className="text-xs text-gray-400">Showing {(waitingPage - 1) * PAGE_SIZE + 1}–{Math.min(waitingPage * PAGE_SIZE, waitingRevision.length)} of {waitingRevision.length}</span>
+              <span className="text-xs text-gray-400">Showing {(waitingPage - 1) * PAGE_SIZE + 1}–{Math.min(waitingPage * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
               <div className="flex items-center gap-1.5">
                 <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={waitingPage === 1} onClick={() => setWaitingPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
                 <span className="text-xs text-gray-500 px-1">Page {waitingPage} of {totalPages}</span>
@@ -315,20 +353,31 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
 
       {/* ── History ─────────────────────────────────────────────────────────── */}
       {activePage === 'history' && (() => {
-        const totalPages = Math.max(1, Math.ceil(history.length / PAGE_SIZE))
-        const paginated  = history.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE)
+        const filtered   = history.filter(r => matchesSearch(r, historySearch))
+        const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+        const paginated  = filtered.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 select-none">
               <CheckIcon className="h-4 w-4" />
               {history.length} Approved
             </span>
+            <div className="relative flex-1 sm:max-w-xs">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search by vendor, contact, city…"
+                value={historySearch}
+                onChange={e => { setHistorySearch(e.target.value); setHistoryPage(1) }}
+                className="form-input pl-9 text-sm"
+              />
+            </div>
           </div>
-          {history.length === 0 && (
+          {filtered.length === 0 && (
             <div className="card p-12 text-center">
               <ArchiveBoxIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">No requests approved yet.</p>
+              <p className="text-sm text-gray-500">{historySearch ? 'No results match your search.' : 'No requests approved yet.'}</p>
             </div>
           )}
           {paginated.map(req => {
@@ -365,7 +414,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
           })}
           {totalPages > 1 && (
             <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
-              <span className="text-xs text-gray-400">Showing {(historyPage - 1) * PAGE_SIZE + 1}–{Math.min(historyPage * PAGE_SIZE, history.length)} of {history.length}</span>
+              <span className="text-xs text-gray-400">Showing {(historyPage - 1) * PAGE_SIZE + 1}–{Math.min(historyPage * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
               <div className="flex items-center gap-1.5">
                 <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === 1} onClick={() => setHistoryPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
                 <span className="text-xs text-gray-500 px-1">Page {historyPage} of {totalPages}</span>
