@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ChevronLeftIcon, ChevronRightIcon, ArchiveBoxIcon, ArrowPathIcon, EyeIcon } from '@heroicons/react/24/outline'
+import { ChevronLeftIcon, ChevronRightIcon, ArchiveBoxIcon, ArrowPathIcon, EyeIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import api from './services/api'
 import { useAuth } from './contexts/AuthContext'
 import { ROLES } from './constants/roles'
@@ -30,10 +30,17 @@ function OneTimeVendorPage({ workflow, currentUser }) {
   const [restoreLoading,   setRestoreLoading]   = useState(false)
   const [restoreError,     setRestoreError]     = useState(null)
 
+  const [search, setSearch] = useState('')
+
   const archivedCount = workflow.requests.filter(r => r.isOneTimeVendor && r.isArchived && r.status === 'Completed').length
   const oneTime    = workflow.requests.filter(r => r.isOneTimeVendor && (showArchived ? r.isArchived : !r.isArchived) && r.status === 'Completed')
-  const totalPages = Math.max(1, Math.ceil(oneTime.length / OTV_PAGE_SIZE))
-  const paginated  = oneTime.slice((page - 1) * OTV_PAGE_SIZE, page * OTV_PAGE_SIZE)
+  const filtered   = oneTime.filter(r => {
+    const q = search.toLowerCase()
+    return !q || r.vendorName?.toLowerCase().includes(q) || r.gstNumber?.toLowerCase().includes(q)
+      || r.city?.toLowerCase().includes(q) || r.contactPerson?.toLowerCase().includes(q)
+  })
+  const totalPages = Math.max(1, Math.ceil(filtered.length / OTV_PAGE_SIZE))
+  const paginated  = filtered.slice((page - 1) * OTV_PAGE_SIZE, page * OTV_PAGE_SIZE)
 
   const handleRestore = async () => {
     if (!restoring) return
@@ -108,6 +115,16 @@ function OneTimeVendorPage({ workflow, currentUser }) {
             )}
           </div>
         </div>
+        <div className="relative">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search vendor, GST, city…"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1) }}
+            className="form-input pl-9 text-sm max-w-xs"
+          />
+        </div>
       </div>
 
       {moveError && (
@@ -118,7 +135,7 @@ function OneTimeVendorPage({ workflow, currentUser }) {
       <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
+            <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
               {['Vendor Name', 'Status', 'City', 'GST Number', 'Submitted On', 'Actions'].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
               ))}
@@ -133,7 +150,7 @@ function OneTimeVendorPage({ workflow, currentUser }) {
               </tr>
             )}
             {paginated.map(req => (
-              <tr key={req.id} className="hover:bg-gray-50 transition-colors">
+              <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
                 <td className="px-4 py-3">
                   <p className="font-medium text-gray-900">{req.vendorName}</p>
                   <p className="text-xs text-gray-400">{req.contactPerson}</p>
@@ -198,9 +215,9 @@ function OneTimeVendorPage({ workflow, currentUser }) {
         {/* Footer / pagination */}
         <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
           <span className="text-xs text-gray-400">
-            {oneTime.length === 0
+            {filtered.length === 0
               ? 'No records'
-              : `Showing ${(page - 1) * OTV_PAGE_SIZE + 1}–${Math.min(page * OTV_PAGE_SIZE, oneTime.length)} of ${oneTime.length}`}
+              : `Showing ${(page - 1) * OTV_PAGE_SIZE + 1}–${Math.min(page * OTV_PAGE_SIZE, filtered.length)} of ${filtered.length}`}
           </span>
           {totalPages > 1 && (
             <div className="flex items-center gap-1.5">

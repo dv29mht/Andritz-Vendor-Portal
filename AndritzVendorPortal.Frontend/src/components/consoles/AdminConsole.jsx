@@ -366,7 +366,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
+                <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
                   <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
                   <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-40">Buyer</th>
                   <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-36">Status</th>
@@ -378,14 +378,14 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                   <tr><td colSpan={4} className="px-5 py-8 text-center text-sm text-gray-400">No requests yet.</td></tr>
                 )}
                 {recentRequests.map(req => (
-                  <tr key={req.id} className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => setViewingRequest(req)}>
-                    <td className="px-5 py-3.5 align-top">
+                  <tr key={req.id} className="hover:bg-gray-50 cursor-pointer transition-colors divide-x divide-gray-200" onClick={() => setViewingRequest(req)}>
+                    <td className="px-5 py-3.5">
                       <p className="font-medium text-gray-900 leading-snug">{req.vendorName}</p>
                       {req.vendorCode && <p className="text-xs text-emerald-600 font-mono mt-0.5">{req.vendorCode}</p>}
                     </td>
-                    <td className="px-5 py-3.5 align-top text-gray-500 whitespace-nowrap">{req.createdByName}</td>
-                    <td className="px-5 py-3.5 align-top"><StatusBadge status={req.status} /></td>
-                    <td className="px-5 py-3.5 align-top text-gray-400 text-xs whitespace-nowrap">{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</td>
+                    <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap">{req.createdByName}</td>
+                    <td className="px-5 py-3.5"><StatusBadge status={req.status} /></td>
+                    <td className="px-5 py-3.5 text-gray-400 text-xs whitespace-nowrap">{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</td>
                   </tr>
                 ))}
               </tbody>
@@ -449,7 +449,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
           <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
+                <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
                   {['ID', 'Vendor Name', 'Buyer', 'City', 'Revision', 'Status', 'Updated', 'Actions'].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
@@ -460,25 +460,25 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                   <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-400">No requests match the current filter.</td></tr>
                 )}
                 {paginated.map(req => (
-                  <tr key={req.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3.5 align-top font-mono text-xs text-gray-400">#{req.id}</td>
-                    <td className="px-4 py-3.5 align-top">
+                  <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
+                    <td className="px-4 py-3.5 font-mono text-xs text-gray-400">#{req.id}</td>
+                    <td className="px-4 py-3.5">
                       <p className="font-medium text-gray-900 whitespace-nowrap leading-snug">{req.vendorName}</p>
                       {req.vendorCode && <p className="text-xs text-emerald-600 font-mono mt-0.5">{req.vendorCode}</p>}
                     </td>
-                    <td className="px-4 py-3.5 align-top text-gray-600 whitespace-nowrap">{req.createdByName}</td>
-                    <td className="px-4 py-3.5 align-top text-gray-500 whitespace-nowrap">{req.city}, {req.locality}</td>
-                    <td className="px-4 py-3.5 align-top text-center">
+                    <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{req.createdByName}</td>
+                    <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">{req.city}, {req.locality}</td>
+                    <td className="px-4 py-3.5 text-center">
                       {req.revisionNo > 0
                         ? <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
                         : <span className="text-xs text-gray-400">—</span>
                       }
                     </td>
-                    <td className="px-4 py-3.5 align-top"><StatusBadge status={req.status} /></td>
-                    <td className="px-4 py-3.5 align-top text-gray-400 whitespace-nowrap text-xs">
+                    <td className="px-4 py-3.5"><StatusBadge status={req.status} /></td>
+                    <td className="px-4 py-3.5 text-gray-400 whitespace-nowrap text-xs">
                       {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
                     </td>
-                    <td className="px-4 py-3.5 align-middle">
+                    <td className="px-4 py-3.5">
                       {req.isArchived ? (
                         <div className="flex items-center gap-1">
                           <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>

@@ -1,6 +1,5 @@
 import { CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/solid'
 import { UserMinusIcon } from '@heroicons/react/24/outline'
-import { useAuth } from '../../contexts/AuthContext'
 
 const iconMap = {
   Approved: <CheckCircleIcon className="h-5 w-5 text-emerald-500" />,
@@ -11,10 +10,6 @@ const iconMap = {
 const deletedIcon = <CheckCircleIcon className="h-5 w-5 text-gray-300" />
 
 export default function ApprovalTimeline({ steps }) {
-  const { currentUser } = useAuth()
-  const role = currentUser?.role ?? ''
-  const canSeeDeletedReason = role === 'Admin' || role === 'FinalApprover'
-
   const sorted = [...steps].sort((a, b) => a.stepOrder - b.stepOrder)
 
   return (
@@ -34,14 +29,15 @@ export default function ApprovalTimeline({ steps }) {
                     {step.approverName}
                   </span>
                   {step.isFinalApproval && !isDeleted && (
-                    <span className="text-xs bg-[#096fb3]/10 text-[#096fb3] ring-1 ring-[#096fb3]/20 ring-inset px-2 py-0.5 rounded-full">
-                      ⭐ Final Approver
+                    <span className="inline-flex items-center gap-1.5 text-xs bg-[#096fb3]/10 text-[#096fb3] ring-1 ring-[#096fb3]/20 ring-inset px-2 py-0.5 rounded-full whitespace-nowrap">
+                      <span>⭐</span>
+                      <span>Final Approver</span>
                     </span>
                   )}
                   {isDeleted && (
-                    <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-500 ring-1 ring-gray-200 ring-inset px-2 py-0.5 rounded-full">
+                    <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-500 ring-1 ring-gray-200 ring-inset px-2 py-0.5 rounded-full whitespace-nowrap">
                       <UserMinusIcon className="h-3 w-3" />
-                      {canSeeDeletedReason ? 'User deleted by Admin' : 'Completed'}
+                      User deleted by Admin
                     </span>
                   )}
                 </div>

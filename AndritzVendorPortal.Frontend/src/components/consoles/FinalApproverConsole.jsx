@@ -266,7 +266,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
             <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
+                  <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Intermediates</th>
@@ -279,8 +279,8 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                     const intermediateSteps = req.approvalSteps.filter(s => !s.isFinalApproval)
                     const allIntermediate   = intermediateSteps.every(s => s.decision === 'Approved')
                     return (
-                      <tr key={req.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3.5 align-top">
+                      <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
+                        <td className="px-4 py-3.5">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium text-gray-900">{req.vendorName}</p>
                             {req.revisionNo > 0 && (
@@ -292,8 +292,8 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                           </div>
                           <p className="text-xs text-gray-400 mt-0.5">{req.contactInformation}</p>
                         </td>
-                        <td className="px-4 py-3.5 align-top text-xs text-gray-500">{req.city}, {req.locality}</td>
-                        <td className="px-4 py-3.5 align-top">
+                        <td className="px-4 py-3.5 text-xs text-gray-500">{req.city}, {req.locality}</td>
+                        <td className="px-4 py-3.5">
                           <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ring-1 ring-inset ${
                             allIntermediate
                               ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
@@ -303,10 +303,10 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                             {allIntermediate ? 'All approved' : 'In progress'}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 align-top text-xs text-gray-400 whitespace-nowrap">
+                        <td className="px-4 py-3.5 text-xs text-gray-400 whitespace-nowrap">
                           {new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
                         </td>
-                        <td className="px-4 py-3.5 align-middle">
+                        <td className="px-4 py-3.5">
                           <div className="flex items-center gap-1.5">
                             <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => { markViewed(req); setViewingRequest(req) }}>
                               <EyeIcon className="h-3.5 w-3.5" />
@@ -377,7 +377,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
             <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
+                  <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">SAP Code</th>
@@ -391,8 +391,8 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                     const step       = myStepFor(req)
                     const isApproved = step?.decision === 'Approved'
                     return (
-                      <tr key={req.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3.5 align-top">
+                      <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
+                        <td className="px-4 py-3.5">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium text-gray-900">{req.vendorName}</p>
                             <StatusBadge status={req.status} />
@@ -402,20 +402,20 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                           </div>
                           {step?.comment && <p className="text-xs text-gray-400 mt-0.5 italic">"{step.comment}"</p>}
                         </td>
-                        <td className="px-4 py-3.5 align-top text-xs text-gray-500">{req.city}, {req.locality}</td>
-                        <td className="px-4 py-3.5 align-top font-mono text-xs text-emerald-600">{req.vendorCode || '—'}</td>
-                        <td className="px-4 py-3.5 align-top">
-                          <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ring-1 ring-inset ${
+                        <td className="px-4 py-3.5 text-xs text-gray-500">{req.city}, {req.locality}</td>
+                        <td className="px-4 py-3.5 font-mono text-xs text-emerald-600">{req.vendorCode || '—'}</td>
+                        <td className="px-4 py-3.5">
+                          <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ring-1 ring-inset whitespace-nowrap ${
                             isApproved ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-red-50 text-red-700 ring-red-200'
                           }`}>
                             {isApproved ? <CheckIcon className="h-3 w-3" /> : <XMarkIcon className="h-3 w-3" />}
                             Final {isApproved ? 'approved' : 'rejected'}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 align-top text-xs text-gray-400 whitespace-nowrap">
+                        <td className="px-4 py-3.5 text-xs text-gray-400 whitespace-nowrap">
                           {step?.decidedAt ? new Date(step.decidedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—'}
                         </td>
-                        <td className="px-4 py-3.5 align-middle">
+                        <td className="px-4 py-3.5">
                           <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
                             <EyeIcon className="h-3.5 w-3.5" />
                             View

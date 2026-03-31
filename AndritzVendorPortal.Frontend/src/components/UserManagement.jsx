@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline'
 import api from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
+import Toast from './shared/Toast'
 
 const ROLES = ['Buyer', 'Approver']
 
@@ -392,7 +393,7 @@ export default function UserManagement() {
   const [saving, setSaving]             = useState(false)
   const [syncing, setSyncing]           = useState(false)
   const [syncMsg, setSyncMsg]           = useState(null)
-  const [successMsg, setSuccessMsg]     = useState(null)
+  const [toast, setToast]               = useState(null)
   const [copiedPwd, setCopiedPwd]       = useState(false)
   const [detailUser, setDetailUser]     = useState(null)
   const [page,       setPage]           = useState(1)
@@ -430,7 +431,7 @@ export default function UserManagement() {
   const handleFormChange = (field, value) => {
     setForm(f => ({ ...f, [field]: value }))
     setFormErrors([])
-    setSuccessMsg(null)
+    setToast(null)
   }
 
   const handleAddUser = async (e) => {
@@ -460,8 +461,7 @@ export default function UserManagement() {
       setForm(EMPTY_FORM)
       setShowForm(false)
       setCopiedPwd(false)
-      setSuccessMsg({ name: data.fullName, email: data.email, designation: data.designation,
-                      role: data.roles[0], password: form.password.trim() })
+      setToast({ type: 'success', title: 'User added', body: `${data.fullName} has been added as ${ROLE_DISPLAY[data.roles[0]] ?? data.roles[0]}.` })
     } catch (err) {
       const detail = err.response?.data
       if (Array.isArray(detail))           setFormErrors(detail)
@@ -503,7 +503,10 @@ export default function UserManagement() {
   const handleUserDeleted = (id) => {
     const deleted = users.find(u => u.id === id)
     setUsers(prev => prev.filter(u => u.id !== id))
-    if (deleted) setArchivedUsers(prev => [...prev, deleted].sort((a, b) => a.fullName.localeCompare(b.fullName)))
+    if (deleted) {
+      setArchivedUsers(prev => [...prev, deleted].sort((a, b) => a.fullName.localeCompare(b.fullName)))
+      setToast({ type: 'success', title: 'User archived', body: `${deleted.fullName} has been successfully archived.` })
+    }
   }
 
   const handleRestore = async (u) => {
@@ -511,10 +514,9 @@ export default function UserManagement() {
       const { data: restored } = await api.put(`/users/${u.id}/restore`)
       setArchivedUsers(prev => prev.filter(a => a.id !== u.id))
       setUsers(prev => [...prev, restored].sort((a, b) => a.fullName.localeCompare(b.fullName)))
-      setSuccessMsg(`${restored.fullName} has been restored.`)
+      setToast({ type: 'success', title: 'User restored', body: `${restored.fullName} has been successfully restored.` })
     } catch (err) {
-      setSuccessMsg(null)
-      alert(err?.response?.data || 'Failed to restore user.')
+      setToast({ type: 'error', title: 'Restore failed', body: err?.response?.data || 'Failed to restore user.' })
     }
   }
 
@@ -532,7 +534,7 @@ export default function UserManagement() {
             {syncing ? 'Syncing…' : 'Sync from AD'}
           </button>
           <button
-            onClick={() => { setShowForm(true); setFormErrors([]); setSuccessMsg(null) }}
+            onClick={() => { setShowForm(true); setFormErrors([]) }}
             className="btn-primary"
           >
             <UserPlusIcon className="h-4 w-4" />
@@ -553,35 +555,6 @@ export default function UserManagement() {
         </div>
       )}
 
-      {/* Success banner */}
-      {successMsg && (
-        <div className="mb-4 rounded-lg bg-emerald-50 ring-1 ring-inset ring-emerald-200 px-4 py-3">
-          <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800 mb-1">
-            <CheckIcon className="h-4 w-4 flex-shrink-0" />
-            {successMsg.name} added as {ROLE_DISPLAY[successMsg.role] ?? successMsg.role}
-            {successMsg.designation && (
-              <span className="font-normal text-emerald-600">· {successMsg.designation}</span>
-            )}
-          </div>
-          <p className="text-xs text-emerald-700">Email: <span className="font-mono">{successMsg.email}</span></p>
-          <div className="mt-2 flex items-center gap-2">
-            <p className="text-xs text-emerald-700">
-              Password:{' '}
-              <span className="font-mono font-semibold tracking-wider">{successMsg.password}</span>
-            </p>
-            <button
-              onClick={() => copyPassword(successMsg.password)}
-              className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-800 transition-colors"
-            >
-              <ClipboardDocumentIcon className="h-3.5 w-3.5" />
-              {copiedPwd ? 'Copied!' : 'Copy'}
-            </button>
-          </div>
-          <p className="text-xs text-emerald-600 mt-1">
-            Share the password with the user and advise them to change it on first login.
-          </p>
-        </div>
-      )}
 
       {/* Add User inline form */}
       {showForm && (
@@ -845,6 +818,8 @@ export default function UserManagement() {
           onDeleted={handleUserDeleted}
         />
       )}
+
+      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
     </div>
   )
 }

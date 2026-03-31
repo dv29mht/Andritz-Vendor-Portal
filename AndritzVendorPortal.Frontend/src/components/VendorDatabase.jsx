@@ -122,7 +122,7 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
       <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
+            <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
               {['SAP Code', 'Vendor Name', 'City', 'GST Number', 'Approved On', 'Actions'].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
               ))}
@@ -143,7 +143,7 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
               </tr>
             )}
             {paginated.map(req => (
-              <tr key={req.id} className="hover:bg-gray-50 transition-colors">
+              <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
                 <td className="px-4 py-3 font-mono text-xs font-semibold text-emerald-700">{req.vendorCode}</td>
                 <td className="px-4 py-3">
                   <p className="font-medium text-gray-900">{req.vendorName}</p>
