@@ -43,7 +43,12 @@ const METRICS = [
 export default function FinalApproverConsole({ workflow, currentUser, activePage, onNavigate }) {
   const queue   = workflow.getPendingFor(currentUser.id)
   const history = workflow.getHistoryFor(currentUser.id)
-  const stats   = buildStats(workflow.requests)
+  const myRequests = [...queue, ...history]
+  const stats   = {
+    ...buildStats(myRequests),
+    total:        myRequests.length,
+    finalPending: queue.length,
+  }
 
   const [reviewing, setReviewing]           = useState(null)
   const [vendorCode, setVendorCode]         = useState('')

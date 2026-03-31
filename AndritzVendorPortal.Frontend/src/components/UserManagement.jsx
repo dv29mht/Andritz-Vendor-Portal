@@ -418,6 +418,7 @@ export default function UserManagement() {
   useEffect(() => { fetchUsers() }, [])
 
   const visible = users.filter(u => {
+    if (u.roles.includes('Admin')) return false
     const q = search.toLowerCase()
     const matchSearch = !q
       || u.fullName.toLowerCase().includes(q)

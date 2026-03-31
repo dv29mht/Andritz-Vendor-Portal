@@ -16,6 +16,7 @@ export default function ApprovalTimeline({ steps, requestStatus }) {
     <ol className="space-y-3">
       {sorted.map((step) => {
         const isDeleted = step.isDeletedApprover
+        const deletedPostCompletion = isDeleted && requestStatus === 'Completed'
         const wasBlocked = !isDeleted && step.decision === 'Pending' && requestStatus === 'Completed'
 
         return (
@@ -35,11 +36,14 @@ export default function ApprovalTimeline({ steps, requestStatus }) {
                       <span>Final Approver</span>
                     </span>
                   )}
-                  {isDeleted && (
+                  {isDeleted && !deletedPostCompletion && (
                     <span className="inline-flex items-center gap-1 text-xs bg-red-50 text-red-600 ring-1 ring-red-200 ring-inset px-2 py-0.5 rounded-full whitespace-nowrap">
                       <UserMinusIcon className="h-3 w-3" />
                       User deleted by Admin
                     </span>
+                  )}
+                  {deletedPostCompletion && (
+                    <span className="text-xs text-gray-400">User was deleted by Admin</span>
                   )}
                   {wasBlocked && (
                     <span className="text-xs text-gray-400">User was blocked from acting</span>
