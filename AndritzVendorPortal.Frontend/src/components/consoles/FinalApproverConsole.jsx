@@ -469,7 +469,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
             </div>
             <div>
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Approval Chain</h3>
-              <ApprovalTimeline steps={reviewing.approvalSteps} />
+              <ApprovalTimeline steps={reviewing.approvalSteps} requestStatus={reviewing.status} />
             </div>
           </div>
 

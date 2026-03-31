@@ -159,7 +159,7 @@ function DetailsTab({ request }) {
         <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2 pb-1.5 border-b border-gray-100">
           Approval Chain
         </p>
-        <ApprovalTimeline steps={request.approvalSteps} />
+        <ApprovalTimeline steps={request.approvalSteps} requestStatus={request.status} />
       </div>
     </div>
   )
