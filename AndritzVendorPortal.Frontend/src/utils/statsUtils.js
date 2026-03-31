@@ -1,8 +1,9 @@
 /**
- * Builds monthly counts for the last 6 months from a list of requests.
+ * Builds monthly counts for the last N months from a list of requests.
  * Uses createdAt by default; pass a dateField to use a different date.
+ * Pass monthCount to control the window (default 6).
  */
-export function buildMonthlyData(requests, dateField = 'createdAt') {
+export function buildMonthlyData(requests, dateField = 'createdAt', monthCount = 6) {
   const counts = {}
   requests.forEach(r => {
     const raw = r[dateField]
@@ -12,7 +13,7 @@ export function buildMonthlyData(requests, dateField = 'createdAt') {
     counts[key] = (counts[key] ?? 0) + 1
   })
   const months = []
-  for (let i = 5; i >= 0; i--) {
+  for (let i = monthCount - 1; i >= 0; i--) {
     const d = new Date()
     d.setDate(1)
     d.setMonth(d.getMonth() - i)

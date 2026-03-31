@@ -149,25 +149,42 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
             </button>
           </div>
 
-          {/* Monthly approvals chart */}
-          <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-900">My Approvals — Last 6 Months</h3>
+          {/* Charts row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Requests Pipeline */}
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-900">Requests Pipeline</h3>
+              </div>
+              <div className="px-2 py-4">
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={buildMonthlyData([...pending, ...allActedOn], 'createdAt', 3)} barSize={28} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                    <Tooltip cursor={{ fill: '#eef2ff' }} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
+                    <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-            <div className="px-2 py-4">
-              <ResponsiveContainer width="100%" height={160}>
-                <BarChart data={buildMonthlyData(history, 'updatedAt')} barSize={28} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    cursor={{ fill: '#f0fdf4' }}
-                    contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
-                    formatter={(v) => [v, 'Approvals']}
-                  />
-                  <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+
+            {/* Approved Requests */}
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-900">Approved Requests</h3>
+              </div>
+              <div className="px-2 py-4">
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={buildMonthlyData(history, 'updatedAt', 3)} barSize={28} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                    <Tooltip cursor={{ fill: '#f0fdf4' }} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Approvals']} />
+                    <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
 
