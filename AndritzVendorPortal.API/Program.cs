@@ -275,6 +275,9 @@ using (var scope = app.Services.CreateScope())
         """ALTER TABLE "VendorRequests" ADD COLUMN IF NOT EXISTS "ArchivedAt" timestamp with time zone""",
         // Fix designation stored as role key ("FinalApprover" → "Final Approver")
         """UPDATE "AspNetUsers" SET "Designation"='Final Approver' WHERE "NormalizedEmail"='PARDEEP.SHARMA@ANDRITZ.COM' AND "Designation"='FinalApprover'""",
+        // Deleted-approver tracking on approval steps
+        """ALTER TABLE "ApprovalSteps" ADD COLUMN IF NOT EXISTS "IsDeletedApprover" boolean NOT NULL DEFAULT false""",
+        """ALTER TABLE "ApprovalSteps" ADD COLUMN IF NOT EXISTS "DeletedApproverNote" text""",
     })
     {
         try { context.Database.ExecuteSqlRaw(sql); }
