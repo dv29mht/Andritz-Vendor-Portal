@@ -13,6 +13,7 @@ import AdminConsole from './components/consoles/AdminConsole'
 import SettingsPage from './pages/SettingsPage'
 import StatusBadge from './components/shared/StatusBadge'
 import VendorDetailModal from './components/VendorDetailModal'
+import Toast from './components/shared/Toast'
 
 const OTV_PAGE_SIZE = 10
 
@@ -25,6 +26,7 @@ function OneTimeVendorPage({ workflow, currentUser }) {
   const [archiveError,     setArchiveError]     = useState(null)
   const [movingId,         setMovingId]         = useState(null)
   const [moveError,        setMoveError]        = useState(null)
+  const [toast,            setToast]            = useState(null)
   const [showArchived,     setShowArchived]     = useState(false)
   const [restoring,        setRestoring]        = useState(null)
   const [restoreLoading,   setRestoreLoading]   = useState(false)
@@ -76,6 +78,7 @@ function OneTimeVendorPage({ workflow, currentUser }) {
     try {
       await api.patch(`/vendor-requests/${req.id}/classify`, { isOneTimeVendor: false })
       await workflow.fetchAll()
+      setToast({ type: 'success', title: 'Vendor Reclassified', body: `${req.vendorName} has been moved to the Permanent Vendor Master.` })
     } catch (err) {
       setMoveError(err?.response?.data?.message ?? 'Failed to move vendor. Please try again.')
     } finally {
@@ -299,6 +302,8 @@ function OneTimeVendorPage({ workflow, currentUser }) {
           </div>
         </div>
       )}
+
+      {toast && <Toast type={toast.type} title={toast.title} body={toast.body} onClose={() => setToast(null)} />}
     </div>
   )
 }

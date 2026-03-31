@@ -368,9 +368,9 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
                   <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-40">Buyer</th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-36">Status</th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28 whitespace-nowrap">Updated</th>
+                  <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-40">Buyer</th>
+                  <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-36">Status</th>
+                  <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-28 whitespace-nowrap">Updated</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
@@ -383,9 +383,9 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                       <p className="font-medium text-gray-900 leading-snug">{req.vendorName}</p>
                       {req.vendorCode && <p className="text-xs text-emerald-600 font-mono mt-0.5">{req.vendorCode}</p>}
                     </td>
-                    <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap">{req.createdByName}</td>
-                    <td className="px-5 py-3.5"><StatusBadge status={req.status} /></td>
-                    <td className="px-5 py-3.5 text-gray-400 text-xs whitespace-nowrap">{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</td>
+                    <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap text-center">{req.createdByName}</td>
+                    <td className="px-5 py-3.5 text-center"><StatusBadge status={req.status} /></td>
+                    <td className="px-5 py-3.5 text-gray-400 text-xs whitespace-nowrap text-center">{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</td>
                   </tr>
                 ))}
               </tbody>

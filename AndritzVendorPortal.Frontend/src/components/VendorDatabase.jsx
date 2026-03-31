@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BuildingOfficeIcon, ArrowPathIcon, EyeIcon, ArchiveBoxIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import VendorDetailModal from './VendorDetailModal'
+import Toast from './shared/Toast'
 import api from '../services/api'
 
 const PAGE_SIZE = 10
@@ -21,6 +22,7 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
   const [restoring, setRestoring]             = useState(null)
   const [restoreLoading, setRestoreLoading]   = useState(false)
   const [restoreError, setRestoreError]       = useState(null)
+  const [toast, setToast]                     = useState(null)
 
   const archivedCount = requests.filter(r => r.status === 'Completed' && !r.isOneTimeVendor && r.isArchived).length
 
@@ -53,6 +55,7 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
     try {
       const { data } = await api.patch(`/vendor-requests/${req.id}/classify`, { isOneTimeVendor: true })
       onReclassified?.(data)
+      setToast({ type: 'success', title: 'Vendor Reclassified', body: `${req.vendorName} has been moved to the One-Time Vendor list.` })
     } catch (err) {
       setReclassifyError(err?.response?.data?.message ?? err?.response?.data ?? 'Failed to reclassify vendor. Please try again.')
     } finally {
@@ -274,6 +277,8 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
           </div>
         </div>
       )}
+
+      {toast && <Toast type={toast.type} title={toast.title} body={toast.body} onClose={() => setToast(null)} />}
 
       {/* Restore confirmation modal */}
       {restoring && (

@@ -120,7 +120,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900">{pending.length}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Pending Review</p>
+                <p className="text-xs text-gray-500 mt-0.5">Pending Approval</p>
               </div>
             </button>
             <button
