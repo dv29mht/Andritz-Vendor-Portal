@@ -79,4 +79,9 @@ public class ApprovalStep
     public string?          Comment         { get; set; }
     public DateTime?        DecidedAt       { get; set; }
     public bool             IsFinalApproval { get; set; }
+
+    // Set when the approver account is deleted while this step is still pending.
+    // The step is kept for audit but treated as auto-skipped by the workflow engine.
+    public bool    IsDeletedApprover    { get; set; } = false;
+    public string? DeletedApproverNote  { get; set; }
 }

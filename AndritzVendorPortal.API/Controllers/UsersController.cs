@@ -196,7 +196,15 @@ public class UsersController(
 
     // ─────────────────────────────────────────────────────────────────────────
     // DELETE /api/users/{id}
-    // Admin-only: permanently removes a user account.
+    // Admin-only: soft-deletes a user.
+    //
+    // Deletion rules for approvers:
+    //   - BLOCKED  if the user's step is currently active (it is their turn right
+    //              now — i.e. no earlier non-deleted step is still pending).
+    //              The admin must wait for that request to clear first.
+    //   - ALLOWED  if their pending step is only queued for the future (an earlier
+    //              step in the chain is still pending). Those future steps are
+    //              marked IsDeletedApprover = true and auto-skipped by the workflow.
     // ─────────────────────────────────────────────────────────────────────────
     [HttpDelete("{id}")]
     [Authorize(Roles = Roles.Admin)]
@@ -208,11 +216,69 @@ public class UsersController(
         if (user.Email?.Equals("pardeep.sharma@andritz.com", StringComparison.OrdinalIgnoreCase) == true)
             return BadRequest("The Final Approver account cannot be deleted.");
 
-        // Block deletion if the user has pending approval requests
-        var hasPending = await db.ApprovalSteps
-            .AnyAsync(s => s.ApproverUserId == id && s.Decision == ApprovalDecision.Pending);
-        if (hasPending)
-            return Conflict("This approver has pending vendor requests and cannot be deleted. Reassign or resolve those requests first.");
+        // Load all pending steps for this user (across all requests)
+        var pendingSteps = await db.ApprovalSteps
+            .Where(s => s.ApproverUserId == id && s.Decision == ApprovalDecision.Pending && !s.IsDeletedApprover)
+            .Include(s => s.VendorRequest)
+                .ThenInclude(r => r!.ApprovalSteps)
+            .ToListAsync();
+
+        // For each pending step, check if it is currently active (their turn right now).
+        // A step is active when there is no earlier step in the same request that is
+        // still pending (and not already marked as a deleted-approver step).
+        var activelyPendingRequests = pendingSteps
+            .Where(myStep =>
+            {
+                if (myStep.VendorRequest is null) return false;
+                bool blockedByEarlierStep = myStep.VendorRequest.ApprovalSteps.Any(s =>
+                    s.StepOrder < myStep.StepOrder &&
+                    s.Decision == ApprovalDecision.Pending &&
+                    !s.IsDeletedApprover);
+                return !blockedByEarlierStep;  // not blocked → this IS the active step
+            })
+            .ToList();
+
+        if (activelyPendingRequests.Count > 0)
+        {
+            var requestIds = activelyPendingRequests
+                .Select(s => s.VendorRequestId)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
+            return Conflict(
+                $"This approver is the current active approver on {activelyPendingRequests.Count} " +
+                $"pending request(s) (IDs: {string.Join(", ", requestIds)}). " +
+                "Wait for those requests to advance or be reassigned before deleting this user.");
+        }
+
+        // Mark all future-queued steps as deleted — they will be auto-skipped
+        // by the workflow engine without disrupting the chain.
+        foreach (var step in pendingSteps)
+        {
+            step.IsDeletedApprover   = true;
+            step.DeletedApproverNote = $"User deleted by Admin on {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC";
+        }
+
+        // For each affected request, re-evaluate the workflow now that a step was
+        // logically removed. If all remaining non-final steps are already approved
+        // (or deleted), advance the status.
+        var affectedRequestIds = pendingSteps.Select(s => s.VendorRequestId).Distinct().ToList();
+        if (affectedRequestIds.Count > 0)
+        {
+            var affectedRequests = await db.VendorRequests
+                .Include(r => r.ApprovalSteps)
+                .Where(r => affectedRequestIds.Contains(r.Id))
+                .ToListAsync();
+
+            foreach (var req in affectedRequests)
+            {
+                // Only advance if request is actively in workflow
+                if (req.Status == VendorRequestStatus.PendingApproval)
+                    Infrastructure.ApprovalChain.AdvanceWorkflow(req);
+
+                req.UpdatedAt = DateTime.UtcNow;
+            }
+        }
 
         // Soft-delete: mark as archived so vendor request history is preserved
         user.IsArchived = true;
@@ -220,6 +286,7 @@ public class UsersController(
         if (!result.Succeeded)
             return BadRequest(result.Errors.Select(e => e.Description).ToList());
 
+        await db.SaveChangesAsync();
         return NoContent();
     }
 

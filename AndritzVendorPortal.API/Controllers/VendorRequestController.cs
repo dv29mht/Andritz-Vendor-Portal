@@ -876,18 +876,19 @@ public class VendorRequestController(
         var sortedSteps = r.ApprovalSteps.OrderBy(s => s.StepOrder).ToList();
 
         // Sequential chain: only the NEXT approver (lowest StepOrder) is active at a time.
+        // Deleted-approver steps are auto-skipped and never surface as pending.
         var pendingApproverUserIds = r.Status switch
         {
             VendorRequestStatus.PendingApproval =>
                 sortedSteps
-                    .Where(s => !s.IsFinalApproval && s.Decision == ApprovalDecision.Pending)
+                    .Where(s => !s.IsFinalApproval && s.Decision == ApprovalDecision.Pending && !s.IsDeletedApprover)
                     .OrderBy(s => s.StepOrder)
                     .Take(1)
                     .Select(s => s.ApproverUserId)
                     .ToList(),
             VendorRequestStatus.PendingFinalApproval =>
                 sortedSteps
-                    .Where(s => s.IsFinalApproval && s.Decision == ApprovalDecision.Pending)
+                    .Where(s => s.IsFinalApproval && s.Decision == ApprovalDecision.Pending && !s.IsDeletedApprover)
                     .Select(s => s.ApproverUserId)
                     .ToList(),
             _ => new List<string>(),
@@ -922,7 +923,8 @@ public class VendorRequestController(
             pendingApproverUserIds,
             sortedSteps.Select(s => new ApprovalStepDto(
                 s.Id, s.ApproverUserId, s.ApproverName, s.StepOrder,
-                s.Decision, s.Comment, s.DecidedAt, s.IsFinalApproval)).ToList(),
+                s.Decision, s.Comment, s.DecidedAt, s.IsFinalApproval,
+                s.IsDeletedApprover, s.DeletedApproverNote)).ToList(),
             revisionHistory);
     }
 }

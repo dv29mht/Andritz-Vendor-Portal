@@ -1,4 +1,6 @@
 import { CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/solid'
+import { UserMinusIcon } from '@heroicons/react/24/outline'
+import { useAuth } from '../../contexts/AuthContext'
 
 const iconMap = {
   Approved: <CheckCircleIcon className="h-5 w-5 text-emerald-500" />,
@@ -6,40 +8,60 @@ const iconMap = {
   Pending:  <ClockIcon       className="h-5 w-5 text-gray-300"     />,
 }
 
+const deletedIcon = <CheckCircleIcon className="h-5 w-5 text-gray-300" />
+
 export default function ApprovalTimeline({ steps }) {
+  const { currentUser } = useAuth()
+  const role = currentUser?.role ?? ''
+  const canSeeDeletedReason = role === 'Admin' || role === 'FinalApprover'
+
   const sorted = [...steps].sort((a, b) => a.stepOrder - b.stepOrder)
 
   return (
     <ol className="space-y-3">
-      {sorted.map((step, idx) => (
-        <li key={step.id} className="flex items-start gap-3">
-          <div className="mt-0.5 flex-shrink-0">{iconMap[step.decision]}</div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 flex-wrap min-w-0">
-                <span className="text-sm font-medium text-gray-800">{step.approverName}</span>
-                {step.isFinalApproval && (
-                  <span className="text-xs bg-[#096fb3]/10 text-[#096fb3] ring-1 ring-[#096fb3]/20 ring-inset px-2 py-0.5 rounded-full">
-                    ⭐ Final Approver
-                  </span>
-                )}
-              </div>
-              <span className="text-xs text-gray-400 flex-shrink-0">Step {step.stepOrder}</span>
+      {sorted.map((step) => {
+        const isDeleted = step.isDeletedApprover
+
+        return (
+          <li key={step.id} className="flex items-start gap-3">
+            <div className="mt-0.5 flex-shrink-0">
+              {isDeleted ? deletedIcon : iconMap[step.decision]}
             </div>
-            {step.comment && (
-              <p className="mt-0.5 text-xs text-gray-500 italic">"{step.comment}"</p>
-            )}
-            {step.decidedAt && (
-              <p className="text-xs text-gray-400">
-                {new Date(step.decidedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
-              </p>
-            )}
-            {step.decision === 'Pending' && (
-              <p className="text-xs text-amber-600">Awaiting action</p>
-            )}
-          </div>
-        </li>
-      ))}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                  <span className={`text-sm font-medium ${isDeleted ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+                    {step.approverName}
+                  </span>
+                  {step.isFinalApproval && !isDeleted && (
+                    <span className="text-xs bg-[#096fb3]/10 text-[#096fb3] ring-1 ring-[#096fb3]/20 ring-inset px-2 py-0.5 rounded-full">
+                      ⭐ Final Approver
+                    </span>
+                  )}
+                  {isDeleted && (
+                    <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-500 ring-1 ring-gray-200 ring-inset px-2 py-0.5 rounded-full">
+                      <UserMinusIcon className="h-3 w-3" />
+                      {canSeeDeletedReason ? 'User deleted by Admin' : 'Completed'}
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-gray-400 flex-shrink-0">Step {step.stepOrder}</span>
+              </div>
+              {!isDeleted && step.comment && (
+                <p className="mt-0.5 text-xs text-gray-500 italic">"{step.comment}"</p>
+              )}
+              {!isDeleted && step.decidedAt && (
+                <p className="text-xs text-gray-400">
+                  {new Date(step.decidedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                </p>
+              )}
+              {!isDeleted && step.decision === 'Pending' && (
+                <p className="text-xs text-amber-600">Awaiting action</p>
+              )}
+            </div>
+          </li>
+        )
+      })}
     </ol>
   )
 }

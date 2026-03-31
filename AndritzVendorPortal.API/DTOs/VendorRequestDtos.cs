@@ -213,7 +213,9 @@ public record ApprovalStepDto(
     ApprovalDecision Decision,
     string?          Comment,
     DateTime?        DecidedAt,
-    bool             IsFinalApproval
+    bool             IsFinalApproval,
+    bool             IsDeletedApprover,
+    string?          DeletedApproverNote
 );
 
 public record VendorRevisionDto(
