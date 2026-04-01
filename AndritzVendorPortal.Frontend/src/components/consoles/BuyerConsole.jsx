@@ -413,15 +413,37 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
   const hasFormChanged = () => {
     if (!editingRequest) return true
-    const fields = [
+    // Build a snapshot of the original request in the same shape as `form`
+    // (country is stored as a full name on the request but as an ISO code in the form)
+    const original = {
+      vendorName:     editingRequest.vendorName     ?? '',
+      contactPerson:  editingRequest.contactPerson  || editingRequest.contactInformation || '',
+      telephone:      editingRequest.telephone      ?? '',
+      gstNumber:      editingRequest.gstNumber      ?? '',
+      panCard:        editingRequest.panCard        ?? '',
+      addressDetails: editingRequest.addressDetails ?? '',
+      postalCode:     editingRequest.postalCode     ?? '',
+      city:           editingRequest.city           ?? '',
+      locality:       editingRequest.locality       ?? '',
+      state:          editingRequest.state          ?? '',
+      country:        ALL_COUNTRIES.find(c => c.name === editingRequest.country)?.isoCode ?? 'IN',
+      currency:       editingRequest.currency       ?? 'INR',
+      paymentTerms:   editingRequest.paymentTerms   ?? '',
+      incoterms:      editingRequest.incoterms      ?? '',
+      materialGroup:  editingRequest.materialGroup  ?? '',
+      reason:         editingRequest.reason         ?? '',
+      yearlyPvo:      editingRequest.yearlyPvo      ?? '',
+      proposedBy:     editingRequest.proposedBy     ?? '',
+      isOneTimeVendor:editingRequest.isOneTimeVendor ?? false,
+    }
+    const strFields = [
       'vendorName','contactPerson','telephone','gstNumber','panCard',
       'addressDetails','postalCode','city','locality','state','country',
       'currency','paymentTerms','incoterms','materialGroup','reason',
       'yearlyPvo','proposedBy',
     ]
-    const boolFields = ['isOneTimeVendor']
-    return fields.some(f => (form[f] ?? '') !== (editingRequest[f] ?? ''))
-        || boolFields.some(f => (form[f] ?? false) !== (editingRequest[f] ?? false))
+    return strFields.some(f => (form[f] ?? '') !== (original[f] ?? ''))
+        || (form.isOneTimeVendor ?? false) !== (original.isOneTimeVendor ?? false)
   }
 
   const handleSubmitForm = async (skipApproverConfirm = false) => {
