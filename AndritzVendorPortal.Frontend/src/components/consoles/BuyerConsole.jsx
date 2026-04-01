@@ -205,6 +205,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const [submitting, setSubmitting]                 = useState(false)
   const [savingDraft, setSavingDraft]               = useState(false)
   const [apiError, setApiError]                     = useState(null)
+  const apiErrorRef                                 = useRef(null)
   const [materialGroups, setMaterialGroups]         = useState([])
   const [proposedByNames, setProposedByNames]       = useState([])
   const [toast, setToast]                           = useState(null)
@@ -452,7 +453,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
     // Block resubmit if buyer changed nothing
     if (editingRequest && editingRequest.status === 'Rejected' && !hasFormChanged()) {
-      setApiError('No changes detected. Please edit at least one field before resubmitting a rejected request.')
+      setApiError('Please edit the concerned field(s) before resubmitting.')
+      setTimeout(() => apiErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
       return
     }
 
@@ -1115,7 +1117,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             </div>
           )}
           {apiError && (
-            <div className="mb-4 flex items-start gap-2 rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3">
+            <div ref={apiErrorRef} className="mb-4 flex items-start gap-2 rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3">
               <ExclamationTriangleIcon className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-red-700">{apiError}</p>
             </div>
