@@ -206,7 +206,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
   const { requests } = workflow
   // Exclude archived records from all stats, charts, and recent activity —
   // they are only visible when the 'Archived' filter is explicitly selected.
-  const liveRequests = requests.filter(r => !r.isArchived)
+  const liveRequests = requests.filter(r => !r.isArchived && r.status !== 'Draft')
   const stats = buildStats(liveRequests)
 
   const [filterStatus, setFilterStatus]     = useState('All')
@@ -455,7 +455,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
-                  {['ID', 'Vendor Name', 'Buyer', 'City', 'Revision', 'Status', 'Updated', 'Actions'].map(h => (
+                  {['Serial No.', 'Vendor Name', 'Buyer', 'City', 'Revision', 'Status', 'Updated', 'Actions'].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
