@@ -402,6 +402,29 @@ public class VendorRequestController(
         if (request.Status != VendorRequestStatus.Draft)
             return BadRequest("Only Draft requests can be submitted via this endpoint. Use /resubmit for Rejected requests.");
 
+        // Uniqueness check: no other non-rejected, non-archived request may share the same GST or PAN
+        if (!string.IsNullOrWhiteSpace(request.GstNumber))
+        {
+            var gstConflict = await db.VendorRequests.AnyAsync(r =>
+                r.Id != request.Id &&
+                !r.IsArchived &&
+                r.Status != VendorRequestStatus.Rejected &&
+                r.GstNumber == request.GstNumber);
+            if (gstConflict)
+                return Conflict("A request with this GST number already exists.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.PanCard))
+        {
+            var panConflict = await db.VendorRequests.AnyAsync(r =>
+                r.Id != request.Id &&
+                !r.IsArchived &&
+                r.Status != VendorRequestStatus.Rejected &&
+                r.PanCard == request.PanCard);
+            if (panConflict)
+                return Conflict("A request with this PAN number already exists.");
+        }
+
         // If there are no intermediate (non-final) steps, skip straight to PendingFinalApproval
         var hasIntermediateSteps = request.ApprovalSteps.Any(s => !s.IsFinalApproval);
         request.Status    = hasIntermediateSteps
@@ -559,6 +582,29 @@ public class VendorRequestController(
                 step.Comment   = null;
                 step.DecidedAt = null;
             }
+        }
+
+        // Uniqueness check: no other non-rejected, non-archived request may share the same GST or PAN
+        if (!string.IsNullOrWhiteSpace(dto.GstNumber))
+        {
+            var gstConflict = await db.VendorRequests.AnyAsync(r =>
+                r.Id != request.Id &&
+                !r.IsArchived &&
+                r.Status != VendorRequestStatus.Rejected &&
+                r.GstNumber == dto.GstNumber);
+            if (gstConflict)
+                return Conflict("A request with this GST number already exists.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.PanCard))
+        {
+            var panConflict = await db.VendorRequests.AnyAsync(r =>
+                r.Id != request.Id &&
+                !r.IsArchived &&
+                r.Status != VendorRequestStatus.Rejected &&
+                r.PanCard == dto.PanCard);
+            if (panConflict)
+                return Conflict("A request with this PAN number already exists.");
         }
 
         // Compute field-level diff (same logic as the frontend RESUBMIT reducer)

@@ -258,7 +258,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
       return true
     })()
     if (filterStatus === 'Archived') return r.isArchived && matchDate
-    if (!r.isArchived) {
+    if (!r.isArchived && r.status !== 'Draft') {
       const matchStatus = filterStatus === 'All' || r.status === filterStatus
       const q = search.toLowerCase()
       const matchSearch = !q
