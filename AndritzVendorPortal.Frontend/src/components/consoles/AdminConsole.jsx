@@ -45,7 +45,6 @@ function buildMaterialData(requests) {
   })
   return Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
     .map(([name, value], i) => ({ name, value, fill: BAR_COLORS[i % BAR_COLORS.length] }))
 }
 
@@ -329,7 +328,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
             {/* Requests by material group */}
             <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden flex flex-col" style={{ minHeight: 340 }}>
               <div className="px-5 py-3.5 border-b border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-900">Requests by Material Group</h3>
+                <h3 className="text-sm font-semibold text-gray-900">Top Requests by Material Group</h3>
               </div>
               <div className="px-2 py-4 flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
