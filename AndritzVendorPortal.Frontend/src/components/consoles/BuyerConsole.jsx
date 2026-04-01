@@ -870,22 +870,16 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           <div className="space-y-4">
             {/* Controls row */}
             <div className="flex flex-row items-center justify-between gap-3">
-              <div className="flex flex-row items-center gap-2 overflow-x-auto">
-                <div className="flex gap-1.5">
+              <div className="flex flex-row items-center gap-2">
+                <select
+                  value={requestsFilter}
+                  onChange={e => { setRequestsFilter(e.target.value); setReqsPage(1) }}
+                  className="form-input text-sm w-36 shrink-0"
+                >
                   {['All', 'Draft', 'Pending', 'Completed'].map(f => (
-                    <button
-                      key={f}
-                      onClick={() => { setRequestsFilter(f); setReqsPage(1) }}
-                      className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
-                        requestsFilter === f
-                          ? 'bg-slate-700 text-white ring-slate-700'
-                          : 'bg-white text-gray-600 ring-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      {f}
-                    </button>
+                    <option key={f} value={f}>{f}</option>
                   ))}
-                </div>
+                </select>
                 <div className="relative">
                   <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   <input type="text" placeholder="Search…" value={reqsSearch}

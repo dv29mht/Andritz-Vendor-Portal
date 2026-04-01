@@ -382,26 +382,16 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
         const paginated  = filtered.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="flex items-center gap-2 overflow-x-auto">
-            <div className="flex gap-1.5">
-              {['All', 'Approved', 'Rejected'].map(f => (
-                <button
-                  key={f}
-                  onClick={() => { setHistoryFilter(f); setHistoryPage(1) }}
-                  className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
-                    historyFilter === f
-                      ? f === 'Rejected'
-                        ? 'bg-red-600 text-white ring-red-600'
-                        : f === 'Approved'
-                        ? 'bg-emerald-600 text-white ring-emerald-600'
-                        : 'bg-slate-700 text-white ring-slate-700'
-                      : 'bg-white text-gray-600 ring-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  {f === 'All' ? `All (${history.length})` : f === 'Approved' ? `Completed (${history.filter(r => myStepFor(r)?.decision === 'Approved').length})` : `Rejected (${history.filter(r => myStepFor(r)?.decision === 'Rejected').length})`}
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={historyFilter}
+              onChange={e => { setHistoryFilter(e.target.value); setHistoryPage(1) }}
+              className="form-input text-sm w-36 shrink-0"
+            >
+              <option value="All">All ({history.length})</option>
+              <option value="Approved">Completed ({history.filter(r => myStepFor(r)?.decision === 'Approved').length})</option>
+              <option value="Rejected">Rejected ({history.filter(r => myStepFor(r)?.decision === 'Rejected').length})</option>
+            </select>
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <input type="text" placeholder="Search by vendor, contact, city…" value={historySearch}

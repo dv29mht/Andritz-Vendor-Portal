@@ -418,23 +418,17 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
               className="form-input text-sm w-36 shrink-0" title="From date" />
             <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setReqPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="To date" />
-            <div className="flex gap-1.5">
+            <select
+              value={filterStatus}
+              onChange={e => { setFilterStatus(e.target.value); setReqPage(1) }}
+              className="form-input text-sm w-40 shrink-0"
+            >
               {STATUS_FILTERS.map(s => (
-                <button
-                  key={s}
-                  onClick={() => { setFilterStatus(s); setReqPage(1) }}
-                  className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
-                    filterStatus === s && s === 'Archived'
-                      ? 'bg-amber-500 text-white ring-amber-500'
-                      : filterStatus === s
-                      ? 'bg-slate-700 text-white ring-slate-700'
-                      : 'bg-white text-gray-600 ring-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  {s === 'PendingApproval' ? 'Pending' : s === 'PendingFinalApproval' ? 'Final' : s}
-                </button>
+                <option key={s} value={s}>
+                  {s === 'PendingApproval' ? 'Pending' : s === 'PendingFinalApproval' ? 'Final Review' : s}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
           {/* Archived banner */}
