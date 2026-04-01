@@ -379,7 +379,10 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                       <tr key={req.id} className="hover:bg-amber-50/30 transition-colors divide-x divide-gray-200">
                         <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
                         <td className="px-4 py-3">
-                          <p className="font-medium text-gray-900">{req.vendorName}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-gray-900">{req.vendorName}</p>
+                            {req.revisionNo > 0 && <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>}
+                          </div>
                           <p className="text-xs text-gray-400 mt-0.5">{req.contactInformation}</p>
                         </td>
                         <td className="px-4 py-3 text-xs text-red-600 italic max-w-xs truncate">{step?.comment || '—'}</td>

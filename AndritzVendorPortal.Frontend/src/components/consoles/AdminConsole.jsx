@@ -384,7 +384,10 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 {recentRequests.map(req => (
                   <tr key={req.id} className="hover:bg-gray-50 cursor-pointer transition-colors divide-x divide-gray-200" onClick={() => setViewingRequest(req)}>
                     <td className="px-5 py-3.5">
-                      <p className="font-medium text-gray-900 leading-snug">{req.vendorName}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium text-gray-900 leading-snug">{req.vendorName}</p>
+                        {req.revisionNo > 0 && <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>}
+                      </div>
                       {req.vendorCode && <p className="text-xs text-emerald-600 font-mono mt-0.5">{req.vendorCode}</p>}
                     </td>
                     <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap text-center">{req.createdByName}</td>
