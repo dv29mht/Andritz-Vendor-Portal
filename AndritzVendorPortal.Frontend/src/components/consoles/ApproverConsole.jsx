@@ -421,7 +421,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
         return (
         <div className="space-y-4">
           <div className="flex items-center gap-2 overflow-x-auto">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 select-none">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 select-none shrink-0">
               <CheckIcon className="h-4 w-4" />
               {filtered.length} Approved
             </span>

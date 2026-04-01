@@ -1002,7 +1002,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         return (
         <div className="space-y-4">
           <div className="flex flex-row items-center gap-2 overflow-x-auto">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 ring-1 ring-red-200 text-red-700 text-sm font-semibold px-4 py-2 select-none">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 ring-1 ring-red-200 text-red-700 text-sm font-semibold px-4 py-2 select-none shrink-0">
               <ExclamationCircleIcon className="h-4 w-4" />
               {filteredRev.length} Awaiting Revision
             </span>
