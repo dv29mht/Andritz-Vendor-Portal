@@ -649,7 +649,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           {/* ── Left column (main) ── */}
           <div className="lg:col-span-2 flex flex-col gap-5">
             {/* Stat cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className={`grid gap-4 ${draftReqs.length > 0 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
               {draftReqs.length > 0 && (
                 <button
                   onClick={() => { setRequestsFilter('Draft'); onNavigate('requests') }}
