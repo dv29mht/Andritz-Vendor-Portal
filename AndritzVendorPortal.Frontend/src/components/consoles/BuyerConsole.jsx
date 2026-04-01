@@ -186,10 +186,11 @@ function ApprovalChainBuilder({ approvers, selected, onChange, error }) {
 const revLabel = (n) => n === 0 ? 'Original' : `REV ${n}`
 
 export default function BuyerConsole({ workflow, currentUser, activePage, onNavigate }) {
-  const myRequests   = workflow.requests.filter(r => r.createdByUserId === currentUser.id && !r.isArchived)
-  const activeReqs   = myRequests.filter(r => r.status !== 'Rejected')
-  const rejectedReqs = myRequests.filter(r => r.status === 'Rejected')
-  const completedReqs = myRequests.filter(r => r.status === 'Completed')
+  const myRequests     = workflow.requests.filter(r => r.createdByUserId === currentUser.id && !r.isArchived)
+  const draftReqs      = myRequests.filter(r => r.status === 'Draft')
+  const activeReqs     = myRequests.filter(r => r.status !== 'Rejected' && r.status !== 'Draft')
+  const rejectedReqs   = myRequests.filter(r => r.status === 'Rejected')
+  const completedReqs  = myRequests.filter(r => r.status === 'Completed')
   const inProgressReqs = activeReqs.filter(r => r.status !== 'Completed')
 
   const [showForm, setShowForm]                     = useState(false)
@@ -202,6 +203,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const [viewingRequest, setViewingRequest]         = useState(null)
   const [errors, setErrors]                         = useState({})
   const [submitting, setSubmitting]                 = useState(false)
+  const [savingDraft, setSavingDraft]               = useState(false)
   const [apiError, setApiError]                     = useState(null)
   const [materialGroups, setMaterialGroups]         = useState([])
   const [proposedByNames, setProposedByNames]       = useState([])
@@ -213,6 +215,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const [revPage, setRevPage]                       = useState(1)
   const [reqsSearch, setReqsSearch]                 = useState('')
   const [revSearch, setRevSearch]                   = useState('')
+  const [reqsDateFrom, setReqsDateFrom]             = useState('')
+  const [reqsDateTo, setReqsDateTo]                 = useState('')
+  const [revDateFrom, setRevDateFrom]               = useState('')
+  const [revDateTo, setRevDateTo]                   = useState('')
+  const [showNoApproverConfirm, setShowNoApproverConfirm] = useState(false)
 
   const PAGE_SIZE = 10
 
@@ -339,7 +346,16 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     const needsRebuild = stale.length > 0
     setChainNeedsRebuild(needsRebuild)
 
-    if (needsRebuild) {
+    if (req.status === 'Draft') {
+      // For drafts, always pre-populate the approver chain so the buyer can edit it
+      const validSteps = intermediateSteps
+        .filter(s => availableIds.has(s.approverUserId))
+        .sort((a, b) => a.stepOrder - b.stepOrder)
+      setSelectedApprovers(validSteps.map(s => ({
+        id: s.approverUserId, name: s.approverName,
+        email: availableApprovers.find(a => a.id === s.approverUserId)?.email ?? '',
+      })))
+    } else if (needsRebuild) {
       // Pre-populate with the still-valid approvers in original order
       const validSteps = intermediateSteps
         .filter(s => availableIds.has(s.approverUserId))
@@ -389,8 +405,9 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     if (!form.addressDetails.trim()) e.addressDetails = 'Address is required.'
     if (!form.city.trim())           e.city           = 'City is required.'
     if (!form.locality.trim())       e.locality       = 'Locality is required.'
-    if ((!editingRequest || chainNeedsRebuild) && selectedApprovers.length === 0)
-      e.approvers = 'Select at least one approver.'
+    // approvers: warn only if chain rebuild is required (stale approver case)
+    if (chainNeedsRebuild && selectedApprovers.length === 0)
+      e.approvers = 'The original approval chain has stale approvers — please select at least one approver to rebuild the chain.'
     return e
   }
 
@@ -407,13 +424,24 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         || boolFields.some(f => (form[f] ?? false) !== (editingRequest[f] ?? false))
   }
 
-  const handleSubmitForm = async () => {
+  const handleSubmitForm = async (skipApproverConfirm = false) => {
     const e = validate()
     if (Object.keys(e).length) { setErrors(e); setApiError('Please fill in all required fields highlighted below.'); return }
 
     // Block resubmit if buyer changed nothing
-    if (editingRequest && editingRequest.status !== 'Completed' && !hasFormChanged()) {
-      setApiError('No changes detected. Please modify at least one field before resubmitting.')
+    if (editingRequest && editingRequest.status === 'Rejected' && !hasFormChanged()) {
+      setApiError('No changes detected. Please edit at least one field before resubmitting a rejected request.')
+      return
+    }
+
+    // If no intermediate approvers selected, ask for confirmation first (new requests only)
+    if (!skipApproverConfirm && !editingRequest && selectedApprovers.length === 0) {
+      setShowNoApproverConfirm(true)
+      return
+    }
+    // Also confirm for Draft submissions with no intermediate approvers
+    if (!skipApproverConfirm && editingRequest?.status === 'Draft' && selectedApprovers.length === 0) {
+      setShowNoApproverConfirm(true)
       return
     }
 
@@ -426,6 +454,13 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         await workflow.updateCompleted(editingRequest.id, payload)
         setShowForm(false)
         setToast({ type: 'success', title: 'Details Updated', body: `Vendor details for ${name} have been updated. Final Approver and Admin have been notified.` })
+      } else if (editingRequest?.status === 'Draft') {
+        // Update the draft fields then submit it
+        const name = form.vendorName || editingRequest.vendorName || 'Draft'
+        await workflow.saveDraft(payload, selectedApprovers, editingRequest.id)
+        await workflow.submit(editingRequest.id)
+        setShowForm(false)
+        setToast({ type: 'success', title: 'Request Submitted', body: `Your vendor registration request for ${name} has been submitted for approval.` })
       } else if (editingRequest) {
         const name = editingRequest.vendorName
         const resubmitPayload = chainNeedsRebuild
@@ -471,6 +506,23 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     }
   }
 
+  const handleSaveDraft = async () => {
+    setSavingDraft(true)
+    setApiError(null)
+    const payload = { ...form, country: Country.getCountryByCode(form.country)?.name ?? form.country }
+    try {
+      const name = form.vendorName?.trim() || 'Untitled Draft'
+      await workflow.saveDraft(payload, selectedApprovers, editingRequest?.status === 'Draft' ? editingRequest.id : null)
+      setShowForm(false)
+      setToast({ type: 'success', title: 'Draft Saved', body: `"${name}" has been saved as a draft. You can submit it when ready.` })
+    } catch (err) {
+      const detail = err.response?.data
+      setApiError(typeof detail === 'string' ? detail : detail?.message ?? 'Failed to save draft.')
+    } finally {
+      setSavingDraft(false)
+    }
+  }
+
   const matchesSearch = (req, q) => {
     if (!q.trim()) return true
     const lq = q.toLowerCase()
@@ -481,6 +533,14 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       req.city?.toLowerCase().includes(lq) ||
       req.locality?.toLowerCase().includes(lq)
     )
+  }
+
+  const matchesDateRange = (req, dateFrom, dateTo) => {
+    if (!dateFrom && !dateTo) return true
+    const d = new Date(req.createdAt)
+    if (dateFrom && d < new Date(dateFrom)) return false
+    if (dateTo   && d > new Date(dateTo + 'T23:59:59')) return false
+    return true
   }
 
   // ── Sub-components ───────────────────────────────────────────────────────────
@@ -589,7 +649,21 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           {/* ── Left column (main) ── */}
           <div className="lg:col-span-2 flex flex-col gap-5">
             {/* Stat cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {draftReqs.length > 0 && (
+                <button
+                  onClick={() => { setRequestsFilter('Draft'); onNavigate('requests') }}
+                  className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4 hover:ring-2 hover:ring-slate-600 transition-all text-left"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0">
+                    <PencilSquareIcon className="h-5 w-5 text-gray-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{draftReqs.length}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Drafts</p>
+                  </div>
+                </button>
+              )}
               <button
                 onClick={() => { setRequestsFilter('Pending'); onNavigate('requests') }}
                 className="bg-white rounded-xl ring-1 ring-gray-200 px-5 py-4 flex items-center gap-4 hover:ring-2 hover:ring-slate-600 transition-all text-left"
@@ -760,22 +834,23 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
       {/* ── My Requests ─────────────────────────────────────────────────────── */}
       {activePage === 'requests' && (() => {
-        const filteredReqs = activeReqs.filter(r => {
-          const statusMatch = requestsFilter === 'Pending' ? r.status !== 'Completed'
+        const allForTab = [...draftReqs, ...activeReqs]
+        const filteredReqs = allForTab.filter(r => {
+          const statusMatch = requestsFilter === 'Pending'   ? (r.status !== 'Completed' && r.status !== 'Draft')
             : requestsFilter === 'Completed' ? r.status === 'Completed'
+            : requestsFilter === 'Draft'     ? r.status === 'Draft'
             : true
-          return statusMatch && matchesSearch(r, reqsSearch)
+          return statusMatch && matchesSearch(r, reqsSearch) && matchesDateRange(r, reqsDateFrom, reqsDateTo)
         })
+        const totalPages = Math.max(1, Math.ceil(filteredReqs.length / PAGE_SIZE))
+        const paginated  = filteredReqs.slice((reqsPage - 1) * PAGE_SIZE, reqsPage * PAGE_SIZE)
         return (
           <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 ring-1 ring-blue-200 text-blue-700 text-sm font-semibold px-4 py-2 select-none">
-                  <ClockIcon className="h-4 w-4" />
-                  {filteredReqs.length} Request{filteredReqs.length !== 1 ? 's' : ''}
-                </span>
+            {/* Controls row */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
                 <div className="flex gap-1.5">
-                  {['All', 'Pending', 'Completed'].map(f => (
+                  {['All', 'Draft', 'Pending', 'Completed'].map(f => (
                     <button
                       key={f}
                       onClick={() => { setRequestsFilter(f); setReqsPage(1) }}
@@ -791,23 +866,19 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 </div>
                 <div className="relative">
                   <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    placeholder="Search requests…"
-                    value={reqsSearch}
+                  <input type="text" placeholder="Search…" value={reqsSearch}
                     onChange={e => { setReqsSearch(e.target.value); setReqsPage(1) }}
-                    className="form-input pl-9 text-sm"
-                  />
+                    className="form-input pl-9 text-sm w-44" />
                 </div>
+                <input type="date" value={reqsDateFrom} onChange={e => { setReqsDateFrom(e.target.value); setReqsPage(1) }}
+                  className="form-input text-sm" title="From date" />
+                <input type="date" value={reqsDateTo} onChange={e => { setReqsDateTo(e.target.value); setReqsPage(1) }}
+                  className="form-input text-sm" title="To date" />
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  className="btn-secondary"
-                  onClick={() => { setImportErrors([]); setShowImportDialog(true) }}
-                  title="Import vendor data from Excel template"
-                >
+                <button className="btn-secondary" onClick={() => { setImportErrors([]); setShowImportDialog(true) }}>
                   <ArrowUpTrayIcon className="h-4 w-4" />
-                  Import Excel
+                  Import Request
                 </button>
                 <button className="btn-primary" onClick={openCreate}>
                   <PlusIcon className="h-4 w-4" />
@@ -815,110 +886,183 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 </button>
               </div>
             </div>
-            {filteredReqs.length === 0 && (
+
+            {filteredReqs.length === 0 ? (
               <div className="card p-12 text-center text-gray-400">
-                <p className="text-sm">
-                  {reqsSearch
-                    ? 'No results match your search.'
-                    : activeReqs.length === 0
-                      ? 'No active requests. Click "New Request" to get started.'
-                      : `No ${requestsFilter.toLowerCase()} requests.`}
-                </p>
+                <p className="text-sm">{reqsSearch || reqsDateFrom || reqsDateTo ? 'No results match the filters.' : allForTab.length === 0 ? 'No requests yet. Click "New Request" to get started.' : `No ${requestsFilter.toLowerCase()} requests.`}</p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">#</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Material Group</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Created On</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {paginated.map((req, idx) => {
+                      const serial = (reqsPage - 1) * PAGE_SIZE + idx + 1
+                      const isDraft = req.status === 'Draft'
+                      return (
+                        <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
+                          <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-medium text-gray-900">{req.vendorName || <span className="text-gray-400 italic">Untitled</span>}</p>
+                              {req.revisionNo > 0 && (
+                                <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
+                              )}
+                              {req.status === 'Completed' && req.vendorCode && (
+                                <span className="text-xs bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 ring-inset font-mono px-2 py-0.5 rounded-full">{req.vendorCode}</span>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-400 mt-0.5">{req.contactPerson || req.contactInformation}</p>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-gray-500">{[req.city, req.locality].filter(Boolean).join(', ') || '—'}</td>
+                          <td className="px-4 py-3 text-xs text-gray-500">{req.materialGroup || '—'}</td>
+                          <td className="px-4 py-3">
+                            {isDraft
+                              ? <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ring-1 ring-inset bg-gray-100 text-gray-600 ring-gray-300">Draft</span>
+                              : <StatusBadge status={req.status} />
+                            }
+                          </td>
+                          <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                            {new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1.5">
+                              {!isDraft && (
+                                <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
+                                  <EyeIcon className="h-3.5 w-3.5" />
+                                  View
+                                </button>
+                              )}
+                              {isDraft && (
+                                <button className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-semibold text-white bg-[#096fb3] hover:bg-[#075d99] transition-colors" onClick={() => openEdit(req)}>
+                                  <PencilSquareIcon className="h-3.5 w-3.5" />
+                                  Edit &amp; Submit
+                                </button>
+                              )}
+                              {req.status === 'Completed' && (
+                                <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => openEdit(req)}>
+                                  <PencilSquareIcon className="h-3.5 w-3.5" />
+                                  Edit
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+                <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+                  <span className="text-xs text-gray-400">Showing {filteredReqs.length === 0 ? 0 : (reqsPage - 1) * PAGE_SIZE + 1}–{Math.min(reqsPage * PAGE_SIZE, filteredReqs.length)} of {filteredReqs.length}</span>
+                  {totalPages > 1 && (
+                    <div className="flex items-center gap-1.5">
+                      <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={reqsPage === 1} onClick={() => setReqsPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
+                      <span className="text-xs text-gray-500 px-1">Page {reqsPage} of {totalPages}</span>
+                      <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={reqsPage === totalPages} onClick={() => setReqsPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
-            {(() => {
-              const totalPages = Math.max(1, Math.ceil(filteredReqs.length / PAGE_SIZE))
-              const paginated  = filteredReqs.slice((reqsPage - 1) * PAGE_SIZE, reqsPage * PAGE_SIZE)
-              return (<>
-                {paginated.map(req => <RequestCard key={req.id} req={req} />)}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
-                    <span className="text-xs text-gray-400">
-                      Showing {(reqsPage - 1) * PAGE_SIZE + 1}–{Math.min(reqsPage * PAGE_SIZE, filteredReqs.length)} of {filteredReqs.length}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        disabled={reqsPage === 1}
-                        onClick={() => setReqsPage(p => p - 1)}
-                      >
-                        <ChevronLeftIcon className="h-4 w-4" />
-                      </button>
-                      <span className="text-xs text-gray-500 px-1">Page {reqsPage} of {totalPages}</span>
-                      <button
-                        className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        disabled={reqsPage === totalPages}
-                        onClick={() => setReqsPage(p => p + 1)}
-                      >
-                        <ChevronRightIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>)
-            })()}
           </div>
         )
       })()}
 
       {/* ── Waiting Revision ────────────────────────────────────────────────── */}
       {activePage === 'revision' && (() => {
-        const filteredRev = rejectedReqs.filter(r => matchesSearch(r, revSearch))
+        const filteredRev = rejectedReqs.filter(r => matchesSearch(r, revSearch) && matchesDateRange(r, revDateFrom, revDateTo))
+        const totalPages  = Math.max(1, Math.ceil(filteredRev.length / PAGE_SIZE))
+        const paginated   = filteredRev.slice((revPage - 1) * PAGE_SIZE, revPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 ring-1 ring-red-200 text-red-700 text-sm font-semibold px-4 py-2 select-none">
               <ExclamationCircleIcon className="h-4 w-4" />
-              {rejectedReqs.length} Awaiting Revision
+              {filteredRev.length} Awaiting Revision
             </span>
-            <div className="relative flex-1 sm:max-w-xs">
+            <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search requests…"
-                value={revSearch}
+              <input type="text" placeholder="Search requests…" value={revSearch}
                 onChange={e => { setRevSearch(e.target.value); setRevPage(1) }}
-                className="form-input pl-9 text-sm"
-              />
+                className="form-input pl-9 text-sm w-44" />
             </div>
+            <input type="date" value={revDateFrom} onChange={e => { setRevDateFrom(e.target.value); setRevPage(1) }}
+              className="form-input text-sm" title="From date" />
+            <input type="date" value={revDateTo} onChange={e => { setRevDateTo(e.target.value); setRevPage(1) }}
+              className="form-input text-sm" title="To date" />
           </div>
-          {filteredRev.length === 0 && (
+          {filteredRev.length === 0 ? (
             <div className="card p-12 text-center">
               <ExclamationCircleIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">{revSearch ? 'No results match your search.' : 'No requests waiting for revision.'}</p>
+              <p className="text-sm text-gray-500">{revSearch || revDateFrom || revDateTo ? 'No results match the filters.' : 'No requests waiting for revision.'}</p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">#</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Rejection Reason</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Rejected On</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {paginated.map((req, idx) => {
+                    const serial = (revPage - 1) * PAGE_SIZE + idx + 1
+                    return (
+                      <tr key={req.id} className="hover:bg-red-50/30 transition-colors divide-x divide-gray-200">
+                        <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-gray-900">{req.vendorName}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{req.contactPerson || req.contactInformation}</p>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-red-600 italic max-w-xs truncate">{req.rejectionComment || '—'}</td>
+                        <td className="px-4 py-3 text-xs text-gray-500">{[req.city, req.locality].filter(Boolean).join(', ') || '—'}</td>
+                        <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                          {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5">
+                            <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
+                              <EyeIcon className="h-3.5 w-3.5" />
+                              View
+                            </button>
+                            <button className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-semibold text-white bg-[#096fb3] hover:bg-[#075d99] transition-colors" onClick={() => openEdit(req)}>
+                              <PencilSquareIcon className="h-3.5 w-3.5" />
+                              Edit &amp; Resubmit
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+                <span className="text-xs text-gray-400">Showing {filteredRev.length === 0 ? 0 : (revPage - 1) * PAGE_SIZE + 1}–{Math.min(revPage * PAGE_SIZE, filteredRev.length)} of {filteredRev.length}</span>
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={revPage === 1} onClick={() => setRevPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
+                    <span className="text-xs text-gray-500 px-1">Page {revPage} of {totalPages}</span>
+                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={revPage === totalPages} onClick={() => setRevPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
-          {(() => {
-            const totalPages = Math.max(1, Math.ceil(filteredRev.length / PAGE_SIZE))
-            const paginated  = filteredRev.slice((revPage - 1) * PAGE_SIZE, revPage * PAGE_SIZE)
-            return (<>
-              {paginated.map(req => <RejectedCard key={req.id} req={req} />)}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
-                  <span className="text-xs text-gray-400">
-                    Showing {(revPage - 1) * PAGE_SIZE + 1}–{Math.min(revPage * PAGE_SIZE, filteredRev.length)} of {filteredRev.length}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      disabled={revPage === 1}
-                      onClick={() => setRevPage(p => p - 1)}
-                    >
-                      <ChevronLeftIcon className="h-4 w-4" />
-                    </button>
-                    <span className="text-xs text-gray-500 px-1">Page {revPage} of {totalPages}</span>
-                    <button
-                      className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      disabled={revPage === totalPages}
-                      onClick={() => setRevPage(p => p + 1)}
-                    >
-                      <ChevronRightIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>)
-          })()}
         </div>
         )
       })()}
@@ -936,9 +1080,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           title={
             editingRequest?.status === 'Completed'
               ? `Update Vendor Details — ${editingRequest.vendorName}`
-              : editingRequest
-                ? `Edit & Resubmit — ${editingRequest.vendorName}`
-                : 'New Vendor Registration Request'
+              : editingRequest?.status === 'Draft'
+                ? `Edit Draft — ${editingRequest.vendorName || 'Untitled'}`
+                : editingRequest
+                  ? `Edit & Resubmit — ${editingRequest.vendorName}`
+                  : 'New Vendor Registration Request'
           }
           onClose={() => setShowForm(false)}
           size="xl"
@@ -1077,7 +1223,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               </Field>
             </FormSection>
 
-            {(!editingRequest || chainNeedsRebuild) && (
+            {(!editingRequest || editingRequest?.status === 'Draft' || chainNeedsRebuild) && (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3 border-b border-gray-100 pb-1.5">Approvers</p>
                 {chainNeedsRebuild && (
@@ -1103,25 +1249,74 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 </p>
               </div>
             )}
-            {editingRequest && editingRequest.status !== 'Completed' && !chainNeedsRebuild && (
+            {editingRequest && editingRequest.status !== 'Completed' && editingRequest.status !== 'Draft' && !chainNeedsRebuild && (
               <div className="rounded-lg bg-blue-50 ring-1 ring-blue-200 p-3">
                 <p className="text-xs text-[#096fb3]">
                   The approval chain is preserved from the original request. Submitting will reset all approver decisions and increment the revision number.
                 </p>
               </div>
             )}
+            {editingRequest?.status === 'Draft' && (
+              <div className="rounded-lg bg-gray-50 ring-1 ring-gray-200 p-3">
+                <p className="text-xs text-gray-600">
+                  This is a draft. You can save your progress or submit when ready. No notifications will be sent until you submit.
+                </p>
+              </div>
+            )}
           </div>
 
-          <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-5">
-            <button className="btn-secondary" onClick={() => setShowForm(false)} disabled={submitting}>Cancel</button>
-            <button className="btn-primary" onClick={handleSubmitForm} disabled={submitting}>
-              <PaperAirplaneIcon className="h-4 w-4" />
-              {submitting
-                ? (editingRequest?.status === 'Completed' ? 'Saving…' : editingRequest ? 'Resubmitting…' : 'Submitting…')
-                : (editingRequest?.status === 'Completed' ? 'Save Updates' : editingRequest ? 'Update & Resubmit for Approval' : 'Submit for Approval')}
-            </button>
+          <div className="mt-6 flex justify-between gap-3 border-t border-gray-100 pt-5">
+            <button className="btn-secondary" onClick={() => setShowForm(false)} disabled={submitting || savingDraft}>Cancel</button>
+            <div className="flex items-center gap-3">
+              {/* Show "Save as Draft" only for new requests or existing drafts */}
+              {(!editingRequest || editingRequest?.status === 'Draft') && (
+                <button
+                  className="btn-secondary"
+                  onClick={handleSaveDraft}
+                  disabled={submitting || savingDraft}
+                >
+                  <PencilSquareIcon className="h-4 w-4" />
+                  {savingDraft ? 'Saving Draft…' : 'Save as Draft'}
+                </button>
+              )}
+              <button className="btn-primary" onClick={() => handleSubmitForm(false)} disabled={submitting || savingDraft}>
+                <PaperAirplaneIcon className="h-4 w-4" />
+                {submitting
+                  ? (editingRequest?.status === 'Completed' ? 'Saving…' : editingRequest ? 'Resubmitting…' : 'Submitting…')
+                  : (editingRequest?.status === 'Completed' ? 'Save Updates' : editingRequest?.status === 'Draft' ? 'Submit for Approval' : editingRequest ? 'Update & Resubmit for Approval' : 'Submit for Approval')}
+              </button>
+            </div>
           </div>
         </Modal>
+      )}
+
+      {/* ── No-Approver Confirmation Dialog ─────────────────────────────────── */}
+      {showNoApproverConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <ExclamationTriangleIcon className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-gray-900">Submit without intermediate approvers?</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  You haven't added any intermediate approvers. The request will go directly to Pardeep Sharma (Final Approver) for review. Are you sure you want to proceed?
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button className="btn-secondary" onClick={() => setShowNoApproverConfirm(false)}>Go Back</button>
+              <button
+                className="btn-primary"
+                onClick={() => { setShowNoApproverConfirm(false); handleSubmitForm(true) }}
+              >
+                <PaperAirplaneIcon className="h-4 w-4" />
+                Yes, Submit Directly
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {toast && <Toast type={toast.type} title={toast.title} body={toast.body} onClose={() => setToast(null)} />}
@@ -1133,7 +1328,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-base font-semibold text-gray-900">Import Vendor from Excel</h3>
+                <h3 className="text-base font-semibold text-gray-900">Import Request</h3>
                 <p className="text-xs text-gray-500 mt-0.5">Fill in the template and upload it to pre-fill the form.</p>
               </div>
               <button

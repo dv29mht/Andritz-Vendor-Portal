@@ -62,6 +62,10 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
   const [queueSearch, setQueueSearch]       = useState('')
   const [historySearch, setHistorySearch]   = useState('')
   const [historyFilter, setHistoryFilter]   = useState('All')
+  const [queueDateFrom, setQueueDateFrom]   = useState('')
+  const [queueDateTo, setQueueDateTo]       = useState('')
+  const [historyDateFrom, setHistoryDateFrom] = useState('')
+  const [historyDateTo, setHistoryDateTo]     = useState('')
 
   const isAuthorizedFinalApprover = currentUser?.email === 'pardeep.sharma@andritz.com'
   const { isNew, markViewed } = useViewedRequests(currentUser.id)
@@ -116,6 +120,14 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
       req.locality?.toLowerCase().includes(lq) ||
       req.createdByName?.toLowerCase().includes(lq)
     )
+  }
+
+  const matchesDateRange = (req, dateFrom, dateTo) => {
+    if (!dateFrom && !dateTo) return true
+    const d = new Date(req.createdAt)
+    if (dateFrom && d < new Date(dateFrom)) return false
+    if (dateTo   && d > new Date(dateTo + 'T23:59:59')) return false
+    return true
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -250,25 +262,27 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
 
       {/* ── Pending Queue ───────────────────────────────────────────────────── */}
       {activePage === 'pending' && (() => {
-        const filtered   = queue.filter(r => matchesSearch(r, queueSearch))
+        const filtered   = queue.filter(r => matchesSearch(r, queueSearch) && matchesDateRange(r, queueDateFrom, queueDateTo))
         const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
         const paginated  = filtered.slice((queuePage - 1) * PAGE_SIZE, queuePage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search by vendor, contact, city…"
-              value={queueSearch}
-              onChange={e => { setQueueSearch(e.target.value); setQueuePage(1) }}
-              className="form-input pl-9 text-sm"
-            />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <input type="text" placeholder="Search by vendor, contact, city…" value={queueSearch}
+                onChange={e => { setQueueSearch(e.target.value); setQueuePage(1) }}
+                className="form-input pl-9 text-sm w-52" />
+            </div>
+            <input type="date" value={queueDateFrom} onChange={e => { setQueueDateFrom(e.target.value); setQueuePage(1) }}
+              className="form-input text-sm" title="From date" />
+            <input type="date" value={queueDateTo} onChange={e => { setQueueDateTo(e.target.value); setQueuePage(1) }}
+              className="form-input text-sm" title="To date" />
           </div>
           {filtered.length === 0 && (
             <div className="card p-12 text-center">
               <CheckBadgeIcon className="h-10 w-10 text-emerald-400 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">{queueSearch ? 'No results match your search.' : 'No requests awaiting your approval.'}</p>
+              <p className="text-sm text-gray-500">{queueSearch || queueDateFrom || queueDateTo ? 'No results match the filters.' : 'No requests awaiting your approval.'}</p>
             </div>
           )}
           {filtered.length > 0 && (
@@ -276,6 +290,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">#</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Intermediates</th>
@@ -284,11 +299,13 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
-                  {paginated.map(req => {
+                  {paginated.map((req, idx) => {
+                    const serial = (queuePage - 1) * PAGE_SIZE + idx + 1
                     const intermediateSteps = req.approvalSteps.filter(s => !s.isFinalApproval)
                     const allIntermediate   = intermediateSteps.every(s => s.decision === 'Approved')
                     return (
                       <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
+                        <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
                         <td className="px-4 py-3.5">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium text-gray-900">{req.vendorName}</p>
@@ -360,12 +377,12 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
           const step = myStepFor(r)
           return historyFilter === 'Approved' ? step?.decision === 'Approved' : step?.decision === 'Rejected'
         })
-        const filtered   = byDecision.filter(r => matchesSearch(r, historySearch))
+        const filtered   = byDecision.filter(r => matchesSearch(r, historySearch) && matchesDateRange(r, historyDateFrom, historyDateTo))
         const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
         const paginated  = filtered.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex gap-1.5">
               {['All', 'Approved', 'Rejected'].map(f => (
                 <button
@@ -385,21 +402,21 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                 </button>
               ))}
             </div>
-            <div className="relative flex-1 sm:max-w-xs">
+            <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search by vendor, contact, city…"
-                value={historySearch}
+              <input type="text" placeholder="Search by vendor, contact, city…" value={historySearch}
                 onChange={e => { setHistorySearch(e.target.value); setHistoryPage(1) }}
-                className="form-input pl-9 text-sm"
-              />
+                className="form-input pl-9 text-sm w-52" />
             </div>
+            <input type="date" value={historyDateFrom} onChange={e => { setHistoryDateFrom(e.target.value); setHistoryPage(1) }}
+              className="form-input text-sm" title="From date" />
+            <input type="date" value={historyDateTo} onChange={e => { setHistoryDateTo(e.target.value); setHistoryPage(1) }}
+              className="form-input text-sm" title="To date" />
           </div>
           {filtered.length === 0 && (
             <div className="card p-12 text-center">
               <ArchiveBoxIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">{historySearch || historyFilter !== 'All' ? 'No results match the current filter.' : 'No vendor registrations acted upon yet.'}</p>
+              <p className="text-sm text-gray-500">{historySearch || historyDateFrom || historyDateTo || historyFilter !== 'All' ? 'No results match the current filter.' : 'No vendor registrations acted upon yet.'}</p>
             </div>
           )}
           {filtered.length > 0 && (
@@ -407,6 +424,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">#</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">SAP Code</th>
@@ -416,11 +434,13 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
-                  {paginated.map(req => {
+                  {paginated.map((req, idx) => {
+                    const serial     = (historyPage - 1) * PAGE_SIZE + idx + 1
                     const step       = myStepFor(req)
                     const isApproved = step?.decision === 'Approved'
                     return (
                       <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
+                        <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
                         <td className="px-4 py-3.5">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium text-gray-900">{req.vendorName}</p>

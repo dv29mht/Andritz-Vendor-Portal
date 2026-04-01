@@ -60,7 +60,11 @@ public static class ApprovalChain
         bool allDeleted = actionableNonFinalSteps.Count == 0
             && request.ApprovalSteps.Any(s => !s.IsFinalApproval && s.IsDeletedApprover);
 
-        if (allTechnicalApproved || allDeleted)
+        // Edge case: no intermediate steps at all (buyer submitted directly to final approver)
+        bool noIntermediateSteps = actionableNonFinalSteps.Count == 0
+            && !request.ApprovalSteps.Any(s => !s.IsFinalApproval);
+
+        if (allTechnicalApproved || allDeleted || noIntermediateSteps)
             request.Status = VendorRequestStatus.PendingFinalApproval;
         // else: status stays PendingApproval — remaining approvers still need to act
     }

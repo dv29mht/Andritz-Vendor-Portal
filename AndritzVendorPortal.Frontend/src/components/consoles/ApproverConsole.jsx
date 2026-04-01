@@ -39,6 +39,12 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
   const [pendingSearch, setPendingSearch]   = useState('')
   const [waitingSearch, setWaitingSearch]   = useState('')
   const [historySearch, setHistorySearch]   = useState('')
+  const [pendingDateFrom, setPendingDateFrom] = useState('')
+  const [pendingDateTo, setPendingDateTo]     = useState('')
+  const [waitingDateFrom, setWaitingDateFrom] = useState('')
+  const [waitingDateTo, setWaitingDateTo]     = useState('')
+  const [historyDateFrom, setHistoryDateFrom] = useState('')
+  const [historyDateTo, setHistoryDateTo]     = useState('')
 
   const { isNew, markViewed } = useViewedRequests(currentUser.id)
 
@@ -91,6 +97,14 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
       req.locality?.toLowerCase().includes(lq) ||
       req.createdByName?.toLowerCase().includes(lq)
     )
+  }
+
+  const matchesDateRange = (req, dateFrom, dateTo) => {
+    if (!dateFrom && !dateTo) return true
+    const d = new Date(req.createdAt)
+    if (dateFrom && d < new Date(dateFrom)) return false
+    if (dateTo   && d > new Date(dateTo + 'T23:59:59')) return false
+    return true
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -235,69 +249,84 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
 
       {/* ── Pending Approval ────────────────────────────────────────────────── */}
       {activePage === 'pending' && (() => {
-        const filtered   = pending.filter(r => matchesSearch(r, pendingSearch))
+        const filtered   = pending.filter(r => matchesSearch(r, pendingSearch) && matchesDateRange(r, pendingDateFrom, pendingDateTo))
         const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
         const paginated  = filtered.slice((pendingPage - 1) * PAGE_SIZE, pendingPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search by vendor, contact, city…"
-              value={pendingSearch}
-              onChange={e => { setPendingSearch(e.target.value); setPendingPage(1) }}
-              className="form-input pl-9 text-sm"
-            />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <input type="text" placeholder="Search by vendor, city…" value={pendingSearch}
+                onChange={e => { setPendingSearch(e.target.value); setPendingPage(1) }}
+                className="form-input pl-9 text-sm w-48" />
+            </div>
+            <input type="date" value={pendingDateFrom} onChange={e => { setPendingDateFrom(e.target.value); setPendingPage(1) }}
+              className="form-input text-sm" title="From date" />
+            <input type="date" value={pendingDateTo} onChange={e => { setPendingDateTo(e.target.value); setPendingPage(1) }}
+              className="form-input text-sm" title="To date" />
           </div>
-          {filtered.length === 0 && (
+          {filtered.length === 0 ? (
             <div className="card p-12 text-center">
               <CheckIcon className="h-10 w-10 text-emerald-400 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">{pendingSearch ? 'No results match your search.' : 'All caught up — no requests pending your review.'}</p>
+              <p className="text-sm text-gray-500">{pendingSearch || pendingDateFrom || pendingDateTo ? 'No results match the filters.' : 'All caught up — no requests pending your review.'}</p>
             </div>
-          )}
-          {paginated.map(req => (
-            <div key={req.id} className="card px-5 py-4">
-              <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="font-semibold text-gray-900">{req.vendorName}</h2>
-                    {req.revisionNo > 0 && (
-                      <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
-                    )}
-                    {isNew(req) && (
-                      <span className="text-xs bg-violet-500 text-white font-bold px-2 py-0.5 rounded-full">NEW</span>
-                    )}
+          ) : (
+            <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">#</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Submitted By</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Submitted On</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {paginated.map((req, idx) => {
+                    const serial = (pendingPage - 1) * PAGE_SIZE + idx + 1
+                    return (
+                      <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
+                        <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-gray-900">{req.vendorName}</p>
+                            {req.revisionNo > 0 && <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>}
+                            {isNew(req) && <span className="text-xs bg-violet-500 text-white font-bold px-2 py-0.5 rounded-full">NEW</span>}
+                          </div>
+                          <p className="text-xs text-gray-400 mt-0.5">{req.contactInformation}</p>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-500">{req.createdByName}</td>
+                        <td className="px-4 py-3 text-xs text-gray-500">{[req.city, req.locality].filter(Boolean).join(', ')}</td>
+                        <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                          {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5">
+                            <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => openView(req)}>
+                              <EyeIcon className="h-3.5 w-3.5" />View
+                            </button>
+                            <button className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-semibold text-white bg-[#096fb3] hover:bg-[#075d99] transition-colors" onClick={() => openReview(req)}>
+                              Review
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+                <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (pendingPage - 1) * PAGE_SIZE + 1}–{Math.min(pendingPage * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={pendingPage === 1} onClick={() => setPendingPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
+                    <span className="text-xs text-gray-500 px-1">Page {pendingPage} of {totalPages}</span>
+                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={pendingPage === totalPages} onClick={() => setPendingPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">{req.contactInformation}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{req.addressDetails} · {req.city}, {req.locality}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Submitted by <span className="font-medium text-gray-600">{req.createdByName}</span>
-                    {' · '}{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button className="btn-secondary" onClick={() => openView(req)}>
-                    <EyeIcon className="h-4 w-4" />
-                    View
-                  </button>
-                  <button
-                    className="inline-flex items-center gap-1.5 rounded-md bg-[#096fb3] hover:bg-[#075d99] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
-                    onClick={() => openReview(req)}
-                  >
-                    Review
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
-              <span className="text-xs text-gray-400">Showing {(pendingPage - 1) * PAGE_SIZE + 1}–{Math.min(pendingPage * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
-              <div className="flex items-center gap-1.5">
-                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={pendingPage === 1} onClick={() => setPendingPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
-                <span className="text-xs text-gray-500 px-1">Page {pendingPage} of {totalPages}</span>
-                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={pendingPage === totalPages} onClick={() => setPendingPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
+                )}
               </div>
             </div>
           )}
@@ -307,60 +336,76 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
 
       {/* ── Waiting Revision ────────────────────────────────────────────────── */}
       {activePage === 'waiting' && (() => {
-        const filtered   = waitingRevision.filter(r => matchesSearch(r, waitingSearch))
+        const filtered   = waitingRevision.filter(r => matchesSearch(r, waitingSearch) && matchesDateRange(r, waitingDateFrom, waitingDateTo))
         const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
         const paginated  = filtered.slice((waitingPage - 1) * PAGE_SIZE, waitingPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search by vendor, contact, city…"
-              value={waitingSearch}
-              onChange={e => { setWaitingSearch(e.target.value); setWaitingPage(1) }}
-              className="form-input pl-9 text-sm"
-            />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <input type="text" placeholder="Search by vendor, city…" value={waitingSearch}
+                onChange={e => { setWaitingSearch(e.target.value); setWaitingPage(1) }}
+                className="form-input pl-9 text-sm w-48" />
+            </div>
+            <input type="date" value={waitingDateFrom} onChange={e => { setWaitingDateFrom(e.target.value); setWaitingPage(1) }}
+              className="form-input text-sm" title="From date" />
+            <input type="date" value={waitingDateTo} onChange={e => { setWaitingDateTo(e.target.value); setWaitingPage(1) }}
+              className="form-input text-sm" title="To date" />
           </div>
-          {filtered.length === 0 && (
+          {filtered.length === 0 ? (
             <div className="card p-12 text-center">
               <ExclamationCircleIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">{waitingSearch ? 'No results match your search.' : 'No rejected requests waiting for buyer revision.'}</p>
+              <p className="text-sm text-gray-500">{waitingSearch || waitingDateFrom || waitingDateTo ? 'No results match the filters.' : 'No rejected requests waiting for buyer revision.'}</p>
             </div>
-          )}
-          {paginated.map(req => {
-            const step = myStepFor(req)
-            return (
-              <div key={req.id} className="card overflow-hidden">
-                <div className="bg-amber-50 border-b border-amber-100 px-5 py-2.5 flex items-center gap-2">
-                  <ExclamationCircleIcon className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                  <p className="text-xs text-amber-700 font-medium">You rejected this request — awaiting buyer revision and resubmission</p>
-                </div>
-                <div className="px-5 py-4 flex items-start justify-between gap-4 flex-wrap">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="font-semibold text-gray-900">{req.vendorName}</h2>
-                      <StatusBadge status={req.status} />
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">{req.contactInformation}</p>
-                    {step?.comment && <p className="text-xs text-gray-500 mt-1 italic">Your rejection reason: "{step.comment}"</p>}
-                    <p className="text-xs text-gray-400 mt-0.5">Submitted by <span className="font-medium text-gray-600">{req.createdByName}</span></p>
+          ) : (
+            <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">#</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Rejection Reason</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Submitted By</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Rejected On</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {paginated.map((req, idx) => {
+                    const step   = myStepFor(req)
+                    const serial = (waitingPage - 1) * PAGE_SIZE + idx + 1
+                    return (
+                      <tr key={req.id} className="hover:bg-amber-50/30 transition-colors divide-x divide-gray-200">
+                        <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-gray-900">{req.vendorName}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{req.contactInformation}</p>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-red-600 italic max-w-xs truncate">{step?.comment || '—'}</td>
+                        <td className="px-4 py-3 text-xs text-gray-500">{req.createdByName}</td>
+                        <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                          {step?.decidedAt ? new Date(step.decidedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => openView(req)}>
+                            <EyeIcon className="h-3.5 w-3.5" />View
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+                <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (waitingPage - 1) * PAGE_SIZE + 1}–{Math.min(waitingPage * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={waitingPage === 1} onClick={() => setWaitingPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
+                    <span className="text-xs text-gray-500 px-1">Page {waitingPage} of {totalPages}</span>
+                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={waitingPage === totalPages} onClick={() => setWaitingPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
                   </div>
-                  <button className="btn-secondary flex-shrink-0" onClick={() => openView(req)}>
-                    <EyeIcon className="h-4 w-4" />
-                    View
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
-              <span className="text-xs text-gray-400">Showing {(waitingPage - 1) * PAGE_SIZE + 1}–{Math.min(waitingPage * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
-              <div className="flex items-center gap-1.5">
-                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={waitingPage === 1} onClick={() => setWaitingPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
-                <span className="text-xs text-gray-500 px-1">Page {waitingPage} of {totalPages}</span>
-                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={waitingPage === totalPages} onClick={() => setWaitingPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
+                )}
               </div>
             </div>
           )}
@@ -370,72 +415,85 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
 
       {/* ── History ─────────────────────────────────────────────────────────── */}
       {activePage === 'history' && (() => {
-        const filtered   = history.filter(r => matchesSearch(r, historySearch))
+        const filtered   = history.filter(r => matchesSearch(r, historySearch) && matchesDateRange(r, historyDateFrom, historyDateTo))
         const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
         const paginated  = filtered.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 select-none">
               <CheckIcon className="h-4 w-4" />
-              {history.length} Approved
+              {filtered.length} Approved
             </span>
-            <div className="relative flex-1 sm:max-w-xs">
+            <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search by vendor, contact, city…"
-                value={historySearch}
+              <input type="text" placeholder="Search by vendor, city…" value={historySearch}
                 onChange={e => { setHistorySearch(e.target.value); setHistoryPage(1) }}
-                className="form-input pl-9 text-sm"
-              />
+                className="form-input pl-9 text-sm w-48" />
             </div>
+            <input type="date" value={historyDateFrom} onChange={e => { setHistoryDateFrom(e.target.value); setHistoryPage(1) }}
+              className="form-input text-sm" title="From date" />
+            <input type="date" value={historyDateTo} onChange={e => { setHistoryDateTo(e.target.value); setHistoryPage(1) }}
+              className="form-input text-sm" title="To date" />
           </div>
-          {filtered.length === 0 && (
+          {filtered.length === 0 ? (
             <div className="card p-12 text-center">
               <ArchiveBoxIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">{historySearch ? 'No results match your search.' : 'No requests approved yet.'}</p>
+              <p className="text-sm text-gray-500">{historySearch || historyDateFrom || historyDateTo ? 'No results match the filters.' : 'No requests approved yet.'}</p>
             </div>
-          )}
-          {paginated.map(req => {
-            const step = myStepFor(req)
-            return (
-              <div key={req.id} className="card px-5 py-4">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="font-semibold text-gray-900">{req.vendorName}</h2>
-                      <StatusBadge status={req.status} />
-                      {req.revisionNo > 0 && (
-                        <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
-                      )}
-                      <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ring-1 ring-inset bg-emerald-50 text-emerald-700 ring-emerald-200">
-                        <CheckIcon className="h-3 w-3" />
-                        You approved
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">{req.contactInformation}</p>
-                    {step?.comment && <p className="text-xs text-gray-500 mt-1 italic">Your comment: "{step.comment}"</p>}
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      Submitted by <span className="font-medium text-gray-600">{req.createdByName}</span>
-                      {step?.decidedAt && <> · Decided {new Date(step.decidedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</>}
-                    </p>
+          ) : (
+            <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">#</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Submitted By</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Comment</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Decided On</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {paginated.map((req, idx) => {
+                    const step   = myStepFor(req)
+                    const serial = (historyPage - 1) * PAGE_SIZE + idx + 1
+                    return (
+                      <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
+                        <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-gray-900">{req.vendorName}</p>
+                            {req.revisionNo > 0 && <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>}
+                          </div>
+                          <p className="text-xs text-gray-400 mt-0.5">{req.contactInformation}</p>
+                        </td>
+                        <td className="px-4 py-3"><StatusBadge status={req.status} /></td>
+                        <td className="px-4 py-3 text-xs text-gray-500">{req.createdByName}</td>
+                        <td className="px-4 py-3 text-xs text-gray-400 italic max-w-xs truncate">{step?.comment || '—'}</td>
+                        <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                          {step?.decidedAt ? new Date(step.decidedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => openView(req)}>
+                            <EyeIcon className="h-3.5 w-3.5" />View
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+                <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (historyPage - 1) * PAGE_SIZE + 1}–{Math.min(historyPage * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === 1} onClick={() => setHistoryPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
+                    <span className="text-xs text-gray-500 px-1">Page {historyPage} of {totalPages}</span>
+                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === totalPages} onClick={() => setHistoryPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
                   </div>
-                  <button className="btn-secondary flex-shrink-0" onClick={() => openView(req)}>
-                    <EyeIcon className="h-4 w-4" />
-                    View
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between bg-white rounded-xl ring-1 ring-gray-200 px-4 py-2.5">
-              <span className="text-xs text-gray-400">Showing {(historyPage - 1) * PAGE_SIZE + 1}–{Math.min(historyPage * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
-              <div className="flex items-center gap-1.5">
-                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === 1} onClick={() => setHistoryPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
-                <span className="text-xs text-gray-500 px-1">Page {historyPage} of {totalPages}</span>
-                <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === totalPages} onClick={() => setHistoryPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
+                )}
               </div>
             </div>
           )}

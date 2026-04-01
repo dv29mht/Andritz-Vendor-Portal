@@ -132,6 +132,79 @@ public class VendorRequestController(
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // POST /api/vendor-requests/draft
+    // Buyer saves a new request as Draft without submitting (all fields optional).
+    // ─────────────────────────────────────────────────────────────────────────
+    [HttpPost("draft")]
+    [Authorize(Roles = Roles.Buyer)]
+    public async Task<IActionResult> CreateDraft([FromBody] SaveNewDraftDto dto)
+    {
+        var creator = await db.Users.FindAsync(UserId());
+        var request = new VendorRequest
+        {
+            CreatedByUserId  = UserId(),
+            CreatedByName    = creator?.FullName ?? string.Empty,
+            Status           = VendorRequestStatus.Draft,
+            VendorName       = dto.VendorName       ?? string.Empty,
+            ContactInformation = dto.ContactPerson  ?? string.Empty,
+            ContactPerson    = dto.ContactPerson     ?? string.Empty,
+            Telephone        = dto.Telephone         ?? string.Empty,
+            GstNumber        = dto.GstNumber         ?? string.Empty,
+            PanCard          = dto.PanCard           ?? string.Empty,
+            AddressDetails   = dto.AddressDetails    ?? string.Empty,
+            City             = dto.City              ?? string.Empty,
+            Locality         = dto.Locality          ?? string.Empty,
+            MaterialGroup    = dto.MaterialGroup     ?? string.Empty,
+            PostalCode       = dto.PostalCode        ?? string.Empty,
+            State            = dto.State             ?? string.Empty,
+            Country          = dto.Country           ?? string.Empty,
+            Currency         = dto.Currency          ?? string.Empty,
+            PaymentTerms     = dto.PaymentTerms      ?? string.Empty,
+            Incoterms        = dto.Incoterms         ?? string.Empty,
+            Reason           = dto.Reason            ?? string.Empty,
+            YearlyPvo        = dto.YearlyPvo         ?? string.Empty,
+            IsOneTimeVendor  = dto.IsOneTimeVendor   ?? false,
+            ProposedBy       = dto.ProposedBy        ?? string.Empty,
+        };
+
+        // Optionally build approval chain if approvers are supplied
+        if (dto.ApproverUserIds is { Count: > 0 })
+        {
+            var approverIds = dto.ApproverUserIds.Distinct().ToList();
+            var approverMap = await db.Users.Where(u => approverIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id);
+            int stepOrder = 1;
+            foreach (var approverId in dto.ApproverUserIds.Where(id => approverMap.ContainsKey(id)))
+            {
+                request.ApprovalSteps.Add(new ApprovalStep
+                {
+                    ApproverUserId  = approverId,
+                    ApproverName    = approverMap[approverId].FullName,
+                    StepOrder       = stepOrder++,
+                    IsFinalApproval = false,
+                });
+            }
+        }
+
+        // Always add the final approver step
+        var pardeep = await db.Users.FirstOrDefaultAsync(u => u.Email == FinalApproverRequirement.AuthorizedEmail);
+        if (pardeep is not null)
+        {
+            var stepOrder = request.ApprovalSteps.Count + 1;
+            request.ApprovalSteps.Add(new ApprovalStep
+            {
+                ApproverUserId  = pardeep.Id,
+                ApproverName    = pardeep.FullName,
+                StepOrder       = stepOrder,
+                IsFinalApproval = true,
+            });
+        }
+
+        db.VendorRequests.Add(request);
+        await db.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetById), new { id = request.Id }, MapToDetail(request));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // POST /api/vendor-requests
     // Buyer creates a new request in Draft status.
     // ─────────────────────────────────────────────────────────────────────────
@@ -221,6 +294,95 @@ public class VendorRequestController(
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // PUT /api/vendor-requests/{id}/save-draft
+    // Buyer updates field data on an existing Draft without submitting it.
+    // ─────────────────────────────────────────────────────────────────────────
+    [HttpPut("{id:int}/save-draft")]
+    [Authorize(Roles = Roles.Buyer)]
+    public async Task<IActionResult> SaveDraft(int id, [FromBody] SaveNewDraftDto dto)
+    {
+        var request = await db.VendorRequests
+            .Include(r => r.ApprovalSteps)
+            .FirstOrDefaultAsync(r => r.Id == id);
+
+        if (request is null)                              return NotFound();
+        if (request.CreatedByUserId != UserId())           return Forbid();
+        if (request.Status != VendorRequestStatus.Draft)
+            return BadRequest("Only Draft requests can be updated via this endpoint.");
+
+        // Apply only the fields provided (null means "leave unchanged")
+        if (dto.VendorName     is not null) request.VendorName         = dto.VendorName;
+        if (dto.ContactPerson  is not null) { request.ContactPerson    = dto.ContactPerson; request.ContactInformation = dto.ContactPerson; }
+        if (dto.Telephone      is not null) request.Telephone          = dto.Telephone;
+        if (dto.GstNumber      is not null) request.GstNumber          = dto.GstNumber;
+        if (dto.PanCard        is not null) request.PanCard            = dto.PanCard;
+        if (dto.AddressDetails is not null) request.AddressDetails     = dto.AddressDetails;
+        if (dto.City           is not null) request.City               = dto.City;
+        if (dto.Locality       is not null) request.Locality           = dto.Locality;
+        if (dto.MaterialGroup  is not null) request.MaterialGroup      = dto.MaterialGroup;
+        if (dto.PostalCode     is not null) request.PostalCode         = dto.PostalCode;
+        if (dto.State          is not null) request.State              = dto.State;
+        if (dto.Country        is not null) request.Country            = dto.Country;
+        if (dto.Currency       is not null) request.Currency           = dto.Currency;
+        if (dto.PaymentTerms   is not null) request.PaymentTerms       = dto.PaymentTerms;
+        if (dto.Incoterms      is not null) request.Incoterms          = dto.Incoterms;
+        if (dto.Reason         is not null) request.Reason             = dto.Reason;
+        if (dto.YearlyPvo      is not null) request.YearlyPvo          = dto.YearlyPvo;
+        if (dto.IsOneTimeVendor is not null) request.IsOneTimeVendor   = dto.IsOneTimeVendor.Value;
+        if (dto.ProposedBy     is not null) request.ProposedBy         = dto.ProposedBy;
+        request.UpdatedAt = DateTime.UtcNow;
+
+        // If a new approver list is supplied, rebuild the approval chain.
+        if (dto.ApproverUserIds is { Count: > 0 })
+        {
+            var approverIds = dto.ApproverUserIds.Distinct().ToList();
+            var approverMap = await db.Users
+                .Where(u => approverIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id);
+
+            var approverRoleId = await db.Roles
+                .Where(r => r.Name == Roles.Approver)
+                .Select(r => r.Id)
+                .FirstOrDefaultAsync();
+
+            var usersWithApproverRole = (await db.UserRoles
+                .Where(ur => approverIds.Contains(ur.UserId) && ur.RoleId == approverRoleId)
+                .Select(ur => ur.UserId)
+                .ToListAsync())
+                .ToHashSet();
+
+            foreach (var approverId in approverIds)
+                if (!usersWithApproverRole.Contains(approverId))
+                    return BadRequest($"User '{approverMap[approverId].FullName}' does not have the Approver role.");
+
+            // Remove existing intermediate steps and rebuild
+            var existingIntermediate = request.ApprovalSteps.Where(s => !s.IsFinalApproval).ToList();
+            foreach (var s in existingIntermediate)
+                db.ApprovalSteps.Remove(s);
+
+            int stepOrder = 1;
+            foreach (var approverId in dto.ApproverUserIds)
+            {
+                var approver = approverMap[approverId];
+                request.ApprovalSteps.Add(new ApprovalStep
+                {
+                    ApproverUserId  = approverId,
+                    ApproverName    = approver.FullName,
+                    StepOrder       = stepOrder++,
+                    IsFinalApproval = false,
+                });
+            }
+
+            // Update final approver step order
+            var finalStep = request.ApprovalSteps.FirstOrDefault(s => s.IsFinalApproval);
+            if (finalStep is not null) finalStep.StepOrder = stepOrder;
+        }
+
+        await db.SaveChangesAsync();
+        return Ok(MapToDetail(request));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // POST /api/vendor-requests/{id}/submit
     // Buyer submits a Draft request into the approval queue.
     // ─────────────────────────────────────────────────────────────────────────
@@ -238,25 +400,49 @@ public class VendorRequestController(
         if (request.Status != VendorRequestStatus.Draft)
             return BadRequest("Only Draft requests can be submitted via this endpoint. Use /resubmit for Rejected requests.");
 
-        request.Status    = VendorRequestStatus.PendingApproval;
+        // If there are no intermediate (non-final) steps, skip straight to PendingFinalApproval
+        var hasIntermediateSteps = request.ApprovalSteps.Any(s => !s.IsFinalApproval);
+        request.Status    = hasIntermediateSteps
+            ? VendorRequestStatus.PendingApproval
+            : VendorRequestStatus.PendingFinalApproval;
         request.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
-        // Notify first approver(s) + admin
         var adminEmail = await AdminEmailAsync();
-        var firstStep  = request.ApprovalSteps
-            .Where(s => !s.IsFinalApproval).OrderBy(s => s.StepOrder).FirstOrDefault();
-        if (firstStep is not null)
+        if (hasIntermediateSteps)
         {
-            var approverEmail = await db.Users
-                .Where(u => u.Id == firstStep.ApproverUserId)
-                .Select(u => u.Email!)
-                .FirstOrDefaultAsync();
-            if (approverEmail is not null)
-                await SendEmailAsync(
-                    approverEmail,
-                    NewSubmission(ToSummary(request), firstStep.ApproverName, PortalUrl()),
-                    adminEmail);
+            // Notify first intermediate approver
+            var firstStep  = request.ApprovalSteps
+                .Where(s => !s.IsFinalApproval).OrderBy(s => s.StepOrder).FirstOrDefault();
+            if (firstStep is not null)
+            {
+                var approverEmail = await db.Users
+                    .Where(u => u.Id == firstStep.ApproverUserId)
+                    .Select(u => u.Email!)
+                    .FirstOrDefaultAsync();
+                if (approverEmail is not null)
+                    await SendEmailAsync(
+                        approverEmail,
+                        NewSubmission(ToSummary(request), firstStep.ApproverName, PortalUrl()),
+                        adminEmail);
+            }
+        }
+        else
+        {
+            // No intermediate approvers — notify final approver directly
+            var finalStep = request.ApprovalSteps.FirstOrDefault(s => s.IsFinalApproval);
+            if (finalStep is not null)
+            {
+                var finalEmail = await db.Users
+                    .Where(u => u.Id == finalStep.ApproverUserId)
+                    .Select(u => u.Email!)
+                    .FirstOrDefaultAsync();
+                if (finalEmail is not null)
+                    await SendEmailAsync(
+                        finalEmail,
+                        NewSubmission(ToSummary(request), finalStep.ApproverName, PortalUrl()),
+                        adminEmail);
+            }
         }
 
         return Ok(MapToDetail(request));
@@ -401,12 +587,14 @@ public class VendorRequestController(
 
         request.RevisionNo       = newRevNo;
         request.RejectionComment = null;
-        request.Status           = VendorRequestStatus.PendingApproval;
+        var hasIntermediateRs    = request.ApprovalSteps.Any(s => !s.IsFinalApproval);
+        request.Status           = hasIntermediateRs
+            ? VendorRequestStatus.PendingApproval
+            : VendorRequestStatus.PendingFinalApproval;
         request.UpdatedAt        = DateTime.UtcNow;
 
         await db.SaveChangesAsync();
 
-        // Notify first approver + admin that the buyer has resubmitted
         var adminEmailRs = await AdminEmailAsync();
         var firstStepRs  = request.ApprovalSteps
             .Where(s => !s.IsFinalApproval).OrderBy(s => s.StepOrder).FirstOrDefault();

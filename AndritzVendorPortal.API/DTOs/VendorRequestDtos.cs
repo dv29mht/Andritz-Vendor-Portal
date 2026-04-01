@@ -66,6 +66,30 @@ internal static class ValidationPatterns
     public const string Pan = @"^[A-Z]{5}[0-9]{4}[A-Z]$";
 }
 
+/// <summary>All fields optional — used when saving a new request as Draft without submitting.</summary>
+public record SaveNewDraftDto(
+    [MaxLength(200)]  string?       VendorName,
+    [MaxLength(100)]  string?       ContactPerson,
+    [MaxLength(30)]   string?       Telephone,
+    [MaxLength(15)]   string?       GstNumber,
+    [MaxLength(10)]   string?       PanCard,
+    [MaxLength(500)]  string?       AddressDetails,
+    [MaxLength(100)]  string?       City,
+    [MaxLength(100)]  string?       Locality,
+    [MaxLength(200)]  string?       MaterialGroup,
+    [MaxLength(10)]   string?       PostalCode,
+    [MaxLength(100)]  string?       State,
+    [MaxLength(100)]  string?       Country,
+    [MaxLength(10)]   string?       Currency,
+    [MaxLength(200)]  string?       PaymentTerms,
+    [MaxLength(200)]  string?       Incoterms,
+    [MaxLength(1000)] string?       Reason,
+    [MaxLength(100)]  string?       YearlyPvo,
+                      bool?         IsOneTimeVendor,
+    [MaxLength(200)]  string?       ProposedBy,
+                      List<string>? ApproverUserIds
+);
+
 public record CreateVendorRequestDto(
     [Required, MaxLength(200)]                                                    string  VendorName,
     [Required, MaxLength(100)]                                                    string  ContactPerson,

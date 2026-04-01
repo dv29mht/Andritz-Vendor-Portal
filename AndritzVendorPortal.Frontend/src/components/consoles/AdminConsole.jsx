@@ -211,6 +211,8 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
 
   const [filterStatus, setFilterStatus]     = useState('All')
   const [search, setSearch]                 = useState('')
+  const [dateFrom, setDateFrom]             = useState('')
+  const [dateTo, setDateTo]                 = useState('')
   const [viewingRequest, setViewingRequest] = useState(null)
   const [previewRequest, setPreviewRequest] = useState(null)
   const [editingRequest, setEditingRequest] = useState(null)
@@ -248,7 +250,14 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
   }
 
   const visible = requests.filter(r => {
-    if (filterStatus === 'Archived') return r.isArchived
+    const matchDate = (() => {
+      if (!dateFrom && !dateTo) return true
+      const d = new Date(r.createdAt)
+      if (dateFrom && d < new Date(dateFrom)) return false
+      if (dateTo   && d > new Date(dateTo + 'T23:59:59')) return false
+      return true
+    })()
+    if (filterStatus === 'Archived') return r.isArchived && matchDate
     if (!r.isArchived) {
       const matchStatus = filterStatus === 'All' || r.status === filterStatus
       const q = search.toLowerCase()
@@ -256,7 +265,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
         || r.vendorName.toLowerCase().includes(q)
         || r.createdByName.toLowerCase().includes(q)
         || (r.vendorCode ?? '').toLowerCase().includes(q)
-      return matchStatus && matchSearch
+      return matchStatus && matchSearch && matchDate
     }
     return false
   })
@@ -395,7 +404,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
       {activePage === 'requests' && (
         <>
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 flex-wrap">
             <div className="relative flex-1 min-w-0 max-w-xs">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <input
@@ -405,6 +414,10 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 onChange={e => { setSearch(e.target.value); setReqPage(1) }}
               />
             </div>
+            <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setReqPage(1) }}
+              className="form-input text-sm" title="From date" />
+            <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setReqPage(1) }}
+              className="form-input text-sm" title="To date" />
             <div className="flex flex-wrap gap-1.5">
               {STATUS_FILTERS.map(s => (
                 <button
@@ -454,9 +467,9 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 {paginated.length === 0 && (
                   <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-400">No requests match the current filter.</td></tr>
                 )}
-                {paginated.map(req => (
+                {paginated.map((req, idx) => (
                   <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
-                    <td className="px-4 py-3.5 font-mono text-xs text-gray-400">#{req.id}</td>
+                    <td className="px-4 py-3.5 font-mono text-xs text-gray-400">#{(reqPage - 1) * PAGE_SIZE + idx + 1}</td>
                     <td className="px-4 py-3.5">
                       <p className="font-medium text-gray-900 whitespace-nowrap leading-snug">{req.vendorName}</p>
                       {req.vendorCode && <p className="text-xs text-emerald-600 font-mono mt-0.5">{req.vendorCode}</p>}

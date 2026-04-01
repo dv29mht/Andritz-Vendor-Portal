@@ -57,34 +57,72 @@ export function useVendorWorkflow() {
 
   // ── Buyer actions ────────────────────────────────────────────────────────
 
+  const _buildRequestPayload = (form, approvers) => ({
+    vendorName:      form.vendorName,
+    contactPerson:   form.contactPerson,
+    telephone:       form.telephone     || null,
+    gstNumber:       form.gstNumber,
+    panCard:         form.panCard,
+    addressDetails:  form.addressDetails,
+    city:            form.city,
+    locality:        form.locality,
+    materialGroup:   form.materialGroup || null,
+    postalCode:      form.postalCode    || null,
+    state:           form.state         || null,
+    country:         form.country       || null,
+    currency:        form.currency      || null,
+    paymentTerms:    form.paymentTerms  || null,
+    incoterms:       form.incoterms     || null,
+    reason:          form.reason        || null,
+    yearlyPvo:       form.yearlyPvo     || null,
+    isOneTimeVendor: form.isOneTimeVendor ?? false,
+    proposedBy:      form.proposedBy    || null,
+    approverUserIds: approvers.map(a => a.id),
+  })
+
   const createRequest = async (form, approvers) => {
     setActionLoading(true)
     try {
-    const { data } = await api.post('/vendor-requests', {
-      vendorName:     form.vendorName,
-      contactPerson:  form.contactPerson,
-      telephone:      form.telephone     || null,
-      gstNumber:      form.gstNumber,
-      panCard:        form.panCard,
-      addressDetails: form.addressDetails,
-      city:           form.city,
-      locality:       form.locality,
-      materialGroup:  form.materialGroup || null,
-      postalCode:     form.postalCode    || null,
-      state:          form.state         || null,
-      country:        form.country       || null,
-      currency:       form.currency      || null,
-      paymentTerms:   form.paymentTerms  || null,
-      incoterms:      form.incoterms     || null,
-      reason:         form.reason        || null,
-      yearlyPvo:       form.yearlyPvo      || null,
-      isOneTimeVendor: form.isOneTimeVendor ?? false,
-      proposedBy:      form.proposedBy     || null,
-      approverUserIds: approvers.map(a => a.id),
-    })
+    const { data } = await api.post('/vendor-requests', _buildRequestPayload(form, approvers))
     // Auto-submit immediately so the request enters the approval queue
     await api.post(`/vendor-requests/${data.id}/submit`)
     await fetchAll()
+    } finally { setActionLoading(false) }
+  }
+
+  const _buildDraftPayload = (form, approvers) => ({
+    vendorName:      form.vendorName      || null,
+    contactPerson:   form.contactPerson   || null,
+    telephone:       form.telephone       || null,
+    gstNumber:       form.gstNumber       || null,
+    panCard:         form.panCard         || null,
+    addressDetails:  form.addressDetails  || null,
+    city:            form.city            || null,
+    locality:        form.locality        || null,
+    materialGroup:   form.materialGroup   || null,
+    postalCode:      form.postalCode      || null,
+    state:           form.state           || null,
+    country:         form.country         || null,
+    currency:        form.currency        || null,
+    paymentTerms:    form.paymentTerms    || null,
+    incoterms:       form.incoterms       || null,
+    reason:          form.reason          || null,
+    yearlyPvo:       form.yearlyPvo       || null,
+    isOneTimeVendor: form.isOneTimeVendor ?? false,
+    proposedBy:      form.proposedBy      || null,
+    approverUserIds: approvers.length > 0 ? approvers.map(a => a.id) : null,
+  })
+
+  /** Save a new or existing request as Draft without submitting. */
+  const saveDraft = async (form, approvers, existingId = null) => {
+    setActionLoading(true)
+    try {
+      if (existingId) {
+        await api.put(`/vendor-requests/${existingId}/save-draft`, _buildDraftPayload(form, approvers))
+      } else {
+        await api.post('/vendor-requests/draft', _buildDraftPayload(form, approvers))
+      }
+      await fetchAll()
     } finally { setActionLoading(false) }
   }
 
@@ -209,6 +247,7 @@ export function useVendorWorkflow() {
     getPendingFor,
     getHistoryFor,
     createRequest,
+    saveDraft,
     submit,
     resubmit,
     updateCompleted,
