@@ -101,8 +101,12 @@ function deriveEvents(requests, role, userId) {
       const myStep = (req.approvalSteps ?? []).find(s => s.approverUserId === userId)
       if (!myStep) continue
 
-      if (myStep.decision === 'Pending') {
-        // New pending assignment
+      const allPriorApproved = (req.approvalSteps ?? [])
+        .filter(s => s.stepOrder < myStep.stepOrder)
+        .every(s => s.decision === 'Approved')
+
+      if (myStep.decision === 'Pending' && allPriorApproved) {
+        // New pending assignment — only notify when it's actually this approver's turn
         events.push({
           id: `assigned-${req.id}-${req.revisionNo}`,
           title: 'New Request for Review',

@@ -978,7 +978,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               </Field>
               <Field label="Proposed By" error={errors.proposedBy} span={2}>
                 <input className="form-input" list="proposed-by-list" placeholder="Name / department proposing this vendor"
-                  value={form.proposedBy} onChange={e => set('proposedBy', e.target.value)} />
+                  value={form.proposedBy} onChange={e => set('proposedBy', e.target.value.replace(/[^a-zA-Z\s]/g, ''))} />
                 <datalist id="proposed-by-list">
                   {proposedByNames.map(n => <option key={n} value={n} />)}
                 </datalist>
