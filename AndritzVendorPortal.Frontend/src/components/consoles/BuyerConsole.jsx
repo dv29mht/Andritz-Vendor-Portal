@@ -1003,12 +1003,12 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         const paginated   = filteredRev.slice((revPage - 1) * PAGE_SIZE, revPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="flex flex-row items-center gap-2 overflow-x-auto">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 ring-1 ring-red-200 text-red-700 text-sm font-semibold px-4 py-2 select-none shrink-0">
-              <ExclamationCircleIcon className="h-4 w-4" />
+          <div className="flex flex-row items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 ring-1 ring-red-200 text-red-700 text-sm font-semibold px-4 py-2 select-none shrink-0 whitespace-nowrap">
+              <ExclamationCircleIcon className="h-4 w-4 shrink-0" />
               {filteredRev.length} Awaiting Revision
             </span>
-            <div className="relative">
+            <div className="relative shrink-0">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <input type="text" placeholder="Search requests…" value={revSearch}
                 onChange={e => { setRevSearch(e.target.value); setRevPage(1) }}

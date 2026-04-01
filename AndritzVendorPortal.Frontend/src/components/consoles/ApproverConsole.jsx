@@ -254,7 +254,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
         const paginated  = filtered.slice((pendingPage - 1) * PAGE_SIZE, pendingPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="flex items-center gap-2 overflow-x-auto">
+          <div className="flex items-center gap-2">
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <input type="text" placeholder="Search by vendor, city…" value={pendingSearch}
@@ -341,7 +341,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
         const paginated  = filtered.slice((waitingPage - 1) * PAGE_SIZE, waitingPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="flex items-center gap-2 overflow-x-auto">
+          <div className="flex items-center gap-2">
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <input type="text" placeholder="Search by vendor, city…" value={waitingSearch}
@@ -420,8 +420,8 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
         const paginated  = filtered.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="flex items-center gap-2 overflow-x-auto">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 select-none shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 select-none shrink-0 whitespace-nowrap">
               <CheckIcon className="h-4 w-4" />
               {filtered.length} Approved
             </span>

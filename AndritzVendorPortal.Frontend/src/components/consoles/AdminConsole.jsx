@@ -404,7 +404,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
       {activePage === 'requests' && (
         <>
           {/* Filters */}
-          <div className="flex flex-row items-center gap-3 mb-4 overflow-x-auto">
+          <div className="flex flex-row items-center gap-3 mb-4">
             <div className="relative flex-1 min-w-0 max-w-xs">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <input
