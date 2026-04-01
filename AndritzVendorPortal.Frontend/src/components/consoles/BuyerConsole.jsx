@@ -1020,7 +1020,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 )}
               </Field>
               <Field label="City" required error={errors.city}>
-                <input className="form-input" placeholder="Enter city" value={form.city} onChange={e => set('city', e.target.value)} />
+                <input className="form-input" placeholder="Enter city" value={form.city} onChange={e => set('city', e.target.value.replace(/[^a-zA-Z\s]/g, ''))} />
               </Field>
               <Field label="Locality" required error={errors.locality}>
                 <input className="form-input" list="locality-list" placeholder="Type or select locality"
@@ -1049,7 +1049,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               </Field>
               <Field label="Yearly PVO" error={errors.yearlyPvo}>
                 <input className="form-input" placeholder="e.g. 50,00,000"
-                  value={form.yearlyPvo} onChange={e => set('yearlyPvo', e.target.value)} />
+                  value={form.yearlyPvo} onChange={e => set('yearlyPvo', e.target.value.replace(/[^0-9,]/g, ''))} />
               </Field>
             </FormSection>
 
