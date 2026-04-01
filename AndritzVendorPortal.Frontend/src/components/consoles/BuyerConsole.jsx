@@ -287,7 +287,13 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           errs.push('PAN Card format is invalid (expected: ABCDE1234F).')
         if (!parsed.addressDetails.trim()) errs.push('Address Details is required.')
         if (!parsed.city.trim())           errs.push('City is required.')
+        else if (/[^a-zA-Z\s]/.test(parsed.city.trim()))
+          errs.push('City must contain letters only — no numbers or special characters.')
         if (!parsed.locality.trim())       errs.push('Locality is required.')
+        if (parsed.yearlyPvo.trim() && /[^0-9,]/.test(parsed.yearlyPvo.trim()))
+          errs.push('Yearly PVO must contain digits and commas only — no letters or special characters.')
+        if (parsed.proposedBy.trim() && /[^a-zA-Z\s]/.test(parsed.proposedBy.trim()))
+          errs.push('Proposed By must contain letters only — no numbers or special characters.')
 
         if (errs.length) {
           setImportErrors(errs)
