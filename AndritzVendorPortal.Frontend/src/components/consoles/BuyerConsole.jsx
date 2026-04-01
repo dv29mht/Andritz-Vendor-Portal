@@ -893,9 +893,9 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                     className="form-input pl-9 text-sm w-44" />
                 </div>
                 <input type="date" value={reqsDateFrom} onChange={e => { setReqsDateFrom(e.target.value); setReqsPage(1) }}
-                  className="form-input text-sm" title="From date" />
+                  className="form-input text-sm w-36 shrink-0" title="From date" />
                 <input type="date" value={reqsDateTo} onChange={e => { setReqsDateTo(e.target.value); setReqsPage(1) }}
-                  className="form-input text-sm" title="To date" />
+                  className="form-input text-sm w-36 shrink-0" title="To date" />
               </div>
               <div className="flex items-center gap-2">
                 <button className="btn-secondary" onClick={() => { setImportErrors([]); setShowImportDialog(true) }}>
@@ -1019,9 +1019,9 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 className="form-input pl-9 text-sm w-44" />
             </div>
             <input type="date" value={revDateFrom} onChange={e => { setRevDateFrom(e.target.value); setRevPage(1) }}
-              className="form-input text-sm" title="From date" />
+              className="form-input text-sm w-36 shrink-0" title="From date" />
             <input type="date" value={revDateTo} onChange={e => { setRevDateTo(e.target.value); setRevPage(1) }}
-              className="form-input text-sm" title="To date" />
+              className="form-input text-sm w-36 shrink-0" title="To date" />
           </div>
           {filteredRev.length === 0 ? (
             <div className="card p-12 text-center">

@@ -275,9 +275,9 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                 className="form-input pl-9 text-sm w-52" />
             </div>
             <input type="date" value={queueDateFrom} onChange={e => { setQueueDateFrom(e.target.value); setQueuePage(1) }}
-              className="form-input text-sm" title="From date" />
+              className="form-input text-sm w-36 shrink-0" title="From date" />
             <input type="date" value={queueDateTo} onChange={e => { setQueueDateTo(e.target.value); setQueuePage(1) }}
-              className="form-input text-sm" title="To date" />
+              className="form-input text-sm w-36 shrink-0" title="To date" />
           </div>
           {filtered.length === 0 && (
             <div className="card p-12 text-center">
@@ -409,9 +409,9 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                 className="form-input pl-9 text-sm w-52" />
             </div>
             <input type="date" value={historyDateFrom} onChange={e => { setHistoryDateFrom(e.target.value); setHistoryPage(1) }}
-              className="form-input text-sm" title="From date" />
+              className="form-input text-sm w-36 shrink-0" title="From date" />
             <input type="date" value={historyDateTo} onChange={e => { setHistoryDateTo(e.target.value); setHistoryPage(1) }}
-              className="form-input text-sm" title="To date" />
+              className="form-input text-sm w-36 shrink-0" title="To date" />
           </div>
           {filtered.length === 0 && (
             <div className="card p-12 text-center">

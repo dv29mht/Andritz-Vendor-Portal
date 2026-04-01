@@ -262,9 +262,9 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                 className="form-input pl-9 text-sm w-48" />
             </div>
             <input type="date" value={pendingDateFrom} onChange={e => { setPendingDateFrom(e.target.value); setPendingPage(1) }}
-              className="form-input text-sm" title="From date" />
+              className="form-input text-sm w-36 shrink-0" title="From date" />
             <input type="date" value={pendingDateTo} onChange={e => { setPendingDateTo(e.target.value); setPendingPage(1) }}
-              className="form-input text-sm" title="To date" />
+              className="form-input text-sm w-36 shrink-0" title="To date" />
           </div>
           {filtered.length === 0 ? (
             <div className="card p-12 text-center">
@@ -349,9 +349,9 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                 className="form-input pl-9 text-sm w-48" />
             </div>
             <input type="date" value={waitingDateFrom} onChange={e => { setWaitingDateFrom(e.target.value); setWaitingPage(1) }}
-              className="form-input text-sm" title="From date" />
+              className="form-input text-sm w-36 shrink-0" title="From date" />
             <input type="date" value={waitingDateTo} onChange={e => { setWaitingDateTo(e.target.value); setWaitingPage(1) }}
-              className="form-input text-sm" title="To date" />
+              className="form-input text-sm w-36 shrink-0" title="To date" />
           </div>
           {filtered.length === 0 ? (
             <div className="card p-12 text-center">
@@ -432,9 +432,9 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                 className="form-input pl-9 text-sm w-48" />
             </div>
             <input type="date" value={historyDateFrom} onChange={e => { setHistoryDateFrom(e.target.value); setHistoryPage(1) }}
-              className="form-input text-sm" title="From date" />
+              className="form-input text-sm w-36 shrink-0" title="From date" />
             <input type="date" value={historyDateTo} onChange={e => { setHistoryDateTo(e.target.value); setHistoryPage(1) }}
-              className="form-input text-sm" title="To date" />
+              className="form-input text-sm w-36 shrink-0" title="To date" />
           </div>
           {filtered.length === 0 ? (
             <div className="card p-12 text-center">

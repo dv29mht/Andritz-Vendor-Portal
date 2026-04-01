@@ -415,9 +415,9 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
               />
             </div>
             <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setReqPage(1) }}
-              className="form-input text-sm" title="From date" />
+              className="form-input text-sm w-36 shrink-0" title="From date" />
             <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setReqPage(1) }}
-              className="form-input text-sm" title="To date" />
+              className="form-input text-sm w-36 shrink-0" title="To date" />
             <div className="flex gap-1.5">
               {STATUS_FILTERS.map(s => (
                 <button
