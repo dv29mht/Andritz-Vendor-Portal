@@ -267,7 +267,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
         const paginated  = filtered.slice((queuePage - 1) * PAGE_SIZE, queuePage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto">
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <input type="text" placeholder="Search by vendor, contact, city…" value={queueSearch}
@@ -382,7 +382,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
         const paginated  = filtered.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto">
             <div className="flex gap-1.5">
               {['All', 'Approved', 'Rejected'].map(f => (
                 <button

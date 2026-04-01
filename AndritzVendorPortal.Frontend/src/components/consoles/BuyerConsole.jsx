@@ -847,8 +847,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         return (
           <div className="space-y-4">
             {/* Controls row */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-wrap">
-              <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex flex-row items-center justify-between gap-3">
+              <div className="flex flex-row items-center gap-2 overflow-x-auto">
                 <div className="flex gap-1.5">
                   {['All', 'Draft', 'Pending', 'Completed'].map(f => (
                     <button
@@ -985,7 +985,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         const paginated   = filteredRev.slice((revPage - 1) * PAGE_SIZE, revPage * PAGE_SIZE)
         return (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+          <div className="flex flex-row items-center gap-2 overflow-x-auto">
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 ring-1 ring-red-200 text-red-700 text-sm font-semibold px-4 py-2 select-none">
               <ExclamationCircleIcon className="h-4 w-4" />
               {filteredRev.length} Awaiting Revision

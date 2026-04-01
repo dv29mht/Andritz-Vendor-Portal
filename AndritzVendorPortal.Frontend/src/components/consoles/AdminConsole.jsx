@@ -404,7 +404,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
       {activePage === 'requests' && (
         <>
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 flex-wrap">
+          <div className="flex flex-row items-center gap-3 mb-4 overflow-x-auto">
             <div className="relative flex-1 min-w-0 max-w-xs">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <input
@@ -418,7 +418,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
               className="form-input text-sm" title="From date" />
             <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setReqPage(1) }}
               className="form-input text-sm" title="To date" />
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex gap-1.5">
               {STATUS_FILTERS.map(s => (
                 <button
                   key={s}

@@ -213,31 +213,33 @@ public class VendorRequestController(
     public async Task<IActionResult> Create([FromBody] CreateVendorRequestDto dto)
     {
         // Batch-load all candidate approver users in a single WHERE Id IN (...) query
-        var approverIds = dto.ApproverUserIds.Distinct().ToList();
-        var approverMap = await db.Users
-            .Where(u => approverIds.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id);
+        var approverIds = (dto.ApproverUserIds ?? []).Distinct().ToList();
+        var approverMap = approverIds.Count > 0
+            ? await db.Users.Where(u => approverIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id)
+            : [];
 
-        // Validate existence in-memory
-        foreach (var approverId in approverIds)
-            if (!approverMap.ContainsKey(approverId))
-                return BadRequest($"Approver ID '{approverId}' does not exist.");
+        // Validate existence and role in-memory
+        if (approverIds.Count > 0)
+        {
+            foreach (var approverId in approverIds)
+                if (!approverMap.ContainsKey(approverId))
+                    return BadRequest($"Approver ID '{approverId}' does not exist.");
 
-        // Batch-check roles: one query to get the Approver role ID, one join query
-        var approverRoleId = await db.Roles
-            .Where(r => r.Name == Roles.Approver)
-            .Select(r => r.Id)
-            .FirstOrDefaultAsync();
+            var approverRoleId = await db.Roles
+                .Where(r => r.Name == Roles.Approver)
+                .Select(r => r.Id)
+                .FirstOrDefaultAsync();
 
-        var usersWithApproverRole = (await db.UserRoles
-            .Where(ur => approverIds.Contains(ur.UserId) && ur.RoleId == approverRoleId)
-            .Select(ur => ur.UserId)
-            .ToListAsync())
-            .ToHashSet();
+            var usersWithApproverRole = (await db.UserRoles
+                .Where(ur => approverIds.Contains(ur.UserId) && ur.RoleId == approverRoleId)
+                .Select(ur => ur.UserId)
+                .ToListAsync())
+                .ToHashSet();
 
-        foreach (var approverId in approverIds)
-            if (!usersWithApproverRole.Contains(approverId))
-                return BadRequest($"User '{approverMap[approverId].FullName}' does not have the Approver role.");
+            foreach (var approverId in approverIds)
+                if (!usersWithApproverRole.Contains(approverId))
+                    return BadRequest($"User '{approverMap[approverId].FullName}' does not have the Approver role.");
+        }
 
         var creator = await db.Users.FindAsync(UserId());
 
@@ -261,7 +263,7 @@ public class VendorRequestController(
         // FinalApprover is always last at stepOrder = approverCount + 1.
         // approverMap already loaded above — no further DB hits needed.
         int stepOrder = 1;
-        foreach (var approverId in dto.ApproverUserIds)
+        foreach (var approverId in approverIds)
         {
             var approver = approverMap[approverId];
             request.ApprovalSteps.Add(new ApprovalStep

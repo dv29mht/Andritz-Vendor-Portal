@@ -114,7 +114,7 @@ public record CreateVendorRequestDto(
     [MaxLength(100)]                                                              string? YearlyPvo,
                                                                                   bool?   IsOneTimeVendor,
     [MaxLength(200)]                                                              string? ProposedBy,
-    [Required, MinLength(1)]                                                      List<string> ApproverUserIds
+                                                                                  List<string>? ApproverUserIds
 );
 
 public record ResubmitRequestDto(
