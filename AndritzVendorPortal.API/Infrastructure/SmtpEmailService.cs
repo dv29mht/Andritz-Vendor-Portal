@@ -14,25 +14,25 @@ public class SmtpEmailService(
 
     public async Task SendAsync(string to, string subject, string htmlBody)
     {
-        if (string.IsNullOrWhiteSpace(_cfg.ResendApiKey))
+        if (string.IsNullOrWhiteSpace(_cfg.BrevoApiKey))
         {
             logger.LogInformation(
-                "[Email] Resend API key not configured — skipping email to {To}: {Subject}", to, subject);
+                "[Email] Brevo API key not configured — skipping email to {To}: {Subject}", to, subject);
             return;
         }
 
         try
         {
             var client = httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", _cfg.ResendApiKey);
+            client.DefaultRequestHeaders.Add("api-key", _cfg.BrevoApiKey);
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             var payload = new
             {
-                from    = $"{_cfg.FromName} <{_cfg.FromEmail}>",
-                to      = new[] { to },
+                sender  = new { name = _cfg.FromName, email = _cfg.FromEmail },
+                to      = new[] { new { email = to } },
                 subject,
-                html    = htmlBody,
+                htmlContent = htmlBody,
             };
 
             var content = new StringContent(
@@ -40,14 +40,14 @@ public class SmtpEmailService(
                 Encoding.UTF8,
                 "application/json");
 
-            var response = await client.PostAsync("https://api.resend.com/emails", content);
+            var response = await client.PostAsync("https://api.brevo.com/v3/smtp/email", content);
 
             if (response.IsSuccessStatusCode)
                 logger.LogInformation("[Email] Sent to {To}: {Subject}", to, subject);
             else
             {
                 var body = await response.Content.ReadAsStringAsync();
-                logger.LogError("[Email] Resend API error {Status} for {To}: {Body}", (int)response.StatusCode, to, body);
+                logger.LogError("[Email] Brevo API error {Status} for {To}: {Body}", (int)response.StatusCode, to, body);
             }
         }
         catch (Exception ex)
