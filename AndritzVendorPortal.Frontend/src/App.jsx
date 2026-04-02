@@ -386,17 +386,15 @@ function WelcomeScreen({ user, onDone }) {
 // ── Session-expired banner ────────────────────────────────────────────────────
 
 function SessionExpiredBanner({ onDone }) {
-  const [count, setCount] = useState(3)
-
-  useEffect(() => {
-    if (count <= 0) { onDone(); return }
-    const t = setTimeout(() => setCount(c => c - 1), 1000)
-    return () => clearTimeout(t)
-  }, [count, onDone])
-
   return (
-    <div className="fixed inset-x-0 top-0 z-[200] flex items-center justify-center px-4 py-3 bg-red-600 text-white text-sm font-medium shadow-lg">
-      Your session has expired. Redirecting to login in {count}s…
+    <div className="fixed inset-x-0 top-0 z-[200] flex items-center justify-between px-6 py-3 bg-red-600 text-white text-sm font-medium shadow-lg">
+      <span>Your session has expired. Please sign in again to continue.</span>
+      <button
+        onClick={onDone}
+        className="ml-4 px-3 py-1 rounded bg-white text-red-600 font-semibold hover:bg-red-50 transition-colors"
+      >
+        Sign In
+      </button>
     </div>
   )
 }
