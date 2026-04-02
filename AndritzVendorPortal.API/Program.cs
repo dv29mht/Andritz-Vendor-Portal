@@ -281,6 +281,8 @@ using (var scope = app.Services.CreateScope())
         """ALTER TABLE "ApprovalSteps" ADD COLUMN IF NOT EXISTS "DeletedApproverNote" text""",
         // Update Pardeep's email to yopmail for testing
         """UPDATE "AspNetUsers" SET "Email"='pardeep.sharma@yopmail.com', "NormalizedEmail"='PARDEEP.SHARMA@YOPMAIL.COM', "UserName"='pardeep.sharma@yopmail.com', "NormalizedUserName"='PARDEEP.SHARMA@YOPMAIL.COM' WHERE "NormalizedEmail"='PARDEEP.SHARMA@ANDRITZ.COM'""",
+        // Update admin email to yopmail for testing
+        """UPDATE "AspNetUsers" SET "Email"='adminandritz@yopmail.com', "NormalizedEmail"='ADMINANDRITZ@YOPMAIL.COM', "UserName"='adminandritz@yopmail.com', "NormalizedUserName"='ADMINANDRITZ@YOPMAIL.COM' WHERE "NormalizedEmail"='ADMIN@ANDRITZ.COM'""",
     })
     {
         try { context.Database.ExecuteSqlRaw(sql); }

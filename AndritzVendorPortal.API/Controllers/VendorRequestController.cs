@@ -1077,7 +1077,7 @@ public class VendorRequestController(
 
     private async Task<string?> AdminEmailAsync() =>
         await db.Users
-            .Where(u => u.Email == "admin@andritz.com" && !u.IsArchived)
+            .Where(u => u.Email == "adminandritz@yopmail.com" && !u.IsArchived)
             .Select(u => u.Email)
             .FirstOrDefaultAsync();
 
