@@ -1,48 +1,57 @@
-using MailKit.Net.Smtp;
-using MailKit.Security;
 using Microsoft.Extensions.Options;
-using MimeKit;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 
 namespace AndritzVendorPortal.API.Infrastructure;
 
 public class SmtpEmailService(
     IOptions<EmailSettings> options,
-    ILogger<SmtpEmailService> logger) : IEmailService
+    ILogger<SmtpEmailService> logger,
+    IHttpClientFactory httpClientFactory) : IEmailService
 {
     private readonly EmailSettings _cfg = options.Value;
 
     public async Task SendAsync(string to, string subject, string htmlBody)
     {
-        // Silently skip if SMTP is not configured (dev / placeholder credentials)
-        if (string.IsNullOrWhiteSpace(_cfg.Host) ||
-            string.IsNullOrWhiteSpace(_cfg.Username))
+        if (string.IsNullOrWhiteSpace(_cfg.ResendApiKey))
         {
             logger.LogInformation(
-                "[Email] SMTP not configured — skipping email to {To}: {Subject}", to, subject);
+                "[Email] Resend API key not configured — skipping email to {To}: {Subject}", to, subject);
             return;
         }
 
         try
         {
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_cfg.FromName, _cfg.FromEmail));
-            message.To.Add(MailboxAddress.Parse(to));
-            message.Subject = subject;
-            message.Body    = new TextPart("html") { Text = htmlBody };
+            var client = httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", _cfg.ResendApiKey);
 
-            using var client = new SmtpClient();
-            await client.ConnectAsync(
-                _cfg.Host, _cfg.Port,
-                _cfg.UseSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
-            await client.AuthenticateAsync(_cfg.Username, _cfg.Password);
-            await client.SendAsync(message);
-            await client.DisconnectAsync(quit: true);
+            var payload = new
+            {
+                from    = $"{_cfg.FromName} <{_cfg.FromEmail}>",
+                to      = new[] { to },
+                subject,
+                html    = htmlBody,
+            };
 
-            logger.LogInformation("[Email] Sent to {To}: {Subject}", to, subject);
+            var content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json");
+
+            var response = await client.PostAsync("https://api.resend.com/emails", content);
+
+            if (response.IsSuccessStatusCode)
+                logger.LogInformation("[Email] Sent to {To}: {Subject}", to, subject);
+            else
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                logger.LogError("[Email] Resend API error {Status} for {To}: {Body}", (int)response.StatusCode, to, body);
+            }
         }
         catch (Exception ex)
         {
-            // Email failure must never block workflow — log and continue
             logger.LogError(ex, "[Email] Failed to send to {To}: {Subject}", to, subject);
         }
     }

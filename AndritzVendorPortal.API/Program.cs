@@ -114,6 +114,7 @@ builder.Services.AddAuthentication(options =>
 // ── 3. POLICIES & API SERVICES ───────────────────────────────────────────────
 builder.Services.AddSingleton<IAuthorizationHandler, FinalApproverHandler>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy(Policies.FinalApproverOnly, policy => {
