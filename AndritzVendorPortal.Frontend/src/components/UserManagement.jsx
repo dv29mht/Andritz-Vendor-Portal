@@ -67,7 +67,7 @@ const CONSOLE_LABEL = {
   FinalApprover: 'Final Approver Console',
 }
 
-const EMPTY_FORM = { fullName: '', email: '', password: '', role: 'Buyer', designation: '' }
+const EMPTY_FORM = { fullName: '', email: '', password: '', confirmPassword: '', role: 'Buyer', designation: '' }
 
 // ── User Detail / Edit Modal ──────────────────────────────────────────────────
 
@@ -391,6 +391,8 @@ export default function UserManagement() {
   const [form, setForm]                 = useState(EMPTY_FORM)
   const [formErrors, setFormErrors]     = useState([])
   const [saving, setSaving]             = useState(false)
+  const [showNewUserPwd, setShowNewUserPwd]         = useState(false)
+  const [showNewUserConfirmPwd, setShowNewUserConfirmPwd] = useState(false)
   const [syncing, setSyncing]           = useState(false)
   const [syncMsg, setSyncMsg]           = useState(null)
   const [toast, setToast]               = useState(null)
@@ -445,6 +447,7 @@ export default function UserManagement() {
 
     if (!form.password.trim()) errs.push('Password is required.')
     else if (form.password.trim().length < 8) errs.push('Password must be at least 8 characters.')
+    if (form.password.trim() && form.password !== form.confirmPassword) errs.push('Passwords do not match.')
     if (errs.length) { setFormErrors(errs); return }
 
     setSaving(true)
@@ -606,10 +609,31 @@ export default function UserManagement() {
                 {ROLES.map(r => <option key={r} value={r}>{ROLE_DISPLAY[r] ?? r}</option>)}
               </select>
             </div>
-            <div className="sm:col-span-2">
+            <div>
               <label className="form-label">Password <span className="text-red-500">*</span></label>
-              <input type="password" className="form-input" placeholder="Enter a strong password"
-                value={form.password} onChange={e => handleFormChange('password', e.target.value)} />
+              <div className="relative">
+                <input type={showNewUserPwd ? 'text' : 'password'} className="form-input pr-10" placeholder="Min 8 characters"
+                  value={form.password} onChange={e => handleFormChange('password', e.target.value)} />
+                <button type="button" className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+                  onClick={() => setShowNewUserPwd(v => !v)} tabIndex={-1}>
+                  {showNewUserPwd
+                    ? <EyeSlashIcon className="h-4 w-4" />
+                    : <EyeIcon className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="form-label">Confirm Password <span className="text-red-500">*</span></label>
+              <div className="relative">
+                <input type={showNewUserConfirmPwd ? 'text' : 'password'} className="form-input pr-10" placeholder="Repeat password"
+                  value={form.confirmPassword} onChange={e => handleFormChange('confirmPassword', e.target.value)} />
+                <button type="button" className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+                  onClick={() => setShowNewUserConfirmPwd(v => !v)} tabIndex={-1}>
+                  {showNewUserConfirmPwd
+                    ? <EyeSlashIcon className="h-4 w-4" />
+                    : <EyeIcon className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <div className="sm:col-span-2">
               <div className="flex items-start gap-2 rounded-lg bg-blue-50 ring-1 ring-blue-100 px-3 py-2.5">
