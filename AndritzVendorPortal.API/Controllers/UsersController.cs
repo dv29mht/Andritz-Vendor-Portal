@@ -106,10 +106,6 @@ public class UsersController(
         if (!validRoles.Contains(dto.Role))
             return BadRequest($"Invalid role. Must be one of: {string.Join(", ", validRoles)}.");
 
-        // Enforce corporate domain — all accounts must use the @andritz.com address.
-        if (!dto.Email.EndsWith("@andritz.com", StringComparison.OrdinalIgnoreCase))
-            return BadRequest("Email address must use the @andritz.com domain.");
-
         if (await userManager.FindByEmailAsync(dto.Email) is not null)
             return Conflict("A user with this email address already exists.");
 

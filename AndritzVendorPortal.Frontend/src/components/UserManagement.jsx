@@ -442,8 +442,6 @@ export default function UserManagement() {
     const errs = []
     if (!form.fullName.trim()) errs.push('Full name is required.')
     if (!form.email.trim())    errs.push('Email address is required.')
-    if (form.email.trim() && !form.email.toLowerCase().endsWith('@andritz.com'))
-      errs.push('Email must use the @andritz.com domain.')
 
     if (!form.password.trim()) errs.push('Password is required.')
     else if (form.password.trim().length < 8) errs.push('Password must be at least 8 characters.')
@@ -593,10 +591,8 @@ export default function UserManagement() {
                 value={form.fullName} onChange={e => handleFormChange('fullName', e.target.value)} />
             </div>
             <div>
-              <label className="form-label">Email <span className="text-red-500">*</span>
-                <span className="ml-1 text-gray-400 font-normal">(@andritz.com only)</span>
-              </label>
-              <input type="email" className="form-input" placeholder="priya.mehta@andritz.com"
+              <label className="form-label">Email <span className="text-red-500">*</span></label>
+              <input type="email" className="form-input" placeholder="email@example.com"
                 value={form.email} onChange={e => handleFormChange('email', e.target.value)} />
             </div>
             <div>
