@@ -14,7 +14,9 @@ namespace AndritzVendorPortal.API.Controllers;
 [Authorize]
 public class UsersController(
     UserManager<ApplicationUser> userManager,
-    ApplicationDbContext db) : ControllerBase
+    ApplicationDbContext db,
+    IEmailService email,
+    IConfiguration config) : ControllerBase
 {
     // ─────────────────────────────────────────────────────────────────────────
     // GET /api/users/approvers
@@ -123,6 +125,10 @@ public class UsersController(
             return BadRequest(result.Errors.Select(e => e.Description).ToList());
 
         await userManager.AddToRoleAsync(user, dto.Role);
+
+        var portalUrl = config["PortalUrl"] ?? "https://andritz-portal-live.vercel.app";
+        var (wSubject, wBody) = EmailTemplates.WelcomeUser(user.FullName, user.Email!, dto.Role, portalUrl);
+        await email.SendAsync(user.Email!, wSubject, wBody);
 
         return Ok(new UserDto(
             user.Id,

@@ -217,7 +217,35 @@ public static class EmailTemplates
         return (subject, body);
     }
 
-    // ── 6. Completed ──────────────────────────────────────────────────────────
+    // ── 6. Welcome new user ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Sent to: newly created user
+    /// Trigger: Admin creates a new user account
+    /// </summary>
+    public static (string Subject, string Body) WelcomeUser(
+        string fullName, string email, string role, string portalUrl)
+    {
+        var subject = "Welcome to the Andritz Vendor Portal";
+        var body = Wrap(subject, $"Your account has been created. Sign in at {portalUrl}", $"""
+            <p style="margin:0 0 4px;color:#6b7280;font-size:13px;">Hi {HtmlEncode(fullName)},</p>
+            <h2 style="margin:0 0 16px;color:#111827;font-size:18px;">Welcome to the Andritz Vendor Portal</h2>
+            <p style="margin:0 0 16px;color:#374151;font-size:14px;line-height:1.6;">
+              Your account has been created by the Administrator. You can now sign in using your email address.
+            </p>
+            <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:16px 0;">
+              {Row("Email",    email)}
+              {Row("Role",     role)}
+            </table>
+            {ActionButton("Sign In to Portal", portalUrl)}
+            <p style="margin:16px 0 0;color:#6b7280;font-size:12px;">
+              If you did not expect this email, please contact your administrator.
+            </p>
+            """);
+        return (subject, body);
+    }
+
+    // ── 7. Completed ─────────────────────────────────────────────────────────
 
     /// <summary>
     /// Sent to: buyer + admin
