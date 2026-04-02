@@ -1,4 +1,5 @@
 using AndritzVendorPortal.API.DTOs;
+using AndritzVendorPortal.API.Infrastructure;
 using AndritzVendorPortal.API.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +16,8 @@ namespace AndritzVendorPortal.API.Controllers;
 public class AuthController(
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
-    IConfiguration configuration) : ControllerBase
+    IConfiguration configuration,
+    IEmailService email) : ControllerBase
 {
     [HttpPost("login")]
     [EnableRateLimiting("login")]
@@ -94,6 +96,38 @@ public class AuthController(
             User:      new AuthUserDto(user.Id, user.Email!, user.FullName, roles, user.Designation),
             Token:     tokenString,  // also in body — Vercel proxy cannot reliably forward httpOnly Set-Cookie headers
             CsrfToken: csrfToken));  // also in body so cross-domain SPA can read it without cross-domain cookie access
+    }
+
+    [HttpPost("forgot-password")]
+    [EnableRateLimiting("login")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    {
+        // Always return 200 to prevent email enumeration
+        var user = await userManager.FindByEmailAsync(dto.Email);
+        if (user is not null && !user.IsArchived)
+        {
+            var token      = await userManager.GeneratePasswordResetTokenAsync(user);
+            var encoded    = Uri.EscapeDataString(token);
+            var portalUrl  = configuration["PortalUrl"] ?? "https://andritz-portal-live.vercel.app";
+            var resetLink  = $"{portalUrl}/reset-password?email={Uri.EscapeDataString(user.Email!)}&token={encoded}";
+            var (subject, body) = EmailTemplates.PasswordReset(user.FullName, resetLink);
+            await email.SendAsync(user.Email!, subject, body);
+        }
+        return Ok(new { message = "If that email is registered, a reset link has been sent." });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        var user = await userManager.FindByEmailAsync(dto.Email);
+        if (user is null || user.IsArchived)
+            return BadRequest(new { message = "Invalid request." });
+
+        var result = await userManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword);
+        if (!result.Succeeded)
+            return BadRequest(new { message = result.Errors.FirstOrDefault()?.Description ?? "Reset failed." });
+
+        return Ok(new { message = "Password reset successfully. You can now sign in." });
     }
 
     [HttpPost("logout")]

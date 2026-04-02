@@ -3,6 +3,16 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AndritzVendorPortal.API.DTOs;
 
+// ── Auth ─────────────────────────────────────────────────────────────────────
+
+public record ForgotPasswordDto([Required, EmailAddress] string Email);
+
+public record ResetPasswordDto(
+    [Required, EmailAddress] string Email,
+    [Required]               string Token,
+    [Required, MinLength(8)] string NewPassword
+);
+
 // ── Users ────────────────────────────────────────────────────────────────────
 
 public record CreateUserDto(

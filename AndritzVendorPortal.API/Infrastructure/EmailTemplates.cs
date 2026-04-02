@@ -217,7 +217,30 @@ public static class EmailTemplates
         return (subject, body);
     }
 
-    // ── 6. Submission confirmed (to buyer) ───────────────────────────────────
+    // ── 6. Password reset ─────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Sent to: user who requested a password reset
+    /// </summary>
+    public static (string Subject, string Body) PasswordReset(string fullName, string resetLink)
+    {
+        var subject = "Reset your Andritz Vendor Portal password";
+        var body = Wrap(subject, "You requested a password reset. Click the link to set a new password.", $"""
+            <p style="margin:0 0 4px;color:#6b7280;font-size:13px;">Hi {HtmlEncode(fullName)},</p>
+            <h2 style="margin:0 0 16px;color:#111827;font-size:18px;">Reset your password</h2>
+            <p style="margin:0 0 16px;color:#374151;font-size:14px;line-height:1.6;">
+              We received a request to reset your password. Click the button below to set a new password.
+              This link will expire in <strong>1 hour</strong>.
+            </p>
+            {ActionButton("Reset Password", resetLink)}
+            <p style="margin:16px 0 0;color:#6b7280;font-size:12px;">
+              If you did not request a password reset, you can safely ignore this email.
+            </p>
+            """);
+        return (subject, body);
+    }
+
+    // ── 7. Submission confirmed (to buyer) ───────────────────────────────────
 
     /// <summary>
     /// Sent to: buyer
