@@ -163,6 +163,19 @@ public class UsersController(
         user.FullName    = dto.FullName;
         user.Designation = dto.Designation ?? string.Empty;
 
+        // Update email if changed
+        if (!string.Equals(user.Email, dto.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            var existing = await userManager.FindByEmailAsync(dto.Email);
+            if (existing is not null && existing.Id != user.Id)
+                return Conflict("A user with this email address already exists.");
+
+            user.Email           = dto.Email;
+            user.UserName        = dto.Email;
+            user.NormalizedEmail = dto.Email.ToUpperInvariant();
+            user.NormalizedUserName = dto.Email.ToUpperInvariant();
+        }
+
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
             return BadRequest(updateResult.Errors.Select(e => e.Description).ToList());

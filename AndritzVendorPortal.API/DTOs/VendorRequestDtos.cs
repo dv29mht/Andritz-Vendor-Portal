@@ -22,10 +22,11 @@ public record UserDto(
 );
 
 public record UpdateUserDto(
-    [Required] string  FullName,
-               string? Designation,
-    [Required] string  Role,
-               string? NewPassword
+    [Required]                string  FullName,
+                              string? Designation,
+    [Required]                string  Role,
+                              string? NewPassword,
+    [Required, EmailAddress]  string  Email
 );
 
 public record UpdateProfileDto(

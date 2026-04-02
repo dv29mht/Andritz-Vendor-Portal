@@ -75,6 +75,7 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
   const [mode, setMode]           = useState('view') // 'view' | 'edit' | 'delete'
   const [form, setForm]           = useState({
     fullName:        user.fullName,
+    email:           user.email,
     designation:     user.designation ?? '',
     role:            user.roles[0] ?? 'Buyer',
     newPassword:     '',
@@ -94,6 +95,7 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
     setErrors([])
     const errs = []
     if (!form.fullName.trim()) errs.push('Full name is required.')
+    if (!form.email.trim())    errs.push('Email is required.')
     if (form.newPassword && form.newPassword.length < 8) errs.push('New password must be at least 8 characters.')
     if (form.newPassword && form.newPassword !== form.confirmPassword) errs.push('Passwords do not match.')
     if (errs.length) { setErrors(errs); return }
@@ -102,6 +104,7 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
     try {
       const { data } = await api.put(`/users/${user.id}`, {
         fullName:    form.fullName.trim(),
+        email:       form.email.trim(),
         designation: form.designation.trim() || null,
         role:        form.role,
         newPassword: form.newPassword.trim() || null,
@@ -252,6 +255,15 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
                   className="form-input"
                   value={form.fullName}
                   onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="form-label">Email <span className="text-red-500">*</span></label>
+                <input
+                  type="email"
+                  className="form-input"
+                  value={form.email}
+                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                 />
               </div>
               <div>
