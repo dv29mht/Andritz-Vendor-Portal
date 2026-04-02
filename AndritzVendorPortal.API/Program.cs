@@ -279,6 +279,8 @@ using (var scope = app.Services.CreateScope())
         // Deleted-approver tracking on approval steps
         """ALTER TABLE "ApprovalSteps" ADD COLUMN IF NOT EXISTS "IsDeletedApprover" boolean NOT NULL DEFAULT false""",
         """ALTER TABLE "ApprovalSteps" ADD COLUMN IF NOT EXISTS "DeletedApproverNote" text""",
+        // Update Pardeep's email to yopmail for testing
+        """UPDATE "AspNetUsers" SET "Email"='pardeep.sharma@yopmail.com', "NormalizedEmail"='PARDEEP.SHARMA@YOPMAIL.COM', "UserName"='pardeep.sharma@yopmail.com', "NormalizedUserName"='PARDEEP.SHARMA@YOPMAIL.COM' WHERE "NormalizedEmail"='PARDEEP.SHARMA@ANDRITZ.COM'""",
     })
     {
         try { context.Database.ExecuteSqlRaw(sql); }

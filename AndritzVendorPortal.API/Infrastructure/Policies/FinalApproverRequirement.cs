@@ -10,7 +10,7 @@ namespace AndritzVendorPortal.API.Infrastructure;
 /// </summary>
 public class FinalApproverRequirement : IAuthorizationRequirement
 {
-    public const string AuthorizedEmail = "pardeep.sharma@andritz.com";
+    public const string AuthorizedEmail = "pardeep.sharma@yopmail.com";
 }
 
 public class FinalApproverHandler : AuthorizationHandler<FinalApproverRequirement>

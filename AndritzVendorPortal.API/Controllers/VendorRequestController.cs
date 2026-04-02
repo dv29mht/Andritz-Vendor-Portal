@@ -432,10 +432,19 @@ public class VendorRequestController(
         await db.SaveChangesAsync();
 
         var adminEmail = await AdminEmailAsync();
+        var buyerEmailSub = await db.Users
+            .Where(u => u.Id == request.CreatedByUserId).Select(u => u.Email!).FirstOrDefaultAsync();
+        var summary = ToSummary(request);
+        var url     = PortalUrl();
+
+        // Always notify buyer of successful submission
+        if (buyerEmailSub is not null)
+            await email.SendAsync(buyerEmailSub, SubmissionConfirmed(summary, url).Subject, SubmissionConfirmed(summary, url).Body);
+
         if (hasIntermediateSteps)
         {
-            // Notify first intermediate approver
-            var firstStep  = request.ApprovalSteps
+            // Notify first intermediate approver + admin
+            var firstStep = request.ApprovalSteps
                 .Where(s => !s.IsFinalApproval).OrderBy(s => s.StepOrder).FirstOrDefault();
             if (firstStep is not null)
             {
@@ -446,13 +455,13 @@ public class VendorRequestController(
                 if (approverEmail is not null)
                     await SendEmailAsync(
                         approverEmail,
-                        NewSubmission(ToSummary(request), firstStep.ApproverName, PortalUrl()),
+                        NewSubmission(summary, firstStep.ApproverName, url),
                         adminEmail);
             }
         }
         else
         {
-            // No intermediate approvers — notify final approver directly
+            // No intermediate approvers — notify final approver + admin directly
             var finalStep = request.ApprovalSteps.FirstOrDefault(s => s.IsFinalApproval);
             if (finalStep is not null)
             {
@@ -463,7 +472,7 @@ public class VendorRequestController(
                 if (finalEmail is not null)
                     await SendEmailAsync(
                         finalEmail,
-                        NewSubmission(ToSummary(request), finalStep.ApproverName, PortalUrl()),
+                        NewSubmission(summary, finalStep.ApproverName, url),
                         adminEmail);
             }
         }
@@ -619,7 +628,16 @@ public class VendorRequestController(
         await db.SaveChangesAsync();
 
         var adminEmailRs = await AdminEmailAsync();
-        var firstStepRs  = request.ApprovalSteps
+        var buyerEmailRs = await db.Users
+            .Where(u => u.Id == request.CreatedByUserId).Select(u => u.Email!).FirstOrDefaultAsync();
+        var summaryRs = ToSummary(request);
+        var urlRs     = PortalUrl();
+
+        // Notify buyer their resubmission was received
+        if (buyerEmailRs is not null)
+            await email.SendAsync(buyerEmailRs, SubmissionConfirmed(summaryRs, urlRs).Subject, SubmissionConfirmed(summaryRs, urlRs).Body);
+
+        var firstStepRs = request.ApprovalSteps
             .Where(s => !s.IsFinalApproval).OrderBy(s => s.StepOrder).FirstOrDefault();
         if (firstStepRs is not null)
         {
@@ -630,8 +648,25 @@ public class VendorRequestController(
             if (approverEmailRs is not null)
                 await SendEmailAsync(
                     approverEmailRs,
-                    Resubmitted(ToSummary(request), firstStepRs.ApproverName, PortalUrl()),
+                    Resubmitted(summaryRs, firstStepRs.ApproverName, urlRs),
                     adminEmailRs);
+        }
+        else
+        {
+            // No intermediate steps — notify final approver directly
+            var finalStepRs = request.ApprovalSteps.FirstOrDefault(s => s.IsFinalApproval);
+            if (finalStepRs is not null)
+            {
+                var finalEmailRs = await db.Users
+                    .Where(u => u.Id == finalStepRs.ApproverUserId)
+                    .Select(u => u.Email!)
+                    .FirstOrDefaultAsync();
+                if (finalEmailRs is not null)
+                    await SendEmailAsync(
+                        finalEmailRs,
+                        Resubmitted(summaryRs, finalStepRs.ApproverName, urlRs),
+                        adminEmailRs);
+            }
         }
 
         request.RevisionHistory.Add(revision);
@@ -669,34 +704,40 @@ public class VendorRequestController(
         request.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
-        var adminEmailAp  = await AdminEmailAsync();
-        var buyerEmailAp  = await db.Users
+        var adminEmailAp    = await AdminEmailAsync();
+        var buyerEmailAp    = await db.Users
             .Where(u => u.Id == request.CreatedByUserId).Select(u => u.Email!).FirstOrDefaultAsync();
-        var summary       = ToSummary(request);
-        var url           = PortalUrl();
+        var approverEmailAp = await db.Users
+            .Where(u => u.Id == step.ApproverUserId).Select(u => u.Email!).FirstOrDefaultAsync();
+        var summaryAp       = ToSummary(request);
+        var urlAp           = PortalUrl();
 
         if (request.Status == VendorRequestStatus.PendingFinalApproval)
         {
-            // All intermediate steps done — notify FinalApprover + admin
-            var finalStep     = request.ApprovalSteps.FirstOrDefault(s => s.IsFinalApproval);
-            var pardeepEmail  = await db.Users
-                .Where(u => u.Id == (finalStep!.ApproverUserId))
-                .Select(u => u.Email!)
-                .FirstOrDefaultAsync();
-            if (pardeepEmail is not null)
-                await SendEmailAsync(pardeepEmail, ReadyForFinalApproval(summary, url), adminEmailAp);
+            // All intermediate steps done — notify buyer + FinalApprover + approver who acted + admin
+            var finalStep    = request.ApprovalSteps.FirstOrDefault(s => s.IsFinalApproval);
+            var finalEmail   = await db.Users
+                .Where(u => u.Id == finalStep!.ApproverUserId).Select(u => u.Email!).FirstOrDefaultAsync();
+            var (rfaSubject, rfaBody) = ReadyForFinalApproval(summaryAp, urlAp);
+            if (finalEmail is not null)
+                await SendEmailAsync(finalEmail, ReadyForFinalApproval(summaryAp, urlAp), adminEmailAp);
+            // Also notify buyer that their request cleared intermediate approvals
+            var (saSubject, saBody) = StepApproved(summaryAp, step.ApproverName, null, urlAp);
+            if (buyerEmailAp is not null)    await email.SendAsync(buyerEmailAp, saSubject, saBody);
+            if (approverEmailAp is not null) await email.SendAsync(approverEmailAp, saSubject, saBody);
         }
         else
         {
-            // Still more intermediate approvers — notify buyer + next approver + admin
+            // Still more intermediate approvers — notify buyer + approver who acted + next approver + admin
             var nextStep = request.ApprovalSteps
                 .Where(s => !s.IsFinalApproval && s.Decision == ApprovalDecision.Pending)
                 .OrderBy(s => s.StepOrder).FirstOrDefault();
-            var (apSubject, apBody) = StepApproved(summary, step.ApproverName, nextStep?.ApproverName, url);
+            var (apSubject, apBody) = StepApproved(summaryAp, step.ApproverName, nextStep?.ApproverName, urlAp);
 
             var recipients = new HashSet<string>();
-            if (buyerEmailAp is not null)  recipients.Add(buyerEmailAp);
-            if (adminEmailAp is not null)  recipients.Add(adminEmailAp);
+            if (buyerEmailAp is not null)    recipients.Add(buyerEmailAp);
+            if (approverEmailAp is not null) recipients.Add(approverEmailAp);
+            if (adminEmailAp is not null)    recipients.Add(adminEmailAp);
             if (nextStep is not null)
             {
                 var nextEmail = await db.Users
@@ -932,6 +973,23 @@ public class VendorRequestController(
         request.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync();
+
+        // Notify FinalApprover + admin of the changes if anything actually changed
+        if (revision is not null && changes.Count > 0)
+        {
+            var buyer      = await db.Users.FindAsync(UserId());
+            var buyerName  = buyer?.FullName ?? request.CreatedByName;
+            var adminEmailBu = await AdminEmailAsync();
+            var finalStep  = request.ApprovalSteps.FirstOrDefault(s => s.IsFinalApproval);
+            var finalEmailBu = finalStep is not null
+                ? await db.Users.Where(u => u.Id == finalStep.ApproverUserId).Select(u => u.Email!).FirstOrDefaultAsync()
+                : null;
+            var changeList = changes.Select(c => (c.FieldLabel, c.OldValue, c.NewValue));
+            var (buSubject, buBody) = BuyerUpdatedCompleted(ToSummary(request), buyerName, changeList, PortalUrl());
+            if (finalEmailBu is not null) await email.SendAsync(finalEmailBu, buSubject, buBody);
+            if (adminEmailBu is not null && adminEmailBu != finalEmailBu)
+                await email.SendAsync(adminEmailBu, buSubject, buBody);
+        }
 
         if (revision is not null)
             request.RevisionHistory.Add(revision);

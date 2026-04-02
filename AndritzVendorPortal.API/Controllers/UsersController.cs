@@ -153,7 +153,7 @@ public class UsersController(
             return BadRequest("Cannot modify an archived account.");
 
         // Protect Pardeep Sharma — FinalApprover is a fixed role, not reassignable via UI.
-        if (user.Email?.Equals("pardeep.sharma@andritz.com", StringComparison.OrdinalIgnoreCase) == true)
+        if (user.Email?.Equals("pardeep.sharma@yopmail.com", StringComparison.OrdinalIgnoreCase) == true)
             return BadRequest("The Final Approver account cannot be modified through User Management.");
 
         var validRoles = new[] { Roles.Admin, Roles.Buyer, Roles.Approver };
@@ -228,7 +228,7 @@ public class UsersController(
         var user = await userManager.FindByIdAsync(id);
         if (user is null) return NotFound("User not found.");
 
-        if (user.Email?.Equals("pardeep.sharma@andritz.com", StringComparison.OrdinalIgnoreCase) == true)
+        if (user.Email?.Equals("pardeep.sharma@yopmail.com", StringComparison.OrdinalIgnoreCase) == true)
             return BadRequest("The Final Approver account cannot be deleted.");
 
         // Load all pending steps for this user (across all requests)
@@ -340,7 +340,7 @@ public class UsersController(
         var user = await userManager.FindByIdAsync(id);
         if (user is null) return NotFound("User not found.");
 
-        if (user.Email?.Equals("pardeep.sharma@andritz.com", StringComparison.OrdinalIgnoreCase) == true)
+        if (user.Email?.Equals("pardeep.sharma@yopmail.com", StringComparison.OrdinalIgnoreCase) == true)
             return BadRequest("The Final Approver account cannot be deleted.");
 
         var result = await userManager.DeleteAsync(user);

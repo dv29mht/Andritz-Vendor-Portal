@@ -172,7 +172,7 @@ function ApprovalChainBuilder({ approvers, selected, onChange, error }) {
             <span className="flex-shrink-0 w-6 h-6 rounded-full bg-rose-100 text-rose-700 text-xs font-bold flex items-center justify-center">★</span>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-rose-800">Pardeep Sharma</p>
-              <p className="text-xs text-rose-400">pardeep.sharma@andritz.com · Final Approver</p>
+              <p className="text-xs text-rose-400">pardeep.sharma@yopmail.com · Final Approver</p>
             </div>
             <span className="text-xs text-rose-400 font-medium flex-shrink-0">Auto-added · cannot remove</span>
           </div>

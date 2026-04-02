@@ -55,7 +55,7 @@ const ROLE_ACCESS_NOTE = {
   Approver:
     'Routed to the Approver Console. Can approve or reject requests assigned to them.',
   FinalApprover:
-    'Routed to the Final Approver Console. Only the registered email pardeep.sharma@andritz.com can complete a vendor registration and assign the SAP Vendor Code (enforced by server-side policy).',
+    'Routed to the Final Approver Console. Only the registered email pardeep.sharma@yopmail.com can complete a vendor registration and assign the SAP Vendor Code (enforced by server-side policy).',
   Admin:
     'Full visibility of all requests and user management. Cannot create or approve requests.',
 }

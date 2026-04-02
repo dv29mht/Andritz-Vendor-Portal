@@ -217,7 +217,30 @@ public static class EmailTemplates
         return (subject, body);
     }
 
-    // ── 6. Welcome new user ───────────────────────────────────────────────────
+    // ── 6. Submission confirmed (to buyer) ───────────────────────────────────
+
+    /// <summary>
+    /// Sent to: buyer
+    /// Trigger: Buyer submits or resubmits a request
+    /// </summary>
+    public static (string Subject, string Body) SubmissionConfirmed(
+        VendorSummary v, string portalUrl)
+    {
+        var subject = $"[Submitted] Your vendor request for {v.VendorName} has been submitted";
+        var body = Wrap(subject, $"Your request for {v.VendorName} is now in the approval queue.", $"""
+            <h2 style="margin:0 0 16px;color:#111827;font-size:18px;">Request submitted successfully</h2>
+            <p style="margin:0 0 16px;color:#374151;font-size:14px;line-height:1.6;">
+              Your vendor onboarding request has been submitted and is now in the approval queue.
+              You will be notified at each stage of the process.
+            </p>
+            {StatusBadge("Pending Approval", "#f59e0b")}
+            {VendorTable(v)}
+            {ActionButton("Track Request", portalUrl)}
+            """);
+        return (subject, body);
+    }
+
+    // ── 7. Welcome new user ───────────────────────────────────────────────────
 
     /// <summary>
     /// Sent to: newly created user
@@ -245,7 +268,43 @@ public static class EmailTemplates
         return (subject, body);
     }
 
-    // ── 7. Completed ─────────────────────────────────────────────────────────
+    // ── 7. Buyer updated a completed record ──────────────────────────────────
+
+    /// <summary>
+    /// Sent to: FinalApprover + admin
+    /// Trigger: Buyer updates fields on a Completed request
+    /// </summary>
+    public static (string Subject, string Body) BuyerUpdatedCompleted(
+        VendorSummary v, string buyerName, IEnumerable<(string Label, string Old, string New)> changes, string portalUrl)
+    {
+        var subject = $"[Update] {v.VendorName} — vendor details updated by {buyerName}";
+        var changeRows = string.Concat(changes.Select(c => $"""
+            <tr>
+              <td style="padding:6px 12px 6px 0;color:#6b7280;font-size:13px;white-space:nowrap;vertical-align:top;">{HtmlEncode(c.Label)}</td>
+              <td style="padding:6px 0;font-size:13px;">
+                <span style="color:#ef4444;text-decoration:line-through;">{HtmlEncode(c.Old)}</span>
+                &nbsp;→&nbsp;
+                <span style="color:#10b981;font-weight:500;">{HtmlEncode(c.New)}</span>
+              </td>
+            </tr>
+            """));
+        var body = Wrap(subject, $"{buyerName} has updated vendor details for {v.VendorName}.", $"""
+            <h2 style="margin:0 0 16px;color:#111827;font-size:18px;">Vendor details updated</h2>
+            <p style="margin:0 0 16px;color:#374151;font-size:14px;line-height:1.6;">
+              <strong>{HtmlEncode(buyerName)}</strong> has updated the following fields on the completed vendor record:
+            </p>
+            {StatusBadge("Completed", "#10b981")}
+            {VendorTable(v)}
+            <p style="margin:16px 0 8px;color:#111827;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Changes Made</p>
+            <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:0 0 16px;">
+              {changeRows}
+            </table>
+            {ActionButton("View Vendor Record", portalUrl)}
+            """);
+        return (subject, body);
+    }
+
+    // ── 8. Completed ─────────────────────────────────────────────────────────
 
     /// <summary>
     /// Sent to: buyer + admin
