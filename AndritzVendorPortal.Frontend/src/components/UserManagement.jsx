@@ -97,6 +97,7 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
     const errs = []
     if (!form.fullName.trim()) errs.push('Full name is required.')
     if (!form.email.trim())    errs.push('Email is required.')
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim())) errs.push('Enter a valid email address.')
     if (form.newPassword && form.newPassword.length < 8) errs.push('New password must be at least 8 characters.')
     if (form.newPassword && form.newPassword !== form.confirmPassword) errs.push('Passwords do not match.')
     if (errs.length) {
@@ -463,7 +464,7 @@ export default function UserManagement() {
     const errs = []
     if (!form.fullName.trim()) errs.push('Full name is required.')
     if (!form.email.trim())    errs.push('Email address is required.')
-
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim())) errs.push('Enter a valid email address.')
     if (!form.password.trim()) errs.push('Password is required.')
     else if (form.password.trim().length < 8) errs.push('Password must be at least 8 characters.')
     if (form.password.trim() && form.password !== form.confirmPassword) errs.push('Passwords do not match.')
