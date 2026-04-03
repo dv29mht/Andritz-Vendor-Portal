@@ -527,10 +527,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         } else {
           setApiError(detail.title ?? 'Request failed. Please check your entries and try again.')
         }
-      } else if (Array.isArray(detail))           setApiError(detail.join(' '))
+      } else if (Array.isArray(detail))    setApiError(detail.join(' '))
       else if (typeof detail === 'string') setApiError(detail)
       else if (detail?.message)            setApiError(detail.message)
       else                                 setApiError('Request failed. Please check your entries and try again.')
+      setTimeout(() => apiErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
     } finally {
       setSubmitting(false)
     }

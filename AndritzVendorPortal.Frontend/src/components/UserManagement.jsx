@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   UserPlusIcon, ArrowPathIcon, MagnifyingGlassIcon,
   XMarkIcon, CheckIcon, ExclamationCircleIcon,
@@ -86,6 +86,7 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
   const [deleting, setDeleting] = useState(false)
   const [showNewPwd, setShowNewPwd]         = useState(false)
   const [showConfirmPwd, setShowConfirmPwd] = useState(false)
+  const errorsRef = useRef(null)
 
   const primaryRole = user.roles[0]
   const hasEmailGuard = primaryRole === 'FinalApprover'
@@ -98,7 +99,11 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
     if (!form.email.trim())    errs.push('Email is required.')
     if (form.newPassword && form.newPassword.length < 8) errs.push('New password must be at least 8 characters.')
     if (form.newPassword && form.newPassword !== form.confirmPassword) errs.push('Passwords do not match.')
-    if (errs.length) { setErrors(errs); return }
+    if (errs.length) {
+      setErrors(errs)
+      setTimeout(() => errorsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
+      return
+    }
 
     setSaving(true)
     try {
@@ -116,6 +121,7 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
       if (Array.isArray(detail))           setErrors(detail)
       else if (typeof detail === 'string') setErrors([detail])
       else setErrors(['Failed to update user. Please try again.'])
+      setTimeout(() => errorsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
     } finally {
       setSaving(false)
     }
@@ -132,6 +138,7 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
       const msg = typeof detail === 'string' ? detail : 'Failed to delete user. Please try again.'
       setErrors([msg])
       setMode('view')
+      setTimeout(() => errorsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
     } finally {
       setDeleting(false)
     }
@@ -185,7 +192,7 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
 
         {/* ── Errors ── */}
         {errors.length > 0 && (
-          <div className="mx-5 mt-4 rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3">
+          <div ref={errorsRef} className="mx-5 mt-4 rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3">
             <ul className="list-disc list-inside space-y-0.5">
               {errors.map((e, i) => <li key={i} className="text-xs text-red-700">{e}</li>)}
             </ul>

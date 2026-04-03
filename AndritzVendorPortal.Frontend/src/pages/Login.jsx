@@ -375,7 +375,7 @@ export default function Login() {
             </button>
           </form>
         </div>
-        <p className="text-center text-[11px] text-gray-300 mt-5">
+        <p className="text-center text-[11px] font-semibold text-gray-400 mt-5">
           Access restricted to authorised Andritz personnel only.
         </p>
       </>
