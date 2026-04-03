@@ -100,6 +100,14 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim())) errs.push('Enter a valid email address.')
     if (form.newPassword && form.newPassword.length < 8) errs.push('New password must be at least 8 characters.')
     if (form.newPassword && form.newPassword !== form.confirmPassword) errs.push('Passwords do not match.')
+
+    const unchanged =
+      form.fullName.trim()    === user.fullName &&
+      form.email.trim()       === user.email &&
+      (form.designation.trim() || null) === (user.designation || null) &&
+      form.role               === (user.roles[0] ?? 'Buyer') &&
+      !form.newPassword
+    if (unchanged) errs.push('No changes detected. Update a field or close this form.')
     if (errs.length) {
       setErrors(errs)
       setTimeout(() => errorsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
@@ -556,7 +564,7 @@ export default function UserManagement() {
             {syncing ? 'Syncing…' : 'Sync from AD'}
           </button>
           <button
-            onClick={() => { setShowForm(true); setFormErrors([]) }}
+            onClick={() => { setForm(EMPTY_FORM); setShowForm(true); setFormErrors([]) }}
             className="btn-primary"
           >
             <UserPlusIcon className="h-4 w-4" />
