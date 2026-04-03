@@ -289,30 +289,7 @@ using (var scope = app.Services.CreateScope())
         catch (Exception ex) { Console.Error.WriteLine($"[STARTUP] Migration failed ({sql[..60]}…): {ex.Message}"); }
     }
 
-    // Step 3: reset all seeded account passwords to Dahlia@1234
-    try
-    {
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var seedEmails  = new[]
-        {
-            "pardeep.sharma@yopmail.com",
-            "adminandritz@yopmail.com",
-            "vikram.nair@andritz.com",
-            "rajesh.kumar@andritz.com",
-        };
-        foreach (var e in seedEmails)
-        {
-            var u = await userManager.FindByEmailAsync(e);
-            if (u is null) continue;
-            var token  = await userManager.GeneratePasswordResetTokenAsync(u);
-            var result = await userManager.ResetPasswordAsync(u, token, "Dahlia@1234");
-            if (!result.Succeeded)
-                Console.Error.WriteLine($"[STARTUP] Password reset failed for {e}: {string.Join(", ", result.Errors.Select(x => x.Description))}");
-        }
-    }
-    catch (Exception ex) { Console.Error.WriteLine($"[STARTUP] Password reset failed: {ex.Message}"); }
-
-    // Step 4: ensure roles
+    // Step 3: ensure roles
     try
     {
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
