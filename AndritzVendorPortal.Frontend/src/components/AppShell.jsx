@@ -164,7 +164,7 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
       </aside>
 
       {/* ── Main area ───────────────────────────────────────────────────────── */}
-      <div className={`flex-1 ${mainML} flex flex-col min-h-screen transition-all duration-200 min-w-0 w-0`}>
+      <div className={`flex-1 ${mainML} flex flex-col min-h-screen transition-all duration-200 min-w-0`}>
 
         {/* Top bar */}
         <header className="bg-white border-b border-gray-200 px-5 h-14 flex items-center justify-between flex-shrink-0 sticky top-0 z-20">

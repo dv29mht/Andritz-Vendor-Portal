@@ -672,7 +672,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     .slice(0, 5)
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6">
 
       {/* ── Dashboard ───────────────────────────────────────────────────────── */}
       {activePage === 'dashboard' && (

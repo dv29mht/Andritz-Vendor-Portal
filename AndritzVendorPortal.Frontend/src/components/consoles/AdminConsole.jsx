@@ -287,7 +287,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6">
 
       {/* ── Dashboard ─────────────────────────────────────────────────────── */}
       {activePage === 'dashboard' && (() => {
