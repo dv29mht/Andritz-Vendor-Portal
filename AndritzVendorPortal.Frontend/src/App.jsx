@@ -137,7 +137,7 @@ function OneTimeVendorPage({ workflow, currentUser }) {
       {/* Table */}
       <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
+        <table className="min-w-full w-max text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
               {['Vendor Name', 'Status', 'City', 'GST Number', 'Submitted On', 'Actions'].map(h => (

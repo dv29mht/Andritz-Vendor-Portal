@@ -709,7 +709,7 @@ export default function UserManagement() {
       {/* Users table */}
       <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
+        <table className="min-w-full w-max text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               {['Full Name', 'Designation', 'Email', 'Role(s)', 'Actions'].map(h => (

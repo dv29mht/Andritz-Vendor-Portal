@@ -920,7 +920,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             ) : (
               <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
+                <table className="min-w-full w-max text-sm">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">Serial No.</th>
@@ -1039,7 +1039,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             </div>
           ) : (
             <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-              <table className="min-w-full text-sm">
+              <table className="min-w-full w-max text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">Serial No.</th>
