@@ -160,7 +160,7 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
                     ? new Date(req.vendorCodeAssignedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })
                     : '—'}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 whitespace-nowrap">
                   <div className="flex items-center gap-1.5">
                     <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
                       <EyeIcon className="h-3.5 w-3.5" />

@@ -485,7 +485,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                     <td className="px-4 py-3.5 text-gray-400 whitespace-nowrap text-xs">
                       {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5 whitespace-nowrap">
                       {req.isArchived ? (
                         <div className="flex items-center gap-1">
                           <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>

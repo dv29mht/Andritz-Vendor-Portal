@@ -305,7 +305,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                         <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
                           {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
                             <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => openView(req)}>
                               <EyeIcon className="h-3.5 w-3.5" />View
@@ -397,7 +397,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                         <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
                           {step?.decidedAt ? new Date(step.decidedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—'}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => openView(req)}>
                             <EyeIcon className="h-3.5 w-3.5" />View
                           </button>
@@ -490,7 +490,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                         <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
                           {step?.decidedAt ? new Date(step.decidedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—'}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => openView(req)}>
                             <EyeIcon className="h-3.5 w-3.5" />View
                           </button>

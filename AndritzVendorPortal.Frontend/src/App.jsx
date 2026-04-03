@@ -169,7 +169,7 @@ function OneTimeVendorPage({ workflow, currentUser }) {
                 <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
                   {new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 whitespace-nowrap">
                   <div className="flex items-center gap-1.5">
                     <button
                       className="btn-secondary !py-1 !px-2 !text-xs"

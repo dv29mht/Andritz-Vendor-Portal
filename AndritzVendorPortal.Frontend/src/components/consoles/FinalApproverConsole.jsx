@@ -334,7 +334,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                         <td className="px-4 py-3.5 text-xs text-gray-400 whitespace-nowrap">
                           {new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
                         </td>
-                        <td className="px-4 py-3.5">
+                        <td className="px-4 py-3.5 whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
                             <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => { markViewed(req); setViewingRequest(req) }}>
                               <EyeIcon className="h-3.5 w-3.5" />
@@ -461,7 +461,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                         <td className="px-4 py-3.5 text-xs text-gray-400 whitespace-nowrap">
                           {step?.decidedAt ? new Date(step.decidedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—'}
                         </td>
-                        <td className="px-4 py-3.5">
+                        <td className="px-4 py-3.5 whitespace-nowrap">
                           <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>
                             <EyeIcon className="h-3.5 w-3.5" />
                             View
