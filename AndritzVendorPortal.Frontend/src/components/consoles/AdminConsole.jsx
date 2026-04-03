@@ -453,6 +453,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
             const paginated  = visible.slice((reqPage - 1) * pageSize, reqPage * pageSize)
             return (
           <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
@@ -538,6 +539,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 ))}
               </tbody>
             </table>
+            </div>
             <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-3">
                 <span className="text-xs text-gray-400">
