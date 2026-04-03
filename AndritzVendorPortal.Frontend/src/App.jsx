@@ -14,13 +14,13 @@ import SettingsPage from './pages/SettingsPage'
 import StatusBadge from './components/shared/StatusBadge'
 import VendorDetailModal from './components/VendorDetailModal'
 import Toast from './components/shared/Toast'
-
-const OTV_PAGE_SIZE = 10
+import PageSizeSelect from './components/shared/PageSizeSelect'
 
 function OneTimeVendorPage({ workflow, currentUser }) {
   const isAdmin = currentUser?.role === 'Admin'
   const [viewing,          setViewing]          = useState(null)
   const [page,             setPage]             = useState(1)
+  const [pageSize,         setPageSize]         = useState(10)
   const [archiving,        setArchiving]        = useState(null)
   const [archiveLoading,   setArchiveLoading]   = useState(false)
   const [archiveError,     setArchiveError]     = useState(null)
@@ -41,8 +41,8 @@ function OneTimeVendorPage({ workflow, currentUser }) {
     return !q || r.vendorName?.toLowerCase().includes(q) || r.gstNumber?.toLowerCase().includes(q)
       || r.city?.toLowerCase().includes(q) || r.contactPerson?.toLowerCase().includes(q)
   })
-  const totalPages = Math.max(1, Math.ceil(filtered.length / OTV_PAGE_SIZE))
-  const paginated  = filtered.slice((page - 1) * OTV_PAGE_SIZE, page * OTV_PAGE_SIZE)
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize)
 
   const handleRestore = async () => {
     if (!restoring) return
@@ -216,12 +216,15 @@ function OneTimeVendorPage({ workflow, currentUser }) {
         </table>
 
         {/* Footer / pagination */}
-        <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
-          <span className="text-xs text-gray-400">
-            {filtered.length === 0
-              ? 'No records'
-              : `Showing ${(page - 1) * OTV_PAGE_SIZE + 1}–${Math.min(page * OTV_PAGE_SIZE, filtered.length)} of ${filtered.length}`}
-          </span>
+        <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-400">
+              {filtered.length === 0
+                ? 'No records'
+                : `Showing ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, filtered.length)} of ${filtered.length}`}
+            </span>
+            <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setPage(1) }} />
+          </div>
           {totalPages > 1 && (
             <div className="flex items-center gap-1.5">
               <button

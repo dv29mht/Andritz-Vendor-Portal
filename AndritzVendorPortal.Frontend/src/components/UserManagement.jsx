@@ -10,6 +10,7 @@ import {
 import api from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import Toast from './shared/Toast'
+import PageSizeSelect from './shared/PageSizeSelect'
 
 const ROLES = ['Buyer', 'Approver']
 
@@ -427,6 +428,7 @@ export default function UserManagement() {
   const [copiedPwd, setCopiedPwd]       = useState(false)
   const [detailUser, setDetailUser]     = useState(null)
   const [page,       setPage]           = useState(1)
+  const [pageSize,   setPageSize]       = useState(10)
 
   const fetchUsers = async () => {
     setLoading(true)
@@ -734,10 +736,7 @@ export default function UserManagement() {
             {!loading && !fetchError && visible.length === 0 && (
               <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-400">No users match the search.</td></tr>
             )}
-            {!loading && !fetchError && (() => {
-              const PAGE_SIZE = 10
-              return visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-            })().map(user => {
+            {!loading && !fetchError && visible.slice((page - 1) * pageSize, page * pageSize).map(user => {
               const primaryRole = user.roles[0]
               const consoleLabel = CONSOLE_LABEL[primaryRole] ?? '—'
               const hasEmailGuard = primaryRole === 'FinalApprover'
@@ -781,12 +780,12 @@ export default function UserManagement() {
         <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 text-xs text-gray-400 flex items-center justify-between flex-wrap gap-2">
           <span className="flex items-center gap-3">
             {(() => {
-              const PAGE_SIZE  = 10
-              const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
-              const start      = visible.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
-              const end        = Math.min(page * PAGE_SIZE, visible.length)
+              const totalPages = Math.max(1, Math.ceil(visible.length / pageSize))
+              const start      = visible.length === 0 ? 0 : (page - 1) * pageSize + 1
+              const end        = Math.min(page * pageSize, visible.length)
               return (<>
                 <span>Showing {visible.length === 0 ? '0' : `${start}–${end}`} of {visible.length} user{visible.length !== 1 ? 's' : ''}</span>
+                <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setPage(1) }} />
                 {totalPages > 1 && (
                   <span className="flex items-center gap-1">
                     <button className="inline-flex items-center justify-center rounded p-0.5 text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"

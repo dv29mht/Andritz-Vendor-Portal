@@ -10,6 +10,7 @@ import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
+import PageSizeSelect from '../shared/PageSizeSelect'
 import { CITIES } from '../../data/mockData'
 import { Country, State } from 'country-state-city'
 
@@ -222,7 +223,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const [revDateTo, setRevDateTo]                   = useState('')
   const [showNoApproverConfirm, setShowNoApproverConfirm] = useState(false)
 
-  const PAGE_SIZE = 10
+  const [pageSize, setPageSize] = useState(10)
 
   const handleImportExcel = (e) => {
     const file = e.target.files?.[0]
@@ -873,8 +874,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             : true
           return statusMatch && matchesSearch(r, reqsSearch) && matchesDateRange(r, reqsDateFrom, reqsDateTo)
         })
-        const totalPages = Math.max(1, Math.ceil(filteredReqs.length / PAGE_SIZE))
-        const paginated  = filteredReqs.slice((reqsPage - 1) * PAGE_SIZE, reqsPage * PAGE_SIZE)
+        const totalPages = Math.max(1, Math.ceil(filteredReqs.length / pageSize))
+        const paginated  = filteredReqs.slice((reqsPage - 1) * pageSize, reqsPage * pageSize)
         return (
           <div className="space-y-4">
             {/* Controls row */}
@@ -932,7 +933,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
                     {paginated.map((req, idx) => {
-                      const serial = (reqsPage - 1) * PAGE_SIZE + idx + 1
+                      const serial = (reqsPage - 1) * pageSize + idx + 1
                       const isDraft = req.status === 'Draft'
                       return (
                         <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
@@ -987,8 +988,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                     })}
                   </tbody>
                 </table>
-                <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Showing {filteredReqs.length === 0 ? 0 : (reqsPage - 1) * PAGE_SIZE + 1}–{Math.min(reqsPage * PAGE_SIZE, filteredReqs.length)} of {filteredReqs.length}</span>
+                <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-gray-400">Showing {filteredReqs.length === 0 ? 0 : (reqsPage - 1) * pageSize + 1}–{Math.min(reqsPage * pageSize, filteredReqs.length)} of {filteredReqs.length}</span>
+                    <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setReqsPage(1) }} />
+                  </div>
                   {totalPages > 1 && (
                     <div className="flex items-center gap-1.5">
                       <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={reqsPage === 1} onClick={() => setReqsPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
@@ -1006,8 +1010,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       {/* ── Waiting Revision ────────────────────────────────────────────────── */}
       {activePage === 'revision' && (() => {
         const filteredRev = rejectedReqs.filter(r => matchesSearch(r, revSearch) && matchesDateRange(r, revDateFrom, revDateTo))
-        const totalPages  = Math.max(1, Math.ceil(filteredRev.length / PAGE_SIZE))
-        const paginated   = filteredRev.slice((revPage - 1) * PAGE_SIZE, revPage * PAGE_SIZE)
+        const totalPages  = Math.max(1, Math.ceil(filteredRev.length / pageSize))
+        const paginated   = filteredRev.slice((revPage - 1) * pageSize, revPage * pageSize)
         return (
         <div className="space-y-4">
           <div className="flex flex-row items-center gap-2">
@@ -1046,7 +1050,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {paginated.map((req, idx) => {
-                    const serial = (revPage - 1) * PAGE_SIZE + idx + 1
+                    const serial = (revPage - 1) * pageSize + idx + 1
                     return (
                       <tr key={req.id} className="hover:bg-red-50/30 transition-colors divide-x divide-gray-200">
                         <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
@@ -1076,8 +1080,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   })}
                 </tbody>
               </table>
-              <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
-                <span className="text-xs text-gray-400">Showing {filteredRev.length === 0 ? 0 : (revPage - 1) * PAGE_SIZE + 1}–{Math.min(revPage * PAGE_SIZE, filteredRev.length)} of {filteredRev.length}</span>
+              <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-400">Showing {filteredRev.length === 0 ? 0 : (revPage - 1) * pageSize + 1}–{Math.min(revPage * pageSize, filteredRev.length)} of {filteredRev.length}</span>
+                  <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setRevPage(1) }} />
+                </div>
                 {totalPages > 1 && (
                   <div className="flex items-center gap-1.5">
                     <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={revPage === 1} onClick={() => setRevPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>

@@ -13,6 +13,7 @@ import VendorDatabase from '../VendorDatabase'
 import StatusBadge from '../shared/StatusBadge'
 import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
+import PageSizeSelect from '../shared/PageSizeSelect'
 import UserManagement from '../UserManagement'
 import api from '../../services/api'
 import { buildStats, buildMonthlyData } from '../../utils/statsUtils'
@@ -220,6 +221,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
   const [archiveLoading, setArchiveLoading]     = useState(false)
   const [toast, setToast]                       = useState(null)
   const [reqPage, setReqPage]                   = useState(1)
+  const [pageSize, setPageSize]                 = useState(10)
 
   const handleArchive = async () => {
     if (!archivingRequest) return
@@ -447,9 +449,8 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
 
           {/* Table */}
           {(() => {
-            const PAGE_SIZE  = 10
-            const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
-            const paginated  = visible.slice((reqPage - 1) * PAGE_SIZE, reqPage * PAGE_SIZE)
+            const totalPages = Math.max(1, Math.ceil(visible.length / pageSize))
+            const paginated  = visible.slice((reqPage - 1) * pageSize, reqPage * pageSize)
             return (
           <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
             <table className="min-w-full text-sm">
@@ -466,7 +467,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 )}
                 {paginated.map((req, idx) => (
                   <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
-                    <td className="px-4 py-3.5 font-mono text-xs text-gray-400">#{(reqPage - 1) * PAGE_SIZE + idx + 1}</td>
+                    <td className="px-4 py-3.5 font-mono text-xs text-gray-400">#{(reqPage - 1) * pageSize + idx + 1}</td>
                     <td className="px-4 py-3.5">
                       <p className="font-medium text-gray-900 whitespace-nowrap leading-snug">{req.vendorName}</p>
                       {req.vendorCode && <p className="text-xs text-emerald-600 font-mono mt-0.5">{req.vendorCode}</p>}
@@ -538,11 +539,14 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
               </tbody>
             </table>
             <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
-              <span className="text-xs text-gray-400">
-                {visible.length === 0
-                  ? 'No requests'
-                  : `Showing ${(reqPage - 1) * PAGE_SIZE + 1}–${Math.min(reqPage * PAGE_SIZE, visible.length)} of ${visible.length} request${visible.length !== 1 ? 's' : ''}`}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-400">
+                  {visible.length === 0
+                    ? 'No requests'
+                    : `Showing ${(reqPage - 1) * pageSize + 1}–${Math.min(reqPage * pageSize, visible.length)} of ${visible.length} request${visible.length !== 1 ? 's' : ''}`}
+                </span>
+                <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setReqPage(1) }} />
+              </div>
               {totalPages > 1 && (
                 <div className="flex items-center gap-1.5">
                   <button

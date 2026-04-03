@@ -3,13 +3,13 @@ import { CheckIcon, XMarkIcon, EyeIcon, ClockIcon, ArchiveBoxIcon,
          ExclamationCircleIcon, ChevronLeftIcon, ChevronRightIcon,
          MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 
-const PAGE_SIZE = 10
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
 import ApprovalTimeline from '../shared/ApprovalTimeline'
 import VendorDetailModal from '../VendorDetailModal'
 import Toast from '../shared/Toast'
+import PageSizeSelect from '../shared/PageSizeSelect'
 import { useViewedRequests } from '../../hooks/useViewedRequests'
 import { buildMonthlyData } from '../../utils/statsUtils'
 
@@ -33,6 +33,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
   const [rejectError, setRejectError]       = useState('')
   const [viewingRequest, setViewingRequest] = useState(null)
   const [toast, setToast]                   = useState(null)
+  const [pageSize, setPageSize]             = useState(10)
   const [pendingPage, setPendingPage]       = useState(1)
   const [waitingPage, setWaitingPage]       = useState(1)
   const [historyPage, setHistoryPage]       = useState(1)
@@ -250,8 +251,8 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
       {/* ── Pending Approval ────────────────────────────────────────────────── */}
       {activePage === 'pending' && (() => {
         const filtered   = pending.filter(r => matchesSearch(r, pendingSearch) && matchesDateRange(r, pendingDateFrom, pendingDateTo))
-        const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-        const paginated  = filtered.slice((pendingPage - 1) * PAGE_SIZE, pendingPage * PAGE_SIZE)
+        const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+        const paginated  = filtered.slice((pendingPage - 1) * pageSize, pendingPage * pageSize)
         return (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -286,7 +287,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {paginated.map((req, idx) => {
-                    const serial = (pendingPage - 1) * PAGE_SIZE + idx + 1
+                    const serial = (pendingPage - 1) * pageSize + idx + 1
                     return (
                       <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
                         <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
@@ -318,8 +319,11 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                   })}
                 </tbody>
               </table>
-              <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
-                <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (pendingPage - 1) * PAGE_SIZE + 1}–{Math.min(pendingPage * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
+              <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (pendingPage - 1) * pageSize + 1}–{Math.min(pendingPage * pageSize, filtered.length)} of {filtered.length}</span>
+                  <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setPendingPage(1) }} />
+                </div>
                 {totalPages > 1 && (
                   <div className="flex items-center gap-1.5">
                     <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={pendingPage === 1} onClick={() => setPendingPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
@@ -337,8 +341,8 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
       {/* ── Waiting Revision ────────────────────────────────────────────────── */}
       {activePage === 'waiting' && (() => {
         const filtered   = waitingRevision.filter(r => matchesSearch(r, waitingSearch) && matchesDateRange(r, waitingDateFrom, waitingDateTo))
-        const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-        const paginated  = filtered.slice((waitingPage - 1) * PAGE_SIZE, waitingPage * PAGE_SIZE)
+        const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+        const paginated  = filtered.slice((waitingPage - 1) * pageSize, waitingPage * pageSize)
         return (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -374,7 +378,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {paginated.map((req, idx) => {
                     const step   = myStepFor(req)
-                    const serial = (waitingPage - 1) * PAGE_SIZE + idx + 1
+                    const serial = (waitingPage - 1) * pageSize + idx + 1
                     return (
                       <tr key={req.id} className="hover:bg-amber-50/30 transition-colors divide-x divide-gray-200">
                         <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
@@ -400,8 +404,11 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                   })}
                 </tbody>
               </table>
-              <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
-                <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (waitingPage - 1) * PAGE_SIZE + 1}–{Math.min(waitingPage * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
+              <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (waitingPage - 1) * pageSize + 1}–{Math.min(waitingPage * pageSize, filtered.length)} of {filtered.length}</span>
+                  <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setWaitingPage(1) }} />
+                </div>
                 {totalPages > 1 && (
                   <div className="flex items-center gap-1.5">
                     <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={waitingPage === 1} onClick={() => setWaitingPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
@@ -419,8 +426,8 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
       {/* ── History ─────────────────────────────────────────────────────────── */}
       {activePage === 'history' && (() => {
         const filtered   = history.filter(r => matchesSearch(r, historySearch) && matchesDateRange(r, historyDateFrom, historyDateTo))
-        const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-        const paginated  = filtered.slice((historyPage - 1) * PAGE_SIZE, historyPage * PAGE_SIZE)
+        const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+        const paginated  = filtered.slice((historyPage - 1) * pageSize, historyPage * pageSize)
         return (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -461,7 +468,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {paginated.map((req, idx) => {
                     const step   = myStepFor(req)
-                    const serial = (historyPage - 1) * PAGE_SIZE + idx + 1
+                    const serial = (historyPage - 1) * pageSize + idx + 1
                     return (
                       <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
                         <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
@@ -488,8 +495,11 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                   })}
                 </tbody>
               </table>
-              <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
-                <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (historyPage - 1) * PAGE_SIZE + 1}–{Math.min(historyPage * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
+              <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (historyPage - 1) * pageSize + 1}–{Math.min(historyPage * pageSize, filtered.length)} of {filtered.length}</span>
+                  <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setHistoryPage(1) }} />
+                </div>
                 {totalPages > 1 && (
                   <div className="flex items-center gap-1.5">
                     <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === 1} onClick={() => setHistoryPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>

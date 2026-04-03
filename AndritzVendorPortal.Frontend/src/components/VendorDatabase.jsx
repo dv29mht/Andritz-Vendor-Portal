@@ -2,9 +2,8 @@ import { useState } from 'react'
 import { BuildingOfficeIcon, ArrowPathIcon, EyeIcon, ArchiveBoxIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import VendorDetailModal from './VendorDetailModal'
 import Toast from './shared/Toast'
+import PageSizeSelect from './shared/PageSizeSelect'
 import api from '../services/api'
-
-const PAGE_SIZE = 10
 
 export default function VendorDatabase({ requests, isAdmin, onReclassified, workflow }) {
   const [showArchived, setShowArchived]       = useState(false)
@@ -16,6 +15,7 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
   const [reclassifyError, setReclassifyError] = useState(null)
   const [search, setSearch]                   = useState('')
   const [page, setPage]                       = useState(1)
+  const [pageSize, setPageSize]               = useState(10)
   const [invalidating, setInvalidating]       = useState(null)
   const [invalidateLoading, setInvalidateLoading] = useState(false)
   const [invalidateError, setInvalidateError] = useState(null)
@@ -133,8 +133,8 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
             {(() => {
-              const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
-              const paginated  = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+              const totalPages = Math.max(1, Math.ceil(visible.length / pageSize))
+              const paginated  = visible.slice((page - 1) * pageSize, page * pageSize)
               return (<>
             {paginated.length === 0 && (
               <tr>
@@ -204,13 +204,16 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
             })()}
           </tbody>
         </table>
-        <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
-          <span className="text-xs text-gray-400">
-            {visible.length === 0
-              ? `0 of ${vendors.length} vendor${vendors.length !== 1 ? 's' : ''}`
-              : `Showing ${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, visible.length)} of ${visible.length} vendor${visible.length !== 1 ? 's' : ''}`}
-          </span>
-          {Math.ceil(visible.length / PAGE_SIZE) > 1 && (
+        <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-400">
+              {visible.length === 0
+                ? `0 of ${vendors.length} vendor${vendors.length !== 1 ? 's' : ''}`
+                : `Showing ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, visible.length)} of ${visible.length} vendor${visible.length !== 1 ? 's' : ''}`}
+            </span>
+            <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setPage(1) }} />
+          </div>
+          {Math.ceil(visible.length / pageSize) > 1 && (
             <div className="flex items-center gap-1.5">
               <button
                 className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
@@ -219,10 +222,10 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
               >
                 <ChevronLeftIcon className="h-4 w-4" />
               </button>
-              <span className="text-xs text-gray-500 px-1">Page {page} of {Math.max(1, Math.ceil(visible.length / PAGE_SIZE))}</span>
+              <span className="text-xs text-gray-500 px-1">Page {page} of {Math.max(1, Math.ceil(visible.length / pageSize))}</span>
               <button
                 className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                disabled={page >= Math.ceil(visible.length / PAGE_SIZE)}
+                disabled={page >= Math.ceil(visible.length / pageSize)}
                 onClick={() => setPage(p => p + 1)}
               >
                 <ChevronRightIcon className="h-4 w-4" />
