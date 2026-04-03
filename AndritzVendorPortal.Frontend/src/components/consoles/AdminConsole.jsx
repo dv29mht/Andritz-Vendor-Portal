@@ -452,8 +452,8 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
             const totalPages = Math.max(1, Math.ceil(visible.length / pageSize))
             const paginated  = visible.slice((reqPage - 1) * pageSize, reqPage * pageSize)
             return (
-          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
+          <div className="rounded-xl border border-gray-200 shadow-sm">
+            <div className="overflow-x-auto rounded-t-xl">
             <table className="min-w-full w-max text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">

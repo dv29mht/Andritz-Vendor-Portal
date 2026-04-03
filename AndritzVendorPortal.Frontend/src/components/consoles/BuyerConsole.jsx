@@ -918,8 +918,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 <p className="text-sm">{reqsSearch || reqsDateFrom || reqsDateTo ? 'No results match the filters.' : allForTab.length === 0 ? 'No requests yet. Click "New Request" to get started.' : `No ${requestsFilter.toLowerCase()} requests.`}</p>
               </div>
             ) : (
-              <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
+              <div className="rounded-xl border border-gray-200 shadow-sm">
+                <div className="overflow-x-auto rounded-t-xl">
                 <table className="min-w-full w-max text-sm">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">

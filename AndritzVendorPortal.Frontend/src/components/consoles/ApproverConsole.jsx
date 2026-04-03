@@ -273,8 +273,8 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               <p className="text-sm text-gray-500">{pendingSearch || pendingDateFrom || pendingDateTo ? 'No results match the filters.' : 'All caught up — no requests pending your review.'}</p>
             </div>
           ) : (
-            <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-              <div className="overflow-x-auto">
+            <div className="rounded-xl border border-gray-200 shadow-sm">
+              <div className="overflow-x-auto rounded-t-xl">
               <table className="min-w-full w-max text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
@@ -365,8 +365,8 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               <p className="text-sm text-gray-500">{waitingSearch || waitingDateFrom || waitingDateTo ? 'No results match the filters.' : 'No rejected requests waiting for buyer revision.'}</p>
             </div>
           ) : (
-            <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-              <div className="overflow-x-auto">
+            <div className="rounded-xl border border-gray-200 shadow-sm">
+              <div className="overflow-x-auto rounded-t-xl">
               <table className="min-w-full w-max text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
@@ -456,8 +456,8 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               <p className="text-sm text-gray-500">{historySearch || historyDateFrom || historyDateTo ? 'No results match the filters.' : 'No requests approved yet.'}</p>
             </div>
           ) : (
-            <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-              <div className="overflow-x-auto">
+            <div className="rounded-xl border border-gray-200 shadow-sm">
+              <div className="overflow-x-auto rounded-t-xl">
               <table className="min-w-full w-max text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
