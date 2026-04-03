@@ -217,7 +217,7 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-auto" style={{ minWidth: 0 }}>
           {children}
         </main>
       </div>

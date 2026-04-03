@@ -324,7 +324,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 <h3 className="text-sm font-semibold text-gray-900">Monthly Requests</h3>
               </div>
               <div className="px-2 py-4 flex-1 min-h-0">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={260}>
                   <BarChart data={monthlyData} barSize={24} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
@@ -342,7 +342,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 <h3 className="text-sm font-semibold text-gray-900">Top Requests by Material Group</h3>
               </div>
               <div className="px-2 py-4 flex-1 min-h-0">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={260}>
                   <BarChart data={materialData} layout="vertical" margin={{ top: 0, right: 24, left: 10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
                     <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} domain={[0, 'dataMax+1']} />
