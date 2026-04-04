@@ -273,9 +273,8 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               <p className="text-sm text-gray-500">{pendingSearch || pendingDateFrom || pendingDateTo ? 'No results match the filters.' : 'All caught up — no requests pending your review.'}</p>
             </div>
           ) : (
-            <div className="rounded-xl border border-gray-200 shadow-sm">
-              <div className="overflow-x-auto rounded-t-xl">
-              <table className="min-w-full w-max text-sm">
+            <div className="rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+              <table className="text-sm" style={{ minWidth: '800px', width: '100%' }}>
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">Serial No.</th>
@@ -320,7 +319,6 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                   })}
                 </tbody>
               </table>
-              </div>
               <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (pendingPage - 1) * pageSize + 1}–{Math.min(pendingPage * pageSize, filtered.length)} of {filtered.length}</span>
@@ -365,9 +363,8 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               <p className="text-sm text-gray-500">{waitingSearch || waitingDateFrom || waitingDateTo ? 'No results match the filters.' : 'No rejected requests waiting for buyer revision.'}</p>
             </div>
           ) : (
-            <div className="rounded-xl border border-gray-200 shadow-sm">
-              <div className="overflow-x-auto rounded-t-xl">
-              <table className="min-w-full w-max text-sm">
+            <div className="rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+              <table className="text-sm" style={{ minWidth: '800px', width: '100%' }}>
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">Serial No.</th>
@@ -407,7 +404,6 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                   })}
                 </tbody>
               </table>
-              </div>
               <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (waitingPage - 1) * pageSize + 1}–{Math.min(waitingPage * pageSize, filtered.length)} of {filtered.length}</span>
@@ -456,9 +452,8 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               <p className="text-sm text-gray-500">{historySearch || historyDateFrom || historyDateTo ? 'No results match the filters.' : 'No requests approved yet.'}</p>
             </div>
           ) : (
-            <div className="rounded-xl border border-gray-200 shadow-sm">
-              <div className="overflow-x-auto rounded-t-xl">
-              <table className="min-w-full w-max text-sm">
+            <div className="rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+              <table className="text-sm" style={{ minWidth: '800px', width: '100%' }}>
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">Serial No.</th>
@@ -500,7 +495,6 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                   })}
                 </tbody>
               </table>
-              </div>
               <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (historyPage - 1) * pageSize + 1}–{Math.min(historyPage * pageSize, filtered.length)} of {filtered.length}</span>

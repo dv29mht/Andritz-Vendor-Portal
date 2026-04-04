@@ -707,9 +707,8 @@ export default function UserManagement() {
       </div>
 
       {/* Users table */}
-      <div className="rounded-xl border border-gray-200 shadow-sm">
-        <div className="overflow-x-auto rounded-t-xl">
-        <table className="min-w-full w-max text-sm">
+      <div className="rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+        <table className="text-sm" style={{ minWidth: '700px', width: '100%' }}>
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               {['Full Name', 'Designation', 'Email', 'Role(s)', 'Actions'].map(h => (
@@ -778,7 +777,6 @@ export default function UserManagement() {
             })}
           </tbody>
         </table>
-        </div>
         <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 text-xs text-gray-400 flex items-center justify-between flex-wrap gap-2">
           <span className="flex items-center gap-3">
             {(() => {
