@@ -90,12 +90,28 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
             </div>
           )}
           {collapsed && (
-            <span
-              className="text-white font-black select-none"
-              style={{ fontFamily: "'Barlow Condensed', 'Arial Black', Arial, sans-serif", fontSize: '17px', letterSpacing: '0.04em' }}
+            // Show only the "A" from the Andritz wordmark PNG.
+            // Logo is 2041×393; "A" glyph spans ~x 0–340.
+            // At rendered height=30: natural width ≈ 156px; A ends at ~26px.
+            <div
+              className="select-none flex-shrink-0"
+              style={{ width: 26, height: 30, overflow: 'hidden', position: 'relative' }}
+              title="Andritz"
             >
-              A
-            </span>
+              <img
+                src="/andritz-logo.png"
+                alt="A"
+                draggable={false}
+                style={{
+                  filter: 'brightness(0) invert(1)',
+                  height: 30,
+                  width: 'auto',
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                }}
+              />
+            </div>
           )}
           {!collapsed && (
             <button

@@ -1073,7 +1073,7 @@ public class VendorRequestController(
 
         // Notify buyer their re-submission was received
         if (buyerEmailBu is not null)
-            await email.SendAsync(buyerEmailBu, SubmissionConfirmed(summaryBu, urlBu).Subject, SubmissionConfirmed(summaryBu, urlBu).Body);
+            await email.SendAsync(buyerEmailBu, CompletedReEditConfirmed(summaryBu, urlBu).Subject, CompletedReEditConfirmed(summaryBu, urlBu).Body);
 
         var firstStepBu = request.ApprovalSteps
             .Where(s => !s.IsFinalApproval).OrderBy(s => s.StepOrder).FirstOrDefault();
@@ -1086,7 +1086,7 @@ public class VendorRequestController(
             if (approverEmailBu is not null)
                 await SendEmailAsync(
                     approverEmailBu,
-                    Resubmitted(summaryBu, firstStepBu.ApproverName, urlBu),
+                    CompletedReEditSubmitted(summaryBu, firstStepBu.ApproverName, urlBu),
                     adminEmailBu);
         }
         else
@@ -1101,7 +1101,7 @@ public class VendorRequestController(
                 if (finalEmailBu is not null)
                     await SendEmailAsync(
                         finalEmailBu,
-                        Resubmitted(summaryBu, finalStepNotify.ApproverName, urlBu),
+                        CompletedReEditSubmitted(summaryBu, finalStepNotify.ApproverName, urlBu),
                         adminEmailBu);
             }
         }
