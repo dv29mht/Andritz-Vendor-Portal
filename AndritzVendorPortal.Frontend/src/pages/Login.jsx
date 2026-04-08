@@ -23,7 +23,7 @@ function LeftPanel() {
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px] rounded-full bg-white/5 -translate-x-1/2 translate-y-1/2" />
       <div className="absolute top-1/2 right-0 w-48 h-48 rounded-full bg-[#096fb3]/30 translate-x-1/2 -translate-y-1/2" />
       <div className="relative z-10">
-        <AndritzLogo color="white" className="h-8 w-auto" />
+        <AndritzLogo white className="h-8 w-auto" />
         <p className="text-white/50 text-[9px] font-semibold tracking-[0.3em] uppercase mt-2">
           Supplier Onboarding Tool
         </p>
@@ -383,7 +383,7 @@ export default function Login() {
       <LeftPanel />
       <div className="flex-1 flex flex-col bg-[#f7f8fa] min-h-screen">
         <div className="lg:hidden flex items-center gap-3 px-6 py-4" style={{ background: '#064e80' }}>
-          <AndritzLogo color="white" className="h-5 w-auto" />
+          <AndritzLogo white className="h-5 w-auto" />
           <div className="h-4 w-px bg-white/20 mx-1" />
           <span className="text-white/60 text-xs font-semibold tracking-widest uppercase">Supplier Onboarding Tool</span>
         </div>

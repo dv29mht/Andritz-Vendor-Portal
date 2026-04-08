@@ -83,14 +83,14 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
         >
           {!collapsed && (
             <div className="min-w-0 flex flex-col gap-1">
-              <AndritzLogo color="white" className="h-5 w-auto" />
+              <AndritzLogo white className="h-5 w-auto" />
               <span className="text-white/55 text-[9px] font-semibold tracking-[0.22em] uppercase leading-none">
                 Supplier Onboarding Tool
               </span>
             </div>
           )}
           {collapsed && (
-            <AndritzLogo color="white" className="h-4 w-auto" />
+            <AndritzLogo white className="h-4 w-auto" />
           )}
           {!collapsed && (
             <button
