@@ -64,8 +64,8 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
     workflow.requests, currentUser.id, role
   )
 
-  const sidebarW = collapsed ? 'w-14' : 'w-56'
-  const mainML   = collapsed ? 'ml-14' : 'ml-56'
+  const sidebarW = collapsed ? 'w-14' : 'w-52'
+  const mainML   = collapsed ? 'ml-14' : 'ml-52'
 
   return (
     <div className="flex min-h-screen bg-[#f1f5f9]">
@@ -76,21 +76,26 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
         style={{ background: SIDEBAR_BG }}
       >
         {/* Logo */}
-        <div className={`flex items-center border-b h-16 flex-shrink-0 ${
-          collapsed ? 'justify-center px-0' : 'justify-between px-4'
+        <div className={`flex items-center border-b flex-shrink-0 ${
+          collapsed ? 'justify-center px-0 h-14' : 'justify-between px-4 h-14'
         }`}
           style={{ borderColor: 'rgba(255,255,255,0.12)' }}
         >
           {!collapsed && (
-            <div className="min-w-0 flex flex-col gap-1">
-              <AndritzLogo white className="h-5 w-auto" />
-              <span className="text-white/55 text-[9px] font-semibold tracking-[0.22em] uppercase leading-none">
+            <div className="flex flex-col gap-1 min-w-0">
+              <AndritzLogo white className="h-4 w-auto" style={{ maxWidth: '108px' }} />
+              <span className="text-white/50 text-[8px] font-semibold tracking-[0.18em] uppercase leading-none whitespace-nowrap">
                 Supplier Onboarding Tool
               </span>
             </div>
           )}
           {collapsed && (
-            <AndritzLogo white className="h-4 w-auto" />
+            <span
+              className="text-white font-black select-none"
+              style={{ fontFamily: "'Barlow Condensed', 'Arial Black', Arial, sans-serif", fontSize: '17px', letterSpacing: '0.04em' }}
+            >
+              A
+            </span>
           )}
           {!collapsed && (
             <button
