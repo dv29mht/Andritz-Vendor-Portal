@@ -369,16 +369,14 @@ function WelcomeScreen({ user, onDone }) {
         }}
       >
         <div className="text-center mb-10">
-          <p className="text-white mb-1"
-            style={{ fontFamily: "'Barlow Condensed', 'Arial Black', Arial, sans-serif", fontWeight: 900, fontSize: '2.4rem', letterSpacing: '0.18em' }}>
-            ANDRITZ
-          </p>
-          <div className="flex items-center justify-center gap-2">
-            <div className="h-px w-10 bg-white/20" />
-            <span className="text-white/60 text-xs font-bold tracking-[0.5em] uppercase">KYC</span>
-            <div className="h-px w-10 bg-white/20" />
-          </div>
-          <p className="text-white/30 text-[9px] tracking-[0.2em] uppercase mt-1.5">Vendor Onboarding &amp; Compliance</p>
+          <img
+            src="/andritz-logo.png"
+            alt="Andritz"
+            className="h-10 w-auto mx-auto mb-3"
+            style={{ filter: 'brightness(0) invert(1)' }}
+            draggable={false}
+          />
+          <p className="text-white/50 text-[9px] font-semibold tracking-[0.3em] uppercase">Supplier Onboarding Tool</p>
         </div>
         <p className="text-white/50 text-sm font-medium uppercase tracking-[0.3em] mb-3">Welcome back</p>
         <h1 className="text-white font-bold mb-4" style={{ fontSize: '2.2rem' }}>{user.name}</h1>
