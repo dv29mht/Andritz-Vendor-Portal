@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import api from '../services/api'
+import AndritzLogo from '../components/shared/AndritzLogo'
 
 function LeftPanel() {
   return (
@@ -22,23 +23,18 @@ function LeftPanel() {
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px] rounded-full bg-white/5 -translate-x-1/2 translate-y-1/2" />
       <div className="absolute top-1/2 right-0 w-48 h-48 rounded-full bg-[#096fb3]/30 translate-x-1/2 -translate-y-1/2" />
       <div className="relative z-10">
-        <p className="text-white leading-none"
-          style={{ fontFamily: "'Barlow Condensed', 'Arial Black', Arial, sans-serif", fontWeight: 900, fontSize: '1.9rem', letterSpacing: '0.16em' }}>
-          ANDRITZ
+        <AndritzLogo color="white" className="h-8 w-auto" />
+        <p className="text-white/50 text-[9px] font-semibold tracking-[0.3em] uppercase mt-2">
+          Supplier Onboarding Tool
         </p>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span className="text-white/50 text-[9px] font-bold tracking-[0.5em] uppercase">KYC</span>
-          <span className="text-white/20 text-[8px]">·</span>
-          <span className="text-white/35 text-[8.5px] tracking-wider">Vendor Onboarding &amp; Compliance</span>
-        </div>
       </div>
       <div className="relative z-10">
         <div className="w-8 h-0.5 mb-8" style={{ background: '#096fb3' }} />
         <h1 className="text-white font-bold leading-[1.1] mb-6" style={{ fontSize: '2.8rem' }}>
-          Smarter<br />vendor<br />onboarding.
+          Streamlined<br />supplier<br />onboarding.
         </h1>
         <p className="text-white/50 text-sm leading-relaxed max-w-[280px] mb-10">
-          Multi-step approvals, real-time tracking, and SAP vendor code assignment — all in one compliance-ready portal.
+          Multi-step approvals, real-time tracking, and SAP vendor code assignment — all in one compliance-ready tool.
         </p>
         <div className="flex gap-8">
           {[['Multi-step', 'Approvals'], ['Real-time', 'Tracking'], ['SAP', 'Integration']].map(([top, bot]) => (
@@ -85,7 +81,7 @@ function ForgotPasswordView({ onBack }) {
         <div className="flex items-center gap-2 mb-3">
           <div className="h-4 w-0.5 rounded-full" style={{ background: '#096fb3' }} />
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: '#096fb3' }}>
-            Andritz KYC Portal
+            Supplier Onboarding Tool
           </span>
         </div>
         <h2 className="text-[1.9rem] font-bold text-gray-900 tracking-tight leading-tight">
@@ -174,7 +170,7 @@ function ResetPasswordView({ email, token }) {
         <div className="flex items-center gap-2 mb-3">
           <div className="h-4 w-0.5 rounded-full" style={{ background: '#096fb3' }} />
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: '#096fb3' }}>
-            Andritz KYC Portal
+            Supplier Onboarding Tool
           </span>
         </div>
         <h2 className="text-[1.9rem] font-bold text-gray-900 tracking-tight leading-tight">
@@ -292,7 +288,7 @@ export default function Login() {
           <div className="flex items-center gap-2 mb-3">
             <div className="h-4 w-0.5 rounded-full" style={{ background: '#096fb3' }} />
             <span className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: '#096fb3' }}>
-              Andritz KYC Portal
+              Supplier Onboarding Tool
             </span>
           </div>
           <h2 className="text-[1.9rem] font-bold text-gray-900 tracking-tight leading-tight">
@@ -387,10 +383,9 @@ export default function Login() {
       <LeftPanel />
       <div className="flex-1 flex flex-col bg-[#f7f8fa] min-h-screen">
         <div className="lg:hidden flex items-center gap-3 px-6 py-4" style={{ background: '#064e80' }}>
-          <span className="text-white" style={{ fontFamily: "'Barlow Condensed', 'Arial Black', Arial, sans-serif", fontWeight: 900, fontSize: '1.1rem', letterSpacing: '0.14em' }}>ANDRITZ</span>
-          <span className="text-[#096fb3] font-extrabold text-lg tracking-widest">KYC</span>
+          <AndritzLogo color="white" className="h-5 w-auto" />
           <div className="h-4 w-px bg-white/20 mx-1" />
-          <span className="text-white/60 text-sm">Vendor Onboarding &amp; Compliance</span>
+          <span className="text-white/60 text-xs font-semibold tracking-widest uppercase">Supplier Onboarding Tool</span>
         </div>
         <div className="flex-1 flex items-center justify-center p-6 lg:p-16">
           <div className={`w-full max-w-[400px] transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>

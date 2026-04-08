@@ -343,13 +343,13 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
               </div>
               <div className="px-2 py-4 flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={materialData} layout="vertical" margin={{ top: 0, right: 24, left: 10, bottom: 0 }}>
+                  <BarChart data={materialData} layout="vertical" margin={{ top: 0, right: 60, left: 10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
                     <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} domain={[0, 'dataMax+1']} />
                     <YAxis type="category" dataKey="name" width={175} axisLine={false} tickLine={false}
                       tick={{ fontSize: 11, fill: '#6b7280' }}
                     />
-                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
+                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} allowEscapeViewBox={{ x: true, y: false }} />
                     <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={18}>
                       {materialData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                     </Bar>

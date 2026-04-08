@@ -186,6 +186,110 @@ function ApprovalChainBuilder({ approvers, selected, onChange, error }) {
 
 const revLabel = (n) => n === 0 ? 'Original' : `REV ${n}`
 
+function exportRequestToExcel(req) {
+  const wb   = XLSX.utils.book_new()
+  const data = [
+    ['Field', 'Value'],
+    ['Vendor Name',      req.vendorName],
+    ['SAP Vendor Code',  req.vendorCode ?? ''],
+    ['Material Group',   req.materialGroup ?? ''],
+    ['Reason',           req.reason ?? ''],
+    ['Contact Person',   req.contactPerson || req.contactInformation],
+    ['Telephone',        req.telephone ?? ''],
+    ['GST Number',       req.gstNumber ?? ''],
+    ['PAN Card',         req.panCard ?? ''],
+    ['Address',          req.addressDetails ?? ''],
+    ['City',             req.city ?? ''],
+    ['Locality',         req.locality ?? ''],
+    ['State',            req.state ?? ''],
+    ['Country',          req.country ?? ''],
+    ['Postal Code',      req.postalCode ?? ''],
+    ['Currency',         req.currency ?? ''],
+    ['Payment Terms',    req.paymentTerms ?? ''],
+    ['Incoterms',        req.incoterms ?? ''],
+    ['Yearly PVO',       req.yearlyPvo ?? ''],
+    ['Proposed By',      req.proposedBy ?? ''],
+    ['One-Time Vendor',  req.isOneTimeVendor ? 'Yes' : 'No'],
+    ['Status',           req.status],
+    ['Revision No.',     req.revisionNo],
+    ['Created By',       req.createdByName],
+    ['Created On',       new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })],
+    ['Last Updated',     new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })],
+    ['Assigned By',      req.vendorCodeAssignedBy ?? ''],
+  ]
+  const ws = XLSX.utils.aoa_to_sheet(data)
+  ws['!cols'] = [{ wch: 22 }, { wch: 40 }]
+  XLSX.utils.book_append_sheet(wb, ws, 'Vendor Details')
+  XLSX.writeFile(wb, `${req.vendorName.replace(/\s+/g,'_')}_vendor_details.xlsx`)
+}
+
+function exportRequestToPdf(req) {
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  const row = (label, val, mono = false) =>
+    `<tr><td class="lbl">${esc(label)}</td><td${mono ? ' class="mono"' : ''}>${esc(val)}</td></tr>`
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<title>Vendor Details — ${esc(req.vendorName)}</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 11px; margin: 28px; color: #1f2937; }
+  h1 { font-size: 17px; margin-bottom: 2px; }
+  .badge { display:inline-block; background:#d1fae5; color:#065f46; border-radius:4px; padding:2px 8px; font-size:10px; font-weight:700; margin-left:8px; }
+  .code { font-family: monospace; font-size:14px; font-weight:700; color:#065f46; margin-bottom:16px; }
+  h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #6b7280; margin: 16px 0 4px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 8px; }
+  td { padding: 4px 8px; border-bottom: 1px solid #f3f4f6; vertical-align:top; }
+  .lbl { color: #9ca3af; font-size: 10px; width: 35%; }
+  .mono { font-family: monospace; letter-spacing: .05em; }
+  @media print { body { margin: 12px; } }
+</style></head><body>
+<h1>${esc(req.vendorName)} <span class="badge">${esc(req.status)}</span></h1>
+${req.vendorCode ? `<p class="code">SAP Vendor Code: ${esc(req.vendorCode)}</p>` : ''}
+<h2>Vendor Information</h2>
+<table>
+  ${row('Material Group', req.materialGroup)}
+  ${row('Reason', req.reason)}
+  ${row('GST Number', req.gstNumber, true)}
+  ${row('PAN Card', req.panCard, true)}
+  ${row('One-Time Vendor', req.isOneTimeVendor ? 'Yes' : 'No')}
+  ${row('Proposed By', req.proposedBy)}
+</table>
+<h2>Address</h2>
+<table>
+  ${row('Street / Building', req.addressDetails)}
+  ${row('City', req.city)} ${row('Locality', req.locality)}
+  ${row('State', req.state)} ${row('Postal Code', req.postalCode)}
+  ${row('Country', req.country)}
+</table>
+<h2>Commercial Terms</h2>
+<table>
+  ${row('Currency', req.currency)} ${row('Payment Terms', req.paymentTerms)}
+  ${row('Incoterms', req.incoterms)} ${row('Yearly PVO', req.yearlyPvo)}
+</table>
+<h2>Contact</h2>
+<table>
+  ${row('Contact Person', req.contactPerson || req.contactInformation)}
+  ${row('Telephone', req.telephone)}
+</table>
+<h2>Record</h2>
+<table>
+  ${row('Created By', req.createdByName)}
+  ${row('Created On', new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }))}
+  ${row('Assigned By', req.vendorCodeAssignedBy ?? '')}
+  ${row('Revision No.', String(req.revisionNo))}
+</table>
+</body></html>`
+
+  const iframe = document.createElement('iframe')
+  iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;height:600px;border:0'
+  iframe.srcdoc = html
+  document.body.appendChild(iframe)
+  iframe.onload = () => {
+    iframe.contentWindow.focus()
+    iframe.contentWindow.print()
+    setTimeout(() => { if (document.body.contains(iframe)) document.body.removeChild(iframe) }, 2000)
+  }
+}
+
 export default function BuyerConsole({ workflow, currentUser, activePage, onNavigate }) {
   const myRequests     = workflow.requests.filter(r => r.createdByUserId === currentUser.id && !r.isArchived)
   const draftReqs      = myRequests.filter(r => r.status === 'Draft')
@@ -482,9 +586,10 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     try {
       if (editingRequest && editingRequest.status === 'Completed') {
         const name = editingRequest.vendorName
-        await workflow.updateCompleted(editingRequest.id, payload)
+        const approverIds = chainNeedsRebuild ? selectedApprovers.map(a => a.id) : null
+        await workflow.updateCompleted(editingRequest.id, payload, approverIds)
         setShowForm(false)
-        setToast({ type: 'success', title: 'Details Updated', body: `Vendor details for ${name} have been updated. Final Approver and Admin have been notified.` })
+        setToast({ type: 'success', title: 'Re-submitted for Approval', body: `Updated details for ${name} have been re-submitted through the same approval chain.` })
       } else if (editingRequest?.status === 'Draft') {
         // Update the draft fields then submit it
         const name = form.vendorName || editingRequest.vendorName || 'Draft'
@@ -603,16 +708,26 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             {' · '}{new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
           <button className="btn-secondary" onClick={() => setViewingRequest(req)}>
             <EyeIcon className="h-4 w-4" />
             View
           </button>
           {req.status === 'Completed' && (
-            <button className="btn-secondary" onClick={() => openEdit(req)}>
-              <PencilSquareIcon className="h-4 w-4" />
-              Edit
-            </button>
+            <>
+              <button className="btn-secondary" onClick={() => openEdit(req)}>
+                <PencilSquareIcon className="h-4 w-4" />
+                Edit
+              </button>
+              <button className="btn-secondary" onClick={() => exportRequestToExcel(req)} title="Export to Excel">
+                <ArrowDownTrayIcon className="h-4 w-4" />
+                Excel
+              </button>
+              <button className="btn-secondary" onClick={() => exportRequestToPdf(req)} title="Export to PDF">
+                <ArrowDownTrayIcon className="h-4 w-4" />
+                PDF
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -976,10 +1091,20 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                                 </button>
                               )}
                               {req.status === 'Completed' && (
-                                <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => openEdit(req)}>
-                                  <PencilSquareIcon className="h-3.5 w-3.5" />
-                                  Edit
-                                </button>
+                                <>
+                                  <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => openEdit(req)}>
+                                    <PencilSquareIcon className="h-3.5 w-3.5" />
+                                    Edit
+                                  </button>
+                                  <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => exportRequestToExcel(req)} title="Export to Excel">
+                                    <ArrowDownTrayIcon className="h-3.5 w-3.5" />
+                                    Excel
+                                  </button>
+                                  <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => exportRequestToPdf(req)} title="Export to PDF">
+                                    <ArrowDownTrayIcon className="h-3.5 w-3.5" />
+                                    PDF
+                                  </button>
+                                </>
                               )}
                             </div>
                           </td>
@@ -1275,9 +1400,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             )}
 
             {editingRequest && editingRequest.status === 'Completed' && (
-              <div className="rounded-lg bg-emerald-50 ring-1 ring-emerald-200 p-3">
-                <p className="text-xs text-emerald-700">
-                  This request is already completed with SAP Vendor Code <strong>{editingRequest.vendorCode}</strong>. Saving will update the vendor details and notify the Final Approver and Admin. The vendor code and completed status will be preserved.
+              <div className="rounded-lg bg-amber-50 ring-1 ring-amber-300 p-3 space-y-1">
+                <p className="text-xs font-semibold text-amber-800">Re-submitting for re-approval</p>
+                <p className="text-xs text-amber-700">
+                  This request is completed with SAP Vendor Code <strong>{editingRequest.vendorCode}</strong>.
+                  Submitting changes will send it back through the same approval chain. The vendor code will be preserved and visible again once it is re-approved by the Final Approver.
                 </p>
               </div>
             )}
@@ -1314,8 +1441,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               <button className="btn-primary" onClick={() => handleSubmitForm(false)} disabled={submitting || savingDraft}>
                 <PaperAirplaneIcon className="h-4 w-4" />
                 {submitting
-                  ? (editingRequest?.status === 'Completed' ? 'Saving…' : editingRequest ? 'Resubmitting…' : 'Submitting…')
-                  : (editingRequest?.status === 'Completed' ? 'Save Updates' : editingRequest?.status === 'Draft' ? 'Submit for Approval' : editingRequest ? 'Update & Resubmit for Approval' : 'Submit for Approval')}
+                  ? (editingRequest?.status === 'Completed' ? 'Resubmitting…' : editingRequest ? 'Resubmitting…' : 'Submitting…')
+                  : (editingRequest?.status === 'Completed' ? 'Resubmit for Re-Approval' : editingRequest?.status === 'Draft' ? 'Submit for Approval' : editingRequest ? 'Update & Resubmit for Approval' : 'Submit for Approval')}
               </button>
             </div>
           </div>

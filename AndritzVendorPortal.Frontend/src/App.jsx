@@ -87,7 +87,7 @@ function OneTimeVendorPage({ workflow, currentUser }) {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-5">
+    <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -136,7 +136,15 @@ function OneTimeVendorPage({ workflow, currentUser }) {
 
       {/* Table */}
       <div className="rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
-        <table className="text-sm" style={{ minWidth: '750px', width: '100%' }}>
+        <table className="text-sm" style={{ minWidth: '820px', width: '100%' }}>
+          <colgroup>
+            <col style={{ width: '26%' }} />
+            <col style={{ width: '14%' }} />
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '18%' }} />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '15%' }} />
+          </colgroup>
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
               {['Vendor Name', 'Status', 'City', 'GST Number', 'Submitted On', 'Actions'].map(h => (

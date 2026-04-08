@@ -610,6 +610,7 @@ public class VendorRequestController(
             ChangedByUserId  = UserId(),
             ChangedByName    = changedBy?.FullName ?? string.Empty,
             ChangedAt        = DateTime.UtcNow,
+            RevisionType     = RevisionType.Resubmit,
             RejectionComment = request.RejectionComment,
             ChangesJson      = JsonSerializer.Serialize(changes, JsonOpts),
         };
@@ -903,6 +904,7 @@ public class VendorRequestController(
                 ChangedByUserId  = UserId(),
                 ChangedByName    = adminUser?.FullName ?? string.Empty,
                 ChangedAt        = DateTime.UtcNow,
+                RevisionType     = RevisionType.AdminEdit,
                 RejectionComment = null,
                 ChangesJson      = JsonSerializer.Serialize(changes, JsonOpts),
             };
@@ -920,9 +922,10 @@ public class VendorRequestController(
 
     // ─────────────────────────────────────────────────────────────────────────
     // PUT /api/vendor-requests/{id}/buyer-update
-    // Buyer updates a Completed request after SAP code is assigned.
-    // Status stays Completed; vendor code is preserved.
-    // Records a revision entry so FinalApprover/Admin can see what changed.
+    // Buyer re-edits a Completed request.
+    // Records a revision entry, resets the approval chain to Pending, and
+    // re-enters the workflow (PendingApproval or PendingFinalApproval).
+    // The SAP vendor code is preserved; it remains visible after re-approval.
     // ─────────────────────────────────────────────────────────────────────────
     [HttpPut("{id:int}/buyer-update")]
     [Authorize(Roles = Roles.Buyer)]
@@ -938,7 +941,95 @@ public class VendorRequestController(
         if (request.Status != VendorRequestStatus.Completed)
             return BadRequest("Only Completed requests can be updated via this endpoint.");
 
-        var changes = TrackedFields
+        // ── Chain integrity check (same as Resubmit) ────────────────────────
+        var intermediateStepsBu = request.ApprovalSteps
+            .Where(s => !s.IsFinalApproval)
+            .OrderBy(s => s.StepOrder)
+            .ToList();
+
+        var existingUserIdsBu = intermediateStepsBu.Count > 0
+            ? (await db.Users
+                .Where(u => intermediateStepsBu.Select(s => s.ApproverUserId).Contains(u.Id))
+                .Select(u => u.Id)
+                .ToListAsync())
+              .ToHashSet()
+            : new HashSet<string>();
+
+        var staleApproversBu = intermediateStepsBu
+            .Where(s => !existingUserIdsBu.Contains(s.ApproverUserId))
+            .Select(s => s.ApproverName)
+            .ToList();
+
+        if (staleApproversBu.Count > 0 && (dto.ApproverUserIds is null || dto.ApproverUserIds.Count == 0))
+        {
+            return Conflict(new
+            {
+                message      = "One or more approvers in the original chain no longer exist. Please provide a new approval chain.",
+                staleApprovers = staleApproversBu,
+            });
+        }
+
+        // ── Optionally replace the chain if new one supplied ─────────────────
+        if (dto.ApproverUserIds is { Count: > 0 })
+        {
+            var newApproverIdsBu = dto.ApproverUserIds.Distinct().ToList();
+
+            var approverRoleIdBu = await db.Roles
+                .Where(r => r.Name == Roles.Approver)
+                .Select(r => r.Id)
+                .FirstOrDefaultAsync();
+
+            var approverMapBu = await db.Users
+                .Where(u => newApproverIdsBu.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id);
+
+            foreach (var aid in newApproverIdsBu)
+                if (!approverMapBu.ContainsKey(aid))
+                    return BadRequest($"Approver ID '{aid}' does not exist.");
+
+            var usersWithRoleBu = (await db.UserRoles
+                .Where(ur => newApproverIdsBu.Contains(ur.UserId) && ur.RoleId == approverRoleIdBu)
+                .Select(ur => ur.UserId)
+                .ToListAsync())
+                .ToHashSet();
+
+            foreach (var aid in newApproverIdsBu)
+                if (!usersWithRoleBu.Contains(aid))
+                    return BadRequest($"User '{approverMapBu[aid].FullName}' does not have the Approver role.");
+
+            var finalStepBu = request.ApprovalSteps.First(s => s.IsFinalApproval);
+            db.ApprovalSteps.RemoveRange(intermediateStepsBu);
+
+            int stepOrderBu = 1;
+            foreach (var aid in newApproverIdsBu)
+            {
+                request.ApprovalSteps.Add(new ApprovalStep
+                {
+                    ApproverUserId  = aid,
+                    ApproverName    = approverMapBu[aid].FullName,
+                    StepOrder       = stepOrderBu++,
+                    IsFinalApproval = false,
+                });
+            }
+
+            finalStepBu.StepOrder = stepOrderBu;
+            finalStepBu.Decision  = ApprovalDecision.Pending;
+            finalStepBu.Comment   = null;
+            finalStepBu.DecidedAt = null;
+        }
+        else
+        {
+            // Reuse original chain — reset all decisions
+            foreach (var step in request.ApprovalSteps)
+            {
+                step.Decision  = ApprovalDecision.Pending;
+                step.Comment   = null;
+                step.DecidedAt = null;
+            }
+        }
+
+        // ── Compute field-level diff ─────────────────────────────────────────
+        var changesBu = TrackedFields
             .Where(f => f.GetFromRequest(request) != f.GetFromDto(dto))
             .Select(f => new FieldChangeRecord(
                 f.CamelKey, f.Label,
@@ -946,53 +1037,76 @@ public class VendorRequestController(
                 f.GetFromDto(dto)))
             .ToList();
 
-        // Only create a revision entry if something actually changed
-        VendorRevision? revision = null;
-        if (changes.Count > 0)
-        {
-            var newRevNo  = request.RevisionNo + 1;
-            var changedBy = await db.Users.FindAsync(UserId());
+        var newRevNoBu  = request.RevisionNo + 1;
+        var changedByBu = await db.Users.FindAsync(UserId());
 
-            revision = new VendorRevision
-            {
-                VendorRequestId  = request.Id,
-                RevisionNo       = newRevNo,
-                ChangedByUserId  = UserId(),
-                ChangedByName    = changedBy?.FullName ?? string.Empty,
-                ChangedAt        = DateTime.UtcNow,
-                RejectionComment = null,
-                ChangesJson      = JsonSerializer.Serialize(changes, JsonOpts),
-            };
-            db.VendorRevisions.Add(revision);
-            request.RevisionNo = newRevNo;
-        }
+        var revisionBu = new VendorRevision
+        {
+            VendorRequestId  = request.Id,
+            RevisionNo       = newRevNoBu,
+            ChangedByUserId  = UserId(),
+            ChangedByName    = changedByBu?.FullName ?? string.Empty,
+            ChangedAt        = DateTime.UtcNow,
+            RevisionType     = RevisionType.CompletedReEdit,
+            RejectionComment = null,
+            ChangesJson      = JsonSerializer.Serialize(changesBu, JsonOpts),
+        };
+        db.VendorRevisions.Add(revisionBu);
 
         ApplyVendorFields(request, dto);
 
-        // Status stays Completed; VendorCode stays assigned
+        request.RevisionNo = newRevNoBu;
+        var hasIntermediateBu = request.ApprovalSteps.Any(s => !s.IsFinalApproval);
+        request.Status    = hasIntermediateBu
+            ? VendorRequestStatus.PendingApproval
+            : VendorRequestStatus.PendingFinalApproval;
         request.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync();
 
-        // Notify FinalApprover + admin of the changes if anything actually changed
-        if (revision is not null && changes.Count > 0)
+        // ── Notifications ────────────────────────────────────────────────────
+        var adminEmailBu  = await AdminEmailAsync();
+        var buyerEmailBu  = await db.Users
+            .Where(u => u.Id == request.CreatedByUserId).Select(u => u.Email!).FirstOrDefaultAsync();
+        var summaryBu     = ToSummary(request);
+        var urlBu         = PortalUrl();
+
+        // Notify buyer their re-submission was received
+        if (buyerEmailBu is not null)
+            await email.SendAsync(buyerEmailBu, SubmissionConfirmed(summaryBu, urlBu).Subject, SubmissionConfirmed(summaryBu, urlBu).Body);
+
+        var firstStepBu = request.ApprovalSteps
+            .Where(s => !s.IsFinalApproval).OrderBy(s => s.StepOrder).FirstOrDefault();
+        if (firstStepBu is not null)
         {
-            var buyer      = await db.Users.FindAsync(UserId());
-            var buyerName  = buyer?.FullName ?? request.CreatedByName;
-            var adminEmailBu = await AdminEmailAsync();
-            var finalStep  = request.ApprovalSteps.FirstOrDefault(s => s.IsFinalApproval);
-            var finalEmailBu = finalStep is not null
-                ? await db.Users.Where(u => u.Id == finalStep.ApproverUserId).Select(u => u.Email!).FirstOrDefaultAsync()
-                : null;
-            var changeList = changes.Select(c => (c.FieldLabel, c.OldValue, c.NewValue));
-            var (buSubject, buBody) = BuyerUpdatedCompleted(ToSummary(request), buyerName, changeList, PortalUrl());
-            if (finalEmailBu is not null) await email.SendAsync(finalEmailBu, buSubject, buBody);
-            if (adminEmailBu is not null && adminEmailBu != finalEmailBu)
-                await email.SendAsync(adminEmailBu, buSubject, buBody);
+            var approverEmailBu = await db.Users
+                .Where(u => u.Id == firstStepBu.ApproverUserId)
+                .Select(u => u.Email!)
+                .FirstOrDefaultAsync();
+            if (approverEmailBu is not null)
+                await SendEmailAsync(
+                    approverEmailBu,
+                    Resubmitted(summaryBu, firstStepBu.ApproverName, urlBu),
+                    adminEmailBu);
+        }
+        else
+        {
+            var finalStepNotify = request.ApprovalSteps.FirstOrDefault(s => s.IsFinalApproval);
+            if (finalStepNotify is not null)
+            {
+                var finalEmailBu = await db.Users
+                    .Where(u => u.Id == finalStepNotify.ApproverUserId)
+                    .Select(u => u.Email!)
+                    .FirstOrDefaultAsync();
+                if (finalEmailBu is not null)
+                    await SendEmailAsync(
+                        finalEmailBu,
+                        Resubmitted(summaryBu, finalStepNotify.ApproverName, urlBu),
+                        adminEmailBu);
+            }
         }
 
-        if (revision is not null)
-            request.RevisionHistory.Add(revision);
+        request.RevisionHistory.Add(revisionBu);
         return Ok(MapToDetail(request));
     }
 
@@ -1174,7 +1288,9 @@ public class VendorRequestController(
 
                 return new VendorRevisionDto(
                     v.RevisionNo, v.ChangedByUserId, v.ChangedByName,
-                    v.ChangedAt,  v.RejectionComment, changes);
+                    v.ChangedAt,  v.RejectionComment,
+                    v.RevisionType.ToString(),
+                    changes);
             })
             .ToList();
 

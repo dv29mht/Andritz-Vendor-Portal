@@ -123,7 +123,15 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
 
       {/* Table */}
       <div className="rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
-        <table className="text-sm" style={{ minWidth: '750px', width: '100%' }}>
+        <table className="text-sm" style={{ minWidth: '820px', width: '100%' }}>
+          <colgroup>
+            <col style={{ width: '14%' }} />
+            <col style={{ width: '26%' }} />
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '18%' }} />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '15%' }} />
+          </colgroup>
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
               {['SAP Code', 'Vendor Name', 'City', 'GST Number', 'Approved On', 'Actions'].map(h => (

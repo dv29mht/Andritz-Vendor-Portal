@@ -163,7 +163,7 @@ export function useVendorWorkflow() {
     } finally { setActionLoading(false) }
   }
 
-  const updateCompleted = async (requestId, form) => {
+  const updateCompleted = async (requestId, form, approverUserIds = null) => {
     setActionLoading(true)
     try {
     await api.put(`/vendor-requests/${requestId}/buyer-update`, {
@@ -186,6 +186,7 @@ export function useVendorWorkflow() {
       yearlyPvo:       form.yearlyPvo      || null,
       isOneTimeVendor: form.isOneTimeVendor ?? false,
       proposedBy:      form.proposedBy     || null,
+      ...(approverUserIds ? { approverUserIds } : {}),
     })
     await fetchAll()
     } finally { setActionLoading(false) }

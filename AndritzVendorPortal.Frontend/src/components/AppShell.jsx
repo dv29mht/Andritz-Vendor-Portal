@@ -7,6 +7,7 @@ import {
 } from '@heroicons/react/24/outline'
 import NotificationBell from './shared/NotificationBell'
 import { useNotifications } from '../hooks/useNotifications'
+import AndritzLogo from './shared/AndritzLogo'
 
 const NAV = {
   Buyer: [
@@ -81,21 +82,15 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
           style={{ borderColor: 'rgba(255,255,255,0.12)' }}
         >
           {!collapsed && (
-            <div className="min-w-0">
-              <p className="text-white leading-none"
-                style={{ fontFamily: "'Barlow Condensed', 'Arial Black', Arial, sans-serif", fontWeight: 800, fontSize: '18px', letterSpacing: '0.06em', WebkitFontSmoothing: 'antialiased' }}>
-                ANDRITZ
-              </p>
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="text-white/70 text-[9px] font-bold tracking-[0.4em] uppercase">KYC</span>
-                <span className="text-white/25 text-[8px]">·</span>
-                <span className="text-white/45 text-[8px] tracking-wider uppercase">Vendor Onboarding</span>
-              </div>
+            <div className="min-w-0 flex flex-col gap-1">
+              <AndritzLogo color="white" className="h-5 w-auto" />
+              <span className="text-white/55 text-[9px] font-semibold tracking-[0.22em] uppercase leading-none">
+                Supplier Onboarding Tool
+              </span>
             </div>
           )}
           {collapsed && (
-            <span className="text-white"
-              style={{ fontFamily: "'Barlow Condensed', 'Arial Black', Arial, sans-serif", fontWeight: 900, fontSize: '15px', letterSpacing: '0.08em' }}>A</span>
+            <AndritzLogo color="white" className="h-4 w-auto" />
           )}
           {!collapsed && (
             <button

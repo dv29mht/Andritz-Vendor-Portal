@@ -340,9 +340,19 @@ function RevisionsTab({ request }) {
           <div className="flex-1 pb-4 pt-1">
             <div className="flex items-baseline gap-2 flex-wrap">
               <p className="text-sm font-semibold text-gray-800">REV {entry.revisionNo}</p>
-              <span className="text-xs text-amber-700 bg-amber-50 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">
-                Resubmitted
-              </span>
+              {entry.revisionType === 'CompletedReEdit' ? (
+                <span className="text-xs text-blue-700 bg-blue-50 ring-1 ring-blue-200 ring-inset px-2 py-0.5 rounded-full">
+                  Re-edited (Completed)
+                </span>
+              ) : entry.revisionType === 'AdminEdit' ? (
+                <span className="text-xs text-purple-700 bg-purple-50 ring-1 ring-purple-200 ring-inset px-2 py-0.5 rounded-full">
+                  Admin Edit
+                </span>
+              ) : (
+                <span className="text-xs text-amber-700 bg-amber-50 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">
+                  Resubmitted
+                </span>
+              )}
             </div>
             <p className="text-xs text-gray-400 mt-0.5">
               {entry.changedByName} · {fmtDate(entry.changedAt)}
