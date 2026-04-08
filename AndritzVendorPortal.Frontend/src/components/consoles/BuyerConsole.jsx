@@ -211,7 +211,7 @@ function exportRequestToExcel(req) {
     ['Proposed By',      req.proposedBy ?? ''],
     ['One-Time Vendor',  req.isOneTimeVendor ? 'Yes' : 'No'],
     ['Status',           req.status],
-    ['Revision No.',     req.revisionNo],
+    ['Revision No.',     String(req.revisionNo)],
     ['Created By',       req.createdByName],
     ['Created On',       new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })],
     ['Last Updated',     new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })],
@@ -563,8 +563,9 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     if (Object.keys(e).length) { setErrors(e); setApiError('Please fill in all required fields highlighted below.'); return }
 
     // Block resubmit if buyer changed nothing
-    if (editingRequest && editingRequest.status === 'Rejected' && !hasFormChanged()) {
-      setApiError('Please edit the concerned field(s) before resubmitting.')
+    const isResubmit = editingRequest && (editingRequest.status === 'Rejected' || editingRequest.status === 'Completed')
+    if (isResubmit && !hasFormChanged()) {
+      setApiError('Please edit at least one field before resubmitting.')
       setTimeout(() => apiErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
       return
     }
