@@ -9,14 +9,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.10",
     "@heroicons/react": "^2.1.5",
     "axios": "^1.7.7",
     "clsx": "^2.1.1",
     "country-state-city": "^3.2.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.3",
     "recharts": "^3.8.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",

@@ -1,0 +1,1203 @@
+2026-05-01 01:10:20.995 -07:00 [INF] Now listening on: http://0.0.0.0:5000
+2026-05-01 01:10:21.023 -07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-05-01 01:10:21.023 -07:00 [INF] Hosting environment: Production
+2026-05-01 01:10:21.023 -07:00 [INF] Content root path: C:\Dev\Andritz BRD Dashboard\src\API
+2026-05-01 01:16:59.616 -07:00 [INF] HTTP OPTIONS /api/auth/login responded 204 in 18.1012 ms
+2026-05-01 01:17:44.690 -07:00 [INF] User profile is available. Using 'C:\Users\16046\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-05-01 01:17:45.712 -07:00 [INF] Executed DbCommand (13ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-01 01:17:45.733 -07:00 [INF] Executed DbCommand (12ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-05-01 01:17:45.735 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-01 01:17:45.735 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-05-01 01:17:45.748 -07:00 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2026-05-01 01:17:45.893 -07:00 [INF] Executed DbCommand (11ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedName_0
+2026-05-01 01:17:45.918 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedName_0
+2026-05-01 01:17:45.919 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedName_0
+2026-05-01 01:17:45.920 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedName_0
+2026-05-01 01:17:45.928 -07:00 [INF] Executed DbCommand (3ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:17:45.955 -07:00 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedRoleName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedRoleName_0
+2026-05-01 01:17:45.974 -07:00 [INF] Executed DbCommand (4ms) [Parameters=[@__p_0='?' (Size = 450), @__p_1='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[UserId], [a].[RoleId]
+FROM [AspNetUserRoles] AS [a]
+WHERE [a].[UserId] = @__p_0 AND [a].[RoleId] = @__p_1
+2026-05-01 01:17:45.981 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:17:45.983 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedRoleName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedRoleName_0
+2026-05-01 01:17:45.984 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__p_0='?' (Size = 450), @__p_1='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[UserId], [a].[RoleId]
+FROM [AspNetUserRoles] AS [a]
+WHERE [a].[UserId] = @__p_0 AND [a].[RoleId] = @__p_1
+2026-05-01 01:17:46.026 -07:00 [INF] Now listening on: http://0.0.0.0:5000
+2026-05-01 01:17:46.027 -07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-05-01 01:17:46.028 -07:00 [INF] Hosting environment: Development
+2026-05-01 01:17:46.028 -07:00 [INF] Content root path: C:\Dev\Andritz BRD Dashboard\src\API
+2026-05-01 01:18:26.265 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - null null
+2026-05-01 01:18:26.287 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:18:26.289 -07:00 [INF] HTTP OPTIONS /api/auth/login responded 204 in 21.0490 ms
+2026-05-01 01:18:26.292 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - 204 null null 28.352ms
+2026-05-01 01:18:26.607 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 54
+2026-05-01 01:18:26.610 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:18:26.652 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:18:26.662 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:18:26.703 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:18:26.725 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:18:26.726 -07:00 [ERR] [Request] LoginCommand failed after 23ms
+AndritzVendorPortal.Application.Common.Exceptions.UnauthorizedException: Invalid email or password.
+   at AndritzVendorPortal.Application.Features.Auth.Commands.LoginCommandHandler.Handle(LoginCommand request, CancellationToken ct) in C:\Dev\Andritz BRD Dashboard\src\Application\Features\Auth\Commands\LoginCommand.cs:line 32
+   at AndritzVendorPortal.Application.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\ValidationBehavior.cs:line 31
+   at AndritzVendorPortal.Application.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\LoggingBehavior.cs:line 21
+2026-05-01 01:18:26.746 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 81.205ms
+2026-05-01 01:18:26.747 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:18:26.756 -07:00 [INF] HTTP POST /api/auth/login responded 401 in 148.9662 ms
+2026-05-01 01:18:26.758 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 401 null application/json 151.4265ms
+2026-05-01 01:19:43.728 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - null null
+2026-05-01 01:19:43.729 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:19:43.729 -07:00 [INF] HTTP OPTIONS /api/auth/login responded 204 in 0.8567 ms
+2026-05-01 01:19:43.729 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - 204 null null 1.1643ms
+2026-05-01 01:19:43.730 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 61
+2026-05-01 01:19:43.730 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:19:43.731 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:19:43.731 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:19:43.733 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:19:43.776 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:19:43.778 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:19:43.780 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:19:43.853 -07:00 [INF] Executed DbCommand (3ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-01 01:19:43.856 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:19:43.919 -07:00 [INF] Executed DbCommand (5ms) [Parameters=[@p17='?' (Size = 450), @p0='?' (DbType = Int32), @p1='?' (Size = 4000), @p18='?' (Size = 4000), @p2='?' (Size = 4000), @p3='?' (Size = 256), @p4='?' (DbType = Boolean), @p5='?' (Size = 4000), @p6='?' (DbType = Boolean), @p7='?' (DbType = Boolean), @p8='?' (DbType = DateTimeOffset), @p9='?' (Size = 256), @p10='?' (Size = 256), @p11='?' (Size = 4000), @p12='?' (Size = 4000), @p13='?' (DbType = Boolean), @p14='?' (Size = 4000), @p15='?' (DbType = Boolean), @p16='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+UPDATE [AspNetUsers] SET [AccessFailedCount] = @p0, [ConcurrencyStamp] = @p1, [Designation] = @p2, [Email] = @p3, [EmailConfirmed] = @p4, [FullName] = @p5, [IsArchived] = @p6, [LockoutEnabled] = @p7, [LockoutEnd] = @p8, [NormalizedEmail] = @p9, [NormalizedUserName] = @p10, [PasswordHash] = @p11, [PhoneNumber] = @p12, [PhoneNumberConfirmed] = @p13, [SecurityStamp] = @p14, [TwoFactorEnabled] = @p15, [UserName] = @p16
+OUTPUT 1
+WHERE [Id] = @p17 AND [ConcurrencyStamp] = @p18;
+2026-05-01 01:19:43.925 -07:00 [ERR] [Request] LoginCommand failed after 191ms
+AndritzVendorPortal.Application.Common.Exceptions.UnauthorizedException: Invalid email or password.
+   at AndritzVendorPortal.Application.Features.Auth.Commands.LoginCommandHandler.Handle(LoginCommand request, CancellationToken ct) in C:\Dev\Andritz BRD Dashboard\src\Application\Features\Auth\Commands\LoginCommand.cs:line 38
+   at AndritzVendorPortal.Application.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\ValidationBehavior.cs:line 31
+   at AndritzVendorPortal.Application.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\LoggingBehavior.cs:line 21
+2026-05-01 01:19:43.925 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 193.934ms
+2026-05-01 01:19:43.926 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:19:43.927 -07:00 [INF] HTTP POST /api/auth/login responded 401 in 196.7657 ms
+2026-05-01 01:19:43.927 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 401 null application/json 197.2839ms
+2026-05-01 01:19:56.029 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - null null
+2026-05-01 01:19:56.029 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:19:56.029 -07:00 [INF] HTTP OPTIONS /api/auth/login responded 204 in 0.1768 ms
+2026-05-01 01:19:56.029 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - 204 null null 0.4313ms
+2026-05-01 01:19:56.030 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 63
+2026-05-01 01:19:56.031 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:19:56.032 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:19:56.032 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:19:56.033 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:19:56.044 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:19:56.045 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:19:56.046 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:19:56.101 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-01 01:19:56.102 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:19:56.104 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p17='?' (Size = 450), @p0='?' (DbType = Int32), @p1='?' (Size = 4000), @p18='?' (Size = 4000), @p2='?' (Size = 4000), @p3='?' (Size = 256), @p4='?' (DbType = Boolean), @p5='?' (Size = 4000), @p6='?' (DbType = Boolean), @p7='?' (DbType = Boolean), @p8='?' (DbType = DateTimeOffset), @p9='?' (Size = 256), @p10='?' (Size = 256), @p11='?' (Size = 4000), @p12='?' (Size = 4000), @p13='?' (DbType = Boolean), @p14='?' (Size = 4000), @p15='?' (DbType = Boolean), @p16='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+UPDATE [AspNetUsers] SET [AccessFailedCount] = @p0, [ConcurrencyStamp] = @p1, [Designation] = @p2, [Email] = @p3, [EmailConfirmed] = @p4, [FullName] = @p5, [IsArchived] = @p6, [LockoutEnabled] = @p7, [LockoutEnd] = @p8, [NormalizedEmail] = @p9, [NormalizedUserName] = @p10, [PasswordHash] = @p11, [PhoneNumber] = @p12, [PhoneNumberConfirmed] = @p13, [SecurityStamp] = @p14, [TwoFactorEnabled] = @p15, [UserName] = @p16
+OUTPUT 1
+WHERE [Id] = @p17 AND [ConcurrencyStamp] = @p18;
+2026-05-01 01:19:56.104 -07:00 [ERR] [Request] LoginCommand failed after 70ms
+AndritzVendorPortal.Application.Common.Exceptions.UnauthorizedException: Invalid email or password.
+   at AndritzVendorPortal.Application.Features.Auth.Commands.LoginCommandHandler.Handle(LoginCommand request, CancellationToken ct) in C:\Dev\Andritz BRD Dashboard\src\Application\Features\Auth\Commands\LoginCommand.cs:line 38
+   at AndritzVendorPortal.Application.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\ValidationBehavior.cs:line 31
+   at AndritzVendorPortal.Application.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\LoggingBehavior.cs:line 21
+2026-05-01 01:19:56.105 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 72.8805ms
+2026-05-01 01:19:56.105 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:19:56.105 -07:00 [INF] HTTP POST /api/auth/login responded 401 in 74.6746 ms
+2026-05-01 01:19:56.105 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 401 null application/json 74.8258ms
+2026-05-01 01:19:56.872 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 63
+2026-05-01 01:19:56.872 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:19:56.873 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:19:56.873 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:19:56.873 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:19:56.874 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:19:56.875 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:19:56.875 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:19:56.926 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-01 01:19:56.927 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:19:56.928 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p17='?' (Size = 450), @p0='?' (DbType = Int32), @p1='?' (Size = 4000), @p18='?' (Size = 4000), @p2='?' (Size = 4000), @p3='?' (Size = 256), @p4='?' (DbType = Boolean), @p5='?' (Size = 4000), @p6='?' (DbType = Boolean), @p7='?' (DbType = Boolean), @p8='?' (DbType = DateTimeOffset), @p9='?' (Size = 256), @p10='?' (Size = 256), @p11='?' (Size = 4000), @p12='?' (Size = 4000), @p13='?' (DbType = Boolean), @p14='?' (Size = 4000), @p15='?' (DbType = Boolean), @p16='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+UPDATE [AspNetUsers] SET [AccessFailedCount] = @p0, [ConcurrencyStamp] = @p1, [Designation] = @p2, [Email] = @p3, [EmailConfirmed] = @p4, [FullName] = @p5, [IsArchived] = @p6, [LockoutEnabled] = @p7, [LockoutEnd] = @p8, [NormalizedEmail] = @p9, [NormalizedUserName] = @p10, [PasswordHash] = @p11, [PhoneNumber] = @p12, [PhoneNumberConfirmed] = @p13, [SecurityStamp] = @p14, [TwoFactorEnabled] = @p15, [UserName] = @p16
+OUTPUT 1
+WHERE [Id] = @p17 AND [ConcurrencyStamp] = @p18;
+2026-05-01 01:19:56.928 -07:00 [ERR] [Request] LoginCommand failed after 55ms
+AndritzVendorPortal.Application.Common.Exceptions.UnauthorizedException: Invalid email or password.
+   at AndritzVendorPortal.Application.Features.Auth.Commands.LoginCommandHandler.Handle(LoginCommand request, CancellationToken ct) in C:\Dev\Andritz BRD Dashboard\src\Application\Features\Auth\Commands\LoginCommand.cs:line 38
+   at AndritzVendorPortal.Application.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\ValidationBehavior.cs:line 31
+   at AndritzVendorPortal.Application.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\LoggingBehavior.cs:line 21
+2026-05-01 01:19:56.929 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 55.947ms
+2026-05-01 01:19:56.929 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:19:56.929 -07:00 [INF] HTTP POST /api/auth/login responded 401 in 56.5993 ms
+2026-05-01 01:19:56.929 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 401 null application/json 56.8486ms
+2026-05-01 01:21:29.963 -07:00 [INF] User profile is available. Using 'C:\Users\16046\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-05-01 01:21:41.135 -07:00 [INF] Executed DbCommand (55ms) [Parameters=[], CommandType='"Text"', CommandTimeout='60']
+CREATE DATABASE [AndritzVendorPortal];
+2026-05-01 01:21:41.161 -07:00 [INF] Executed DbCommand (23ms) [Parameters=[], CommandType='"Text"', CommandTimeout='60']
+IF SERVERPROPERTY('EngineEdition') <> 5
+BEGIN
+    ALTER DATABASE [AndritzVendorPortal] SET READ_COMMITTED_SNAPSHOT ON;
+END;
+2026-05-01 01:21:41.172 -07:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-01 01:21:41.204 -07:00 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [__EFMigrationsHistory] (
+    [MigrationId] nvarchar(150) NOT NULL,
+    [ProductVersion] nvarchar(32) NOT NULL,
+    CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+);
+2026-05-01 01:21:41.205 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-01 01:21:41.217 -07:00 [INF] Executed DbCommand (10ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-05-01 01:21:41.224 -07:00 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2026-05-01 01:21:41.263 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [AspNetRoles] (
+    [Id] nvarchar(450) NOT NULL,
+    [Name] nvarchar(256) NULL,
+    [NormalizedName] nvarchar(256) NULL,
+    [ConcurrencyStamp] nvarchar(max) NULL,
+    CONSTRAINT [PK_AspNetRoles] PRIMARY KEY ([Id])
+);
+2026-05-01 01:21:41.265 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [AspNetUsers] (
+    [Id] nvarchar(450) NOT NULL,
+    [FullName] nvarchar(max) NOT NULL,
+    [Designation] nvarchar(max) NOT NULL,
+    [IsArchived] bit NOT NULL,
+    [UserName] nvarchar(256) NULL,
+    [NormalizedUserName] nvarchar(256) NULL,
+    [Email] nvarchar(256) NULL,
+    [NormalizedEmail] nvarchar(256) NULL,
+    [EmailConfirmed] bit NOT NULL,
+    [PasswordHash] nvarchar(max) NULL,
+    [SecurityStamp] nvarchar(max) NULL,
+    [ConcurrencyStamp] nvarchar(max) NULL,
+    [PhoneNumber] nvarchar(max) NULL,
+    [PhoneNumberConfirmed] bit NOT NULL,
+    [TwoFactorEnabled] bit NOT NULL,
+    [LockoutEnd] datetimeoffset NULL,
+    [LockoutEnabled] bit NOT NULL,
+    [AccessFailedCount] int NOT NULL,
+    CONSTRAINT [PK_AspNetUsers] PRIMARY KEY ([Id])
+);
+2026-05-01 01:21:41.267 -07:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [VendorRequests] (
+    [Id] int NOT NULL IDENTITY,
+    [VendorName] nvarchar(200) NOT NULL,
+    [ContactInformation] nvarchar(200) NOT NULL,
+    [GstNumber] nvarchar(15) NOT NULL,
+    [PanCard] nvarchar(10) NOT NULL,
+    [AddressDetails] nvarchar(500) NOT NULL,
+    [City] nvarchar(100) NOT NULL,
+    [Locality] nvarchar(100) NOT NULL,
+    [MaterialGroup] nvarchar(200) NOT NULL,
+    [PostalCode] nvarchar(10) NOT NULL,
+    [State] nvarchar(100) NOT NULL,
+    [Country] nvarchar(100) NOT NULL,
+    [Currency] nvarchar(10) NOT NULL,
+    [PaymentTerms] nvarchar(200) NOT NULL,
+    [Incoterms] nvarchar(200) NOT NULL,
+    [ContactPerson] nvarchar(100) NOT NULL,
+    [Telephone] nvarchar(30) NOT NULL,
+    [Reason] nvarchar(1000) NOT NULL,
+    [YearlyPvo] nvarchar(100) NOT NULL,
+    [IsOneTimeVendor] bit NOT NULL,
+    [ProposedBy] nvarchar(200) NOT NULL,
+    [Status] int NOT NULL,
+    [RevisionNo] int NOT NULL,
+    [RejectionComment] nvarchar(max) NULL,
+    [VendorCode] nvarchar(50) NULL,
+    [VendorCodeAssignedAt] datetime2 NULL,
+    [VendorCodeAssignedBy] nvarchar(200) NULL,
+    [IsArchived] bit NOT NULL,
+    [ArchivedAt] datetime2 NULL,
+    [CreatedByUserId] nvarchar(450) NOT NULL,
+    [CreatedByName] nvarchar(200) NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NOT NULL,
+    [CreatedBy] nvarchar(450) NULL,
+    [ModifiedBy] nvarchar(450) NULL,
+    CONSTRAINT [PK_VendorRequests] PRIMARY KEY ([Id])
+);
+2026-05-01 01:21:41.268 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [AspNetRoleClaims] (
+    [Id] int NOT NULL IDENTITY,
+    [RoleId] nvarchar(450) NOT NULL,
+    [ClaimType] nvarchar(max) NULL,
+    [ClaimValue] nvarchar(max) NULL,
+    CONSTRAINT [PK_AspNetRoleClaims] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_AspNetRoleClaims_AspNetRoles_RoleId] FOREIGN KEY ([RoleId]) REFERENCES [AspNetRoles] ([Id]) ON DELETE CASCADE
+);
+2026-05-01 01:21:41.269 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [AspNetUserClaims] (
+    [Id] int NOT NULL IDENTITY,
+    [UserId] nvarchar(450) NOT NULL,
+    [ClaimType] nvarchar(max) NULL,
+    [ClaimValue] nvarchar(max) NULL,
+    CONSTRAINT [PK_AspNetUserClaims] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_AspNetUserClaims_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE
+);
+2026-05-01 01:21:41.271 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [AspNetUserLogins] (
+    [LoginProvider] nvarchar(450) NOT NULL,
+    [ProviderKey] nvarchar(450) NOT NULL,
+    [ProviderDisplayName] nvarchar(max) NULL,
+    [UserId] nvarchar(450) NOT NULL,
+    CONSTRAINT [PK_AspNetUserLogins] PRIMARY KEY ([LoginProvider], [ProviderKey]),
+    CONSTRAINT [FK_AspNetUserLogins_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE
+);
+2026-05-01 01:21:41.272 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [AspNetUserRoles] (
+    [UserId] nvarchar(450) NOT NULL,
+    [RoleId] nvarchar(450) NOT NULL,
+    CONSTRAINT [PK_AspNetUserRoles] PRIMARY KEY ([UserId], [RoleId]),
+    CONSTRAINT [FK_AspNetUserRoles_AspNetRoles_RoleId] FOREIGN KEY ([RoleId]) REFERENCES [AspNetRoles] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_AspNetUserRoles_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE
+);
+2026-05-01 01:21:41.273 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [AspNetUserTokens] (
+    [UserId] nvarchar(450) NOT NULL,
+    [LoginProvider] nvarchar(450) NOT NULL,
+    [Name] nvarchar(450) NOT NULL,
+    [Value] nvarchar(max) NULL,
+    CONSTRAINT [PK_AspNetUserTokens] PRIMARY KEY ([UserId], [LoginProvider], [Name]),
+    CONSTRAINT [FK_AspNetUserTokens_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE
+);
+2026-05-01 01:21:41.273 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [ApprovalSteps] (
+    [Id] int NOT NULL IDENTITY,
+    [VendorRequestId] int NOT NULL,
+    [ApproverUserId] nvarchar(450) NOT NULL,
+    [ApproverName] nvarchar(200) NOT NULL,
+    [StepOrder] int NOT NULL,
+    [Decision] int NOT NULL,
+    [Comment] nvarchar(500) NULL,
+    [DecidedAt] datetime2 NULL,
+    [IsFinalApproval] bit NOT NULL,
+    [IsDeletedApprover] bit NOT NULL,
+    [DeletedApproverNote] nvarchar(500) NULL,
+    CONSTRAINT [PK_ApprovalSteps] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_ApprovalSteps_VendorRequests_VendorRequestId] FOREIGN KEY ([VendorRequestId]) REFERENCES [VendorRequests] ([Id]) ON DELETE CASCADE
+);
+2026-05-01 01:21:41.275 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [VendorRevisions] (
+    [Id] int NOT NULL IDENTITY,
+    [VendorRequestId] int NOT NULL,
+    [RevisionNo] int NOT NULL,
+    [ChangedByUserId] nvarchar(450) NOT NULL,
+    [ChangedByName] nvarchar(200) NOT NULL,
+    [ChangedAt] datetime2 NOT NULL,
+    [RevisionType] int NOT NULL,
+    [RejectionComment] nvarchar(1000) NULL,
+    [ChangesJson] nvarchar(max) NOT NULL,
+    CONSTRAINT [PK_VendorRevisions] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_VendorRevisions_VendorRequests_VendorRequestId] FOREIGN KEY ([VendorRequestId]) REFERENCES [VendorRequests] ([Id]) ON DELETE CASCADE
+);
+2026-05-01 01:21:41.275 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_ApprovalSteps_ApproverUserId] ON [ApprovalSteps] ([ApproverUserId]);
+2026-05-01 01:21:41.276 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_ApprovalSteps_VendorRequestId_StepOrder] ON [ApprovalSteps] ([VendorRequestId], [StepOrder]);
+2026-05-01 01:21:41.276 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_AspNetRoleClaims_RoleId] ON [AspNetRoleClaims] ([RoleId]);
+2026-05-01 01:21:41.277 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [RoleNameIndex] ON [AspNetRoles] ([NormalizedName]) WHERE [NormalizedName] IS NOT NULL;
+2026-05-01 01:21:41.278 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_AspNetUserClaims_UserId] ON [AspNetUserClaims] ([UserId]);
+2026-05-01 01:21:41.278 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_AspNetUserLogins_UserId] ON [AspNetUserLogins] ([UserId]);
+2026-05-01 01:21:41.279 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_AspNetUserRoles_RoleId] ON [AspNetUserRoles] ([RoleId]);
+2026-05-01 01:21:41.279 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [EmailIndex] ON [AspNetUsers] ([NormalizedEmail]);
+2026-05-01 01:21:41.280 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [UserNameIndex] ON [AspNetUsers] ([NormalizedUserName]) WHERE [NormalizedUserName] IS NOT NULL;
+2026-05-01 01:21:41.280 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_VendorRequests_CreatedByUserId] ON [VendorRequests] ([CreatedByUserId]);
+2026-05-01 01:21:41.281 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_VendorRequests_IsArchived] ON [VendorRequests] ([IsArchived]);
+2026-05-01 01:21:41.282 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_VendorRequests_Status] ON [VendorRequests] ([Status]);
+2026-05-01 01:21:41.282 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_VendorRequests_VendorCode] ON [VendorRequests] ([VendorCode]) WHERE [VendorCode] IS NOT NULL;
+2026-05-01 01:21:41.283 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_VendorRevisions_VendorRequestId] ON [VendorRevisions] ([VendorRequestId]);
+2026-05-01 01:21:41.284 -07:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20260501080726_InitialCreate', N'8.0.10');
+2026-05-01 01:21:41.406 -07:00 [INF] Executed DbCommand (7ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedName_0
+2026-05-01 01:21:41.410 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedName_0
+2026-05-01 01:21:41.471 -07:00 [INF] Executed DbCommand (2ms) [Parameters=[@p0='?' (Size = 450), @p1='?' (Size = 4000), @p2='?' (Size = 256), @p3='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+INSERT INTO [AspNetRoles] ([Id], [ConcurrencyStamp], [Name], [NormalizedName])
+VALUES (@p0, @p1, @p2, @p3);
+2026-05-01 01:21:41.480 -07:00 [INF] Executed DbCommand (4ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedName_0
+2026-05-01 01:21:41.480 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedName_0
+2026-05-01 01:21:41.485 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@p0='?' (Size = 450), @p1='?' (Size = 4000), @p2='?' (Size = 256), @p3='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+INSERT INTO [AspNetRoles] ([Id], [ConcurrencyStamp], [Name], [NormalizedName])
+VALUES (@p0, @p1, @p2, @p3);
+2026-05-01 01:21:41.486 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedName_0
+2026-05-01 01:21:41.487 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedName_0
+2026-05-01 01:21:41.487 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@p0='?' (Size = 450), @p1='?' (Size = 4000), @p2='?' (Size = 256), @p3='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+INSERT INTO [AspNetRoles] ([Id], [ConcurrencyStamp], [Name], [NormalizedName])
+VALUES (@p0, @p1, @p2, @p3);
+2026-05-01 01:21:41.488 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedName_0
+2026-05-01 01:21:41.488 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedName_0
+2026-05-01 01:21:41.489 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p0='?' (Size = 450), @p1='?' (Size = 4000), @p2='?' (Size = 256), @p3='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+INSERT INTO [AspNetRoles] ([Id], [ConcurrencyStamp], [Name], [NormalizedName])
+VALUES (@p0, @p1, @p2, @p3);
+2026-05-01 01:21:41.496 -07:00 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:21:41.545 -07:00 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-01 01:21:41.546 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:21:41.578 -07:00 [INF] Executed DbCommand (3ms) [Parameters=[@p0='?' (Size = 450), @p1='?' (DbType = Int32), @p2='?' (Size = 4000), @p3='?' (Size = 4000), @p4='?' (Size = 256), @p5='?' (DbType = Boolean), @p6='?' (Size = 4000), @p7='?' (DbType = Boolean), @p8='?' (DbType = Boolean), @p9='?' (DbType = DateTimeOffset), @p10='?' (Size = 256), @p11='?' (Size = 256), @p12='?' (Size = 4000), @p13='?' (Size = 4000), @p14='?' (DbType = Boolean), @p15='?' (Size = 4000), @p16='?' (DbType = Boolean), @p17='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+INSERT INTO [AspNetUsers] ([Id], [AccessFailedCount], [ConcurrencyStamp], [Designation], [Email], [EmailConfirmed], [FullName], [IsArchived], [LockoutEnabled], [LockoutEnd], [NormalizedEmail], [NormalizedUserName], [PasswordHash], [PhoneNumber], [PhoneNumberConfirmed], [SecurityStamp], [TwoFactorEnabled], [UserName])
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11, @p12, @p13, @p14, @p15, @p16, @p17);
+2026-05-01 01:21:41.584 -07:00 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedRoleName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedRoleName_0
+2026-05-01 01:21:41.599 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__p_0='?' (Size = 450), @__p_1='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[UserId], [a].[RoleId]
+FROM [AspNetUserRoles] AS [a]
+WHERE [a].[UserId] = @__p_0 AND [a].[RoleId] = @__p_1
+2026-05-01 01:21:41.601 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedRoleName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedRoleName_0
+2026-05-01 01:21:41.610 -07:00 [INF] Executed DbCommand (4ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-01 01:21:41.613 -07:00 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:21:41.629 -07:00 [INF] Executed DbCommand (7ms) [Parameters=[@p0='?' (Size = 450), @p1='?' (Size = 450), @p19='?' (Size = 450), @p2='?' (DbType = Int32), @p3='?' (Size = 4000), @p20='?' (Size = 4000), @p4='?' (Size = 4000), @p5='?' (Size = 256), @p6='?' (DbType = Boolean), @p7='?' (Size = 4000), @p8='?' (DbType = Boolean), @p9='?' (DbType = Boolean), @p10='?' (DbType = DateTimeOffset), @p11='?' (Size = 256), @p12='?' (Size = 256), @p13='?' (Size = 4000), @p14='?' (Size = 4000), @p15='?' (DbType = Boolean), @p16='?' (Size = 4000), @p17='?' (DbType = Boolean), @p18='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [AspNetUserRoles] ([RoleId], [UserId])
+VALUES (@p0, @p1);
+UPDATE [AspNetUsers] SET [AccessFailedCount] = @p2, [ConcurrencyStamp] = @p3, [Designation] = @p4, [Email] = @p5, [EmailConfirmed] = @p6, [FullName] = @p7, [IsArchived] = @p8, [LockoutEnabled] = @p9, [LockoutEnd] = @p10, [NormalizedEmail] = @p11, [NormalizedUserName] = @p12, [PasswordHash] = @p13, [PhoneNumber] = @p14, [PhoneNumberConfirmed] = @p15, [SecurityStamp] = @p16, [TwoFactorEnabled] = @p17, [UserName] = @p18
+OUTPUT 1
+WHERE [Id] = @p19 AND [ConcurrencyStamp] = @p20;
+2026-05-01 01:21:41.632 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:21:41.674 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-01 01:21:41.674 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:21:41.677 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@p0='?' (Size = 450), @p1='?' (DbType = Int32), @p2='?' (Size = 4000), @p3='?' (Size = 4000), @p4='?' (Size = 256), @p5='?' (DbType = Boolean), @p6='?' (Size = 4000), @p7='?' (DbType = Boolean), @p8='?' (DbType = Boolean), @p9='?' (DbType = DateTimeOffset), @p10='?' (Size = 256), @p11='?' (Size = 256), @p12='?' (Size = 4000), @p13='?' (Size = 4000), @p14='?' (DbType = Boolean), @p15='?' (Size = 4000), @p16='?' (DbType = Boolean), @p17='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+INSERT INTO [AspNetUsers] ([Id], [AccessFailedCount], [ConcurrencyStamp], [Designation], [Email], [EmailConfirmed], [FullName], [IsArchived], [LockoutEnabled], [LockoutEnd], [NormalizedEmail], [NormalizedUserName], [PasswordHash], [PhoneNumber], [PhoneNumberConfirmed], [SecurityStamp], [TwoFactorEnabled], [UserName])
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11, @p12, @p13, @p14, @p15, @p16, @p17);
+2026-05-01 01:21:41.677 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedRoleName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedRoleName_0
+2026-05-01 01:21:41.678 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__p_0='?' (Size = 450), @__p_1='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[UserId], [a].[RoleId]
+FROM [AspNetUserRoles] AS [a]
+WHERE [a].[UserId] = @__p_0 AND [a].[RoleId] = @__p_1
+2026-05-01 01:21:41.679 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedRoleName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[ConcurrencyStamp], [a].[Name], [a].[NormalizedName]
+FROM [AspNetRoles] AS [a]
+WHERE [a].[NormalizedName] = @__normalizedRoleName_0
+2026-05-01 01:21:41.679 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-01 01:21:41.680 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:21:41.681 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@p0='?' (Size = 450), @p1='?' (Size = 450), @p19='?' (Size = 450), @p2='?' (DbType = Int32), @p3='?' (Size = 4000), @p20='?' (Size = 4000), @p4='?' (Size = 4000), @p5='?' (Size = 256), @p6='?' (DbType = Boolean), @p7='?' (Size = 4000), @p8='?' (DbType = Boolean), @p9='?' (DbType = Boolean), @p10='?' (DbType = DateTimeOffset), @p11='?' (Size = 256), @p12='?' (Size = 256), @p13='?' (Size = 4000), @p14='?' (Size = 4000), @p15='?' (DbType = Boolean), @p16='?' (Size = 4000), @p17='?' (DbType = Boolean), @p18='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [AspNetUserRoles] ([RoleId], [UserId])
+VALUES (@p0, @p1);
+UPDATE [AspNetUsers] SET [AccessFailedCount] = @p2, [ConcurrencyStamp] = @p3, [Designation] = @p4, [Email] = @p5, [EmailConfirmed] = @p6, [FullName] = @p7, [IsArchived] = @p8, [LockoutEnabled] = @p9, [LockoutEnd] = @p10, [NormalizedEmail] = @p11, [NormalizedUserName] = @p12, [PasswordHash] = @p13, [PhoneNumber] = @p14, [PhoneNumberConfirmed] = @p15, [SecurityStamp] = @p16, [TwoFactorEnabled] = @p17, [UserName] = @p18
+OUTPUT 1
+WHERE [Id] = @p19 AND [ConcurrencyStamp] = @p20;
+2026-05-01 01:21:41.718 -07:00 [INF] Now listening on: http://0.0.0.0:5000
+2026-05-01 01:21:41.719 -07:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-05-01 01:21:41.720 -07:00 [INF] Hosting environment: Development
+2026-05-01 01:21:41.720 -07:00 [INF] Content root path: C:\Dev\Andritz BRD Dashboard\src\API
+2026-05-01 01:22:09.877 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - null null
+2026-05-01 01:22:09.902 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:22:09.904 -07:00 [INF] HTTP OPTIONS /api/auth/login responded 204 in 23.8976 ms
+2026-05-01 01:22:09.906 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - 204 null null 30.9106ms
+2026-05-01 01:22:10.216 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 63
+2026-05-01 01:22:10.218 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:22:10.234 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:22:10.242 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:22:10.275 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:22:10.303 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:22:10.306 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:22:10.307 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:22:10.368 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-01 01:22:10.369 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:22:10.374 -07:00 [INF] Executed DbCommand (5ms) [Parameters=[@p17='?' (Size = 450), @p0='?' (DbType = Int32), @p1='?' (Size = 4000), @p18='?' (Size = 4000), @p2='?' (Size = 4000), @p3='?' (Size = 256), @p4='?' (DbType = Boolean), @p5='?' (Size = 4000), @p6='?' (DbType = Boolean), @p7='?' (DbType = Boolean), @p8='?' (DbType = DateTimeOffset), @p9='?' (Size = 256), @p10='?' (Size = 256), @p11='?' (Size = 4000), @p12='?' (Size = 4000), @p13='?' (DbType = Boolean), @p14='?' (Size = 4000), @p15='?' (DbType = Boolean), @p16='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+UPDATE [AspNetUsers] SET [AccessFailedCount] = @p0, [ConcurrencyStamp] = @p1, [Designation] = @p2, [Email] = @p3, [EmailConfirmed] = @p4, [FullName] = @p5, [IsArchived] = @p6, [LockoutEnabled] = @p7, [LockoutEnd] = @p8, [NormalizedEmail] = @p9, [NormalizedUserName] = @p10, [PasswordHash] = @p11, [PhoneNumber] = @p12, [PhoneNumberConfirmed] = @p13, [SecurityStamp] = @p14, [TwoFactorEnabled] = @p15, [UserName] = @p16
+OUTPUT 1
+WHERE [Id] = @p17 AND [ConcurrencyStamp] = @p18;
+2026-05-01 01:22:10.375 -07:00 [ERR] [Request] LoginCommand failed after 100ms
+AndritzVendorPortal.Application.Common.Exceptions.UnauthorizedException: Invalid email or password.
+   at AndritzVendorPortal.Application.Features.Auth.Commands.LoginCommandHandler.Handle(LoginCommand request, CancellationToken ct) in C:\Dev\Andritz BRD Dashboard\src\Application\Features\Auth\Commands\LoginCommand.cs:line 38
+   at AndritzVendorPortal.Application.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\ValidationBehavior.cs:line 31
+   at AndritzVendorPortal.Application.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\LoggingBehavior.cs:line 21
+2026-05-01 01:22:10.383 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 137.6141ms
+2026-05-01 01:22:10.383 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:22:10.393 -07:00 [INF] HTTP POST /api/auth/login responded 401 in 176.7697 ms
+2026-05-01 01:22:10.394 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 401 null application/json 178.2413ms
+2026-05-01 01:23:15.073 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - null null
+2026-05-01 01:23:15.074 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:23:15.074 -07:00 [INF] HTTP OPTIONS /api/auth/login responded 204 in 1.2250 ms
+2026-05-01 01:23:15.074 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - 204 null null 1.487ms
+2026-05-01 01:23:15.076 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 61
+2026-05-01 01:23:15.076 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:23:15.077 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:23:15.077 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:23:15.079 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:23:15.122 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:23:15.123 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:23:15.124 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:23:15.182 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-01 01:23:15.183 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:23:15.186 -07:00 [INF] Executed DbCommand (2ms) [Parameters=[@p17='?' (Size = 450), @p0='?' (DbType = Int32), @p1='?' (Size = 4000), @p18='?' (Size = 4000), @p2='?' (Size = 4000), @p3='?' (Size = 256), @p4='?' (DbType = Boolean), @p5='?' (Size = 4000), @p6='?' (DbType = Boolean), @p7='?' (DbType = Boolean), @p8='?' (DbType = DateTimeOffset), @p9='?' (Size = 256), @p10='?' (Size = 256), @p11='?' (Size = 4000), @p12='?' (Size = 4000), @p13='?' (DbType = Boolean), @p14='?' (Size = 4000), @p15='?' (DbType = Boolean), @p16='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+UPDATE [AspNetUsers] SET [AccessFailedCount] = @p0, [ConcurrencyStamp] = @p1, [Designation] = @p2, [Email] = @p3, [EmailConfirmed] = @p4, [FullName] = @p5, [IsArchived] = @p6, [LockoutEnabled] = @p7, [LockoutEnd] = @p8, [NormalizedEmail] = @p9, [NormalizedUserName] = @p10, [PasswordHash] = @p11, [PhoneNumber] = @p12, [PhoneNumberConfirmed] = @p13, [SecurityStamp] = @p14, [TwoFactorEnabled] = @p15, [UserName] = @p16
+OUTPUT 1
+WHERE [Id] = @p17 AND [ConcurrencyStamp] = @p18;
+2026-05-01 01:23:15.186 -07:00 [ERR] [Request] LoginCommand failed after 107ms
+AndritzVendorPortal.Application.Common.Exceptions.UnauthorizedException: Invalid email or password.
+   at AndritzVendorPortal.Application.Features.Auth.Commands.LoginCommandHandler.Handle(LoginCommand request, CancellationToken ct) in C:\Dev\Andritz BRD Dashboard\src\Application\Features\Auth\Commands\LoginCommand.cs:line 38
+   at AndritzVendorPortal.Application.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\ValidationBehavior.cs:line 31
+   at AndritzVendorPortal.Application.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\LoggingBehavior.cs:line 21
+2026-05-01 01:23:15.187 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 109.7702ms
+2026-05-01 01:23:15.187 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:23:15.188 -07:00 [INF] HTTP POST /api/auth/login responded 401 in 112.0617 ms
+2026-05-01 01:23:15.188 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 401 null application/json 112.3157ms
+2026-05-01 01:23:54.678 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - null null
+2026-05-01 01:23:54.678 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:23:54.678 -07:00 [INF] HTTP OPTIONS /api/auth/login responded 204 in 0.2644 ms
+2026-05-01 01:23:54.678 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - 204 null null 0.6127ms
+2026-05-01 01:23:54.679 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 63
+2026-05-01 01:23:54.680 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:23:54.681 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:23:54.681 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:23:54.683 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:23:54.694 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:23:54.695 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:23:54.696 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:23:54.752 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-01 01:23:54.753 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:23:54.754 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p17='?' (Size = 450), @p0='?' (DbType = Int32), @p1='?' (Size = 4000), @p18='?' (Size = 4000), @p2='?' (Size = 4000), @p3='?' (Size = 256), @p4='?' (DbType = Boolean), @p5='?' (Size = 4000), @p6='?' (DbType = Boolean), @p7='?' (DbType = Boolean), @p8='?' (DbType = DateTimeOffset), @p9='?' (Size = 256), @p10='?' (Size = 256), @p11='?' (Size = 4000), @p12='?' (Size = 4000), @p13='?' (DbType = Boolean), @p14='?' (Size = 4000), @p15='?' (DbType = Boolean), @p16='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+UPDATE [AspNetUsers] SET [AccessFailedCount] = @p0, [ConcurrencyStamp] = @p1, [Designation] = @p2, [Email] = @p3, [EmailConfirmed] = @p4, [FullName] = @p5, [IsArchived] = @p6, [LockoutEnabled] = @p7, [LockoutEnd] = @p8, [NormalizedEmail] = @p9, [NormalizedUserName] = @p10, [PasswordHash] = @p11, [PhoneNumber] = @p12, [PhoneNumberConfirmed] = @p13, [SecurityStamp] = @p14, [TwoFactorEnabled] = @p15, [UserName] = @p16
+OUTPUT 1
+WHERE [Id] = @p17 AND [ConcurrencyStamp] = @p18;
+2026-05-01 01:23:54.755 -07:00 [ERR] [Request] LoginCommand failed after 71ms
+AndritzVendorPortal.Application.Common.Exceptions.UnauthorizedException: Invalid email or password.
+   at AndritzVendorPortal.Application.Features.Auth.Commands.LoginCommandHandler.Handle(LoginCommand request, CancellationToken ct) in C:\Dev\Andritz BRD Dashboard\src\Application\Features\Auth\Commands\LoginCommand.cs:line 38
+   at AndritzVendorPortal.Application.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\ValidationBehavior.cs:line 31
+   at AndritzVendorPortal.Application.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\LoggingBehavior.cs:line 21
+2026-05-01 01:23:54.755 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 74.2404ms
+2026-05-01 01:23:54.755 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:23:54.756 -07:00 [INF] HTTP POST /api/auth/login responded 401 in 76.3529 ms
+2026-05-01 01:23:54.756 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 401 null application/json 76.5634ms
+2026-05-01 01:24:20.263 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - null null
+2026-05-01 01:24:20.263 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:24:20.263 -07:00 [INF] HTTP OPTIONS /api/auth/login responded 204 in 0.1583 ms
+2026-05-01 01:24:20.263 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - 204 null null 0.3235ms
+2026-05-01 01:24:20.264 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 63
+2026-05-01 01:24:20.264 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:24:20.264 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:24:20.264 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:24:20.265 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:24:20.266 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:24:20.266 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:24:20.267 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:24:20.326 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-01 01:24:20.327 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:24:20.329 -07:00 [INF] Executed DbCommand (2ms) [Parameters=[@p17='?' (Size = 450), @p0='?' (DbType = Int32), @p1='?' (Size = 4000), @p18='?' (Size = 4000), @p2='?' (Size = 4000), @p3='?' (Size = 256), @p4='?' (DbType = Boolean), @p5='?' (Size = 4000), @p6='?' (DbType = Boolean), @p7='?' (DbType = Boolean), @p8='?' (DbType = DateTimeOffset), @p9='?' (Size = 256), @p10='?' (Size = 256), @p11='?' (Size = 4000), @p12='?' (Size = 4000), @p13='?' (DbType = Boolean), @p14='?' (Size = 4000), @p15='?' (DbType = Boolean), @p16='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+UPDATE [AspNetUsers] SET [AccessFailedCount] = @p0, [ConcurrencyStamp] = @p1, [Designation] = @p2, [Email] = @p3, [EmailConfirmed] = @p4, [FullName] = @p5, [IsArchived] = @p6, [LockoutEnabled] = @p7, [LockoutEnd] = @p8, [NormalizedEmail] = @p9, [NormalizedUserName] = @p10, [PasswordHash] = @p11, [PhoneNumber] = @p12, [PhoneNumberConfirmed] = @p13, [SecurityStamp] = @p14, [TwoFactorEnabled] = @p15, [UserName] = @p16
+OUTPUT 1
+WHERE [Id] = @p17 AND [ConcurrencyStamp] = @p18;
+2026-05-01 01:24:20.329 -07:00 [ERR] [Request] LoginCommand failed after 64ms
+AndritzVendorPortal.Application.Common.Exceptions.UnauthorizedException: Invalid email or password.
+   at AndritzVendorPortal.Application.Features.Auth.Commands.LoginCommandHandler.Handle(LoginCommand request, CancellationToken ct) in C:\Dev\Andritz BRD Dashboard\src\Application\Features\Auth\Commands\LoginCommand.cs:line 38
+   at AndritzVendorPortal.Application.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\ValidationBehavior.cs:line 31
+   at AndritzVendorPortal.Application.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\LoggingBehavior.cs:line 21
+2026-05-01 01:24:20.330 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 65.5491ms
+2026-05-01 01:24:20.330 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:24:20.330 -07:00 [INF] HTTP POST /api/auth/login responded 401 in 66.2761 ms
+2026-05-01 01:24:20.331 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 401 null application/json 66.427ms
+2026-05-01 01:24:30.724 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - null null
+2026-05-01 01:24:30.724 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:24:30.724 -07:00 [INF] HTTP OPTIONS /api/auth/login responded 204 in 0.1843 ms
+2026-05-01 01:24:30.724 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - 204 null null 0.3364ms
+2026-05-01 01:24:30.726 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 63
+2026-05-01 01:24:30.726 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:24:30.726 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:24:30.726 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:24:30.727 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:24:30.728 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:24:30.729 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:24:30.730 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:24:30.794 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-01 01:24:30.795 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:24:30.799 -07:00 [INF] Executed DbCommand (2ms) [Parameters=[@p17='?' (Size = 450), @p0='?' (DbType = Int32), @p1='?' (Size = 4000), @p18='?' (Size = 4000), @p2='?' (Size = 4000), @p3='?' (Size = 256), @p4='?' (DbType = Boolean), @p5='?' (Size = 4000), @p6='?' (DbType = Boolean), @p7='?' (DbType = Boolean), @p8='?' (DbType = DateTimeOffset), @p9='?' (Size = 256), @p10='?' (Size = 256), @p11='?' (Size = 4000), @p12='?' (Size = 4000), @p13='?' (DbType = Boolean), @p14='?' (Size = 4000), @p15='?' (DbType = Boolean), @p16='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+UPDATE [AspNetUsers] SET [AccessFailedCount] = @p0, [ConcurrencyStamp] = @p1, [Designation] = @p2, [Email] = @p3, [EmailConfirmed] = @p4, [FullName] = @p5, [IsArchived] = @p6, [LockoutEnabled] = @p7, [LockoutEnd] = @p8, [NormalizedEmail] = @p9, [NormalizedUserName] = @p10, [PasswordHash] = @p11, [PhoneNumber] = @p12, [PhoneNumberConfirmed] = @p13, [SecurityStamp] = @p14, [TwoFactorEnabled] = @p15, [UserName] = @p16
+OUTPUT 1
+WHERE [Id] = @p17 AND [ConcurrencyStamp] = @p18;
+2026-05-01 01:24:30.799 -07:00 [ERR] [Request] LoginCommand failed after 72ms
+AndritzVendorPortal.Application.Common.Exceptions.UnauthorizedException: Invalid email or password.
+   at AndritzVendorPortal.Application.Features.Auth.Commands.LoginCommandHandler.Handle(LoginCommand request, CancellationToken ct) in C:\Dev\Andritz BRD Dashboard\src\Application\Features\Auth\Commands\LoginCommand.cs:line 38
+   at AndritzVendorPortal.Application.Behaviors.ValidationBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\ValidationBehavior.cs:line 31
+   at AndritzVendorPortal.Application.Behaviors.LoggingBehavior`2.Handle(TRequest request, RequestHandlerDelegate`1 next, CancellationToken cancellationToken) in C:\Dev\Andritz BRD Dashboard\src\Application\Behaviors\LoggingBehavior.cs:line 21
+2026-05-01 01:24:30.800 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 73.3869ms
+2026-05-01 01:24:30.800 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:24:30.800 -07:00 [INF] HTTP POST /api/auth/login responded 401 in 74.2087 ms
+2026-05-01 01:24:30.800 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 401 null application/json 74.421ms
+2026-05-01 01:25:30.941 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - null null
+2026-05-01 01:25:30.941 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:25:30.941 -07:00 [INF] HTTP OPTIONS /api/auth/login responded 204 in 0.1393 ms
+2026-05-01 01:25:30.941 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - 204 null null 0.3378ms
+2026-05-01 01:25:31.250 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 60
+2026-05-01 01:25:31.250 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:25:31.250 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:25:31.250 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:25:31.251 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:25:31.252 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:25:31.253 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:25:31.253 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:25:31.297 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-01 01:25:31.299 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:25:31.300 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@p17='?' (Size = 450), @p0='?' (DbType = Int32), @p1='?' (Size = 4000), @p18='?' (Size = 4000), @p2='?' (Size = 4000), @p3='?' (Size = 256), @p4='?' (DbType = Boolean), @p5='?' (Size = 4000), @p6='?' (DbType = Boolean), @p7='?' (DbType = Boolean), @p8='?' (DbType = DateTimeOffset), @p9='?' (Size = 256), @p10='?' (Size = 256), @p11='?' (Size = 4000), @p12='?' (Size = 4000), @p13='?' (DbType = Boolean), @p14='?' (Size = 4000), @p15='?' (DbType = Boolean), @p16='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+UPDATE [AspNetUsers] SET [AccessFailedCount] = @p0, [ConcurrencyStamp] = @p1, [Designation] = @p2, [Email] = @p3, [EmailConfirmed] = @p4, [FullName] = @p5, [IsArchived] = @p6, [LockoutEnabled] = @p7, [LockoutEnd] = @p8, [NormalizedEmail] = @p9, [NormalizedUserName] = @p10, [PasswordHash] = @p11, [PhoneNumber] = @p12, [PhoneNumberConfirmed] = @p13, [SecurityStamp] = @p14, [TwoFactorEnabled] = @p15, [UserName] = @p16
+OUTPUT 1
+WHERE [Id] = @p17 AND [ConcurrencyStamp] = @p18;
+2026-05-01 01:25:31.328 -07:00 [INF] Executed DbCommand (5ms) [Parameters=[@__userId_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a0].[Name]
+FROM [AspNetUserRoles] AS [a]
+INNER JOIN [AspNetRoles] AS [a0] ON [a].[RoleId] = [a0].[Id]
+WHERE [a].[UserId] = @__userId_0
+2026-05-01 01:25:31.340 -07:00 [INF] [Request] LoginCommand completed in 89ms
+2026-05-01 01:25:31.343 -07:00 [INF] Executing OkObjectResult, writing value of type 'AndritzVendorPortal.Application.Common.Models.Result`1[[AndritzVendorPortal.Application.DTOs.AuthResponseDto, AndritzVendorPortal.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-01 01:25:31.350 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 99.419ms
+2026-05-01 01:25:31.350 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:25:31.350 -07:00 [INF] HTTP POST /api/auth/login responded 200 in 99.7897 ms
+2026-05-01 01:25:31.350 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 200 null application/json; charset=utf-8 100.0105ms
+2026-05-01 01:25:41.480 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - null null
+2026-05-01 01:25:41.480 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:25:41.480 -07:00 [INF] HTTP OPTIONS /api/auth/login responded 204 in 0.1130 ms
+2026-05-01 01:25:41.480 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - 204 null null 0.2723ms
+2026-05-01 01:25:41.482 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 60
+2026-05-01 01:25:41.482 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:25:41.506 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:25:41.506 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:25:41.506 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:25:41.508 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:25:41.508 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:25:41.509 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:25:41.553 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__userId_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a0].[Name]
+FROM [AspNetUserRoles] AS [a]
+INNER JOIN [AspNetRoles] AS [a0] ON [a].[RoleId] = [a0].[Id]
+WHERE [a].[UserId] = @__userId_0
+2026-05-01 01:25:41.553 -07:00 [INF] [Request] LoginCommand completed in 46ms
+2026-05-01 01:25:41.553 -07:00 [INF] Executing OkObjectResult, writing value of type 'AndritzVendorPortal.Application.Common.Models.Result`1[[AndritzVendorPortal.Application.DTOs.AuthResponseDto, AndritzVendorPortal.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-01 01:25:41.554 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 47.5372ms
+2026-05-01 01:25:41.554 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:25:41.554 -07:00 [INF] HTTP POST /api/auth/login responded 200 in 72.0224 ms
+2026-05-01 01:25:41.554 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 200 null application/json; charset=utf-8 72.1626ms
+2026-05-01 01:25:45.080 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 60
+2026-05-01 01:25:45.080 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:25:45.080 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:25:45.080 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:25:45.081 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:25:45.082 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:25:45.082 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:25:45.083 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:25:45.138 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__userId_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a0].[Name]
+FROM [AspNetUserRoles] AS [a]
+INNER JOIN [AspNetRoles] AS [a0] ON [a].[RoleId] = [a0].[Id]
+WHERE [a].[UserId] = @__userId_0
+2026-05-01 01:25:45.138 -07:00 [INF] [Request] LoginCommand completed in 57ms
+2026-05-01 01:25:45.138 -07:00 [INF] Executing OkObjectResult, writing value of type 'AndritzVendorPortal.Application.Common.Models.Result`1[[AndritzVendorPortal.Application.DTOs.AuthResponseDto, AndritzVendorPortal.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-01 01:25:45.138 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 57.9402ms
+2026-05-01 01:25:45.138 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:25:45.138 -07:00 [INF] HTTP POST /api/auth/login responded 200 in 58.7286 ms
+2026-05-01 01:25:45.139 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 200 null application/json; charset=utf-8 58.9629ms
+2026-05-01 01:26:53.108 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - null null
+2026-05-01 01:26:53.108 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:26:53.109 -07:00 [INF] HTTP OPTIONS /api/auth/login responded 204 in 0.4042 ms
+2026-05-01 01:26:53.109 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - 204 null null 0.6026ms
+2026-05-01 01:26:53.110 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 60
+2026-05-01 01:26:53.110 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:26:53.111 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:26:53.111 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:26:53.111 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:26:53.112 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:26:53.113 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:26:53.113 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:26:53.182 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__userId_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a0].[Name]
+FROM [AspNetUserRoles] AS [a]
+INNER JOIN [AspNetRoles] AS [a0] ON [a].[RoleId] = [a0].[Id]
+WHERE [a].[UserId] = @__userId_0
+2026-05-01 01:26:53.182 -07:00 [INF] [Request] LoginCommand completed in 70ms
+2026-05-01 01:26:53.182 -07:00 [INF] Executing OkObjectResult, writing value of type 'AndritzVendorPortal.Application.Common.Models.Result`1[[AndritzVendorPortal.Application.DTOs.AuthResponseDto, AndritzVendorPortal.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-01 01:26:53.182 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 71.5332ms
+2026-05-01 01:26:53.182 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:26:53.182 -07:00 [INF] HTTP POST /api/auth/login responded 200 in 72.1802 ms
+2026-05-01 01:26:53.183 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 200 null application/json; charset=utf-8 72.319ms
+2026-05-01 01:26:59.037 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - null null
+2026-05-01 01:26:59.037 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:26:59.037 -07:00 [INF] HTTP OPTIONS /api/auth/login responded 204 in 0.0954 ms
+2026-05-01 01:26:59.037 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - 204 null null 0.4275ms
+2026-05-01 01:26:59.039 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 60
+2026-05-01 01:26:59.039 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:26:59.039 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:26:59.039 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:26:59.040 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:26:59.041 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:26:59.041 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:26:59.042 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:26:59.097 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__userId_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a0].[Name]
+FROM [AspNetUserRoles] AS [a]
+INNER JOIN [AspNetRoles] AS [a0] ON [a].[RoleId] = [a0].[Id]
+WHERE [a].[UserId] = @__userId_0
+2026-05-01 01:26:59.097 -07:00 [INF] [Request] LoginCommand completed in 57ms
+2026-05-01 01:26:59.097 -07:00 [INF] Executing OkObjectResult, writing value of type 'AndritzVendorPortal.Application.Common.Models.Result`1[[AndritzVendorPortal.Application.DTOs.AuthResponseDto, AndritzVendorPortal.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-01 01:26:59.097 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 58.158ms
+2026-05-01 01:26:59.097 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:26:59.098 -07:00 [INF] HTTP POST /api/auth/login responded 200 in 58.6699 ms
+2026-05-01 01:26:59.098 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 200 null application/json; charset=utf-8 58.8031ms
+2026-05-01 01:27:44.922 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - null null
+2026-05-01 01:27:44.922 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:27:44.922 -07:00 [INF] HTTP OPTIONS /api/auth/login responded 204 in 0.1058 ms
+2026-05-01 01:27:44.922 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - 204 null null 0.2599ms
+2026-05-01 01:27:44.924 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 60
+2026-05-01 01:27:44.924 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:27:44.924 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:27:44.924 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:27:44.924 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:27:44.926 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:27:44.927 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:27:44.928 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:27:44.996 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__userId_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a0].[Name]
+FROM [AspNetUserRoles] AS [a]
+INNER JOIN [AspNetRoles] AS [a0] ON [a].[RoleId] = [a0].[Id]
+WHERE [a].[UserId] = @__userId_0
+2026-05-01 01:27:44.997 -07:00 [INF] [Request] LoginCommand completed in 72ms
+2026-05-01 01:27:44.997 -07:00 [INF] Executing OkObjectResult, writing value of type 'AndritzVendorPortal.Application.Common.Models.Result`1[[AndritzVendorPortal.Application.DTOs.AuthResponseDto, AndritzVendorPortal.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-01 01:27:44.997 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 73.0528ms
+2026-05-01 01:27:44.997 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:27:44.997 -07:00 [INF] HTTP POST /api/auth/login responded 200 in 73.6423 ms
+2026-05-01 01:27:44.997 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 200 null application/json; charset=utf-8 73.795ms
+2026-05-01 01:27:45.074 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/vendor-requests - null null
+2026-05-01 01:27:45.074 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:27:45.074 -07:00 [INF] HTTP OPTIONS /api/vendor-requests responded 204 in 0.2063 ms
+2026-05-01 01:27:45.074 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/vendor-requests - 204 null null 0.4137ms
+2026-05-01 01:27:45.080 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/vendor-requests - null null
+2026-05-01 01:27:45.080 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:27:45.080 -07:00 [INF] HTTP OPTIONS /api/vendor-requests responded 204 in 0.1709 ms
+2026-05-01 01:27:45.080 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/vendor-requests - 204 null null 0.5008ms
+2026-05-01 01:27:45.085 -07:00 [INF] Request starting HTTP/1.1 GET http://localhost:5000/api/vendor-requests - null null
+2026-05-01 01:27:45.090 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:27:45.097 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.VendorRequestsController.GetAll (AndritzVendorPortal.API)'
+2026-05-01 01:27:45.102 -07:00 [INF] Route matched with {action = "GetAll", controller = "VendorRequests"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[System.Collections.Generic.List`1[AndritzVendorPortal.Application.DTOs.VendorRequestDetailDto]]]] GetAll() on controller AndritzVendorPortal.API.Controllers.VendorRequestsController (AndritzVendorPortal.API).
+2026-05-01 01:27:45.104 -07:00 [INF] [Request] GetVendorRequestsQuery starting
+2026-05-01 01:27:45.170 -07:00 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2026-05-01 01:27:45.187 -07:00 [INF] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [v].[Id], [v].[AddressDetails], [v].[ArchivedAt], [v].[City], [v].[ContactInformation], [v].[ContactPerson], [v].[Country], [v].[CreatedAt], [v].[CreatedBy], [v].[CreatedByName], [v].[CreatedByUserId], [v].[Currency], [v].[GstNumber], [v].[Incoterms], [v].[IsArchived], [v].[IsOneTimeVendor], [v].[Locality], [v].[MaterialGroup], [v].[ModifiedBy], [v].[PanCard], [v].[PaymentTerms], [v].[PostalCode], [v].[ProposedBy], [v].[Reason], [v].[RejectionComment], [v].[RevisionNo], [v].[State], [v].[Status], [v].[Telephone], [v].[UpdatedAt], [v].[VendorCode], [v].[VendorCodeAssignedAt], [v].[VendorCodeAssignedBy], [v].[VendorName], [v].[YearlyPvo], [a].[Id], [a].[ApproverName], [a].[ApproverUserId], [a].[Comment], [a].[DecidedAt], [a].[Decision], [a].[DeletedApproverNote], [a].[IsDeletedApprover], [a].[IsFinalApproval], [a].[StepOrder], [a].[VendorRequestId], [v0].[Id], [v0].[ChangedAt], [v0].[ChangedByName], [v0].[ChangedByUserId], [v0].[ChangesJson], [v0].[RejectionComment], [v0].[RevisionNo], [v0].[RevisionType], [v0].[VendorRequestId]
+FROM [VendorRequests] AS [v]
+LEFT JOIN [ApprovalSteps] AS [a] ON [v].[Id] = [a].[VendorRequestId]
+LEFT JOIN [VendorRevisions] AS [v0] ON [v].[Id] = [v0].[VendorRequestId]
+ORDER BY [v].[UpdatedAt] DESC, [v].[Id], [a].[Id]
+2026-05-01 01:27:45.188 -07:00 [INF] [Request] GetVendorRequestsQuery completed in 83ms
+2026-05-01 01:27:45.188 -07:00 [INF] Executing OkObjectResult, writing value of type 'AndritzVendorPortal.Application.Common.Models.Result`1[[System.Collections.Generic.List`1[[AndritzVendorPortal.Application.DTOs.VendorRequestDetailDto, AndritzVendorPortal.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-05-01 01:27:45.227 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.VendorRequestsController.GetAll (AndritzVendorPortal.API) in 124.5699ms
+2026-05-01 01:27:45.227 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.VendorRequestsController.GetAll (AndritzVendorPortal.API)'
+2026-05-01 01:27:45.227 -07:00 [INF] HTTP GET /api/vendor-requests responded 200 in 141.8077 ms
+2026-05-01 01:27:45.227 -07:00 [INF] Request finished HTTP/1.1 GET http://localhost:5000/api/vendor-requests - 200 null application/json; charset=utf-8 142.1231ms
+2026-05-01 01:27:45.229 -07:00 [INF] Request starting HTTP/1.1 GET http://localhost:5000/api/vendor-requests - null null
+2026-05-01 01:27:45.230 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:27:45.232 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.VendorRequestsController.GetAll (AndritzVendorPortal.API)'
+2026-05-01 01:27:45.232 -07:00 [INF] Route matched with {action = "GetAll", controller = "VendorRequests"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[System.Collections.Generic.List`1[AndritzVendorPortal.Application.DTOs.VendorRequestDetailDto]]]] GetAll() on controller AndritzVendorPortal.API.Controllers.VendorRequestsController (AndritzVendorPortal.API).
+2026-05-01 01:27:45.233 -07:00 [INF] [Request] GetVendorRequestsQuery starting
+2026-05-01 01:27:45.235 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [v].[Id], [v].[AddressDetails], [v].[ArchivedAt], [v].[City], [v].[ContactInformation], [v].[ContactPerson], [v].[Country], [v].[CreatedAt], [v].[CreatedBy], [v].[CreatedByName], [v].[CreatedByUserId], [v].[Currency], [v].[GstNumber], [v].[Incoterms], [v].[IsArchived], [v].[IsOneTimeVendor], [v].[Locality], [v].[MaterialGroup], [v].[ModifiedBy], [v].[PanCard], [v].[PaymentTerms], [v].[PostalCode], [v].[ProposedBy], [v].[Reason], [v].[RejectionComment], [v].[RevisionNo], [v].[State], [v].[Status], [v].[Telephone], [v].[UpdatedAt], [v].[VendorCode], [v].[VendorCodeAssignedAt], [v].[VendorCodeAssignedBy], [v].[VendorName], [v].[YearlyPvo], [a].[Id], [a].[ApproverName], [a].[ApproverUserId], [a].[Comment], [a].[DecidedAt], [a].[Decision], [a].[DeletedApproverNote], [a].[IsDeletedApprover], [a].[IsFinalApproval], [a].[StepOrder], [a].[VendorRequestId], [v0].[Id], [v0].[ChangedAt], [v0].[ChangedByName], [v0].[ChangedByUserId], [v0].[ChangesJson], [v0].[RejectionComment], [v0].[RevisionNo], [v0].[RevisionType], [v0].[VendorRequestId]
+FROM [VendorRequests] AS [v]
+LEFT JOIN [ApprovalSteps] AS [a] ON [v].[Id] = [a].[VendorRequestId]
+LEFT JOIN [VendorRevisions] AS [v0] ON [v].[Id] = [v0].[VendorRequestId]
+ORDER BY [v].[UpdatedAt] DESC, [v].[Id], [a].[Id]
+2026-05-01 01:27:45.235 -07:00 [INF] [Request] GetVendorRequestsQuery completed in 2ms
+2026-05-01 01:27:45.235 -07:00 [INF] Executing OkObjectResult, writing value of type 'AndritzVendorPortal.Application.Common.Models.Result`1[[System.Collections.Generic.List`1[[AndritzVendorPortal.Application.DTOs.VendorRequestDetailDto, AndritzVendorPortal.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-05-01 01:27:45.235 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.VendorRequestsController.GetAll (AndritzVendorPortal.API) in 3.1034ms
+2026-05-01 01:27:45.235 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.VendorRequestsController.GetAll (AndritzVendorPortal.API)'
+2026-05-01 01:27:45.236 -07:00 [INF] HTTP GET /api/vendor-requests responded 200 in 6.2585 ms
+2026-05-01 01:27:45.236 -07:00 [INF] Request finished HTTP/1.1 GET http://localhost:5000/api/vendor-requests - 200 null application/json; charset=utf-8 6.4498ms
+2026-05-01 01:28:56.596 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - null null
+2026-05-01 01:28:56.596 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:28:56.596 -07:00 [INF] HTTP OPTIONS /api/auth/login responded 204 in 0.1408 ms
+2026-05-01 01:28:56.596 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/auth/login - 204 null null 0.2904ms
+2026-05-01 01:28:56.597 -07:00 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json 60
+2026-05-01 01:28:56.597 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:28:56.598 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:28:56.598 -07:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[AndritzVendorPortal.Application.DTOs.AuthResponseDto]]] Login(AndritzVendorPortal.API.Controllers.LoginRequestModel) on controller AndritzVendorPortal.API.Controllers.AuthController (AndritzVendorPortal.API).
+2026-05-01 01:28:56.598 -07:00 [INF] [Request] LoginCommand starting
+2026-05-01 01:28:56.599 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:28:56.600 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:28:56.601 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-01 01:28:56.665 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__userId_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a0].[Name]
+FROM [AspNetUserRoles] AS [a]
+INNER JOIN [AspNetRoles] AS [a0] ON [a].[RoleId] = [a0].[Id]
+WHERE [a].[UserId] = @__userId_0
+2026-05-01 01:28:56.666 -07:00 [INF] [Request] LoginCommand completed in 67ms
+2026-05-01 01:28:56.666 -07:00 [INF] Executing OkObjectResult, writing value of type 'AndritzVendorPortal.Application.Common.Models.Result`1[[AndritzVendorPortal.Application.DTOs.AuthResponseDto, AndritzVendorPortal.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-01 01:28:56.666 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API) in 68.2657ms
+2026-05-01 01:28:56.666 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.AuthController.Login (AndritzVendorPortal.API)'
+2026-05-01 01:28:56.666 -07:00 [INF] HTTP POST /api/auth/login responded 200 in 69.0005 ms
+2026-05-01 01:28:56.666 -07:00 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 200 null application/json; charset=utf-8 69.174ms
+2026-05-01 01:28:56.704 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/vendor-requests - null null
+2026-05-01 01:28:56.704 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:28:56.704 -07:00 [INF] HTTP OPTIONS /api/vendor-requests responded 204 in 0.1450 ms
+2026-05-01 01:28:56.704 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/vendor-requests - 204 null null 0.3487ms
+2026-05-01 01:28:56.707 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/vendor-requests - null null
+2026-05-01 01:28:56.708 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:28:56.708 -07:00 [INF] HTTP OPTIONS /api/vendor-requests responded 204 in 0.1435 ms
+2026-05-01 01:28:56.708 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/vendor-requests - 204 null null 0.3566ms
+2026-05-01 01:28:56.708 -07:00 [INF] Request starting HTTP/1.1 GET http://localhost:5000/api/vendor-requests - null null
+2026-05-01 01:28:56.708 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:28:56.710 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.VendorRequestsController.GetAll (AndritzVendorPortal.API)'
+2026-05-01 01:28:56.710 -07:00 [INF] Route matched with {action = "GetAll", controller = "VendorRequests"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[System.Collections.Generic.List`1[AndritzVendorPortal.Application.DTOs.VendorRequestDetailDto]]]] GetAll() on controller AndritzVendorPortal.API.Controllers.VendorRequestsController (AndritzVendorPortal.API).
+2026-05-01 01:28:56.710 -07:00 [INF] [Request] GetVendorRequestsQuery starting
+2026-05-01 01:28:56.713 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [v].[Id], [v].[AddressDetails], [v].[ArchivedAt], [v].[City], [v].[ContactInformation], [v].[ContactPerson], [v].[Country], [v].[CreatedAt], [v].[CreatedBy], [v].[CreatedByName], [v].[CreatedByUserId], [v].[Currency], [v].[GstNumber], [v].[Incoterms], [v].[IsArchived], [v].[IsOneTimeVendor], [v].[Locality], [v].[MaterialGroup], [v].[ModifiedBy], [v].[PanCard], [v].[PaymentTerms], [v].[PostalCode], [v].[ProposedBy], [v].[Reason], [v].[RejectionComment], [v].[RevisionNo], [v].[State], [v].[Status], [v].[Telephone], [v].[UpdatedAt], [v].[VendorCode], [v].[VendorCodeAssignedAt], [v].[VendorCodeAssignedBy], [v].[VendorName], [v].[YearlyPvo], [a].[Id], [a].[ApproverName], [a].[ApproverUserId], [a].[Comment], [a].[DecidedAt], [a].[Decision], [a].[DeletedApproverNote], [a].[IsDeletedApprover], [a].[IsFinalApproval], [a].[StepOrder], [a].[VendorRequestId], [v0].[Id], [v0].[ChangedAt], [v0].[ChangedByName], [v0].[ChangedByUserId], [v0].[ChangesJson], [v0].[RejectionComment], [v0].[RevisionNo], [v0].[RevisionType], [v0].[VendorRequestId]
+FROM [VendorRequests] AS [v]
+LEFT JOIN [ApprovalSteps] AS [a] ON [v].[Id] = [a].[VendorRequestId]
+LEFT JOIN [VendorRevisions] AS [v0] ON [v].[Id] = [v0].[VendorRequestId]
+ORDER BY [v].[UpdatedAt] DESC, [v].[Id], [a].[Id]
+2026-05-01 01:28:56.713 -07:00 [INF] [Request] GetVendorRequestsQuery completed in 2ms
+2026-05-01 01:28:56.713 -07:00 [INF] Executing OkObjectResult, writing value of type 'AndritzVendorPortal.Application.Common.Models.Result`1[[System.Collections.Generic.List`1[[AndritzVendorPortal.Application.DTOs.VendorRequestDetailDto, AndritzVendorPortal.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-05-01 01:28:56.713 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.VendorRequestsController.GetAll (AndritzVendorPortal.API) in 2.8121ms
+2026-05-01 01:28:56.713 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.VendorRequestsController.GetAll (AndritzVendorPortal.API)'
+2026-05-01 01:28:56.713 -07:00 [INF] HTTP GET /api/vendor-requests responded 200 in 4.6791 ms
+2026-05-01 01:28:56.713 -07:00 [INF] Request finished HTTP/1.1 GET http://localhost:5000/api/vendor-requests - 200 null application/json; charset=utf-8 4.8175ms
+2026-05-01 01:28:56.714 -07:00 [INF] Request starting HTTP/1.1 GET http://localhost:5000/api/vendor-requests - null null
+2026-05-01 01:28:56.715 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:28:56.715 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.VendorRequestsController.GetAll (AndritzVendorPortal.API)'
+2026-05-01 01:28:56.715 -07:00 [INF] Route matched with {action = "GetAll", controller = "VendorRequests"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[System.Collections.Generic.List`1[AndritzVendorPortal.Application.DTOs.VendorRequestDetailDto]]]] GetAll() on controller AndritzVendorPortal.API.Controllers.VendorRequestsController (AndritzVendorPortal.API).
+2026-05-01 01:28:56.715 -07:00 [INF] [Request] GetVendorRequestsQuery starting
+2026-05-01 01:28:56.716 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [v].[Id], [v].[AddressDetails], [v].[ArchivedAt], [v].[City], [v].[ContactInformation], [v].[ContactPerson], [v].[Country], [v].[CreatedAt], [v].[CreatedBy], [v].[CreatedByName], [v].[CreatedByUserId], [v].[Currency], [v].[GstNumber], [v].[Incoterms], [v].[IsArchived], [v].[IsOneTimeVendor], [v].[Locality], [v].[MaterialGroup], [v].[ModifiedBy], [v].[PanCard], [v].[PaymentTerms], [v].[PostalCode], [v].[ProposedBy], [v].[Reason], [v].[RejectionComment], [v].[RevisionNo], [v].[State], [v].[Status], [v].[Telephone], [v].[UpdatedAt], [v].[VendorCode], [v].[VendorCodeAssignedAt], [v].[VendorCodeAssignedBy], [v].[VendorName], [v].[YearlyPvo], [a].[Id], [a].[ApproverName], [a].[ApproverUserId], [a].[Comment], [a].[DecidedAt], [a].[Decision], [a].[DeletedApproverNote], [a].[IsDeletedApprover], [a].[IsFinalApproval], [a].[StepOrder], [a].[VendorRequestId], [v0].[Id], [v0].[ChangedAt], [v0].[ChangedByName], [v0].[ChangedByUserId], [v0].[ChangesJson], [v0].[RejectionComment], [v0].[RevisionNo], [v0].[RevisionType], [v0].[VendorRequestId]
+FROM [VendorRequests] AS [v]
+LEFT JOIN [ApprovalSteps] AS [a] ON [v].[Id] = [a].[VendorRequestId]
+LEFT JOIN [VendorRevisions] AS [v0] ON [v].[Id] = [v0].[VendorRequestId]
+ORDER BY [v].[UpdatedAt] DESC, [v].[Id], [a].[Id]
+2026-05-01 01:28:56.717 -07:00 [INF] [Request] GetVendorRequestsQuery completed in 1ms
+2026-05-01 01:28:56.717 -07:00 [INF] Executing OkObjectResult, writing value of type 'AndritzVendorPortal.Application.Common.Models.Result`1[[System.Collections.Generic.List`1[[AndritzVendorPortal.Application.DTOs.VendorRequestDetailDto, AndritzVendorPortal.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-05-01 01:28:56.717 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.VendorRequestsController.GetAll (AndritzVendorPortal.API) in 1.6913ms
+2026-05-01 01:28:56.717 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.VendorRequestsController.GetAll (AndritzVendorPortal.API)'
+2026-05-01 01:28:56.717 -07:00 [INF] HTTP GET /api/vendor-requests responded 200 in 2.4577 ms
+2026-05-01 01:28:56.717 -07:00 [INF] Request finished HTTP/1.1 GET http://localhost:5000/api/vendor-requests - 200 null application/json; charset=utf-8 2.6188ms
+2026-05-01 01:29:03.911 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/users - null null
+2026-05-01 01:29:03.912 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:29:03.912 -07:00 [INF] HTTP OPTIONS /api/users responded 204 in 0.1872 ms
+2026-05-01 01:29:03.912 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/users - 204 null null 0.3866ms
+2026-05-01 01:29:03.912 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/users/archived - null null
+2026-05-01 01:29:03.912 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:29:03.912 -07:00 [INF] HTTP OPTIONS /api/users/archived responded 204 in 0.1044 ms
+2026-05-01 01:29:03.912 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/users/archived - 204 null null 0.2452ms
+2026-05-01 01:29:03.914 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/users - null null
+2026-05-01 01:29:03.914 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:29:03.914 -07:00 [INF] HTTP OPTIONS /api/users responded 204 in 0.1372 ms
+2026-05-01 01:29:03.914 -07:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5000/api/users/archived - null null
+2026-05-01 01:29:03.914 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/users - 204 null null 0.4227ms
+2026-05-01 01:29:03.915 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:29:03.915 -07:00 [INF] HTTP OPTIONS /api/users/archived responded 204 in 0.7400 ms
+2026-05-01 01:29:03.915 -07:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5000/api/users/archived - 204 null null 0.8338ms
+2026-05-01 01:29:03.915 -07:00 [INF] Request starting HTTP/1.1 GET http://localhost:5000/api/users - null null
+2026-05-01 01:29:03.915 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:29:03.916 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.UsersController.GetAll (AndritzVendorPortal.API)'
+2026-05-01 01:29:03.916 -07:00 [INF] Request starting HTTP/1.1 GET http://localhost:5000/api/users/archived - null null
+2026-05-01 01:29:03.916 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:29:03.917 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.UsersController.GetArchived (AndritzVendorPortal.API)'
+2026-05-01 01:29:03.918 -07:00 [INF] Route matched with {action = "GetArchived", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[System.Collections.Generic.List`1[AndritzVendorPortal.Application.DTOs.UserDto]]]] GetArchived() on controller AndritzVendorPortal.API.Controllers.UsersController (AndritzVendorPortal.API).
+2026-05-01 01:29:03.919 -07:00 [INF] Route matched with {action = "GetAll", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[System.Collections.Generic.List`1[AndritzVendorPortal.Application.DTOs.UserDto]]]] GetAll() on controller AndritzVendorPortal.API.Controllers.UsersController (AndritzVendorPortal.API).
+2026-05-01 01:29:03.920 -07:00 [INF] [Request] GetAllUsersQuery starting
+2026-05-01 01:29:03.920 -07:00 [INF] [Request] GetAllUsersQuery starting
+2026-05-01 01:29:03.927 -07:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [a].[Id], [a].[Email], [a].[FullName], [a].[Designation], [a].[IsArchived]
+FROM [AspNetUsers] AS [a]
+2026-05-01 01:29:03.928 -07:00 [INF] [Request] GetAllUsersQuery completed in 8ms
+2026-05-01 01:29:03.928 -07:00 [INF] Executing OkObjectResult, writing value of type 'AndritzVendorPortal.Application.Common.Models.Result`1[[System.Collections.Generic.List`1[[AndritzVendorPortal.Application.DTOs.UserDto, AndritzVendorPortal.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-05-01 01:29:03.930 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.UsersController.GetArchived (AndritzVendorPortal.API) in 11.6703ms
+2026-05-01 01:29:03.930 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.UsersController.GetArchived (AndritzVendorPortal.API)'
+2026-05-01 01:29:03.930 -07:00 [INF] HTTP GET /api/users/archived responded 200 in 13.7742 ms
+2026-05-01 01:29:03.930 -07:00 [INF] Request finished HTTP/1.1 GET http://localhost:5000/api/users/archived - 200 null application/json; charset=utf-8 13.9291ms
+2026-05-01 01:29:03.932 -07:00 [INF] Request starting HTTP/1.1 GET http://localhost:5000/api/users/archived - null null
+2026-05-01 01:29:03.932 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:29:03.933 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.UsersController.GetArchived (AndritzVendorPortal.API)'
+2026-05-01 01:29:03.933 -07:00 [INF] Route matched with {action = "GetArchived", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[System.Collections.Generic.List`1[AndritzVendorPortal.Application.DTOs.UserDto]]]] GetArchived() on controller AndritzVendorPortal.API.Controllers.UsersController (AndritzVendorPortal.API).
+2026-05-01 01:29:03.933 -07:00 [INF] [Request] GetAllUsersQuery starting
+2026-05-01 01:29:03.934 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [a].[Id], [a].[Email], [a].[FullName], [a].[Designation], [a].[IsArchived]
+FROM [AspNetUsers] AS [a]
+2026-05-01 01:29:03.934 -07:00 [INF] [Request] GetAllUsersQuery completed in 1ms
+2026-05-01 01:29:03.935 -07:00 [INF] Executing OkObjectResult, writing value of type 'AndritzVendorPortal.Application.Common.Models.Result`1[[System.Collections.Generic.List`1[[AndritzVendorPortal.Application.DTOs.UserDto, AndritzVendorPortal.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-05-01 01:29:03.935 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.UsersController.GetArchived (AndritzVendorPortal.API) in 2.0569ms
+2026-05-01 01:29:03.935 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.UsersController.GetArchived (AndritzVendorPortal.API)'
+2026-05-01 01:29:03.935 -07:00 [INF] HTTP GET /api/users/archived responded 200 in 2.9441 ms
+2026-05-01 01:29:03.935 -07:00 [INF] Request finished HTTP/1.1 GET http://localhost:5000/api/users/archived - 200 null application/json; charset=utf-8 3.1332ms
+2026-05-01 01:29:03.936 -07:00 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [a].[Id], [a].[Email], [a].[FullName], [a].[Designation], [a].[IsArchived]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[IsArchived] = CAST(0 AS bit)
+2026-05-01 01:29:03.942 -07:00 [INF] Executed DbCommand (2ms) [Parameters=[@__p_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[Id] = @__p_0
+2026-05-01 01:29:03.943 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__userId_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a0].[Name]
+FROM [AspNetUserRoles] AS [a]
+INNER JOIN [AspNetRoles] AS [a0] ON [a].[RoleId] = [a0].[Id]
+WHERE [a].[UserId] = @__userId_0
+2026-05-01 01:29:03.944 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__p_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[Id] = @__p_0
+2026-05-01 01:29:03.945 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__userId_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a0].[Name]
+FROM [AspNetUserRoles] AS [a]
+INNER JOIN [AspNetRoles] AS [a0] ON [a].[RoleId] = [a0].[Id]
+WHERE [a].[UserId] = @__userId_0
+2026-05-01 01:29:03.945 -07:00 [INF] [Request] GetAllUsersQuery completed in 25ms
+2026-05-01 01:29:03.945 -07:00 [INF] Executing OkObjectResult, writing value of type 'AndritzVendorPortal.Application.Common.Models.Result`1[[System.Collections.Generic.List`1[[AndritzVendorPortal.Application.DTOs.UserDto, AndritzVendorPortal.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-05-01 01:29:03.946 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.UsersController.GetAll (AndritzVendorPortal.API) in 27.529ms
+2026-05-01 01:29:03.946 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.UsersController.GetAll (AndritzVendorPortal.API)'
+2026-05-01 01:29:03.946 -07:00 [INF] HTTP GET /api/users responded 200 in 31.2646 ms
+2026-05-01 01:29:03.946 -07:00 [INF] Request finished HTTP/1.1 GET http://localhost:5000/api/users - 200 null application/json; charset=utf-8 31.3821ms
+2026-05-01 01:29:03.947 -07:00 [INF] Request starting HTTP/1.1 GET http://localhost:5000/api/users - null null
+2026-05-01 01:29:03.947 -07:00 [INF] CORS policy execution successful.
+2026-05-01 01:29:03.947 -07:00 [INF] Executing endpoint 'AndritzVendorPortal.API.Controllers.UsersController.GetAll (AndritzVendorPortal.API)'
+2026-05-01 01:29:03.947 -07:00 [INF] Route matched with {action = "GetAll", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[AndritzVendorPortal.Application.Common.Models.Result`1[System.Collections.Generic.List`1[AndritzVendorPortal.Application.DTOs.UserDto]]]] GetAll() on controller AndritzVendorPortal.API.Controllers.UsersController (AndritzVendorPortal.API).
+2026-05-01 01:29:03.947 -07:00 [INF] [Request] GetAllUsersQuery starting
+2026-05-01 01:29:03.949 -07:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [a].[Id], [a].[Email], [a].[FullName], [a].[Designation], [a].[IsArchived]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[IsArchived] = CAST(0 AS bit)
+2026-05-01 01:29:03.949 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__p_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[Id] = @__p_0
+2026-05-01 01:29:03.950 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__userId_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a0].[Name]
+FROM [AspNetUserRoles] AS [a]
+INNER JOIN [AspNetRoles] AS [a0] ON [a].[RoleId] = [a0].[Id]
+WHERE [a].[UserId] = @__userId_0
+2026-05-01 01:29:03.951 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__p_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[Designation], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[IsArchived], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[Id] = @__p_0
+2026-05-01 01:29:03.951 -07:00 [INF] Executed DbCommand (0ms) [Parameters=[@__userId_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a0].[Name]
+FROM [AspNetUserRoles] AS [a]
+INNER JOIN [AspNetRoles] AS [a0] ON [a].[RoleId] = [a0].[Id]
+WHERE [a].[UserId] = @__userId_0
+2026-05-01 01:29:03.951 -07:00 [INF] [Request] GetAllUsersQuery completed in 4ms
+2026-05-01 01:29:03.952 -07:00 [INF] Executing OkObjectResult, writing value of type 'AndritzVendorPortal.Application.Common.Models.Result`1[[System.Collections.Generic.List`1[[AndritzVendorPortal.Application.DTOs.UserDto, AndritzVendorPortal.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-05-01 01:29:03.952 -07:00 [INF] Executed action AndritzVendorPortal.API.Controllers.UsersController.GetAll (AndritzVendorPortal.API) in 4.3311ms
+2026-05-01 01:29:03.952 -07:00 [INF] Executed endpoint 'AndritzVendorPortal.API.Controllers.UsersController.GetAll (AndritzVendorPortal.API)'
+2026-05-01 01:29:03.952 -07:00 [INF] HTTP GET /api/users responded 200 in 4.8548 ms
+2026-05-01 01:29:03.952 -07:00 [INF] Request finished HTTP/1.1 GET http://localhost:5000/api/users - 200 null application/json; charset=utf-8 4.9769ms

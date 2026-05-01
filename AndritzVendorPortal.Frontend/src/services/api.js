@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { useUIStore } from '../store/uiStore'
 
 const renderUrl = 'https://andritz-vendor-portal.onrender.com/api'
 
@@ -50,14 +51,30 @@ api.interceptors.request.use(config => {
   return config
 })
 
-// On 401, fire a custom event so the UI can show a graceful session-expired
-// warning rather than silently wiping state and hard-redirecting.
+// Backend wraps every response in a Result<T> envelope:
+//   { success, message, errors, data }
+// Unwrap it here so call sites can treat response.data as the payload directly.
+function isEnvelope(body) {
+  return body && typeof body === 'object'
+    && typeof body.success === 'boolean'
+    && Object.prototype.hasOwnProperty.call(body, 'data')
+}
+
 api.interceptors.response.use(
-  response => response,
-  error => {
-    if (error.response?.status === 401 && !error.config?.url?.includes('/auth/login')) {
-      window.dispatchEvent(new Event('session-expired'))
+  response => {
+    if (isEnvelope(response.data)) {
+      response.data = response.data.data
     }
+    return response
+  },
+  error => {
+    // On 401, flag the UI store so the app shows a graceful session-expired
+    // banner rather than silently wiping state and hard-redirecting.
+    if (error.response?.status === 401 && !error.config?.url?.includes('/auth/login')) {
+      useUIStore.getState().setSessionExpired(true)
+    }
+    // Surface the envelope's error message at err.response.data.message
+    // so existing `err?.response?.data?.message` reads keep working.
     return Promise.reject(error)
   }
 )

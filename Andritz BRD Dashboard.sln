@@ -1,8 +1,16 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndritzVendorPortal.API", "AndritzVendorPortal.API\AndritzVendorPortal.API.csproj", "{30674ED9-CBF4-C213-C2C4-47F63A903929}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A1A1A1A1-0000-0000-0000-000000000001}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "src\Domain\Domain.csproj", "{11111111-1111-1111-1111-111111111111}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "src\Application\Application.csproj", "{22222222-2222-2222-2222-222222222222}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "src\Infrastructure\Infrastructure.csproj", "{33333333-3333-3333-3333-333333333333}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API", "src\API\API.csproj", "{44444444-4444-4444-4444-444444444444}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndritzVendorPortal.Tests", "AndritzVendorPortal.Tests\AndritzVendorPortal.Tests.csproj", "{4060D818-5546-4C48-8203-75F0C8F68AEF}"
 EndProject
@@ -12,14 +20,32 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{30674ED9-CBF4-C213-C2C4-47F63A903929}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{30674ED9-CBF4-C213-C2C4-47F63A903929}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{30674ED9-CBF4-C213-C2C4-47F63A903929}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{30674ED9-CBF4-C213-C2C4-47F63A903929}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11111111-1111-1111-1111-111111111111}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11111111-1111-1111-1111-111111111111}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11111111-1111-1111-1111-111111111111}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11111111-1111-1111-1111-111111111111}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22222222-2222-2222-2222-222222222222}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22222222-2222-2222-2222-222222222222}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22222222-2222-2222-2222-222222222222}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22222222-2222-2222-2222-222222222222}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33333333-3333-3333-3333-333333333333}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33333333-3333-3333-3333-333333333333}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33333333-3333-3333-3333-333333333333}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33333333-3333-3333-3333-333333333333}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44444444-4444-4444-4444-444444444444}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44444444-4444-4444-4444-444444444444}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44444444-4444-4444-4444-444444444444}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44444444-4444-4444-4444-444444444444}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4060D818-5546-4C48-8203-75F0C8F68AEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4060D818-5546-4C48-8203-75F0C8F68AEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4060D818-5546-4C48-8203-75F0C8F68AEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4060D818-5546-4C48-8203-75F0C8F68AEF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{11111111-1111-1111-1111-111111111111} = {A1A1A1A1-0000-0000-0000-000000000001}
+		{22222222-2222-2222-2222-222222222222} = {A1A1A1A1-0000-0000-0000-000000000001}
+		{33333333-3333-3333-3333-333333333333} = {A1A1A1A1-0000-0000-0000-000000000001}
+		{44444444-4444-4444-4444-444444444444} = {A1A1A1A1-0000-0000-0000-000000000001}
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

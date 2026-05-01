@@ -1,0 +1,33 @@
+# Build artefacts
+**/bin/
+**/obj/
+**/out/
+**/publish/
+**/logs/
+
+# IDE / VCS
+.git/
+.gitignore
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Frontend
+AndritzVendorPortal.Frontend/node_modules/
+AndritzVendorPortal.Frontend/dist/
+AndritzVendorPortal.Frontend/build/
+node_modules/
+
+# Local data / secrets
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*
+appsettings.Development.json
+
+# Docs
+*.md
+LICENSE
