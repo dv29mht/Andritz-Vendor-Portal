@@ -129,6 +129,12 @@ app.UseSerilogRequestLogging();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 
+// Serve the React SPA from wwwroot so a single origin hosts both the API
+// (/api, /swagger, /hubs) and the frontend (/, /assets/*, client routes).
+// MapFallbackToFile below sends any unmatched GET to index.html for React Router.
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
     app.UseSwagger();
@@ -146,6 +152,10 @@ app.MapControllers();
 app.MapHub<AndritzVendorPortal.API.Hubs.NotificationHub>("/hubs/notifications");
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok", timestamp = DateTime.UtcNow }))
     .AllowAnonymous();
+
+// SPA fallback — any GET that didn't match a controller, hub, or static file
+// returns index.html so React Router can resolve client-side routes like /login.
+app.MapFallbackToFile("index.html");
 
 // ── Seed DB on startup ───────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
