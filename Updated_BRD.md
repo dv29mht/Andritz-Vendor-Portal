@@ -103,7 +103,7 @@ All emails sent via Brevo API (no domain restriction on recipients).
 | `pardeep.sharma@yopmail.com` | `Dahlia@1234` | FinalApprover |
 | `vikram.nair@andritz.com` | `Dahlia@1234` | Buyer |
 | `rajesh.kumar@andritz.com` | `Dahlia@1234` | Approver |
-| `adminandritz@yopmail.com` | `Dahlia@1234` | Admin |
+| `admin@yopmail.com` | `Andritz@1234` | Admin |
 
 ---
 

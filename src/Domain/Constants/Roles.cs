@@ -19,5 +19,5 @@ public static class Policies
 public static class SystemAccounts
 {
     public const string FinalApproverEmail = "pardeep.sharma@yopmail.com";
-    public const string AdminEmail = "adminandritz@yopmail.com";
+    public const string AdminEmail = "admin@yopmail.com";
 }
