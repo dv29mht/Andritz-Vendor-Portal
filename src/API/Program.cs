@@ -167,7 +167,7 @@ using (var scope = app.Services.CreateScope())
         var db = sp.GetRequiredService<ApplicationDbContext>();
         var users = sp.GetRequiredService<UserManager<ApplicationUser>>();
         var roles = sp.GetRequiredService<RoleManager<IdentityRole>>();
-        var defaultPw = builder.Configuration["Seed:DefaultAdminPassword"] ?? "ChangeMe!2026";
+        var defaultPw = builder.Configuration["Seed:DefaultAdminPassword"] ?? "Andritz@1234";
         await DbInitializer.InitializeAsync(db, users, roles, logger, defaultPw);
     }
     catch (Exception ex)

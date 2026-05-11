@@ -77,6 +77,21 @@ public static class DbInitializer
         {
             if (!await users.IsInRoleAsync(existing, role))
                 await users.AddToRoleAsync(existing, role);
+
+            if (!await users.CheckPasswordAsync(existing, password))
+            {
+                var token = await users.GeneratePasswordResetTokenAsync(existing);
+                var reset = await users.ResetPasswordAsync(existing, token, password);
+                if (!reset.Succeeded)
+                {
+                    logger.LogError("[Seed] Failed to reset password for {Email}: {Errors}",
+                        email, string.Join(", ", reset.Errors.Select(e => e.Description)));
+                }
+                else
+                {
+                    logger.LogInformation("[Seed] Reset password for seeded account {Email}", email);
+                }
+            }
             return;
         }
 
