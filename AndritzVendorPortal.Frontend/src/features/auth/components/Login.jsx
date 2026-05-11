@@ -60,7 +60,7 @@ function CenterVisual() {
       </div>
 
       {/* Approved Vendors — small, mid */}
-      <div className="sc-floating sc-card-base" style={{ left: '41%', top: '30%', width: 'min(16vw, 300px)', padding: '16px 20px', animationDelay: '0.8s' }}>
+      <div className="sc-floating sc-card-base" style={{ left: '41%', top: '30%', width: 'min(16vw, 300px)', padding: '16px 20px' }}>
         <div className="w-[42px] h-[42px] rounded-2xl grid place-items-center flex-shrink-0" style={{ background: 'rgba(17,163,106,0.12)', color: '#11a36a' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <path d="m5 12 4 4L19 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -76,7 +76,7 @@ function CenterVisual() {
       </div>
 
       {/* Onboarding Progress — wide, mid-lower */}
-      <div className="sc-floating sc-card-base" style={{ left: '34%', top: '51%', width: 'min(20vw, 380px)', padding: '20px 24px', display: 'block', animationDelay: '0.35s' }}>
+      <div className="sc-floating sc-card-base" style={{ left: '34%', top: '50%', width: 'min(20vw, 380px)', padding: '20px 24px', display: 'block' }}>
         <div className="font-extrabold mb-4 text-[14px]" style={{ color: BRAND_DARK }}>Onboarding Progress</div>
         <div className="relative grid grid-cols-4 gap-1.5">
           <div className="absolute h-[3px] rounded-full" style={{ top: 13, left: '7%', right: '7%', background: `linear-gradient(90deg, ${BRAND} 0 68%, rgba(8,105,179,0.17) 68% 100%)` }} />
@@ -104,7 +104,7 @@ function CenterVisual() {
       </div>
 
       {/* Recent Activity — wide, bottom */}
-      <div className="sc-floating sc-card-base" style={{ left: '36%', bottom: '8%', width: 'min(20vw, 400px)', padding: '18px 22px', display: 'block', animationDelay: '1.2s' }}>
+      <div className="sc-floating sc-card-base" style={{ left: '36%', bottom: '8%', width: 'min(20vw, 400px)', padding: '18px 22px', display: 'block' }}>
         <div className="flex justify-between items-center mb-3">
           <div className="font-extrabold text-[14px]" style={{ color: BRAND_DARK }}>Recent Activity</div>
           <span className="text-[10.5px] font-extrabold px-2 py-0.5 rounded-full" style={{ color: '#11a36a', background: 'rgba(17,163,106,0.10)' }}>● Live</span>
