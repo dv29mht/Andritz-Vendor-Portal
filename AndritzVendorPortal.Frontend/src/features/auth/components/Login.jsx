@@ -56,7 +56,7 @@ function CenterVisual() {
       </div>
 
       {/* Pending Approvals — small, top */}
-      <div className="sc-floating sc-card-base" style={{ left: '33%', top: '10%', width: 'min(18vw, 280px)', padding: '16px 20px' }}>
+      <div className="sc-floating sc-card-base" style={{ left: '34%', top: '10%', width: 'min(15vw, 280px)', padding: '16px 20px' }}>
         <div className="w-[42px] h-[42px] rounded-2xl grid place-items-center flex-shrink-0" style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2"/>
@@ -74,7 +74,7 @@ function CenterVisual() {
       </div>
 
       {/* Approved Vendors — small, mid */}
-      <div className="sc-floating sc-card-base" style={{ left: '41%', top: '30%', width: 'min(19vw, 300px)', padding: '16px 20px', animationDelay: '0.8s' }}>
+      <div className="sc-floating sc-card-base" style={{ left: '41%', top: '30%', width: 'min(16vw, 300px)', padding: '16px 20px', animationDelay: '0.8s' }}>
         <div className="w-[42px] h-[42px] rounded-2xl grid place-items-center flex-shrink-0" style={{ background: 'rgba(17,163,106,0.12)', color: '#11a36a' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <path d="m5 12 4 4L19 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -90,7 +90,7 @@ function CenterVisual() {
       </div>
 
       {/* Onboarding Progress — wide, mid-lower */}
-      <div className="sc-floating sc-card-base" style={{ left: '34%', top: '51%', width: 'min(22vw, 370px)', padding: '20px 24px', display: 'block', animationDelay: '0.35s' }}>
+      <div className="sc-floating sc-card-base" style={{ left: '34%', top: '51%', width: 'min(20vw, 380px)', padding: '20px 24px', display: 'block', animationDelay: '0.35s' }}>
         <div className="font-extrabold mb-4 text-[14px]" style={{ color: BRAND_DARK }}>Onboarding Progress</div>
         <div className="relative grid grid-cols-4 gap-1.5">
           <div className="absolute h-[3px] rounded-full" style={{ top: 13, left: '7%', right: '7%', background: `linear-gradient(90deg, ${BRAND} 0 68%, rgba(8,105,179,0.17) 68% 100%)` }} />
@@ -118,7 +118,7 @@ function CenterVisual() {
       </div>
 
       {/* Recent Activity — wide, bottom */}
-      <div className="sc-floating sc-card-base" style={{ left: '37%', bottom: '8%', width: 'min(22vw, 390px)', padding: '18px 22px', display: 'block', animationDelay: '1.2s' }}>
+      <div className="sc-floating sc-card-base" style={{ left: '36%', bottom: '8%', width: 'min(20vw, 400px)', padding: '18px 22px', display: 'block', animationDelay: '1.2s' }}>
         <div className="flex justify-between items-center mb-3">
           <div className="font-extrabold text-[14px]" style={{ color: BRAND_DARK }}>Recent Activity</div>
           <span className="text-[10.5px] font-extrabold px-2 py-0.5 rounded-full" style={{ color: '#11a36a', background: 'rgba(17,163,106,0.10)' }}>● Live</span>
@@ -602,12 +602,12 @@ const styles = `
 }
 
 .sc-hero {
-  max-width: 540px;
+  max-width: 420px;
   animation: scFadeUp 0.8s ease both;
 }
 
 .sc-headline {
-  font-size: clamp(28px, 2.6vw, 40px);
+  font-size: clamp(26px, 2.4vw, 38px);
   line-height: 1.08;
   letter-spacing: -0.035em;
   font-weight: 800;
@@ -618,8 +618,8 @@ const styles = `
 
 .sc-subtext {
   margin-top: 16px;
-  max-width: 480px;
-  font-size: clamp(13.5px, 0.95vw, 15.5px);
+  max-width: 380px;
+  font-size: clamp(13px, 0.9vw, 15px);
   line-height: 1.6;
   color: #58708f;
 }
@@ -628,7 +628,7 @@ const styles = `
   margin-top: clamp(22px, 2.2vw, 32px);
   display: grid;
   gap: clamp(14px, 1.4vw, 20px);
-  max-width: 520px;
+  max-width: 380px;
 }
 
 .sc-features > * { animation: scFadeUp 0.8s ease both; }
@@ -681,11 +681,10 @@ const styles = `
   50%      { transform: translateY(-12px); }
 }
 
-/* KPI cards only appear when the middle gap is wide enough to contain them
-   cleanly (no overlap with features text or login card). Below 1600px we
-   hide them and let the layout breathe. */
+/* KPI cards live in the middle gap between features and the login card.
+   Below 1280px the gap is too tight; we hide them so the layout stays clean. */
 .sc-kpi-zone { display: none; }
-@media (min-width: 1600px) { .sc-kpi-zone { display: block; } }
+@media (min-width: 1280px) { .sc-kpi-zone { display: block; } }
 
 /* Right side / login card */
 .sc-right {
