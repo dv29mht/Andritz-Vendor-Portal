@@ -91,13 +91,13 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
           )}
           {collapsed && (
             <img
-              src="/favicon.svg"
+              src="/andritz-a.png"
               alt="Andritz"
               draggable={false}
               style={{
-                height: 32,
-                width: 32,
-                borderRadius: 7,
+                height: 26,
+                width: 'auto',
+                filter: 'brightness(0) invert(1)',
               }}
             />
           )}

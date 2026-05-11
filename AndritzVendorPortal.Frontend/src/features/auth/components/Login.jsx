@@ -22,16 +22,16 @@ function Feature({ icon, title, desc, tone = 'blue' }) {
   }
   const t = tones[tone] ?? tones.blue
   return (
-    <div className="flex items-start gap-4">
+    <div className="flex items-start gap-3.5">
       <div
-        className="w-[52px] h-[52px] rounded-2xl grid place-items-center flex-shrink-0"
+        className="w-[42px] h-[42px] rounded-xl grid place-items-center flex-shrink-0"
         style={{ background: t.bg, color: t.color, boxShadow: `inset 0 0 0 1px ${t.bg}` }}
       >
         {icon}
       </div>
       <div className="min-w-0">
-        <h3 className="text-[16px] font-semibold leading-tight" style={{ color: BRAND_DARK }}>{title}</h3>
-        <p className="text-[13.5px] leading-snug mt-1" style={{ color: '#58708f' }}>{desc}</p>
+        <h3 className="text-[15px] font-bold leading-tight" style={{ color: BRAND_DARK }}>{title}</h3>
+        <p className="text-[13px] leading-snug mt-1" style={{ color: '#58708f' }}>{desc}</p>
       </div>
     </div>
   )
@@ -550,10 +550,10 @@ const styles = `
   position: relative;
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 1.08fr 0.92fr;
+  grid-template-columns: 1.05fr 0.95fr;
   isolation: isolate;
   background:
-    linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.9) 28%, rgba(235,246,255,0.72) 55%, rgba(228,244,255,0.62) 100%),
+    linear-gradient(90deg, rgba(255,255,255,0.97) 0%, rgba(255,255,255,0.9) 30%, rgba(229,242,253,0.74) 58%, rgba(220,238,253,0.62) 100%),
     url("https://images.unsplash.com/photo-1581093458791-9d42cc4f03f3?auto=format&fit=crop&w=2400&q=85") center / cover no-repeat;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #0b2447;
@@ -592,62 +592,60 @@ const styles = `
 }
 
 .sc-left {
-  padding: clamp(42px, 5vw, 78px);
+  padding: clamp(36px, 4vw, 64px) clamp(36px, 4vw, 64px) clamp(36px, 4vw, 56px);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   position: relative;
   z-index: 2;
+  min-height: 100vh;
 }
 
 .sc-brand {
-  position: absolute;
-  top: clamp(34px, 4vw, 70px);
-  left: clamp(42px, 5vw, 78px);
+  margin-bottom: clamp(24px, 2.6vw, 40px);
 }
 
 .sc-andritz-logo {
-  width: clamp(160px, 16vw, 240px);
+  width: clamp(118px, 9.5vw, 150px);
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .sc-brand-title {
-  font-size: clamp(20px, 2vw, 32px);
+  font-size: clamp(14px, 1.3vw, 20px);
   font-weight: 800;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.025em;
   color: #071f3f;
 }
 
 .sc-hero {
-  max-width: 520px;
-  margin-top: 76px;
+  max-width: 540px;
   animation: scFadeUp 0.8s ease both;
 }
 
 .sc-headline {
-  font-size: clamp(34px, 4.4vw, 64px);
-  line-height: 0.98;
-  letter-spacing: -0.055em;
-  font-weight: 850;
+  font-size: clamp(28px, 2.6vw, 40px);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  font-weight: 800;
   color: #071f3f;
 }
 
 .sc-headline span { color: #0869b3; }
 
 .sc-subtext {
-  margin-top: 22px;
-  max-width: 540px;
-  font-size: clamp(14px, 1vw, 17px);
-  line-height: 1.7;
+  margin-top: 16px;
+  max-width: 480px;
+  font-size: clamp(13.5px, 0.95vw, 15.5px);
+  line-height: 1.6;
   color: #58708f;
 }
 
 .sc-features {
-  margin-top: 34px;
+  margin-top: clamp(22px, 2.2vw, 32px);
   display: grid;
-  gap: 22px;
-  max-width: 560px;
+  gap: clamp(14px, 1.4vw, 20px);
+  max-width: 520px;
 }
 
 .sc-features > * { animation: scFadeUp 0.8s ease both; }
