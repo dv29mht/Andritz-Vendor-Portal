@@ -444,8 +444,9 @@ export default function Login() {
               Streamline supplier onboarding, approvals, and collaboration in one secure,
               enterprise-grade workspace.
             </p>
+          </div>
 
-            <div className="sc-features">
+          <div className="sc-features">
               <Feature
                 tone="blue"
                 title="Secure onboarding"
@@ -494,7 +495,6 @@ export default function Login() {
                   </svg>
                 }
               />
-            </div>
           </div>
         </section>
 
@@ -564,20 +564,21 @@ const styles = `
   padding: clamp(36px, 4vw, 64px) clamp(36px, 4vw, 64px) clamp(36px, 4vw, 56px);
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
   position: relative;
   z-index: 2;
   min-height: 100vh;
+  gap: clamp(28px, 2.8vw, 44px);
 }
 
 .sc-brand {
-  margin-bottom: clamp(24px, 2.6vw, 40px);
+  margin: 0;
 }
 
 .sc-andritz-logo {
   width: clamp(118px, 9.5vw, 150px);
   display: block;
-  margin-bottom: 6px;
+  margin: 0 0 6px;
 }
 
 .sc-brand-title {
@@ -589,10 +590,12 @@ const styles = `
 
 .sc-hero {
   max-width: 420px;
+  margin: 0;
   animation: scFadeUp 0.8s ease both;
 }
 
 .sc-headline {
+  margin: 0;
   font-size: clamp(26px, 2.4vw, 38px);
   line-height: 1.08;
   letter-spacing: -0.035em;
@@ -603,7 +606,7 @@ const styles = `
 .sc-headline span { color: #0869b3; }
 
 .sc-subtext {
-  margin-top: 16px;
+  margin: 14px 0 0;
   max-width: 380px;
   font-size: clamp(13px, 0.9vw, 15px);
   line-height: 1.6;
@@ -611,7 +614,6 @@ const styles = `
 }
 
 .sc-features {
-  margin-top: clamp(22px, 2.2vw, 32px);
   display: grid;
   gap: clamp(14px, 1.4vw, 20px);
   max-width: 380px;
@@ -745,10 +747,9 @@ const styles = `
   .sc-left {
     padding: 32px 22px 60px;
     min-height: auto;
+    gap: 28px;
   }
-  .sc-brand { position: static; margin-bottom: 40px; }
-  .sc-hero { margin-top: 0; }
-  .sc-features { gap: 16px; }
+  .sc-features { gap: 14px; }
   .sc-right { padding: 22px; }
   .sc-login-card { border-radius: 22px; }
 }
