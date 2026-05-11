@@ -19,13 +19,10 @@ export const useAuthStore = create(
     (set, get) => ({
       currentUser:  null,
       showWelcome:  false,
-      hasHydrated:  false,
 
       get isAuthenticated() {
         return get().currentUser !== null
       },
-
-      setHasHydrated: (v) => set({ hasHydrated: !!v }),
 
       login: async (email, password) => {
         const data = await authService.login(email, password)
@@ -56,19 +53,6 @@ export const useAuthStore = create(
     }
   )
 )
-
-// Mark the store as hydrated once persist signals it's done. Using the
-// onFinishHydration API (rather than onRehydrateStorage inside the config)
-// because it fires reliably for both sync and async storage paths in
-// Zustand v5, and we can also handle the already-hydrated case directly.
-useAuthStore.persist.onFinishHydration(() => {
-  useAuthStore.setState({ hasHydrated: true })
-})
-if (useAuthStore.persist.hasHydrated()) {
-  useAuthStore.setState({ hasHydrated: true })
-}
-
-export const useHasHydrated = () => useAuthStore((s) => s.hasHydrated)
 
 export const useIsAuthenticated = () => useAuthStore((s) => s.currentUser !== null)
 export const useCurrentUser     = () => useAuthStore((s) => s.currentUser)
