@@ -561,24 +561,25 @@ const styles = `
 }
 
 .sc-left {
-  padding: clamp(36px, 4vw, 64px) clamp(36px, 4vw, 64px) clamp(36px, 4vw, 56px);
+  padding: clamp(40px, 5vh, 64px) clamp(36px, 4vw, 64px) clamp(40px, 5vh, 64px);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   position: relative;
   z-index: 2;
   min-height: 100vh;
-  gap: clamp(28px, 2.8vw, 44px);
+  gap: clamp(22px, 2.4vw, 36px);
 }
 
 .sc-brand {
   margin: 0;
+  line-height: 1;
 }
 
 .sc-andritz-logo {
   width: clamp(118px, 9.5vw, 150px);
   display: block;
-  margin: 0 0 6px;
+  margin: 0 0 4px;
 }
 
 .sc-brand-title {
@@ -586,6 +587,7 @@ const styles = `
   font-weight: 800;
   letter-spacing: -0.025em;
   color: #071f3f;
+  line-height: 1.1;
 }
 
 .sc-hero {
