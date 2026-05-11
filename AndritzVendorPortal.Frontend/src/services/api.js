@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { useUIStore } from '../store/uiStore'
 
-const renderUrl = 'https://andritz-vendor-portal.onrender.com/api'
+const productionApiUrl = 'https://andritz-vendor-portal-production.up.railway.app/api'
 
 // In production (Vercel), use a relative base URL so every request goes to
 // /api/... on the same origin. Vercel's proxy rewrite (vercel.json) forwards
@@ -13,14 +13,14 @@ const renderUrl = 'https://andritz-vendor-portal.onrender.com/api'
 // Production builds ALWAYS use the Vercel proxy (/api → Render via vercel.json rewrite).
 // VITE_API_URL is only honoured in dev so local development can target a local backend.
 const baseURL = import.meta.env.DEV
-  ? (import.meta.env.VITE_API_URL ?? renderUrl)
+  ? (import.meta.env.VITE_API_URL ?? productionApiUrl)
   : '/api'
 
 if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
   console.warn(
     '[api] VITE_API_URL is not set — dev requests will go to the PRODUCTION backend (%s). ' +
     'Set VITE_API_URL in .env.local to point at your local server.',
-    renderUrl
+    productionApiUrl
   )
 }
 
