@@ -55,7 +55,7 @@ export default function WelcomeScreen({ user, onDone }) {
             style={{ filter: 'brightness(0) invert(1)' }}
             draggable={false}
           />
-          <p className="text-white/50 text-[9px] font-semibold tracking-[0.3em] uppercase">Supplier Onboarding Tool</p>
+          <p className="text-white/50 text-[9px] font-semibold tracking-[0.3em] uppercase">Supplier Connect</p>
         </div>
         <p className="text-white/50 text-sm font-medium uppercase tracking-[0.3em] mb-3">Welcome back</p>
         <h1 className="text-white font-bold mb-4" style={{ fontSize: '2.2rem' }}>{user.name}</h1>

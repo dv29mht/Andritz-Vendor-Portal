@@ -87,7 +87,7 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
             <div className="flex flex-col gap-1 min-w-0">
               <AndritzLogo white className="h-4 w-auto" style={{ maxWidth: '108px' }} />
               <span className="text-white/50 text-[8px] font-semibold tracking-[0.18em] uppercase leading-none whitespace-nowrap">
-                Supplier Onboarding Tool
+                Supplier Connect
               </span>
             </div>
           )}
