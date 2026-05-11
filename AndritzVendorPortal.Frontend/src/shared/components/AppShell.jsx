@@ -8,6 +8,7 @@ import {
 import NotificationBell from '../../features/notifications/components/NotificationBell'
 import { useNotifications } from '../../features/notifications/hooks/useNotifications'
 import AndritzLogo from './AndritzLogo'
+import ConfirmDialog from './ConfirmDialog'
 
 const NAV = {
   Buyer: [
@@ -59,6 +60,7 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
   const navItems = NAV[role] ?? []
   const activeItem = navItems.find(n => n.id === activePage)
   const [collapsed, setCollapsed] = useState(false)
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
 
   const { notifications, unreadCount, markOneRead, markOneUnread, markAllRead } = useNotifications(
     workflow.requests, currentUser.id, role
@@ -152,7 +154,7 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
             </div>
           )}
           <button
-            onClick={onLogout}
+            onClick={() => setConfirmSignOut(true)}
             title={collapsed ? 'Sign out' : undefined}
             className={`w-full flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all py-2 ${
               collapsed ? 'justify-center px-0' : 'px-3'
@@ -225,6 +227,21 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
           {children}
         </main>
       </div>
+
+      <ConfirmDialog
+        open={confirmSignOut}
+        title="Sign out?"
+        confirmLabel="Sign out"
+        cancelLabel="Stay signed in"
+        confirmIcon={ArrowRightOnRectangleIcon}
+        confirmTone="red"
+        onCancel={() => setConfirmSignOut(false)}
+        onConfirm={() => { setConfirmSignOut(false); onLogout?.() }}
+      >
+        <p className="text-sm text-gray-600">
+          You'll be returned to the login page and will need to sign in again to continue.
+        </p>
+      </ConfirmDialog>
     </div>
   )
 }
