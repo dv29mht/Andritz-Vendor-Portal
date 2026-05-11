@@ -27,7 +27,7 @@ public static class EmailTemplates
           <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f8;padding:32px 0;">
             <tr><td align="center">
               <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);">
-                <tr><td style="background:linear-gradient(135deg,#064e80 0%,#096fb3 100%);padding:28px 36px;">
+                <tr><td style="background-color:#064e80;background:#064e80;padding:28px 36px;">
                   <p style="margin:0;color:#fff;font-weight:900;font-size:22px;letter-spacing:.18em;">ANDRITZ</p>
                   <p style="margin:4px 0 0;color:rgba(255,255,255,.6);font-size:11px;letter-spacing:.3em;text-transform:uppercase;">Vendor Onboarding &amp; Compliance</p>
                 </td></tr>
