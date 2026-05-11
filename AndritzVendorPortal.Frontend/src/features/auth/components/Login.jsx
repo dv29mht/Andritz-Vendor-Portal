@@ -37,93 +37,76 @@ function Feature({ icon, title, desc, tone = 'blue' }) {
   )
 }
 
-// ── Center decorative visual (network of cards + animated nodes) ─────────────
+// ── Center decorative visual (KPI cards floating in the middle gap) ─────────
 function CenterVisual() {
   return (
-    <div className="absolute inset-0 pointer-events-none hidden xl:block z-[1]" aria-hidden="true">
-      {/* Animated node lines */}
-      <div className="absolute" style={{ left: '32%', top: '25%', width: '39%', height: '37%', opacity: 0.88 }}>
+    <div className="sc-kpi-zone absolute inset-0 pointer-events-none z-[1]" aria-hidden="true">
+      {/* Subtle network lines tucked behind the cards */}
+      <div className="absolute" style={{ left: '32%', top: '20%', width: '26%', height: '40%', opacity: 0.5 }}>
         <svg viewBox="0 0 640 430" className="w-full h-full overflow-visible">
-          <path className="sc-line" d="M90 235 L250 80 L420 160 L560 70" />
-          <path className="sc-line" d="M90 235 L310 255 L500 235" />
-          <path className="sc-line" d="M250 80 L300 350 L530 330" />
-          <circle className="sc-dot" cx="90"  cy="235" r="5" />
-          <circle className="sc-dot" cx="250" cy="80"  r="5" />
-          <circle className="sc-dot" cx="420" cy="160" r="5" />
-          <circle className="sc-dot" cx="560" cy="70"  r="5" />
-          <circle className="sc-dot" cx="310" cy="255" r="5" />
-          <circle className="sc-dot" cx="500" cy="235" r="5" />
+          <path className="sc-line" d="M90 60 L260 200 L460 120 L580 320" />
+          <path className="sc-line" d="M90 60 L310 380" />
+          <path className="sc-line" d="M260 200 L580 320" />
+          <circle className="sc-dot" cx="90"  cy="60"  r="4" />
+          <circle className="sc-dot" cx="260" cy="200" r="4" />
+          <circle className="sc-dot" cx="460" cy="120" r="4" />
+          <circle className="sc-dot" cx="580" cy="320" r="4" />
+          <circle className="sc-dot" cx="310" cy="380" r="4" />
         </svg>
       </div>
 
-      {/* Pending approvals chip */}
-      <div className="sc-floating sc-card-base" style={{ left: '39%', top: '13%', minWidth: 240, padding: '18px 22px' }}>
-        <div className="w-[44px] h-[44px] rounded-2xl grid place-items-center" style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b' }}>
+      {/* Pending Approvals — small, top */}
+      <div className="sc-floating sc-card-base" style={{ left: '33%', top: '10%', width: 'min(18vw, 280px)', padding: '16px 20px' }}>
+        <div className="w-[42px] h-[42px] rounded-2xl grid place-items-center flex-shrink-0" style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2"/>
             <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
             <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="2"/>
           </svg>
         </div>
-        <div className="ml-1">
-          <strong className="block text-[13px] mb-0.5" style={{ color: BRAND_DARK }}>Pending Approvals</strong>
-          <span className="text-[28px] font-extrabold tracking-tight" style={{ color: BRAND_DARK }}>12</span>
+        <div className="min-w-0">
+          <strong className="block text-[12.5px] mb-0.5" style={{ color: BRAND_DARK }}>Pending Approvals</strong>
+          <span className="text-[24px] font-extrabold tracking-tight" style={{ color: BRAND_DARK }}>12</span>
         </div>
-        <svg className="ml-auto" width="72" height="34" viewBox="0 0 90 38" fill="none">
+        <svg className="ml-auto flex-shrink-0" width="58" height="28" viewBox="0 0 90 38" fill="none">
           <path d="M4 30 L18 23 L33 18 L49 24 L64 22 L84 5" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </div>
 
-      {/* Approved vendors */}
-      <div className="sc-floating sc-card-base" style={{ left: '48%', top: '34%', minWidth: 240, padding: '18px 22px', animationDelay: '0.8s' }}>
-        <div className="w-[44px] h-[44px] rounded-2xl grid place-items-center" style={{ background: 'rgba(17,163,106,0.12)', color: '#11a36a' }}>
+      {/* Approved Vendors — small, mid */}
+      <div className="sc-floating sc-card-base" style={{ left: '41%', top: '30%', width: 'min(19vw, 300px)', padding: '16px 20px', animationDelay: '0.8s' }}>
+        <div className="w-[42px] h-[42px] rounded-2xl grid place-items-center flex-shrink-0" style={{ background: 'rgba(17,163,106,0.12)', color: '#11a36a' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <path d="m5 12 4 4L19 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
-        <div className="ml-1">
-          <strong className="block text-[13px] mb-0.5" style={{ color: BRAND_DARK }}>Approved Vendors</strong>
+        <div className="min-w-0">
+          <strong className="block text-[12.5px] mb-0.5" style={{ color: BRAND_DARK }}>Approved Vendors</strong>
           <div className="flex items-baseline">
-            <span className="text-[28px] font-extrabold tracking-tight" style={{ color: BRAND_DARK }}>248</span>
-            <span className="ml-2 text-[12px] font-extrabold" style={{ color: '#11a36a' }}>+18 this week</span>
+            <span className="text-[24px] font-extrabold tracking-tight" style={{ color: BRAND_DARK }}>248</span>
+            <span className="ml-2 text-[11px] font-extrabold whitespace-nowrap" style={{ color: '#11a36a' }}>+18 this week</span>
           </div>
         </div>
       </div>
 
-      {/* Round decorative nodes */}
-      <div className="sc-floating sc-card-base sc-round" style={{ left: '39%', top: '30%' }}>
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" style={{ color: BRAND }}>
-          <path d="M3 21h18" stroke="currentColor" strokeWidth="2"/>
-          <path d="M5 21V9l7-5 7 5v12" stroke="currentColor" strokeWidth="2"/>
-          <path d="M9 21v-7h6v7" stroke="currentColor" strokeWidth="2"/>
-        </svg>
-      </div>
-      <div className="sc-floating sc-card-base sc-round" style={{ left: '31.5%', top: '46%', animationDelay: '1.1s' }}>
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" style={{ color: BRAND }}>
-          <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2"/>
-          <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="2"/>
-        </svg>
-      </div>
-
-      {/* Onboarding Progress card */}
-      <div className="sc-floating sc-card-base" style={{ left: '40.5%', top: '51%', width: 'min(34vw, 540px)', padding: '22px 26px', display: 'block', animationDelay: '0.35s' }}>
-        <div className="font-extrabold mb-5 text-[15px]" style={{ color: BRAND_DARK }}>Onboarding Progress</div>
+      {/* Onboarding Progress — wide, mid-lower */}
+      <div className="sc-floating sc-card-base" style={{ left: '34%', top: '51%', width: 'min(22vw, 370px)', padding: '20px 24px', display: 'block', animationDelay: '0.35s' }}>
+        <div className="font-extrabold mb-4 text-[14px]" style={{ color: BRAND_DARK }}>Onboarding Progress</div>
         <div className="relative grid grid-cols-4 gap-1.5">
-          <div className="absolute h-[3px] rounded-full" style={{ top: 14, left: '7%', right: '7%', background: `linear-gradient(90deg, ${BRAND} 0 68%, rgba(8,105,179,0.17) 68% 100%)` }} />
+          <div className="absolute h-[3px] rounded-full" style={{ top: 13, left: '7%', right: '7%', background: `linear-gradient(90deg, ${BRAND} 0 68%, rgba(8,105,179,0.17) 68% 100%)` }} />
           {[
-            { label: 'Invited',   icon: '✓', active: true,  pending: false },
-            { label: 'Documents', icon: '✓', active: true,  pending: false },
-            { label: 'Review',    icon: '3', active: true,  pending: false },
-            { label: 'Approved',  icon: '4', active: false, pending: true  },
+            { label: 'Invited',   icon: '✓', pending: false },
+            { label: 'Documents', icon: '✓', pending: false },
+            { label: 'Review',    icon: '3', pending: false },
+            { label: 'Approved',  icon: '4', pending: true  },
           ].map((s) => (
-            <div key={s.label} className="relative text-center z-10 text-[12.5px] font-bold" style={{ color: BRAND_DARK }}>
+            <div key={s.label} className="relative text-center z-10 text-[11.5px] font-bold" style={{ color: BRAND_DARK }}>
               <div
-                className="w-8 h-8 rounded-full mx-auto mb-3 grid place-items-center text-[12px] font-bold"
+                className="w-7 h-7 rounded-full mx-auto mb-2.5 grid place-items-center text-[11px] font-bold"
                 style={
                   s.pending
-                    ? { background: 'rgba(255,255,255,0.76)', color: BRAND, border: `2px dashed rgba(8,105,179,0.55)` }
-                    : { background: BRAND, color: '#fff', boxShadow: '0 0 0 8px rgba(8,105,179,0.08)' }
+                    ? { background: 'rgba(255,255,255,0.85)', color: BRAND, border: `2px dashed rgba(8,105,179,0.55)` }
+                    : { background: BRAND, color: '#fff', boxShadow: '0 0 0 6px rgba(8,105,179,0.08)' }
                 }
               >
                 {s.icon}
@@ -134,23 +117,23 @@ function CenterVisual() {
         </div>
       </div>
 
-      {/* Recent Activity card */}
-      <div className="sc-floating sc-card-base" style={{ left: '40.5%', bottom: '9%', width: 'min(34vw, 540px)', padding: '20px 26px', display: 'block', animationDelay: '1.2s' }}>
-        <div className="flex justify-between items-center mb-4">
-          <div className="font-extrabold text-[15px]" style={{ color: BRAND_DARK }}>Recent Activity</div>
-          <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-full" style={{ color: '#11a36a', background: 'rgba(17,163,106,0.08)' }}>● Live</span>
+      {/* Recent Activity — wide, bottom */}
+      <div className="sc-floating sc-card-base" style={{ left: '37%', bottom: '8%', width: 'min(22vw, 390px)', padding: '18px 22px', display: 'block', animationDelay: '1.2s' }}>
+        <div className="flex justify-between items-center mb-3">
+          <div className="font-extrabold text-[14px]" style={{ color: BRAND_DARK }}>Recent Activity</div>
+          <span className="text-[10.5px] font-extrabold px-2 py-0.5 rounded-full" style={{ color: '#11a36a', background: 'rgba(17,163,106,0.10)' }}>● Live</span>
         </div>
-        <div className="grid gap-3.5">
+        <div className="grid gap-2.5">
           {[
-            { dot: '#11a36a', name: 'Pardeep Sharma', text: 'Final approval granted', time: '2m ago' },
-            { dot: '#0869b3', name: 'Devansh Mehta',  text: 'Documents uploaded',     time: '15m ago' },
-            { dot: '#635bff', name: 'Yash Singh',     text: 'Review in progress',     time: '42m ago' },
+            { dot: '#11a36a', name: 'Pardeep Sharma', text: 'Final approval', time: '2m' },
+            { dot: '#0869b3', name: 'Devansh Mehta',  text: 'Docs uploaded',  time: '15m' },
+            { dot: '#635bff', name: 'Yash Singh',     text: 'Review',         time: '42m' },
           ].map((a) => (
-            <div key={a.name} className="grid items-center gap-2.5 text-[12.5px]" style={{ gridTemplateColumns: '14px 130px 1fr 60px', color: '#58708f' }}>
-              <span style={{ color: a.dot }}>●</span>
-              <strong style={{ color: BRAND_DARK }}>{a.name}</strong>
-              <span>{a.text}</span>
-              <span className="text-right">{a.time}</span>
+            <div key={a.name} className="grid items-center gap-2 text-[11.5px]" style={{ gridTemplateColumns: '10px 1fr auto auto', color: '#58708f' }}>
+              <span style={{ color: a.dot, fontSize: 10 }}>●</span>
+              <strong className="truncate" style={{ color: BRAND_DARK }}>{a.name}</strong>
+              <span className="px-2 truncate">{a.text}</span>
+              <span className="text-right whitespace-nowrap">{a.time}</span>
             </div>
           ))}
         </div>
@@ -698,13 +681,11 @@ const styles = `
   50%      { transform: translateY(-12px); }
 }
 
-.sc-round {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-}
+/* KPI cards only appear when the middle gap is wide enough to contain them
+   cleanly (no overlap with features text or login card). Below 1600px we
+   hide them and let the layout breathe. */
+.sc-kpi-zone { display: none; }
+@media (min-width: 1600px) { .sc-kpi-zone { display: block; } }
 
 /* Right side / login card */
 .sc-right {
