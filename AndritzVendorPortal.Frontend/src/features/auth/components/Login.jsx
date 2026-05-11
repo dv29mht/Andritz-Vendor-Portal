@@ -665,7 +665,12 @@ const styles = `
     top: clamp(40px, 6vh, 80px);
     bottom: clamp(40px, 6vh, 80px);
     left: 30%;
-    right: 35%;
+    /* Right section is 47.5vw wide (grid 1.05fr / 0.95fr) and the 440px login
+       card is centered in it, so the card's left edge sits at
+       (47.5vw + 440px) / 2 from the viewport's right edge. Anchor the KPI
+       zone's right edge to that position with a 32px safety gap so the
+       right-aligned cards never slide under the login card. */
+    right: calc((47.5vw + 440px) / 2 + 32px);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
