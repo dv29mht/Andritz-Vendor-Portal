@@ -21,9 +21,26 @@ public static class DependencyInjection
         var connectionString = config.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not configured.");
 
+        // ServerVersion.AutoDetect needs a reachable server; for first-run scenarios
+        // (DB does not yet exist) we fall back to a pinned MySQL 8.0 version so the
+        // app can boot and create the schema. Override via ConnectionStrings:MySqlVersion
+        // if you need to target a specific server build.
+        var mysqlVersion = config["MySqlServerVersion"];
+        ServerVersion serverVersion;
+        try
+        {
+            serverVersion = !string.IsNullOrWhiteSpace(mysqlVersion)
+                ? ServerVersion.Parse(mysqlVersion)
+                : ServerVersion.AutoDetect(connectionString);
+        }
+        catch
+        {
+            serverVersion = new MySqlServerVersion(new Version(8, 0, 36));
+        }
+
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(connectionString, sql =>
-                sql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+            options.UseMySql(connectionString, serverVersion, mysql =>
+                mysql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
 
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 

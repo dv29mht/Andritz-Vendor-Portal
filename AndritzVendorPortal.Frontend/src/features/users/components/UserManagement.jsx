@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, Fragment } from 'react'
+import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react'
 import {
   UserPlusIcon, ArrowPathIcon, MagnifyingGlassIcon,
   XMarkIcon, CheckIcon, ExclamationCircleIcon,
@@ -160,8 +161,23 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
   const initials    = getInitials(user.fullName)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden my-auto max-h-[calc(100vh-2rem)] flex flex-col">
+    <Transition appear show as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={() => !saving && !deleting && onClose()}>
+        <TransitionChild
+          as={Fragment}
+          enter="ease-out duration-200" enterFrom="opacity-0" enterTo="opacity-100"
+          leave="ease-in duration-150" leaveFrom="opacity-100" leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
+        </TransitionChild>
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <TransitionChild
+              as={Fragment}
+              enter="ease-out duration-200" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100"
+              leave="ease-in duration-150" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95"
+            >
+              <DialogPanel className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden my-auto max-h-[calc(100vh-2rem)] flex flex-col">
 
         {/* ── Gradient profile header ── */}
         <div className={`relative bg-gradient-to-br ${headerGrad} px-6 pt-5 pb-8`}>
@@ -179,7 +195,7 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
             </div>
             {/* Name + role + email */}
             <div className="min-w-0">
-              <h2 className="text-lg font-bold text-white leading-tight truncate">{user.fullName}</h2>
+              <DialogTitle className="text-lg font-bold text-white leading-tight truncate">{user.fullName}</DialogTitle>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 {user.roles.map(role => (
                   <span key={role} className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/20 text-white">
@@ -401,8 +417,12 @@ function UserDetailModal({ user, onClose, onUpdated, onDeleted }) {
           </div>
         )}
         </div>{/* end scrollable body */}
-      </div>
-    </div>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </div>
+      </Dialog>
+    </Transition>
   )
 }
 

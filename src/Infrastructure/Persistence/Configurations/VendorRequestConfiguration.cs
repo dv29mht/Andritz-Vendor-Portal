@@ -80,7 +80,9 @@ public class VendorRevisionConfiguration : IEntityTypeConfiguration<VendorRevisi
         e.Property(x => x.ChangedByName).HasMaxLength(200);
         e.Property(x => x.ChangedByUserId).HasMaxLength(450);
         e.Property(x => x.RejectionComment).HasMaxLength(1000);
-        e.Property(x => x.ChangesJson).HasColumnType("nvarchar(max)");
+        // Unbounded JSON blob; provider chooses the right type
+        // (longtext on MySQL, nvarchar(max) on SQL Server).
+        e.Property(x => x.ChangesJson);
 
         e.HasIndex(x => x.VendorRequestId);
     }

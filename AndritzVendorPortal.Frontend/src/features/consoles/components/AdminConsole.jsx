@@ -9,10 +9,13 @@ import {
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts'
+import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react'
+import { Fragment } from 'react'
 import VendorDatabase from '../../vendors/components/VendorDatabase'
 import StatusBadge from '../../../shared/components/StatusBadge'
 import VendorDetailModal from '../../vendors/components/VendorDetailModal'
 import Toast from '../../../shared/components/Toast'
+import ConfirmDialog from '../../../shared/components/ConfirmDialog'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
 import UserManagement from '../../users/components/UserManagement'
 import { vendorsService } from '../../vendors/services/vendorsService'
@@ -133,16 +136,31 @@ function AdminEditModal({ request, onClose, onSaved }) {
   )
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
-          <div>
-            <h2 className="font-semibold text-gray-900">Admin Edit — {request.vendorName}</h2>
-            <p className="text-xs text-gray-400 mt-0.5">#{request.id} · All fields editable (Completed requests only)</p>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><XMarkIcon className="h-5 w-5" /></button>
-        </div>
-        <div className="px-6 py-5 space-y-5">
+    <Transition appear show as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={() => !saving && onClose()}>
+        <TransitionChild
+          as={Fragment}
+          enter="ease-out duration-200" enterFrom="opacity-0" enterTo="opacity-100"
+          leave="ease-in duration-150" leaveFrom="opacity-100" leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" aria-hidden="true" />
+        </TransitionChild>
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <TransitionChild
+              as={Fragment}
+              enter="ease-out duration-200" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100"
+              leave="ease-in duration-150" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95"
+            >
+              <DialogPanel className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                  <div>
+                    <DialogTitle className="font-semibold text-gray-900">Admin Edit — {request.vendorName}</DialogTitle>
+                    <p className="text-xs text-gray-400 mt-0.5">#{request.id} · All fields editable (Completed requests only)</p>
+                  </div>
+                  <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><XMarkIcon className="h-5 w-5" /></button>
+                </div>
+                <div className="px-6 py-5 space-y-5 overflow-y-auto flex-1">
           {error && <div className="rounded-lg bg-red-50 ring-1 ring-red-200 px-4 py-3 text-sm text-red-700">{error}</div>}
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Vendor Information</p>
@@ -190,14 +208,18 @@ function AdminEditModal({ request, onClose, onSaved }) {
             </div>
           </div>
         </div>
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0 bg-white">
-          <button className="btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn-primary" disabled={saving} onClick={handleSave}>
-            {saving ? 'Saving…' : 'Save Changes'}
-          </button>
+                <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-white">
+                  <button className="btn-secondary" onClick={onClose}>Cancel</button>
+                  <button className="btn-primary" disabled={saving} onClick={handleSave}>
+                    {saving ? 'Saving…' : 'Save Changes'}
+                  </button>
+                </div>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
         </div>
-      </div>
-    </div>
+      </Dialog>
+    </Transition>
   )
 }
 
@@ -598,34 +620,21 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
         />
       )}
       {/* ── Archive confirmation ──────────────────────────────────────────── */}
-      {archivingRequest && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Archive this request?</h3>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              <strong>{archivingRequest.vendorName}</strong> will be moved to the Archived view.
-              The record and its full history are retained and can be restored at any time.
-            </p>
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                className="btn-secondary"
-                onClick={() => setArchivingRequest(null)}
-                disabled={archiveLoading}
-              >
-                Cancel
-              </button>
-              <button
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 transition-colors disabled:opacity-60"
-                onClick={handleArchive}
-                disabled={archiveLoading}
-              >
-                <ArchiveBoxIcon className="h-4 w-4" />
-                {archiveLoading ? 'Archiving…' : 'Yes, archive'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!archivingRequest}
+        title="Archive this request?"
+        confirmLabel={archiveLoading ? 'Archiving…' : 'Yes, archive'}
+        confirmIcon={ArchiveBoxIcon}
+        confirmTone="amber"
+        loading={archiveLoading}
+        onCancel={() => setArchivingRequest(null)}
+        onConfirm={handleArchive}
+      >
+        <p className="text-sm text-gray-600 leading-relaxed">
+          <strong>{archivingRequest?.vendorName}</strong> will be moved to the Archived view.
+          The record and its full history are retained and can be restored at any time.
+        </p>
+      </ConfirmDialog>
 
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
     </div>

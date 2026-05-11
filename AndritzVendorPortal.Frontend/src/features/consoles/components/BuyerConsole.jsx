@@ -6,7 +6,10 @@ import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
 import { ExclamationTriangleIcon, CheckBadgeIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
          Cell } from 'recharts'
+import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react'
+import { Fragment } from 'react'
 import Modal from '../../../shared/components/Modal'
+import ConfirmDialog from '../../../shared/components/ConfirmDialog'
 import StatusBadge from '../../../shared/components/StatusBadge'
 import VendorDetailModal from '../../vendors/components/VendorDetailModal'
 import Toast from '../../../shared/components/Toast'
@@ -1452,106 +1455,115 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       )}
 
       {/* ── No-Approver Confirmation Dialog ─────────────────────────────────── */}
-      {showNoApproverConfirm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                <ExclamationTriangleIcon className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-gray-900">Submit without intermediate approvers?</h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  You haven't added any intermediate approvers. The request will go directly to Pardeep Sharma (Final Approver) for review. Are you sure you want to proceed?
-                </p>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <button className="btn-secondary" onClick={() => setShowNoApproverConfirm(false)}>Go Back</button>
-              <button
-                className="btn-primary"
-                onClick={() => { setShowNoApproverConfirm(false); handleSubmitForm(true) }}
-              >
-                <PaperAirplaneIcon className="h-4 w-4" />
-                Yes, Submit Directly
-              </button>
-            </div>
+      <ConfirmDialog
+        open={showNoApproverConfirm}
+        title="Submit without intermediate approvers?"
+        cancelLabel="Go Back"
+        confirmLabel="Yes, Submit Directly"
+        confirmIcon={PaperAirplaneIcon}
+        confirmTone="blue"
+        onCancel={() => setShowNoApproverConfirm(false)}
+        onConfirm={() => { setShowNoApproverConfirm(false); handleSubmitForm(true) }}
+      >
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+            <ExclamationTriangleIcon className="h-5 w-5 text-amber-600" />
           </div>
+          <p className="text-sm text-gray-500">
+            You haven't added any intermediate approvers. The request will go directly to Pardeep Sharma (Final Approver) for review. Are you sure you want to proceed?
+          </p>
         </div>
-      )}
+      </ConfirmDialog>
 
       {toast && <Toast type={toast.type} title={toast.title} body={toast.body} onClose={() => setToast(null)} />}
 
       {/* ── Excel Import Dialog ─────────────────────────────────────────────── */}
-      {showImportDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-5">
-            {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-base font-semibold text-gray-900">Import Request</h3>
-                <p className="text-xs text-gray-500 mt-0.5">Fill in the template and upload it to pre-fill the form.</p>
-              </div>
-              <button
-                onClick={() => setShowImportDialog(false)}
-                className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
+      <Transition appear show={showImportDialog} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setShowImportDialog(false)}>
+          <TransitionChild
+            as={Fragment}
+            enter="ease-out duration-200" enterFrom="opacity-0" enterTo="opacity-100"
+            leave="ease-in duration-150" leaveFrom="opacity-100" leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
+          </TransitionChild>
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4">
+              <TransitionChild
+                as={Fragment}
+                enter="ease-out duration-200" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100"
+                leave="ease-in duration-150" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95"
               >
-                <XMarkIcon className="h-5 w-5" />
-              </button>
-            </div>
+                <DialogPanel className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-5">
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <DialogTitle className="text-base font-semibold text-gray-900">Import Request</DialogTitle>
+                      <p className="text-xs text-gray-500 mt-0.5">Fill in the template and upload it to pre-fill the form.</p>
+                    </div>
+                    <button
+                      onClick={() => setShowImportDialog(false)}
+                      className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
+                    >
+                      <XMarkIcon className="h-5 w-5" />
+                    </button>
+                  </div>
 
-            {/* Step 1 */}
-            <div className="rounded-xl border border-gray-200 p-4 space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Step 1 — Download Template</p>
-              <p className="text-sm text-gray-600">
-                Download the official template. Fields marked with <span className="text-red-500 font-semibold">*</span> are required.
-              </p>
-              <button
-                className="btn-secondary w-full justify-center"
-                onClick={downloadTemplate}
-              >
-                <ArrowDownTrayIcon className="h-4 w-4" />
-                Download Template (.xlsx)
-              </button>
-            </div>
+                  {/* Step 1 */}
+                  <div className="rounded-xl border border-gray-200 p-4 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Step 1 — Download Template</p>
+                    <p className="text-sm text-gray-600">
+                      Download the official template. Fields marked with <span className="text-red-500 font-semibold">*</span> are required.
+                    </p>
+                    <button
+                      className="btn-secondary w-full justify-center"
+                      onClick={downloadTemplate}
+                    >
+                      <ArrowDownTrayIcon className="h-4 w-4" />
+                      Download Template (.xlsx)
+                    </button>
+                  </div>
 
-            {/* Step 2 */}
-            <div className="rounded-xl border border-gray-200 p-4 space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Step 2 — Upload Filled Template</p>
-              <p className="text-sm text-gray-600">Select the filled template to pre-fill the vendor form.</p>
-              <button
-                className="btn-secondary w-full justify-center"
-                onClick={() => importFileRef.current?.click()}
-              >
-                <ArrowUpTrayIcon className="h-4 w-4" />
-                Choose File (.xlsx / .xls)
-              </button>
-              <input
-                ref={importFileRef}
-                type="file"
-                accept=".xlsx,.xls"
-                className="hidden"
-                onChange={handleImportExcel}
-              />
-            </div>
+                  {/* Step 2 */}
+                  <div className="rounded-xl border border-gray-200 p-4 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Step 2 — Upload Filled Template</p>
+                    <p className="text-sm text-gray-600">Select the filled template to pre-fill the vendor form.</p>
+                    <button
+                      className="btn-secondary w-full justify-center"
+                      onClick={() => importFileRef.current?.click()}
+                    >
+                      <ArrowUpTrayIcon className="h-4 w-4" />
+                      Choose File (.xlsx / .xls)
+                    </button>
+                    <input
+                      ref={importFileRef}
+                      type="file"
+                      accept=".xlsx,.xls"
+                      className="hidden"
+                      onChange={handleImportExcel}
+                    />
+                  </div>
 
-            {/* Validation errors */}
-            {importErrors.length > 0 && (
-              <div className="rounded-xl bg-red-50 ring-1 ring-red-200 px-4 py-3 space-y-1">
-                <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-1">Please fix the following errors:</p>
-                <ul className="space-y-0.5">
-                  {importErrors.map((err, i) => (
-                    <li key={i} className="text-xs text-red-700 flex items-start gap-1.5">
-                      <span className="mt-0.5 flex-shrink-0">•</span>
-                      {err}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                  {/* Validation errors */}
+                  {importErrors.length > 0 && (
+                    <div className="rounded-xl bg-red-50 ring-1 ring-red-200 px-4 py-3 space-y-1">
+                      <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-1">Please fix the following errors:</p>
+                      <ul className="space-y-0.5">
+                        {importErrors.map((err, i) => (
+                          <li key={i} className="text-xs text-red-700 flex items-start gap-1.5">
+                            <span className="mt-0.5 flex-shrink-0">•</span>
+                            {err}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </DialogPanel>
+              </TransitionChild>
+            </div>
           </div>
-        </div>
-      )}
+        </Dialog>
+      </Transition>
     </div>
   )
 }

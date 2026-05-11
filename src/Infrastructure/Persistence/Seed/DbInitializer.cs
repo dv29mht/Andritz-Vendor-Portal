@@ -19,14 +19,31 @@ public static class DbInitializer
         ILogger logger,
         string defaultAdminPassword)
     {
-        try
+        // Wait for the MySQL server to accept connections (helps when the app
+        // and the DB container start at the same time on a fresh machine),
+        // then create the database and apply migrations. Pomelo's MigrateAsync
+        // will issue CREATE DATABASE IF NOT EXISTS implicitly, so a brand-new
+        // server only needs the user credentials — nothing else to set up.
+        const int maxAttempts = 10;
+        for (var attempt = 1; ; attempt++)
         {
-            await db.Database.MigrateAsync();
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "[Seed] Migration failed");
-            throw;
+            try
+            {
+                await db.Database.MigrateAsync();
+                break;
+            }
+            catch (Exception ex) when (attempt < maxAttempts)
+            {
+                logger.LogWarning(ex,
+                    "[Seed] Database not reachable yet (attempt {Attempt}/{Max}); retrying in 2s",
+                    attempt, maxAttempts);
+                await Task.Delay(TimeSpan.FromSeconds(2));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "[Seed] Migration failed after {Max} attempts", maxAttempts);
+                throw;
+            }
         }
 
         foreach (var role in Roles.All)
