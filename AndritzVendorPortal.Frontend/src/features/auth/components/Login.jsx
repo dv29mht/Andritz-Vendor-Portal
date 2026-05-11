@@ -40,9 +40,9 @@ function Feature({ icon, title, desc, tone = 'blue' }) {
 // ── Center decorative visual (KPI cards floating in the middle gap) ─────────
 function CenterVisual() {
   return (
-    <div className="sc-kpi-zone absolute inset-0 pointer-events-none z-[1]" aria-hidden="true">
-      {/* Pending Approvals — small, top */}
-      <div className="sc-floating sc-card-base" style={{ left: '34%', top: '10%', width: 'min(15vw, 280px)', padding: '16px 20px' }}>
+    <div className="sc-kpi-zone" aria-hidden="true">
+      {/* Pending Approvals — small, top, anchored left */}
+      <div className="sc-floating sc-card-base" style={{ alignSelf: 'flex-start', width: 'min(15vw, 280px)', padding: '16px 20px' }}>
         <div className="w-[42px] h-[42px] rounded-2xl grid place-items-center flex-shrink-0" style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2"/>
@@ -59,8 +59,8 @@ function CenterVisual() {
         </svg>
       </div>
 
-      {/* Approved Vendors — small, mid */}
-      <div className="sc-floating sc-card-base" style={{ left: '41%', top: '30%', width: 'min(16vw, 300px)', padding: '16px 20px' }}>
+      {/* Approved Vendors — small, upper-mid, anchored right */}
+      <div className="sc-floating sc-card-base" style={{ alignSelf: 'flex-end', width: 'min(16vw, 300px)', padding: '16px 20px' }}>
         <div className="w-[42px] h-[42px] rounded-2xl grid place-items-center flex-shrink-0" style={{ background: 'rgba(17,163,106,0.12)', color: '#11a36a' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <path d="m5 12 4 4L19 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -75,8 +75,8 @@ function CenterVisual() {
         </div>
       </div>
 
-      {/* Onboarding Progress — wide, mid-lower */}
-      <div className="sc-floating sc-card-base" style={{ left: '34%', top: '50%', width: 'min(20vw, 380px)', padding: '20px 24px', display: 'block' }}>
+      {/* Onboarding Progress — wide, mid-lower, anchored left */}
+      <div className="sc-floating sc-card-base" style={{ alignSelf: 'flex-start', width: 'min(20vw, 380px)', padding: '20px 24px', display: 'block' }}>
         <div className="font-extrabold mb-4 text-[14px]" style={{ color: BRAND_DARK }}>Onboarding Progress</div>
         <div className="relative grid grid-cols-4 gap-1.5">
           <div className="absolute h-[3px] rounded-full" style={{ top: 13, left: '7%', right: '7%', background: `linear-gradient(90deg, ${BRAND} 0 68%, rgba(8,105,179,0.17) 68% 100%)` }} />
@@ -103,8 +103,8 @@ function CenterVisual() {
         </div>
       </div>
 
-      {/* Recent Activity — wide, bottom */}
-      <div className="sc-floating sc-card-base" style={{ left: '36%', bottom: '8%', width: 'min(20vw, 400px)', padding: '18px 22px', display: 'block' }}>
+      {/* Recent Activity — wide, bottom, anchored right */}
+      <div className="sc-floating sc-card-base" style={{ alignSelf: 'flex-end', width: 'min(20vw, 400px)', padding: '18px 22px', display: 'block' }}>
         <div className="flex justify-between items-center mb-3">
           <div className="font-extrabold text-[14px]" style={{ color: BRAND_DARK }}>Recent Activity</div>
           <span className="text-[10.5px] font-extrabold px-2 py-0.5 rounded-full" style={{ color: '#11a36a', background: 'rgba(17,163,106,0.10)' }}>● Live</span>
@@ -632,7 +632,6 @@ const styles = `
 }
 
 .sc-card-base {
-  position: absolute;
   background: rgba(255,255,255,0.82);
   -webkit-backdrop-filter: blur(18px);
           backdrop-filter: blur(18px);
@@ -651,10 +650,27 @@ const styles = `
   50%      { transform: translateY(-12px); }
 }
 
-/* KPI cards live in the middle gap between features and the login card.
-   Below 1280px the gap is too tight; we hide them so the layout stays clean. */
-.sc-kpi-zone { display: none; }
-@media (min-width: 1280px) { .sc-kpi-zone { display: block; } }
+/* KPI cards live in the middle gap as a flex column with space-between,
+   so the three vertical gaps between the four cards are mathematically
+   equal regardless of the cards' individual heights.
+   Below 1280px the gap is too tight, so we hide the zone. */
+.sc-kpi-zone {
+  display: none;
+  pointer-events: none;
+  z-index: 1;
+}
+@media (min-width: 1280px) {
+  .sc-kpi-zone {
+    position: absolute;
+    top: clamp(40px, 6vh, 80px);
+    bottom: clamp(40px, 6vh, 80px);
+    left: 30%;
+    right: 35%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+}
 
 /* Right side / login card */
 .sc-right {
