@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { authService } from '../features/auth/services/authService'
+import { useUIStore } from './uiStore'
 
 function normalizeUser(apiUser) {
   return {
@@ -72,3 +73,22 @@ export const useAuthStore = create(
 
 export const useIsAuthenticated = () => useAuthStore((s) => s.currentUser !== null)
 export const useCurrentUser     = () => useAuthStore((s) => s.currentUser)
+
+// Enforce one signed-in user per browser. localStorage is shared across tabs
+// on the same origin, so when tab B signs in as a different user the
+// auth-store key changes and tab A's "storage" event fires. If the user ID
+// drifted, raise a conflict flag so the UI can block this tab until reload.
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key !== 'auth-store') return
+    const current = useAuthStore.getState().currentUser
+    if (!current) return
+    let next = null
+    try {
+      next = e.newValue ? JSON.parse(e.newValue)?.state?.currentUser ?? null : null
+    } catch { /* corrupt JSON — treat as conflict */ }
+    if (!next || next.id !== current.id) {
+      useUIStore.getState().setSessionConflict(true)
+    }
+  })
+}

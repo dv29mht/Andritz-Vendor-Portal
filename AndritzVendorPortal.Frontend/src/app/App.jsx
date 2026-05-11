@@ -4,11 +4,13 @@ import { useAuth } from '../features/auth/hooks/useAuth'
 import { useUIStore } from '../store/uiStore'
 import WelcomeScreen from '../features/auth/components/WelcomeScreen'
 import SessionExpiredBanner from '../features/auth/components/SessionExpiredBanner'
+import SessionConflictBanner from '../features/auth/components/SessionConflictBanner'
 
 export default function App() {
   const { currentUser, showWelcome, dismissWelcome, logout } = useAuth()
   const sessionExpired    = useUIStore((s) => s.sessionExpired)
   const setSessionExpired = useUIStore((s) => s.setSessionExpired)
+  const sessionConflict   = useUIStore((s) => s.sessionConflict)
 
   const handleSessionExpiredDone = async () => {
     setSessionExpired(false)
@@ -19,6 +21,7 @@ export default function App() {
 
   return (
     <>
+      {sessionConflict && <SessionConflictBanner />}
       {sessionExpired && <SessionExpiredBanner onDone={handleSessionExpiredDone} />}
       {showWelcome && currentUser && (
         <WelcomeScreen user={currentUser} onDone={dismissWelcome} />
