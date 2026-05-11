@@ -41,20 +41,6 @@ function Feature({ icon, title, desc, tone = 'blue' }) {
 function CenterVisual() {
   return (
     <div className="sc-kpi-zone absolute inset-0 pointer-events-none z-[1]" aria-hidden="true">
-      {/* Subtle network lines tucked behind the cards */}
-      <div className="absolute" style={{ left: '32%', top: '20%', width: '26%', height: '40%', opacity: 0.5 }}>
-        <svg viewBox="0 0 640 430" className="w-full h-full overflow-visible">
-          <path className="sc-line" d="M90 60 L260 200 L460 120 L580 320" />
-          <path className="sc-line" d="M90 60 L310 380" />
-          <path className="sc-line" d="M260 200 L580 320" />
-          <circle className="sc-dot" cx="90"  cy="60"  r="4" />
-          <circle className="sc-dot" cx="260" cy="200" r="4" />
-          <circle className="sc-dot" cx="460" cy="120" r="4" />
-          <circle className="sc-dot" cx="580" cy="320" r="4" />
-          <circle className="sc-dot" cx="310" cy="380" r="4" />
-        </svg>
-      </div>
-
       {/* Pending Approvals — small, top */}
       <div className="sc-floating sc-card-base" style={{ left: '34%', top: '10%', width: 'min(15vw, 280px)', padding: '16px 20px' }}>
         <div className="w-[42px] h-[42px] rounded-2xl grid place-items-center flex-shrink-0" style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b' }}>
@@ -639,26 +625,6 @@ const styles = `
 @keyframes scFadeUp {
   from { opacity: 0; transform: translateY(18px); }
   to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Center visual */
-.sc-line {
-  stroke: rgba(10,125,216,0.28);
-  stroke-width: 2;
-  fill: none;
-  stroke-dasharray: 7 9;
-  animation: scDash 9s linear infinite;
-}
-@keyframes scDash { to { stroke-dashoffset: -160; } }
-
-.sc-dot {
-  fill: #fff;
-  filter: drop-shadow(0 0 10px rgba(6,126,216,0.95));
-  animation: scPulse 2.8s ease-in-out infinite;
-}
-@keyframes scPulse {
-  0%, 100% { transform: scale(1);   opacity: 0.75; }
-  50%      { transform: scale(1.6); opacity: 1; }
 }
 
 .sc-card-base {
