@@ -14,10 +14,26 @@ function normalizeUser(apiUser) {
   }
 }
 
+// Read persisted currentUser directly from localStorage during module load.
+// Zustand persist's own rehydration runs async (via .then chains) in the
+// production bundle, which loses the race against ProtectedRoute's first
+// render — the store reads null and the user gets bounced to /login even
+// though their session is intact. Seeding the initial value synchronously
+// here makes that race unwinnable.
+function readPersistedCurrentUser() {
+  try {
+    const raw = typeof localStorage !== 'undefined' && localStorage.getItem('auth-store')
+    if (!raw) return null
+    return JSON.parse(raw)?.state?.currentUser ?? null
+  } catch {
+    return null
+  }
+}
+
 export const useAuthStore = create(
   persist(
     (set, get) => ({
-      currentUser:  null,
+      currentUser:  readPersistedCurrentUser(),
       showWelcome:  false,
 
       get isAuthenticated() {
