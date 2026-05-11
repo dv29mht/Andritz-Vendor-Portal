@@ -28,12 +28,20 @@ export function startNotifications(onWorkflowChanged) {
       accessTokenFactory: () => localStorage.getItem('authToken') ?? '',
       transport: HttpTransportType.WebSockets | HttpTransportType.LongPolling,
     })
-    .withAutomaticReconnect()
-    .configureLogging(LogLevel.Warning)
+    .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+    // Critical suppresses the normal "WebSocket closed 1006" noise that
+    // fires on every server redeploy — withAutomaticReconnect handles it.
+    .configureLogging(LogLevel.Critical)
     .build()
 
   connection.on('workflowChanged', () => {
     try { onWorkflowChanged?.() } catch (err) { console.error('[signalr] handler error', err) }
+  })
+
+  // After auto-reconnect, refetch state so we don't silently miss any
+  // workflowChanged events that fired while we were offline.
+  connection.onreconnected(() => {
+    try { onWorkflowChanged?.() } catch (err) { console.error('[signalr] reconnect handler error', err) }
   })
 
   connectPromise = connection.start().catch(err => {
