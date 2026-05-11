@@ -4,6 +4,7 @@ import { vendorsService } from '../../vendors/services/vendorsService'
 import StatusBadge from '../../../shared/components/StatusBadge'
 import VendorDetailModal from '../../vendors/components/VendorDetailModal'
 import Toast from '../../../shared/components/Toast'
+import ConfirmDialog from '../../../shared/components/ConfirmDialog'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
 
 export default function OneTimeVendorPage({ workflow, currentUser }) {
@@ -244,60 +245,38 @@ export default function OneTimeVendorPage({ workflow, currentUser }) {
 
       {viewing && <VendorDetailModal request={viewing} onClose={() => setViewing(null)} />}
 
-      {archiving && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Archive this one-time vendor?</h3>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              <strong>{archiving.vendorName}</strong> will be removed from the One-Time Vendors list.
-              The full record is retained and can be restored by an admin at any time.
-            </p>
-            {archiveError && (
-              <p className="text-xs text-red-600 bg-red-50 ring-1 ring-red-200 rounded-lg px-3 py-2">{archiveError}</p>
-            )}
-            <div className="flex justify-end gap-3 pt-2">
-              <button className="btn-secondary" onClick={() => setArchiving(null)} disabled={archiveLoading}>
-                Cancel
-              </button>
-              <button
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 transition-colors disabled:opacity-60"
-                onClick={handleArchive}
-                disabled={archiveLoading}
-              >
-                <ArchiveBoxIcon className="h-4 w-4" />
-                {archiveLoading ? 'Archiving…' : 'Yes, archive'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!archiving}
+        title="Archive this one-time vendor?"
+        confirmLabel={archiveLoading ? 'Archiving…' : 'Yes, archive'}
+        confirmIcon={ArchiveBoxIcon}
+        confirmTone="amber"
+        loading={archiveLoading}
+        error={archiveError}
+        onCancel={() => setArchiving(null)}
+        onConfirm={handleArchive}
+      >
+        <p className="text-sm text-gray-600 leading-relaxed">
+          <strong>{archiving?.vendorName}</strong> will be removed from the One-Time Vendors list.
+          The full record is retained and can be restored by an admin at any time.
+        </p>
+      </ConfirmDialog>
 
-      {restoring && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Restore this one-time vendor?</h3>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              <strong>{restoring.vendorName}</strong> will be restored to the One-Time Vendors list.
-            </p>
-            {restoreError && (
-              <p className="text-xs text-red-600 bg-red-50 ring-1 ring-red-200 rounded-lg px-3 py-2">{restoreError}</p>
-            )}
-            <div className="flex justify-end gap-3 pt-2">
-              <button className="btn-secondary" onClick={() => setRestoring(null)} disabled={restoreLoading}>
-                Cancel
-              </button>
-              <button
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 transition-colors disabled:opacity-60"
-                onClick={handleRestore}
-                disabled={restoreLoading}
-              >
-                <ArrowPathIcon className="h-4 w-4" />
-                {restoreLoading ? 'Restoring…' : 'Yes, restore'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!restoring}
+        title="Restore this one-time vendor?"
+        confirmLabel={restoreLoading ? 'Restoring…' : 'Yes, restore'}
+        confirmIcon={ArrowPathIcon}
+        confirmTone="amber"
+        loading={restoreLoading}
+        error={restoreError}
+        onCancel={() => setRestoring(null)}
+        onConfirm={handleRestore}
+      >
+        <p className="text-sm text-gray-600 leading-relaxed">
+          <strong>{restoring?.vendorName}</strong> will be restored to the One-Time Vendors list.
+        </p>
+      </ConfirmDialog>
 
       {toast && <Toast type={toast.type} title={toast.title} body={toast.body} onClose={() => setToast(null)} />}
     </div>

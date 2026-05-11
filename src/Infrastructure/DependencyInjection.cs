@@ -85,6 +85,17 @@ public static class DependencyInjection
             {
                 OnMessageReceived = ctx =>
                 {
+                    // SignalR cannot set Authorization headers on the WebSocket
+                    // handshake, so clients pass the JWT as ?access_token=... on
+                    // requests to /hubs/*. Accept it there.
+                    var path = ctx.HttpContext.Request.Path;
+                    var accessToken = ctx.Request.Query["access_token"].ToString();
+                    if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                    {
+                        ctx.Token = accessToken;
+                        return Task.CompletedTask;
+                    }
+
                     if (string.IsNullOrEmpty(ctx.Token) &&
                         ctx.Request.Cookies.TryGetValue("auth_token", out var cookieToken))
                         ctx.Token = cookieToken;

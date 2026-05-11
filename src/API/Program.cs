@@ -1,4 +1,5 @@
 using AndritzVendorPortal.API.Authorization;
+using AndritzVendorPortal.API.Hubs;
 using AndritzVendorPortal.API.Middleware;
 using AndritzVendorPortal.API.Services;
 using AndritzVendorPortal.Application;
@@ -36,6 +37,12 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // ── API plumbing ─────────────────────────────────────────────────────────────
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+// SignalR + transport-agnostic INotificationService implementation. Command
+// handlers depend only on the Application-layer interface; this wires the
+// SignalR-backed impl in the API project where the Hub lives.
+builder.Services.AddSignalR();
+builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
 
 builder.Services.AddSingleton<IAuthorizationHandler, FinalApproverHandler>();
 builder.Services.AddAuthorization(options =>
@@ -136,6 +143,7 @@ app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapControllers();
+app.MapHub<AndritzVendorPortal.API.Hubs.NotificationHub>("/hubs/notifications");
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok", timestamp = DateTime.UtcNow }))
     .AllowAnonymous();
 

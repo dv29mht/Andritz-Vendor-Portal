@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { vendorsService } from '../services/vendorsService'
 import { useAuth } from '../../auth/hooks/useAuth'
+import { startNotifications, stopNotifications } from '../../../services/signalr'
 
 export function useVendorWorkflow() {
   const { isAuthenticated } = useAuth()
@@ -23,8 +24,15 @@ export function useVendorWorkflow() {
   }, [])
 
   useEffect(() => {
-    if (isAuthenticated) fetchAll()
-    else setRequests([])
+    if (isAuthenticated) {
+      fetchAll()
+      // Open SignalR connection — every "workflowChanged" event triggers a
+      // re-fetch, which in turn refreshes the derived notifications hook.
+      startNotifications(fetchAll)
+    } else {
+      setRequests([])
+      stopNotifications()
+    }
   }, [isAuthenticated, fetchAll])
 
   /** Fetch full detail for a single request (includes revisionHistory). */
