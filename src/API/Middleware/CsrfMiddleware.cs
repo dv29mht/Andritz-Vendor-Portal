@@ -11,8 +11,13 @@ public class CsrfMiddleware(RequestDelegate next)
         var method = ctx.Request.Method;
         bool isSafe = method is "GET" or "HEAD" or "OPTIONS";
         bool isAuthRoute = ctx.Request.Path.StartsWithSegments("/api/auth");
+        // SignalR negotiate is a POST but the SignalR JS client can't attach our
+        // X-CSRF-Token header. Hub paths are already authenticated via JWT
+        // (?access_token=...), so CSRF protection is redundant and would block
+        // every WebSocket handshake.
+        bool isHubRoute = ctx.Request.Path.StartsWithSegments("/hubs");
 
-        if (!isSafe && !isAuthRoute && ctx.User.Identity?.IsAuthenticated == true)
+        if (!isSafe && !isAuthRoute && !isHubRoute && ctx.User.Identity?.IsAuthenticated == true)
         {
             var header = ctx.Request.Headers["X-CSRF-Token"].ToString();
             var cookie = ctx.Request.Cookies["csrf_token"] ?? string.Empty;

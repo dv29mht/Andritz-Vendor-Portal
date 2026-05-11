@@ -19,10 +19,13 @@ export const useAuthStore = create(
     (set, get) => ({
       currentUser:  null,
       showWelcome:  false,
+      hasHydrated:  false,
 
       get isAuthenticated() {
         return get().currentUser !== null
       },
+
+      setHasHydrated: (v) => set({ hasHydrated: !!v }),
 
       login: async (email, password) => {
         const data = await authService.login(email, password)
@@ -50,9 +53,14 @@ export const useAuthStore = create(
       name: 'auth-store',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ currentUser: state.currentUser }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true)
+      },
     }
   )
 )
+
+export const useHasHydrated = () => useAuthStore((s) => s.hasHydrated)
 
 export const useIsAuthenticated = () => useAuthStore((s) => s.currentUser !== null)
 export const useCurrentUser     = () => useAuthStore((s) => s.currentUser)
