@@ -64,40 +64,66 @@ public static class EmailTemplates
     private static string Badge(string label, string color) =>
         $"""<span style="display:inline-block;padding:4px 12px;border-radius:999px;background:{color};color:#fff;font-size:12px;font-weight:600;">{label}</span>""";
 
-    private static string Btn(string text, string href) =>
-        $"""<a href="{href}" style="display:inline-block;margin-top:24px;padding:12px 28px;background:#096fb3;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px;">{text}</a>""";
+    private static string Btn(string text, string href, string color = "#096fb3") =>
+        $"""<a href="{href}" style="display:inline-block;margin:24px 8px 0 0;padding:12px 28px;background:{color};color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px;">{text}</a>""";
 
-    public static (string Subject, string Body) NewSubmission(VendorSummary v, string approverName, string portalUrl)
+    private static string ActionRow(string? approveUrl, string? rejectUrl, string portalUrl, string portalLabel)
+    {
+        if (approveUrl is null && rejectUrl is null) return Btn(portalLabel, portalUrl);
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append("""<div style="margin-top:24px;">""");
+        if (approveUrl is not null)
+            sb.Append($"""<a href="{approveUrl}" style="display:inline-block;margin:0 8px 8px 0;padding:12px 28px;background:#10b981;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px;">Approve</a>""");
+        if (rejectUrl is not null)
+            sb.Append($"""<a href="{rejectUrl}" style="display:inline-block;margin:0 8px 8px 0;padding:12px 28px;background:#ef4444;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px;">Reject</a>""");
+        sb.Append($"""<a href="{portalUrl}" style="display:inline-block;margin:0 8px 8px 0;padding:12px 28px;background:#6b7280;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px;">{portalLabel}</a>""");
+        sb.Append("</div>");
+        sb.Append("""<p style="margin:12px 0 0;color:#9ca3af;font-size:11px;">Approve/Reject links are valid for 7 days and can be used once.</p>""");
+        return sb.ToString();
+    }
+
+    public static (string Subject, string Body) NewSubmission(VendorSummary v, string approverName, string portalUrl,
+        string? approveUrl = null, string? rejectUrl = null)
     {
         var subject = $"[Action Required] New vendor request: {v.VendorName}";
         return (subject, Wrap(subject, $"A new vendor request for {v.VendorName} needs your approval.", $"""
             <p style="margin:0 0 4px;color:#6b7280;font-size:13px;">Hi {Enc(approverName)},</p>
             <h2 style="margin:0 0 16px;color:#111827;font-size:18px;">New vendor request submitted</h2>
-            <p style="margin:0 0 16px;color:#374151;font-size:14px;">A new vendor onboarding request has been submitted and is awaiting your review.</p>
-            {Badge("Pending Approval", "#f59e0b")}{VendorTable(v)}{Btn("Review Request", portalUrl)}
+            <p style="margin:0 0 16px;color:#374151;font-size:14px;">A new vendor onboarding request has been submitted and is awaiting your review. The full request is attached as a PDF for your records.</p>
+            {Badge("Pending Approval", "#f59e0b")}{VendorTable(v)}{ActionRow(approveUrl, rejectUrl, portalUrl, "View in Portal")}
             """));
     }
 
-    public static (string Subject, string Body) StepApproved(VendorSummary v, string by, string? next, string portalUrl)
+    public static (string Subject, string Body) StepApproved(VendorSummary v, string by, string? next, string portalUrl,
+        string? approveUrl = null, string? rejectUrl = null)
     {
         var subject = $"[Update] {v.VendorName} approved by {by}";
         var nextLine = next is not null
             ? $"<p style=\"margin:16px 0 0;color:#374151;font-size:14px;\">Now pending review by <strong>{Enc(next)}</strong>.</p>"
             : "";
+        var hasActions = approveUrl is not null || rejectUrl is not null;
+        var intro = hasActions
+            ? $"<p style=\"margin:0 0 16px;color:#374151;font-size:14px;\"><strong>{Enc(by)}</strong> has approved the vendor request. It is now your turn to review.</p>"
+            : $"<p style=\"margin:0 0 16px;color:#374151;font-size:14px;\"><strong>{Enc(by)}</strong> has approved the vendor request.</p>";
         return (subject, Wrap(subject, $"{v.VendorName} approved by {by}.", $"""
             <h2 style="margin:0 0 16px;color:#111827;font-size:18px;">Approval step completed</h2>
-            <p style="margin:0 0 16px;color:#374151;font-size:14px;"><strong>{Enc(by)}</strong> has approved the vendor request.</p>
-            {Badge("Approved", "#10b981")}{VendorTable(v)}{nextLine}{Btn("View Request", portalUrl)}
+            {intro}
+            {Badge("Approved", "#10b981")}{VendorTable(v)}{nextLine}{ActionRow(approveUrl, rejectUrl, portalUrl, "View Request")}
             """));
     }
 
-    public static (string Subject, string Body) ReadyForFinalApproval(VendorSummary v, string portalUrl)
+    public static (string Subject, string Body) ReadyForFinalApproval(VendorSummary v, string portalUrl,
+        string? approveUrl = null, string? rejectUrl = null)
     {
         var subject = $"[Action Required] {v.VendorName} — ready for final approval";
+        var sapNote = approveUrl is null
+            ? "Please review and assign the SAP Vendor Code."
+            : "Please review and assign the SAP Vendor Code in the portal. You may reject directly from this email if needed.";
         return (subject, Wrap(subject, "Cleared all intermediate approvals.", $"""
             <h2 style="margin:0 0 16px;color:#111827;font-size:18px;">Final approval required</h2>
-            <p style="margin:0 0 16px;color:#374151;font-size:14px;">All intermediate approvers have approved this vendor request. Please review and assign the SAP Vendor Code.</p>
-            {Badge("Pending Final Approval", "#8b5cf6")}{VendorTable(v)}{Btn("Review &amp; Assign SAP Code", portalUrl)}
+            <p style="margin:0 0 16px;color:#374151;font-size:14px;">All intermediate approvers have approved this vendor request. {Enc(sapNote)}</p>
+            {Badge("Pending Final Approval", "#8b5cf6")}{VendorTable(v)}{ActionRow(null, rejectUrl, portalUrl, "Review &amp; Assign SAP Code")}
             """));
     }
 
@@ -115,13 +141,15 @@ public static class EmailTemplates
             """));
     }
 
-    public static (string Subject, string Body) Resubmitted(VendorSummary v, string approverName, string portalUrl)
+    public static (string Subject, string Body) Resubmitted(VendorSummary v, string approverName, string portalUrl,
+        string? approveUrl = null, string? rejectUrl = null)
     {
         var subject = $"[Action Required] {v.VendorName} — resubmitted (REV {v.RevisionNo})";
         return (subject, Wrap(subject, "Resubmitted for review.", $"""
             <p style="margin:0 0 4px;color:#6b7280;font-size:13px;">Hi {Enc(approverName)},</p>
             <h2 style="margin:0 0 16px;color:#111827;font-size:18px;">Vendor request resubmitted</h2>
-            {Badge($"REV {v.RevisionNo} — Pending Approval", "#f59e0b")}{VendorTable(v)}{Btn("Review Updated Request", portalUrl)}
+            <p style="margin:0 0 16px;color:#374151;font-size:14px;">An updated vendor request is awaiting your review. The full request is attached as a PDF.</p>
+            {Badge($"REV {v.RevisionNo} — Pending Approval", "#f59e0b")}{VendorTable(v)}{ActionRow(approveUrl, rejectUrl, portalUrl, "View in Portal")}
             """));
     }
 
@@ -160,13 +188,14 @@ public static class EmailTemplates
             """));
     }
 
-    public static (string Subject, string Body) CompletedReEditSubmitted(VendorSummary v, string approverName, string portalUrl)
+    public static (string Subject, string Body) CompletedReEditSubmitted(VendorSummary v, string approverName, string portalUrl,
+        string? approveUrl = null, string? rejectUrl = null)
     {
         var subject = $"[Action Required] {v.VendorName} — re-submitted (REV {v.RevisionNo})";
         return (subject, Wrap(subject, "Updated and re-submitted.", $"""
             <p style="margin:0 0 4px;color:#6b7280;font-size:13px;">Hi {Enc(approverName)},</p>
             <h2 style="margin:0 0 16px;color:#111827;font-size:18px;">Completed vendor request re-submitted</h2>
-            {Badge($"REV {v.RevisionNo} — Pending Re-Approval", "#f59e0b")}{VendorTable(v)}{Btn("Review Updated Request", portalUrl)}
+            {Badge($"REV {v.RevisionNo} — Pending Re-Approval", "#f59e0b")}{VendorTable(v)}{ActionRow(approveUrl, rejectUrl, portalUrl, "View in Portal")}
             """));
     }
 

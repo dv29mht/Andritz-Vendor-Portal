@@ -68,7 +68,9 @@ public class ResubmitVendorRequestCommandHandler(
     ICurrentUserService currentUser,
     IEmailService email,
     IConfiguration config,
-    IDateTimeProvider clock) : IRequestHandler<ResubmitVendorRequestCommand, VendorRequestDetailDto>
+    IDateTimeProvider clock,
+    IVendorRequestPdfService pdfService,
+    IEmailActionTokenService tokens) : IRequestHandler<ResubmitVendorRequestCommand, VendorRequestDetailDto>
 {
     public async Task<VendorRequestDetailDto> Handle(ResubmitVendorRequestCommand request, CancellationToken ct)
     {
@@ -181,6 +183,7 @@ public class ResubmitVendorRequestCommandHandler(
     {
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
         var summary = VendorRequestMapper.ToSummary(entity);
+        var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
 
         var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
         if (buyer is not null)
@@ -200,8 +203,18 @@ public class ResubmitVendorRequestCommandHandler(
             var approver = await identity.FindByIdAsync(firstStep.ApproverUserId);
             if (approver is not null)
             {
-                var (s, b) = EmailTemplates.Resubmitted(summary, firstStep.ApproverName, portalUrl);
-                await email.SendAsync(approver.Email, s, b);
+                if (firstStep.IsFinalApproval)
+                {
+                    var rejectUrl = EmailActionLinks.BuildRejectOnly(tokens, config, entity, firstStep);
+                    var (s, b) = EmailTemplates.ReadyForFinalApproval(summary, portalUrl, null, rejectUrl);
+                    await email.SendAsync(approver.Email, s, b, pdf);
+                }
+                else
+                {
+                    var (approveUrl, rejectUrl) = EmailActionLinks.BuildFor(tokens, config, entity, firstStep);
+                    var (s, b) = EmailTemplates.Resubmitted(summary, firstStep.ApproverName, portalUrl, approveUrl, rejectUrl);
+                    await email.SendAsync(approver.Email, s, b, pdf);
+                }
             }
         }
 
@@ -209,7 +222,7 @@ public class ResubmitVendorRequestCommandHandler(
         if (admin is not null && !admin.IsArchived && admin.Email != buyer?.Email)
         {
             var (s, b) = EmailTemplates.Resubmitted(summary, admin.FullName, portalUrl);
-            await email.SendAsync(admin.Email, s, b);
+            await email.SendAsync(admin.Email, s, b, pdf);
         }
     }
 }

@@ -67,7 +67,9 @@ public class BuyerUpdateCompletedCommandHandler(
     ICurrentUserService currentUser,
     IEmailService email,
     IConfiguration config,
-    IDateTimeProvider clock) : IRequestHandler<BuyerUpdateCompletedCommand, VendorRequestDetailDto>
+    IDateTimeProvider clock,
+    IVendorRequestPdfService pdfService,
+    IEmailActionTokenService tokens) : IRequestHandler<BuyerUpdateCompletedCommand, VendorRequestDetailDto>
 {
     public async Task<VendorRequestDetailDto> Handle(BuyerUpdateCompletedCommand request, CancellationToken ct)
     {
@@ -168,6 +170,7 @@ public class BuyerUpdateCompletedCommandHandler(
     {
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
         var summary = VendorRequestMapper.ToSummary(entity);
+        var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
         var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
         var admin = await identity.FindByEmailAsync(SystemAccounts.AdminEmail);
 
@@ -188,15 +191,25 @@ public class BuyerUpdateCompletedCommandHandler(
             var approver = await identity.FindByIdAsync(firstStep.ApproverUserId);
             if (approver is not null)
             {
-                var (s, b) = EmailTemplates.CompletedReEditSubmitted(summary, firstStep.ApproverName, portalUrl);
-                await email.SendAsync(approver.Email, s, b);
+                if (firstStep.IsFinalApproval)
+                {
+                    var rejectUrl = EmailActionLinks.BuildRejectOnly(tokens, config, entity, firstStep);
+                    var (s, b) = EmailTemplates.ReadyForFinalApproval(summary, portalUrl, null, rejectUrl);
+                    await email.SendAsync(approver.Email, s, b, pdf);
+                }
+                else
+                {
+                    var (approveUrl, rejectUrl) = EmailActionLinks.BuildFor(tokens, config, entity, firstStep);
+                    var (s, b) = EmailTemplates.CompletedReEditSubmitted(summary, firstStep.ApproverName, portalUrl, approveUrl, rejectUrl);
+                    await email.SendAsync(approver.Email, s, b, pdf);
+                }
             }
         }
 
         if (admin is not null && !admin.IsArchived && admin.Email != buyer?.Email)
         {
             var (s, b) = EmailTemplates.CompletedReEditSubmitted(summary, admin.FullName, portalUrl);
-            await email.SendAsync(admin.Email, s, b);
+            await email.SendAsync(admin.Email, s, b, pdf);
         }
     }
 }

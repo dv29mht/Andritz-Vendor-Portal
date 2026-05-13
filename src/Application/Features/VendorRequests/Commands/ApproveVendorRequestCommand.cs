@@ -26,7 +26,9 @@ public class ApproveVendorRequestCommandHandler(
     ICurrentUserService currentUser,
     IEmailService email,
     IConfiguration config,
-    IDateTimeProvider clock) : IRequestHandler<ApproveVendorRequestCommand, VendorRequestDetailDto>
+    IDateTimeProvider clock,
+    IVendorRequestPdfService pdfService,
+    IEmailActionTokenService tokens) : IRequestHandler<ApproveVendorRequestCommand, VendorRequestDetailDto>
 {
     public async Task<VendorRequestDetailDto> Handle(ApproveVendorRequestCommand request, CancellationToken ct)
     {
@@ -57,47 +59,56 @@ public class ApproveVendorRequestCommandHandler(
     {
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
         var summary = VendorRequestMapper.ToSummary(entity);
+        var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
         var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
         var admin = await identity.FindByEmailAsync(SystemAccounts.AdminEmail);
 
         if (entity.Status == VendorRequestStatus.PendingFinalApproval)
         {
-            // Notify FinalApprover
+            // Notify FinalApprover with reject-only token (approve still needs SAP code in portal)
             var finalStep = entity.ApprovalSteps.FirstOrDefault(s => s.IsFinalApproval);
             if (finalStep is not null)
             {
                 var finalUser = await identity.FindByIdAsync(finalStep.ApproverUserId);
                 if (finalUser is not null)
                 {
-                    var (s, b) = EmailTemplates.ReadyForFinalApproval(summary, portalUrl);
-                    await email.SendAsync(finalUser.Email, s, b);
+                    var rejectUrl = EmailActionLinks.BuildRejectOnly(tokens, config, entity, finalStep);
+                    var (s, b) = EmailTemplates.ReadyForFinalApproval(summary, portalUrl, null, rejectUrl);
+                    await email.SendAsync(finalUser.Email, s, b, pdf);
                 }
             }
 
-            // Notify buyer + acting approver
+            // Buyer + admin get info-only StepApproved (no action buttons, with PDF)
             var (saSubject, saBody) = EmailTemplates.StepApproved(summary, approvedBy, null, portalUrl);
-            if (buyer is not null) await email.SendAsync(buyer.Email, saSubject, saBody);
+            if (buyer is not null) await email.SendAsync(buyer.Email, saSubject, saBody, pdf);
             if (admin is not null && !admin.IsArchived && admin.Email != buyer?.Email)
-                await email.SendAsync(admin.Email, saSubject, saBody);
+                await email.SendAsync(admin.Email, saSubject, saBody, pdf);
         }
         else
         {
             var nextStep = entity.ApprovalSteps
-                .Where(s => !s.IsFinalApproval && s.Decision == ApprovalDecision.Pending)
+                .Where(s => !s.IsFinalApproval && s.Decision == ApprovalDecision.Pending && !s.IsDeletedApprover)
                 .OrderBy(s => s.StepOrder)
                 .FirstOrDefault();
 
-            var (subj, body) = EmailTemplates.StepApproved(summary, approvedBy, nextStep?.ApproverName, portalUrl);
+            // Buyer + admin: info-only
+            var (infoSubj, infoBody) = EmailTemplates.StepApproved(summary, approvedBy, nextStep?.ApproverName, portalUrl);
+            var infoRecipients = new HashSet<string>();
+            if (buyer is not null) infoRecipients.Add(buyer.Email);
+            if (admin is not null && !admin.IsArchived) infoRecipients.Add(admin.Email);
+            foreach (var r in infoRecipients) await email.SendAsync(r, infoSubj, infoBody, pdf);
 
-            var recipients = new HashSet<string>();
-            if (buyer is not null) recipients.Add(buyer.Email);
-            if (admin is not null && !admin.IsArchived) recipients.Add(admin.Email);
+            // Next approver: action-required with one-click buttons
             if (nextStep is not null)
             {
                 var nextUser = await identity.FindByIdAsync(nextStep.ApproverUserId);
-                if (nextUser is not null) recipients.Add(nextUser.Email);
+                if (nextUser is not null && !infoRecipients.Contains(nextUser.Email))
+                {
+                    var (approveUrl, rejectUrl) = EmailActionLinks.BuildFor(tokens, config, entity, nextStep);
+                    var (subj, body) = EmailTemplates.StepApproved(summary, approvedBy, nextStep.ApproverName, portalUrl, approveUrl, rejectUrl);
+                    await email.SendAsync(nextUser.Email, subj, body, pdf);
+                }
             }
-            foreach (var r in recipients) await email.SendAsync(r, subj, body);
         }
     }
 }

@@ -4,6 +4,7 @@ using AndritzVendorPortal.Application.Features.VendorRequests.Common;
 using AndritzVendorPortal.Application.Interfaces;
 using AndritzVendorPortal.Application.Services;
 using AndritzVendorPortal.Domain.Constants;
+using AndritzVendorPortal.Domain.Entities;
 using AndritzVendorPortal.Domain.Enums;
 using MediatR;
 using Microsoft.Extensions.Configuration;
@@ -19,7 +20,9 @@ public class SubmitVendorRequestCommandHandler(
     ICurrentUserService currentUser,
     IEmailService email,
     IConfiguration config,
-    IDateTimeProvider clock) : IRequestHandler<SubmitVendorRequestCommand, VendorRequestDetailDto>
+    IDateTimeProvider clock,
+    IVendorRequestPdfService pdfService,
+    IEmailActionTokenService tokens) : IRequestHandler<SubmitVendorRequestCommand, VendorRequestDetailDto>
 {
     public async Task<VendorRequestDetailDto> Handle(SubmitVendorRequestCommand request, CancellationToken ct)
     {
@@ -43,6 +46,7 @@ public class SubmitVendorRequestCommandHandler(
         // Notifications — buyer + first approver + admin
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
         var summary = VendorRequestMapper.ToSummary(entity);
+        var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
 
         var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
         if (buyer is not null)
@@ -61,16 +65,27 @@ public class SubmitVendorRequestCommandHandler(
             var approver = await identity.FindByIdAsync(firstStep.ApproverUserId);
             if (approver is not null)
             {
-                var (s, b) = EmailTemplates.NewSubmission(summary, firstStep.ApproverName, portalUrl);
-                await email.SendAsync(approver.Email, s, b);
+                if (firstStep.IsFinalApproval)
+                {
+                    var rejectUrl = EmailActionLinks.BuildRejectOnly(tokens, config, entity, firstStep);
+                    var (s, b) = EmailTemplates.ReadyForFinalApproval(summary, portalUrl, null, rejectUrl);
+                    await email.SendAsync(approver.Email, s, b, pdf);
+                }
+                else
+                {
+                    var (approveUrl, rejectUrl) = EmailActionLinks.BuildFor(tokens, config, entity, firstStep);
+                    var (s, b) = EmailTemplates.NewSubmission(summary, firstStep.ApproverName, portalUrl, approveUrl, rejectUrl);
+                    await email.SendAsync(approver.Email, s, b, pdf);
+                }
             }
         }
 
         var admin = await identity.FindByEmailAsync(SystemAccounts.AdminEmail);
         if (admin is not null && !admin.IsArchived && admin.Email != buyer?.Email)
         {
+            // Admin is observer-only on submissions — no action buttons, but include PDF.
             var (s, b) = EmailTemplates.NewSubmission(summary, admin.FullName, portalUrl);
-            await email.SendAsync(admin.Email, s, b);
+            await email.SendAsync(admin.Email, s, b, pdf);
         }
 
         return VendorRequestMapper.ToDetailDto(entity);

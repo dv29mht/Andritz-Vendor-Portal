@@ -73,6 +73,8 @@ public static class DependencyInjection
         services.Configure<EmailSettings>(config.GetSection("EmailSettings"));
         services.AddHttpClient();
         services.AddScoped<IEmailService, BrevoEmailService>();
+        services.AddSingleton<IVendorRequestPdfService, QuestPdfVendorRequestPdfService>();
+        services.AddSingleton<IEmailActionTokenService, EmailActionTokenService>();
 
         // JWT bearer (default scheme — overrides Identity's cookie default)
         var jwtSection = config.GetSection("Jwt");

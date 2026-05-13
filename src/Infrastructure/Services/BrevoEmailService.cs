@@ -18,7 +18,10 @@ public class BrevoEmailService(
 {
     private readonly EmailSettings _cfg = options.Value;
 
-    public async Task SendAsync(string to, string subject, string htmlBody)
+    public Task SendAsync(string to, string subject, string htmlBody) =>
+        SendAsync(to, subject, htmlBody, null);
+
+    public async Task SendAsync(string to, string subject, string htmlBody, IReadOnlyList<EmailAttachment>? attachments)
     {
         if (string.IsNullOrWhiteSpace(_cfg.BrevoApiKey))
         {
@@ -32,13 +35,26 @@ public class BrevoEmailService(
             client.DefaultRequestHeaders.Add("api-key", _cfg.BrevoApiKey);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            var payload = new
-            {
-                sender = new { name = _cfg.FromName, email = _cfg.FromEmail },
-                to = new[] { new { email = to } },
-                subject,
-                htmlContent = htmlBody
-            };
+            object payload = attachments is { Count: > 0 }
+                ? new
+                {
+                    sender = new { name = _cfg.FromName, email = _cfg.FromEmail },
+                    to = new[] { new { email = to } },
+                    subject,
+                    htmlContent = htmlBody,
+                    attachment = attachments.Select(a => new
+                    {
+                        name = a.FileName,
+                        content = Convert.ToBase64String(a.Content)
+                    }).ToArray()
+                }
+                : new
+                {
+                    sender = new { name = _cfg.FromName, email = _cfg.FromEmail },
+                    to = new[] { new { email = to } },
+                    subject,
+                    htmlContent = htmlBody
+                };
 
             using var content = new StringContent(
                 JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
