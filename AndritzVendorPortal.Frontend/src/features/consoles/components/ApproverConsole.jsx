@@ -225,7 +225,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                         )}
                       </div>
                       <p className="text-xs text-gray-400 mt-0.5">
-                        Submitted by {req.createdByName} · {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                        Submitted by {req.createdByName} · {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })}
                       </p>
                     </div>
                     <button

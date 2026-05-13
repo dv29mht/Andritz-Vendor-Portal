@@ -178,7 +178,7 @@ export default function OneTimeVendorPage({ workflow, currentUser }) {
                 </td>
                 <td className="px-4 py-3 font-mono text-xs text-gray-600">{req.gstNumber || '—'}</td>
                 <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
-                  {new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                  {new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   <div className="flex items-center gap-1.5">

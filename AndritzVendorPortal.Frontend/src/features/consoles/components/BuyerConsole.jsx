@@ -357,8 +357,8 @@ function exportRequestToExcel(req) {
     ['Status',           req.status],
     ['Revision No.',     String(req.revisionNo)],
     ['Created By',       req.createdByName],
-    ['Created On',       new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })],
-    ['Last Updated',     new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })],
+    ['Created On',       new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })],
+    ['Last Updated',     new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })],
     ['Assigned By',      req.vendorCodeAssignedBy ?? ''],
   ]
   const ws = XLSX.utils.aoa_to_sheet(data)
@@ -417,7 +417,7 @@ ${req.vendorCode ? `<p class="code">SAP Vendor Code: ${esc(req.vendorCode)}</p>`
 <h2>Record</h2>
 <table>
   ${row('Created By', req.createdByName)}
-  ${row('Created On', new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }))}
+  ${row('Created On', new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' }))}
   ${row('Assigned By', req.vendorCodeAssignedBy ?? '')}
   ${row('Revision No.', String(req.revisionNo))}
 </table>
@@ -961,7 +961,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           </p>
           <p className="text-xs text-gray-400 mt-0.5">
             {[req.city, req.locality, req.state].filter(Boolean).join(', ')}
-            {' · '}{new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+            {' · '}{new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
@@ -1011,7 +1011,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           <p className="text-sm text-gray-500 mt-1">{req.contactPerson || req.contactInformation}</p>
           <p className="text-xs text-gray-400 mt-0.5">
             {[req.city, req.locality, req.state].filter(Boolean).join(', ')}
-            {' · '}{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+            {' · '}{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -1195,7 +1195,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                         <p className="text-sm font-medium text-gray-900">{req.vendorName}</p>
                         <p className="text-xs text-gray-400 mt-0.5">
                           {[req.city, req.locality].filter(Boolean).join(', ')}
-                          {' · '}{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                          {' · '}{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })}
                         </p>
                       </div>
                       <StatusBadge status={req.status} />
@@ -1508,7 +1508,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                         <td className="px-4 py-3 text-xs text-red-600 italic max-w-xs truncate">{req.rejectionComment || '—'}</td>
                         <td className="px-4 py-3 text-xs text-gray-500">{[req.city, req.locality].filter(Boolean).join(', ') || '—'}</td>
                         <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
-                          {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                          {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-1.5">

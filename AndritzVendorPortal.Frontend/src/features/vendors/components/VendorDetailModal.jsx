@@ -256,7 +256,7 @@ function downloadRevisionPdf(request) {
   @media print { body { margin: 12px; } }
 </style></head><body>
 <h1>Revision History — ${esc(request.vendorName)}</h1>
-<p class="sub">Generated on ${new Date().toLocaleDateString('en-IN', { dateStyle: 'long' })} &nbsp;·&nbsp; Status: ${esc(request.status)}</p>
+<p class="sub">Generated on ${new Date().toLocaleDateString('en-IN', { dateStyle: 'long', timeZone: 'Asia/Kolkata' })} &nbsp;·&nbsp; Status: ${esc(request.status)}</p>
 <table><thead><tr><th>Revision</th><th>Changed By</th><th>Changed At</th><th>Rejection Reason</th><th>Field</th><th>Old Value</th><th>New Value</th></tr></thead>
 <tbody>${revRows}</tbody></table>
 </body></html>`
@@ -481,7 +481,7 @@ function PreviewTab({ request }) {
         <td style="padding:4px 8px;border:1px solid #ddd;font-size:10px">${esc(s.isFinalApproval ? 'Final' : `Step ${s.stepOrder}`)}</td>
         <td style="padding:4px 8px;border:1px solid #ddd;font-size:10px">${esc(s.approverName)}${s.isFinalApproval ? ' (FA)' : ''}</td>
         <td style="padding:4px 8px;border:1px solid #ddd;font-size:10px">${esc(stepDecision(s.decision))}</td>
-        <td style="padding:4px 8px;border:1px solid #ddd;font-size:10px">${s.decidedAt ? esc(new Date(s.decidedAt).toLocaleDateString('en-IN',{dateStyle:'medium'})) : '—'}</td>
+        <td style="padding:4px 8px;border:1px solid #ddd;font-size:10px">${s.decidedAt ? esc(new Date(s.decidedAt).toLocaleDateString('en-IN',{dateStyle:'medium',timeZone:'Asia/Kolkata'})) : '—'}</td>
         <td style="padding:4px 8px;border:1px solid #ddd;font-size:10px">${esc(s.comment ?? '')}</td>
       </tr>`).join('')}
     </tbody>
@@ -739,6 +739,6 @@ function SignatureBlock({ label, name }) {
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 
-const fmtDate     = (d) => d ? new Date(d).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—'
-const fmtDateFull = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'
-const fmtDateShort= (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'
+const fmtDate     = (d) => d ? new Date(d).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' }) : '—'
+const fmtDateFull = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' }) : '—'
+const fmtDateShort= (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit', timeZone: 'Asia/Kolkata' }) : '—'

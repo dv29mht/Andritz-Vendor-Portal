@@ -1,5 +1,6 @@
 using AndritzVendorPortal.API.Authorization;
 using AndritzVendorPortal.API.Hubs;
+using AndritzVendorPortal.API.Json;
 using AndritzVendorPortal.API.Middleware;
 using AndritzVendorPortal.API.Services;
 using AndritzVendorPortal.Application;
@@ -72,6 +73,8 @@ builder.Services.AddControllers().AddJsonOptions(opts =>
 {
     opts.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    opts.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
+    opts.JsonSerializerOptions.Converters.Add(new UtcNullableDateTimeConverter());
 });
 builder.Services.AddFluentValidationAutoValidation();
 

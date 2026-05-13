@@ -20,7 +20,7 @@ export function buildWeeklyData(requests, dateField = 'createdAt', weekCount = 8
   for (let i = weekCount - 1; i >= 0; i--) {
     const d = startOfWeek(new Date())
     d.setDate(d.getDate() - i * 7)
-    const label = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+    const label = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', timeZone: 'Asia/Kolkata' })
     weeks.push({ key: fmtKey(d), label, count: counts[fmtKey(d)] ?? 0 })
   }
   return weeks
@@ -48,7 +48,7 @@ export function buildCustomRangeData(requests, dateField = 'createdAt', from, to
   for (let i = 0; cursor <= toD && i < 62; i++) {
     out.push({
       key: fmtKey(cursor),
-      label: cursor.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+      label: cursor.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', timeZone: 'Asia/Kolkata' }),
       count: counts[fmtKey(cursor)] ?? 0,
     })
     cursor.setDate(cursor.getDate() + 1)
@@ -76,7 +76,7 @@ export function buildMonthlyData(requests, dateField = 'createdAt', monthCount =
     d.setDate(1)
     d.setMonth(d.getMonth() - i)
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const label = d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })
+    const label = d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit', timeZone: 'Asia/Kolkata' })
     months.push({ key, label, count: counts[key] ?? 0 })
   }
   return months

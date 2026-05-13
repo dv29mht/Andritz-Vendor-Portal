@@ -417,7 +417,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                     </td>
                     <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap text-center">{req.createdByName}</td>
                     <td className="px-5 py-3.5 text-center"><StatusBadge status={req.status} /></td>
-                    <td className="px-5 py-3.5 text-gray-400 text-xs whitespace-nowrap text-center">{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</td>
+                    <td className="px-5 py-3.5 text-gray-400 text-xs whitespace-nowrap text-center">{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })}</td>
                   </tr>
                 ))}
               </tbody>

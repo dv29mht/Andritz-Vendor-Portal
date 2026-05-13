@@ -1,10 +1,14 @@
 import * as XLSX from 'xlsx'
 
+// Single source of truth: every timestamp surfaced in the UI/exports is rendered
+// in IST regardless of the viewer's machine time zone.
+const IST_TZ = 'Asia/Kolkata'
+
 const dateTimeFmt = (d) => {
   if (!d) return ''
   const dt = new Date(d)
   if (Number.isNaN(dt.getTime())) return ''
-  return dt.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+  return dt.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: IST_TZ })
 }
 
 // Builds an Excel workbook from an array of requests with all the columns useful for
@@ -102,10 +106,10 @@ export function exportUsersToExcel(users, filename = 'users.xlsx', { archived = 
   XLSX.writeFile(wb, filename)
 }
 
-/** Formats a UTC timestamp as a locale-aware date+time string for inline display. */
+/** Formats a UTC timestamp as an IST date+time string for inline display. */
 export function formatDateTime(iso) {
   if (!iso) return '—'
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return '—'
-  return d.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+  return d.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: IST_TZ })
 }

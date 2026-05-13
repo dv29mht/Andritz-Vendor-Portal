@@ -180,7 +180,7 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
                 <td className="px-4 py-3 font-mono text-xs text-gray-600">{req.gstNumber}</td>
                 <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
                   {req.vendorCodeAssignedAt
-                    ? new Date(req.vendorCodeAssignedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })
+                    ? new Date(req.vendorCodeAssignedAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })
                     : '—'}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">

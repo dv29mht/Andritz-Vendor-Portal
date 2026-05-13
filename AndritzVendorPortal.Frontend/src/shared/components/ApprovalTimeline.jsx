@@ -52,7 +52,7 @@ export default function ApprovalTimeline({ steps, requestStatus }) {
               )}
               {!isDeleted && !wasBlocked && step.decidedAt && (
                 <p className="text-xs text-gray-400">
-                  {new Date(step.decidedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                  {new Date(step.decidedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })}
                 </p>
               )}
               {!isDeleted && !wasBlocked && step.decision === 'Pending' && (
