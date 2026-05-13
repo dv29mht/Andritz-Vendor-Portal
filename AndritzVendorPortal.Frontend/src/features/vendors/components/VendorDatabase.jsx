@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { BuildingOfficeIcon, ArrowPathIcon, EyeIcon, ArchiveBoxIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+import { BuildingOfficeIcon, ArrowPathIcon, EyeIcon, ArchiveBoxIcon, ChevronLeftIcon, ChevronRightIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 import VendorDetailModal from './VendorDetailModal'
 import Toast from '../../../shared/components/Toast'
 import ConfirmDialog from '../../../shared/components/ConfirmDialog'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
 import { vendorsService } from '../services/vendorsService'
+import { exportRequestsToExcel } from '../../../utils/exportUtils'
 
 export default function VendorDatabase({ requests, isAdmin, onReclassified, workflow }) {
   const [showArchived, setShowArchived]       = useState(false)
@@ -114,12 +115,26 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
             )}
           </div>
         </div>
-        <input
-          className="form-input max-w-xs"
-          placeholder="Search vendor, code, city, GST…"
-          value={search}
-          onChange={e => { setSearch(e.target.value); setPage(1) }}
-        />
+        <div className="flex items-center gap-2 flex-wrap">
+          <input
+            className="form-input max-w-xs"
+            placeholder="Search vendor, code, city, GST…"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1) }}
+          />
+          <button
+            className="btn-secondary"
+            disabled={visible.length === 0}
+            title="Export current view to Excel"
+            onClick={() => exportRequestsToExcel(
+              visible,
+              showArchived ? 'archived_permanent_vendors.xlsx' : 'permanent_vendors.xlsx',
+            )}
+          >
+            <ArrowDownTrayIcon className="h-4 w-4" />
+            Export Excel
+          </button>
+        </div>
       </div>
 
       {/* Table */}

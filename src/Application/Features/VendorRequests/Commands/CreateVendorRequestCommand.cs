@@ -66,9 +66,9 @@ public class CreateVendorRequestCommandValidator : AbstractValidator<CreateVendo
             .Must(v => v is "900D" or "900I" or "P20D" or "T20I")
             .WithMessage("Purchasing Organization must be one of: 900D, 900I, P20D, T20I.");
         RuleFor(x => x.MsmeCategory)
-            .NotEmpty()
             .Must(v => v is "Micro" or "Small" or "Medium")
-            .WithMessage("MSME Category must be Micro, Small, or Medium.");
+            .When(x => !string.IsNullOrWhiteSpace(x.MsmeCategory))
+            .WithMessage("MSME Category, if provided, must be Micro, Small, or Medium.");
         RuleFor(x => x.BankName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.BranchName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.BankAccountNumber).NotEmpty().MaximumLength(50);

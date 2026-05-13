@@ -26,7 +26,8 @@ import { exportRequestsToExcel, formatDateTime } from '../../../utils/exportUtil
 
 const EMPTY_FORM = {
   purchasingOrganization: '',
-  vendorName: '', materialGroup: '', reason: '', msmeCategory: '',
+  vendorName: '', materialGroup: '', reason: '',
+  isMsmeVendor: false, msmeCategory: '',
   contactPerson: '', telephone: '',
   gstNumber: '', panCard: '',
   addressDetails: '', postalCode: '', city: '', locality: '', state: '', country: 'IN',
@@ -93,7 +94,7 @@ const TEMPLATE_HEADERS = [
   { label: 'Purchasing Organization *', required: true  },
   { label: 'Vendor Name *',             required: true  },
   { label: 'Material Group',            required: false },
-  { label: 'MSME Category *',           required: true  },
+  { label: 'MSME Category',             required: false },
   { label: 'Reason for Registration *', required: true  },
   { label: 'Contact Person *',          required: true  },
   { label: 'Telephone *',               required: true  },
@@ -141,7 +142,7 @@ function downloadTemplate() {
     ['* = Required field. Do not change column headers.'],
     ['Note: GST document and Bank document uploads are mandatory in the form but cannot be imported via this template — attach them after the form pre-fills.'],
     ['Purchasing Organization must be one of: 900D, 900I, P20D, T20I'],
-    ['MSME Category must be one of: Micro, Small, Medium'],
+    ['MSME Category (optional): leave blank if vendor is not MSME, otherwise enter Micro, Small, or Medium.'],
   ], { origin: 'A3' })
 
   XLSX.utils.book_append_sheet(wb, ws, 'Vendor Request')
@@ -472,9 +473,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           errs.push(`Purchasing Organization must be one of: ${PURCHASING_ORGS.join(', ')}.`)
         if (!parsed.vendorName.trim())     errs.push('Vendor Name is required.')
         if (/\d/.test(parsed.vendorName))  errs.push('Vendor Name should not contain numbers.')
-        if (!parsed.msmeCategory.trim())   errs.push('MSME Category is required.')
-        else if (!MSME_CATEGORIES.includes(parsed.msmeCategory.trim()))
-          errs.push(`MSME Category must be one of: ${MSME_CATEGORIES.join(', ')}.`)
+        if (parsed.msmeCategory.trim() && !MSME_CATEGORIES.includes(parsed.msmeCategory.trim()))
+          errs.push(`MSME Category, if provided, must be one of: ${MSME_CATEGORIES.join(', ')}. Leave blank if vendor is not MSME.`)
         if (!parsed.reason.trim())         errs.push('Reason for Registration is required.')
         else if (parsed.reason.length > REASON_MAX) errs.push(`Reason for Registration must be ${REASON_MAX} characters or fewer.`)
         if (!parsed.contactPerson.trim())  errs.push('Contact Person is required.')
@@ -602,6 +602,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       vendorName:     req.vendorName     ?? '',
       materialGroup:  req.materialGroup  ?? '',
       reason:         req.reason         ?? '',
+      isMsmeVendor:   !!(req.msmeCategory && req.msmeCategory.trim()),
       msmeCategory:   req.msmeCategory   ?? '',
       contactPerson:  req.contactPerson  || req.contactInformation || '',
       telephone:      req.telephone      ?? '',
@@ -639,7 +640,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     if (!form.vendorName.trim())     e.vendorName     = 'Vendor name is required.'
     if (!form.reason.trim())         e.reason         = 'Reason for registration is required.'
     else if (form.reason.length > REASON_MAX) e.reason = `Reason must be ${REASON_MAX} characters or fewer.`
-    if (!form.msmeCategory)          e.msmeCategory   = 'MSME Category is required.'
+    if (form.isMsmeVendor && !form.msmeCategory) e.msmeCategory = 'Select MSME Category (Micro, Small, or Medium).'
     if (!form.contactPerson.trim())  e.contactPerson  = 'Contact person is required.'
     if (!form.telephone.trim())      e.telephone      = 'Telephone is required.'
     if (!form.gstNumber.trim())      e.gstNumber      = 'GST Number is required.'
@@ -1525,13 +1526,39 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   {materialGroups.map(g => <option key={g} value={g} />)}
                 </datalist>
               </Field>
-              <Field label="MSME Category" required error={errors.msmeCategory}>
-                <select className="form-input"
-                  value={form.msmeCategory}
-                  onChange={e => set('msmeCategory', e.target.value)}>
-                  <option value="">Select MSME Category</option>
-                  {MSME_CATEGORIES.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
+              <Field label="MSME Vendor?" required error={errors.msmeCategory}>
+                <div className="flex items-center gap-4">
+                  <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="radio"
+                      name="isMsmeVendor"
+                      className="h-4 w-4 text-[#096fb3] focus:ring-[#096fb3]"
+                      checked={form.isMsmeVendor === true}
+                      onChange={() => { set('isMsmeVendor', true) }}
+                    />
+                    <span className="text-sm text-gray-700">Yes</span>
+                  </label>
+                  <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="radio"
+                      name="isMsmeVendor"
+                      className="h-4 w-4 text-[#096fb3] focus:ring-[#096fb3]"
+                      checked={form.isMsmeVendor === false}
+                      onChange={() => { set('isMsmeVendor', false); set('msmeCategory', '') }}
+                    />
+                    <span className="text-sm text-gray-700">No</span>
+                  </label>
+                </div>
+                {form.isMsmeVendor && (
+                  <select
+                    className="form-input mt-2"
+                    value={form.msmeCategory}
+                    onChange={e => set('msmeCategory', e.target.value)}
+                  >
+                    <option value="">Select MSME Category</option>
+                    {MSME_CATEGORIES.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                )}
               </Field>
               <Field label="Proposed By" error={errors.proposedBy}>
                 <input className="form-input" list="proposed-by-list" placeholder="Name / department proposing this vendor"

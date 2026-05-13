@@ -66,6 +66,42 @@ export function exportRequestsToExcel(requests, filename = 'vendor_requests.xlsx
   XLSX.writeFile(wb, filename)
 }
 
+const ROLE_DISPLAY = {
+  Admin: 'Admin', Buyer: 'Buyer', Approver: 'Approver', FinalApprover: 'Final Approver',
+}
+const CONSOLE_LABEL = {
+  Admin: 'Admin Dashboard', Buyer: 'Buyer Console',
+  Approver: 'Approver Console', FinalApprover: 'Final Approver Console',
+}
+
+// Builds an Excel workbook of users (active or archived) and triggers a download.
+export function exportUsersToExcel(users, filename = 'users.xlsx', { archived = false } = {}) {
+  const rows = users.map((u, idx) => {
+    const primaryRole = u.roles?.[0] ?? ''
+    return {
+      '#':              idx + 1,
+      'Full Name':      u.fullName ?? '',
+      'Email':          u.email ?? '',
+      'Designation':    u.designation ?? '',
+      'Role':           ROLE_DISPLAY[primaryRole] ?? primaryRole,
+      'Console Access': CONSOLE_LABEL[primaryRole] ?? '',
+      'User ID':        u.id ?? '',
+      'Status':         archived ? 'Archived' : 'Active',
+    }
+  })
+
+  const wb = XLSX.utils.book_new()
+  const ws = XLSX.utils.json_to_sheet(rows)
+
+  if (rows.length > 0) {
+    const headers = Object.keys(rows[0])
+    ws['!cols'] = headers.map(h => ({ wch: Math.min(40, Math.max(h.length + 2, 14)) }))
+  }
+
+  XLSX.utils.book_append_sheet(wb, ws, archived ? 'Archived Users' : 'Users')
+  XLSX.writeFile(wb, filename)
+}
+
 /** Formats a UTC timestamp as a locale-aware date+time string for inline display. */
 export function formatDateTime(iso) {
   if (!iso) return '—'

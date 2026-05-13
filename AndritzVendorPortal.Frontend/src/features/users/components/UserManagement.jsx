@@ -7,12 +7,14 @@ import {
   PencilSquareIcon, TrashIcon, EyeIcon, EyeSlashIcon,
   EnvelopeIcon, BriefcaseIcon, ComputerDesktopIcon, FingerPrintIcon,
   ChevronLeftIcon, ChevronRightIcon, ArrowUturnLeftIcon,
+  ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline'
 import { usersService } from '../services/usersService'
 import { useUsers } from '../hooks/useUsers'
 import { useAuth } from '../../auth/hooks/useAuth'
 import Toast from '../../../shared/components/Toast'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
+import { exportUsersToExcel } from '../../../utils/exportUtils'
 
 const ROLES = ['Buyer', 'Approver']
 
@@ -566,6 +568,19 @@ export default function UserManagement() {
           <p className="text-sm text-gray-500 mt-0.5">{users.length} registered account{users.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => exportUsersToExcel(
+              showArchived && archivedUsers.length > 0 ? archivedUsers : visible,
+              showArchived ? 'archived_users.xlsx' : 'users.xlsx',
+              { archived: showArchived && archivedUsers.length > 0 },
+            )}
+            disabled={(showArchived ? archivedUsers.length : visible.length) === 0}
+            className="btn-secondary"
+            title="Export current view to Excel"
+          >
+            <ArrowDownTrayIcon className="h-4 w-4" />
+            Export Excel
+          </button>
           <button onClick={handleSyncAd} disabled={syncing} className="btn-secondary">
             <ArrowPathIcon className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
             {syncing ? 'Syncing…' : 'Sync from AD'}

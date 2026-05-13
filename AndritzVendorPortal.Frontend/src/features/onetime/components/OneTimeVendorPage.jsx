@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { ChevronLeftIcon, ChevronRightIcon, ArchiveBoxIcon, ArrowPathIcon, EyeIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { ChevronLeftIcon, ChevronRightIcon, ArchiveBoxIcon, ArrowPathIcon, EyeIcon, MagnifyingGlassIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 import { vendorsService } from '../../vendors/services/vendorsService'
 import StatusBadge from '../../../shared/components/StatusBadge'
 import VendorDetailModal from '../../vendors/components/VendorDetailModal'
 import Toast from '../../../shared/components/Toast'
 import ConfirmDialog from '../../../shared/components/ConfirmDialog'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
+import { exportRequestsToExcel } from '../../../utils/exportUtils'
 
 export default function OneTimeVendorPage({ workflow, currentUser }) {
   const isAdmin = currentUser?.role === 'Admin'
@@ -108,15 +109,29 @@ export default function OneTimeVendorPage({ workflow, currentUser }) {
             )}
           </div>
         </div>
-        <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search vendor, GST, city…"
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1) }}
-            className="form-input pl-9 text-sm max-w-xs"
-          />
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search vendor, GST, city…"
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(1) }}
+              className="form-input pl-9 text-sm max-w-xs"
+            />
+          </div>
+          <button
+            className="btn-secondary"
+            disabled={filtered.length === 0}
+            title="Export current view to Excel"
+            onClick={() => exportRequestsToExcel(
+              filtered,
+              showArchived ? 'archived_one_time_vendors.xlsx' : 'one_time_vendors.xlsx',
+            )}
+          >
+            <ArrowDownTrayIcon className="h-4 w-4" />
+            Export Excel
+          </button>
         </div>
       </div>
 
