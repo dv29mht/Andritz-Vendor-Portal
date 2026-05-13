@@ -171,14 +171,48 @@ function Field({ label, required, error, span = 1, children, hint }) {
   )
 }
 
-function FileUploadField({ label, required, value, error, accept = "image/*,application/pdf", onPick, onClear }) {
+// Opens an uploaded document for preview.
+//   • PDF / image  → new tab
+//   • everything else (xlsx, doc, etc.) → triggers download
+// Works on both freshly picked files and saved docs (both store a data: URL in value.data).
+async function previewUploadedDoc(value) {
+  if (!value?.data) return
+  try {
+    const resp  = await fetch(value.data)
+    const blob  = await resp.blob()
+    const url   = URL.createObjectURL(blob)
+    const mime  = (blob.type || '').toLowerCase()
+    const inline = mime === 'application/pdf' || mime.startsWith('image/')
+    if (inline) {
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } else {
+      const a = document.createElement('a')
+      a.href = url
+      a.download = value.name || 'document'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+    }
+    // Revoke after a delay so the new tab has time to load the resource.
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  } catch {
+    // Fallback: open the data URL directly.
+    window.open(value.data, '_blank', 'noopener,noreferrer')
+  }
+}
+
+function FileUploadField({
+  label, required, value, error,
+  accept = "image/*,application/pdf,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  span = 1, onPick, onClear,
+}) {
   const inputRef = useRef(null)
   return (
-    <div className="sm:col-span-2">
+    <div className={span === 2 ? 'sm:col-span-2' : ''}>
       <label className="form-label">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <button
           type="button"
           className="btn-secondary"
@@ -189,8 +223,16 @@ function FileUploadField({ label, required, value, error, accept = "image/*,appl
         </button>
         {value && (
           <>
-            <span className="text-xs text-gray-600 truncate flex-1 min-w-0">{value.name}</span>
-            <button type="button" className="text-gray-400 hover:text-red-500" onClick={onClear}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => previewUploadedDoc(value)}
+              title="Preview — opens PDFs/images in a new tab, downloads other file types"
+            >
+              <EyeIcon className="h-4 w-4" />
+              Preview
+            </button>
+            <button type="button" className="text-gray-400 hover:text-red-500" onClick={onClear} title="Remove file">
               <XMarkIcon className="h-4 w-4" />
             </button>
           </>
@@ -203,6 +245,9 @@ function FileUploadField({ label, required, value, error, accept = "image/*,appl
           onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; onPick(f) }}
         />
       </div>
+      {value && (
+        <p className="mt-1 text-xs text-gray-500 truncate">{value.name}</p>
+      )}
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   )
