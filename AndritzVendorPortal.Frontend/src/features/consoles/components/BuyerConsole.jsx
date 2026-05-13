@@ -840,40 +840,52 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       }
     } catch (err) {
       const detail = err.response?.data
-      // ASP.NET Core model validation returns { errors: { FieldName: ["msg"] } }
-      if (detail?.errors && typeof detail.errors === 'object') {
-        const fieldMap = {
-          VendorName: 'vendorName', ContactPerson: 'contactPerson',
-          GstNumber: 'gstNumber', PanCard: 'panCard',
-          AddressDetails: 'addressDetails', City: 'city', Locality: 'locality',
-          Telephone: 'telephone', PostalCode: 'postalCode', State: 'state',
-          MaterialGroup: 'materialGroup', Reason: 'reason',
-          PurchasingOrganization: 'purchasingOrganization', MsmeCategory: 'msmeCategory',
-          BankName: 'bankName', BranchName: 'branchName',
-          BankAccountNumber: 'bankAccountNumber', IfscCode: 'ifscCode',
-          GstDocument: 'gstDocument', BankDocument1: 'bankDocument1',
-          Currency: 'currency', Incoterms: 'incoterms',
-        }
-        const fieldErrors = {}
-        for (const [key, msgs] of Object.entries(detail.errors)) {
-          const mapped = fieldMap[key] ?? key.charAt(0).toLowerCase() + key.slice(1)
-          fieldErrors[mapped] = Array.isArray(msgs) ? msgs[0] : msgs
-        }
-        if (Object.keys(fieldErrors).length) {
-          setErrors(fieldErrors)
-          setApiError('Please fix the highlighted fields below.')
-          scrollToFirstFieldError()
-        } else {
-          setApiError(detail.title ?? 'Request failed. Please check your entries and try again.')
-          setTimeout(() => apiErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
-        }
-      } else {
-        if (Array.isArray(detail))           setApiError(detail.join(' '))
-        else if (typeof detail === 'string') setApiError(detail)
-        else if (detail?.message)            setApiError(detail.message)
-        else                                 setApiError('Request failed. Please check your entries and try again.')
+      const fieldMap = {
+        VendorName: 'vendorName', ContactPerson: 'contactPerson',
+        GstNumber: 'gstNumber', PanCard: 'panCard',
+        AddressDetails: 'addressDetails', City: 'city', Locality: 'locality',
+        Telephone: 'telephone', PostalCode: 'postalCode', State: 'state',
+        MaterialGroup: 'materialGroup', Reason: 'reason',
+        PurchasingOrganization: 'purchasingOrganization', MsmeCategory: 'msmeCategory',
+        BankName: 'bankName', BranchName: 'branchName',
+        BankAccountNumber: 'bankAccountNumber', IfscCode: 'ifscCode',
+        GstDocument: 'gstDocument', BankDocument1: 'bankDocument1',
+        Currency: 'currency', Incoterms: 'incoterms',
+      }
+      const toCamel = (key) => fieldMap[key] ?? key.charAt(0).toLowerCase() + key.slice(1)
+      const showFieldErrors = (fieldErrors) => {
+        setErrors(fieldErrors)
+        setApiError('Please fix the highlighted fields below.')
+        scrollToFirstFieldError()
+      }
+      const showMessage = (msg) => {
+        setApiError(msg)
         setTimeout(() => apiErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
       }
+      // ASP.NET Core ProblemDetails: { errors: { FieldName: ["msg"] } }
+      if (detail?.errors && !Array.isArray(detail.errors) && typeof detail.errors === 'object') {
+        const fieldErrors = {}
+        for (const [key, msgs] of Object.entries(detail.errors)) {
+          fieldErrors[toCamel(key)] = Array.isArray(msgs) ? msgs[0] : msgs
+        }
+        if (Object.keys(fieldErrors).length) showFieldErrors(fieldErrors)
+        else showMessage(detail.title ?? detail.message ?? 'Request failed. Please check your entries and try again.')
+      // Result envelope from FluentValidation: { message:"Validation failed", errors:["Field: msg", ...] }
+      } else if (Array.isArray(detail?.errors) && detail.errors.length > 0) {
+        const fieldErrors = {}
+        for (const line of detail.errors) {
+          const [rawKey, ...rest] = String(line).split(':')
+          const msg = rest.join(':').trim()
+          if (rawKey && msg) fieldErrors[toCamel(rawKey.trim())] = msg
+        }
+        if (Object.keys(fieldErrors).length) showFieldErrors(fieldErrors)
+        else showMessage(detail.message ?? detail.errors.join(' '))
+      // Result envelope for typed exceptions (Conflict/NotFound/etc.): { message: "..." }
+      } else if (typeof detail?.message === 'string' && detail.message) {
+        showMessage(detail.message)
+      } else if (Array.isArray(detail))    showMessage(detail.join(' '))
+      else if (typeof detail === 'string') showMessage(detail)
+      else                                 showMessage('Request failed. Please check your entries and try again.')
     } finally {
       setSubmitting(false)
     }
