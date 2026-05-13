@@ -7,12 +7,21 @@ using QuestPDF.Infrastructure;
 
 namespace AndritzVendorPortal.Infrastructure.Services;
 
+/// <summary>
+/// Mirrors the frontend's <c>exportRequestToPdf</c> HTML print layout
+/// (BuyerConsole.jsx) so the email-attached PDF looks identical to the
+/// one users download from the portal.
+/// </summary>
 public class QuestPdfVendorRequestPdfService : IVendorRequestPdfService
 {
-    private static readonly string Brand = "#064e80";
-    private static readonly string Muted = "#6b7280";
-    private static readonly string TextDark = "#111827";
-    private static readonly string Border = "#e5e7eb";
+    // Tailwind-ish palette mirroring the HTML print stylesheet.
+    private const string TextDark   = "#1f2937"; // body
+    private const string Muted      = "#6b7280"; // h2
+    private const string Label      = "#9ca3af"; // .lbl
+    private const string BorderLine = "#e5e7eb"; // h2 underline
+    private const string RowLine    = "#f3f4f6"; // td border
+    private const string GreenBg    = "#d1fae5"; // badge bg
+    private const string GreenFg    = "#065f46"; // badge fg
 
     public byte[] Generate(VendorRequest r)
     {
@@ -21,84 +30,69 @@ public class QuestPdfVendorRequestPdfService : IVendorRequestPdfService
             doc.Page(p =>
             {
                 p.Size(PageSizes.A4);
-                p.Margin(36);
-                p.DefaultTextStyle(t => t.FontSize(10).FontColor(TextDark).FontFamily("Helvetica"));
+                p.Margin(28);
+                p.DefaultTextStyle(t => t.FontSize(10).FontColor(TextDark).FontFamily(Fonts.Arial));
 
-                p.Header().Element(c => Header(c, r));
                 p.Content().Element(c => Body(c, r));
                 p.Footer().AlignCenter().Text(t =>
                 {
-                    t.Span("Andritz Vendor Portal · Generated ").FontColor(Muted).FontSize(9);
-                    t.Span($"{DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC").FontColor(Muted).FontSize(9);
-                    t.Span("  ·  Page ").FontColor(Muted).FontSize(9);
-                    t.CurrentPageNumber().FontColor(Muted).FontSize(9);
-                    t.Span(" / ").FontColor(Muted).FontSize(9);
-                    t.TotalPages().FontColor(Muted).FontSize(9);
+                    t.DefaultTextStyle(s => s.FontSize(9).FontColor(Muted));
+                    t.Span("Andritz Vendor Portal · Generated ");
+                    t.Span($"{DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC");
+                    t.Span("  ·  Page ");
+                    t.CurrentPageNumber();
+                    t.Span(" / ");
+                    t.TotalPages();
                 });
             });
         }).GeneratePdf();
     }
 
-    private static void Header(IContainer c, VendorRequest r)
-    {
-        c.PaddingBottom(12).BorderBottom(2).BorderColor(Brand).Row(row =>
-        {
-            row.RelativeItem().Column(col =>
-            {
-                col.Item().Text("ANDRITZ").FontSize(20).Bold().FontColor(Brand).LetterSpacing(3);
-                col.Item().Text("Vendor Onboarding & Compliance").FontSize(9).FontColor(Muted).LetterSpacing(2);
-            });
-            row.ConstantItem(180).AlignRight().Column(col =>
-            {
-                col.Item().Text("VENDOR REQUEST").FontSize(11).Bold().FontColor(Muted).LetterSpacing(2);
-                col.Item().Text($"#{r.Id}").FontSize(16).Bold().FontColor(TextDark);
-                col.Item().Text(StatusLabel(r.Status)).FontSize(10).Bold().FontColor(StatusColor(r.Status));
-                if (r.RevisionNo > 0)
-                    col.Item().Text($"Revision REV {r.RevisionNo}").FontSize(9).FontColor(Muted);
-            });
-        });
-    }
-
     private static void Body(IContainer c, VendorRequest r)
     {
-        c.PaddingVertical(12).Column(col =>
+        c.Column(col =>
         {
-            col.Spacing(14);
-
-            // Vendor details
-            col.Item().Element(e => Section(e, "Vendor Details", new (string, string)[]
+            // ── Header: vendor name + status badge ──
+            col.Item().Row(row =>
             {
-                ("Vendor Name", r.VendorName),
+                row.AutoItem().PaddingRight(8).Text(r.VendorName).FontSize(15).Bold();
+                row.AutoItem().AlignMiddle().Background(GreenBg).PaddingHorizontal(8).PaddingVertical(2)
+                    .Text(StatusLabel(r.Status)).FontSize(9).Bold().FontColor(GreenFg);
+            });
+
+            if (!string.IsNullOrWhiteSpace(r.VendorCode))
+            {
+                col.Item().PaddingTop(4).Text(t =>
+                {
+                    t.Span("SAP Vendor Code: ").FontSize(11).Bold().FontColor(GreenFg);
+                    t.Span(r.VendorCode!).FontSize(13).Bold().FontColor(GreenFg).FontFamily(Fonts.Consolas);
+                });
+            }
+
+            // ── Sections ──
+            col.Item().Element(e => Section(e, "Vendor Information", new (string, string)[]
+            {
                 ("Material Group", r.MaterialGroup),
-                ("Contact Person", r.ContactPerson),
-                ("Telephone", r.Telephone),
-                ("Proposed By", r.ProposedBy),
-                ("One-Time Vendor", r.IsOneTimeVendor ? "Yes" : "No"),
                 ("Reason", r.Reason),
-            }));
-
-            // Statutory
-            col.Item().Element(e => Section(e, "Statutory", new (string, string)[]
-            {
                 ("GST Number", r.GstNumber),
                 ("PAN Card", r.PanCard),
-                ("MSME Category", string.IsNullOrWhiteSpace(r.MsmeCategory) ? "N/A" : r.MsmeCategory),
+                ("One-Time Vendor", r.IsOneTimeVendor ? "Yes" : "No"),
+                ("Proposed By", r.ProposedBy),
                 ("Purchasing Organization", r.PurchasingOrganization),
+                ("MSME Category", string.IsNullOrWhiteSpace(r.MsmeCategory) ? "N/A" : r.MsmeCategory),
             }));
 
-            // Address
             col.Item().Element(e => Section(e, "Address", new (string, string)[]
             {
-                ("Address", r.AddressDetails),
+                ("Street / Building", r.AddressDetails),
                 ("City", r.City),
                 ("Locality", r.Locality),
-                ("Postal Code", r.PostalCode),
                 ("State", r.State),
+                ("Postal Code", r.PostalCode),
                 ("Country", r.Country),
             }));
 
-            // Commercial
-            col.Item().Element(e => Section(e, "Commercial", new (string, string)[]
+            col.Item().Element(e => Section(e, "Commercial Terms", new (string, string)[]
             {
                 ("Currency", r.Currency),
                 ("Payment Terms", r.PaymentTerms),
@@ -106,7 +100,12 @@ public class QuestPdfVendorRequestPdfService : IVendorRequestPdfService
                 ("Yearly PVO", r.YearlyPvo),
             }));
 
-            // Bank
+            col.Item().Element(e => Section(e, "Contact", new (string, string)[]
+            {
+                ("Contact Person", string.IsNullOrWhiteSpace(r.ContactPerson) ? r.ContactInformation : r.ContactPerson),
+                ("Telephone", r.Telephone),
+            }));
+
             col.Item().Element(e => Section(e, "Bank Details", new (string, string)[]
             {
                 ("Bank Name", r.BankName),
@@ -115,87 +114,83 @@ public class QuestPdfVendorRequestPdfService : IVendorRequestPdfService
                 ("IFSC Code", r.IfscCode),
             }));
 
-            // Submission audit
-            col.Item().Element(e => Section(e, "Submission", new (string, string)[]
+            col.Item().Element(e => Section(e, "Record", new (string, string)[]
             {
-                ("Submitted By", r.CreatedByName),
-                ("Submitted At", r.CreatedAt.ToString("yyyy-MM-dd HH:mm 'UTC'")),
+                ("Created By", r.CreatedByName),
+                ("Created On", r.CreatedAt.ToString("yyyy-MM-dd HH:mm 'UTC'")),
                 ("Last Updated", r.UpdatedAt.ToString("yyyy-MM-dd HH:mm 'UTC'")),
+                ("Assigned By", r.VendorCodeAssignedBy ?? ""),
+                ("Revision No.", r.RevisionNo.ToString()),
             }));
 
-            // Approval chain
-            col.Item().Element(e => ApprovalChainTable(e, r));
-
-            if (!string.IsNullOrWhiteSpace(r.VendorCode))
-            {
-                col.Item().Element(e => Section(e, "SAP Assignment", new (string, string)[]
-                {
-                    ("SAP Vendor Code", r.VendorCode!),
-                    ("Assigned By", r.VendorCodeAssignedBy ?? ""),
-                    ("Assigned At", r.VendorCodeAssignedAt?.ToString("yyyy-MM-dd HH:mm 'UTC'") ?? ""),
-                }));
-            }
+            col.Item().Element(e => ApprovalChainSection(e, r));
         });
     }
 
     private static void Section(IContainer c, string title, (string Label, string Value)[] rows)
     {
-        c.Column(col =>
+        c.PaddingTop(12).Column(col =>
         {
-            col.Item().PaddingBottom(6).Text(title).FontSize(11).Bold().FontColor(Brand).LetterSpacing(1);
-            col.Item().Border(1).BorderColor(Border).Padding(8).Table(table =>
+            col.Item().PaddingBottom(4).BorderBottom(1).BorderColor(BorderLine)
+                .Text(title.ToUpperInvariant()).FontSize(9).Bold().FontColor(Muted);
+
+            col.Item().PaddingTop(4).Table(table =>
             {
                 table.ColumnsDefinition(d =>
                 {
-                    d.ConstantColumn(160);
-                    d.RelativeColumn();
+                    d.RelativeColumn(35);
+                    d.RelativeColumn(65);
                 });
                 foreach (var (label, value) in rows)
                 {
-                    table.Cell().PaddingVertical(2).Text(label).FontSize(9).FontColor(Muted);
-                    table.Cell().PaddingVertical(2).Text(string.IsNullOrWhiteSpace(value) ? "—" : value).FontSize(10);
+                    table.Cell().BorderBottom(1).BorderColor(RowLine).PaddingVertical(3).PaddingRight(8)
+                        .Text(label).FontSize(9).FontColor(Label);
+                    table.Cell().BorderBottom(1).BorderColor(RowLine).PaddingVertical(3)
+                        .Text(string.IsNullOrWhiteSpace(value) ? "—" : value).FontSize(10);
                 }
             });
         });
     }
 
-    private static void ApprovalChainTable(IContainer c, VendorRequest r)
+    private static void ApprovalChainSection(IContainer c, VendorRequest r)
     {
-        c.Column(col =>
+        c.PaddingTop(12).Column(col =>
         {
-            col.Item().PaddingBottom(6).Text("Approval Chain").FontSize(11).Bold().FontColor(Brand).LetterSpacing(1);
-            col.Item().Border(1).BorderColor(Border).Table(table =>
+            col.Item().PaddingBottom(4).BorderBottom(1).BorderColor(BorderLine)
+                .Text("APPROVAL CHAIN").FontSize(9).Bold().FontColor(Muted);
+
+            col.Item().PaddingTop(4).Table(table =>
             {
                 table.ColumnsDefinition(d =>
                 {
-                    d.ConstantColumn(36);
+                    d.ConstantColumn(24);
                     d.RelativeColumn(3);
                     d.RelativeColumn(2);
                     d.RelativeColumn(2);
                 });
                 table.Header(h =>
                 {
-                    h.Cell().Background(Brand).Padding(6).Text("#").FontColor("#fff").FontSize(9).Bold();
-                    h.Cell().Background(Brand).Padding(6).Text("Approver").FontColor("#fff").FontSize(9).Bold();
-                    h.Cell().Background(Brand).Padding(6).Text("Decision").FontColor("#fff").FontSize(9).Bold();
-                    h.Cell().Background(Brand).Padding(6).Text("Decided At").FontColor("#fff").FontSize(9).Bold();
+                    h.Cell().PaddingBottom(4).Text("#").FontSize(8).Bold().FontColor(Label);
+                    h.Cell().PaddingBottom(4).Text("Approver").FontSize(8).Bold().FontColor(Label);
+                    h.Cell().PaddingBottom(4).Text("Decision").FontSize(8).Bold().FontColor(Label);
+                    h.Cell().PaddingBottom(4).Text("Decided At").FontSize(8).Bold().FontColor(Label);
                 });
 
                 foreach (var step in r.ApprovalSteps.OrderBy(s => s.StepOrder))
                 {
-                    table.Cell().BorderBottom(1).BorderColor(Border).Padding(6)
+                    table.Cell().BorderBottom(1).BorderColor(RowLine).PaddingVertical(3)
                         .Text(step.StepOrder.ToString()).FontSize(9);
-                    table.Cell().BorderBottom(1).BorderColor(Border).Padding(6).Column(c2 =>
+                    table.Cell().BorderBottom(1).BorderColor(RowLine).PaddingVertical(3).Column(c2 =>
                     {
                         c2.Item().Text(step.ApproverName + (step.IsFinalApproval ? " (Final)" : "")).FontSize(10);
                         if (!string.IsNullOrWhiteSpace(step.Comment))
-                            c2.Item().Text($"“{step.Comment}”").FontSize(9).FontColor(Muted).Italic();
+                            c2.Item().Text($"“{step.Comment}”").FontSize(8).FontColor(Muted).Italic();
                         if (step.IsDeletedApprover)
-                            c2.Item().Text("[Approver removed]").FontSize(8).FontColor("#9ca3af");
+                            c2.Item().Text("[Approver removed]").FontSize(8).FontColor(Label);
                     });
-                    table.Cell().BorderBottom(1).BorderColor(Border).Padding(6)
+                    table.Cell().BorderBottom(1).BorderColor(RowLine).PaddingVertical(3)
                         .Text(step.Decision.ToString()).FontSize(9).FontColor(DecisionColor(step.Decision));
-                    table.Cell().BorderBottom(1).BorderColor(Border).Padding(6)
+                    table.Cell().BorderBottom(1).BorderColor(RowLine).PaddingVertical(3)
                         .Text(step.DecidedAt?.ToString("yyyy-MM-dd HH:mm 'UTC'") ?? "—").FontSize(9);
                 }
             });
@@ -204,27 +199,15 @@ public class QuestPdfVendorRequestPdfService : IVendorRequestPdfService
 
     private static string StatusLabel(VendorRequestStatus s) => s switch
     {
-        VendorRequestStatus.Draft => "Draft",
-        VendorRequestStatus.PendingApproval => "Pending Approval",
+        VendorRequestStatus.PendingApproval      => "Pending Approval",
         VendorRequestStatus.PendingFinalApproval => "Pending Final Approval",
-        VendorRequestStatus.Rejected => "Rejected",
-        VendorRequestStatus.Completed => "Completed",
         _ => s.ToString()
-    };
-
-    private static string StatusColor(VendorRequestStatus s) => s switch
-    {
-        VendorRequestStatus.Completed => "#10b981",
-        VendorRequestStatus.Rejected => "#ef4444",
-        VendorRequestStatus.PendingFinalApproval => "#8b5cf6",
-        VendorRequestStatus.PendingApproval => "#f59e0b",
-        _ => Muted
     };
 
     private static string DecisionColor(ApprovalDecision d) => d switch
     {
-        ApprovalDecision.Approved => "#10b981",
-        ApprovalDecision.Rejected => "#ef4444",
-        _ => "#f59e0b"
+        ApprovalDecision.Approved => "#065f46",
+        ApprovalDecision.Rejected => "#991b1b",
+        _ => "#92400e"
     };
 }
