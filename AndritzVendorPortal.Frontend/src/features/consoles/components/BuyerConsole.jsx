@@ -166,9 +166,25 @@ function Field({ label, required, error, span = 1, children, hint }) {
       </label>
       {children}
       {hint && !error && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p data-field-error="" className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   )
+}
+
+// After client- or server-side validation fails, jump the user to the first
+// field with an error and focus its input so the fix is one keystroke away.
+function scrollToFirstFieldError() {
+  // Defer until React has flushed the new error state to the DOM.
+  setTimeout(() => {
+    const marker = document.querySelector('[data-field-error]')
+    if (!marker) return
+    const fieldRoot = marker.parentElement
+    fieldRoot?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const input = fieldRoot?.querySelector(
+      'input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"]), select, textarea'
+    )
+    input?.focus?.()
+  }, 60)
 }
 
 // Opens an uploaded document for preview.
@@ -248,7 +264,7 @@ function FileUploadField({
       {value && (
         <p className="mt-1 text-xs text-gray-500 truncate">{value.name}</p>
       )}
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p data-field-error="" className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   )
 }
@@ -753,7 +769,12 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
   const handleSubmitForm = async (skipApproverConfirm = false) => {
     const e = validate()
-    if (Object.keys(e).length) { setErrors(e); setApiError('Please fill in all required fields highlighted below.'); return }
+    if (Object.keys(e).length) {
+      setErrors(e)
+      setApiError('Please fill in all required fields highlighted below.')
+      scrollToFirstFieldError()
+      return
+    }
 
     // Block resubmit if buyer changed nothing
     const isResubmit = editingRequest && (editingRequest.status === 'Rejected' || editingRequest.status === 'Completed')
@@ -841,14 +862,18 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         if (Object.keys(fieldErrors).length) {
           setErrors(fieldErrors)
           setApiError('Please fix the highlighted fields below.')
+          scrollToFirstFieldError()
         } else {
           setApiError(detail.title ?? 'Request failed. Please check your entries and try again.')
+          setTimeout(() => apiErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
         }
-      } else if (Array.isArray(detail))    setApiError(detail.join(' '))
-      else if (typeof detail === 'string') setApiError(detail)
-      else if (detail?.message)            setApiError(detail.message)
-      else                                 setApiError('Request failed. Please check your entries and try again.')
-      setTimeout(() => apiErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
+      } else {
+        if (Array.isArray(detail))           setApiError(detail.join(' '))
+        else if (typeof detail === 'string') setApiError(detail)
+        else if (detail?.message)            setApiError(detail.message)
+        else                                 setApiError('Request failed. Please check your entries and try again.')
+        setTimeout(() => apiErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
+      }
     } finally {
       setSubmitting(false)
     }
@@ -1571,8 +1596,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   {materialGroups.map(g => <option key={g} value={g} />)}
                 </datalist>
               </Field>
-              <Field label="MSME Vendor?" required error={errors.msmeCategory}>
-                <div className="flex items-center gap-4">
+              <Field label="MSME Vendor?" required>
+                <div className="flex items-center gap-4 h-[38px]">
                   <label className="inline-flex items-center gap-2 cursor-pointer select-none">
                     <input
                       type="radio"
@@ -1594,16 +1619,6 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                     <span className="text-sm text-gray-700">No</span>
                   </label>
                 </div>
-                {form.isMsmeVendor && (
-                  <select
-                    className="form-input mt-2"
-                    value={form.msmeCategory}
-                    onChange={e => set('msmeCategory', e.target.value)}
-                  >
-                    <option value="">Select MSME Category</option>
-                    {MSME_CATEGORIES.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                )}
               </Field>
               <Field label="Proposed By" error={errors.proposedBy}>
                 <input className="form-input" list="proposed-by-list" placeholder="Name / department proposing this vendor"
@@ -1612,6 +1627,18 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   {proposedByNames.map(n => <option key={n} value={n} />)}
                 </datalist>
               </Field>
+              {form.isMsmeVendor && (
+                <Field label="MSME Category" required error={errors.msmeCategory}>
+                  <select
+                    className="form-input"
+                    value={form.msmeCategory}
+                    onChange={e => set('msmeCategory', e.target.value)}
+                  >
+                    <option value="">Select MSME Category</option>
+                    {MSME_CATEGORIES.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </Field>
+              )}
               <Field
                 label="Reason for Registration"
                 required
