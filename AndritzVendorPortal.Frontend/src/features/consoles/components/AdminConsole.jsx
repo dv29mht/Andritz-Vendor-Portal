@@ -4,7 +4,6 @@ import {
   CheckBadgeIcon, ArrowDownTrayIcon, MagnifyingGlassIcon, EyeIcon,
   TableCellsIcon, UserGroupIcon, ArrowPathIcon, TrophyIcon, NoSymbolIcon,
   PencilSquareIcon, XMarkIcon, BuildingOfficeIcon, ArchiveBoxIcon, ArchiveBoxArrowDownIcon,
-  ChevronLeftIcon, ChevronRightIcon,
 } from '@heroicons/react/24/outline'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
@@ -17,6 +16,7 @@ import VendorDetailModal from '../../vendors/components/VendorDetailModal'
 import Toast from '../../../shared/components/Toast'
 import ConfirmDialog from '../../../shared/components/ConfirmDialog'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
+import Pagination from '../../../shared/components/Pagination'
 import UserManagement from '../../users/components/UserManagement'
 import { vendorsService } from '../../vendors/services/vendorsService'
 import { buildStats, buildMonthlyData } from '../../../utils/statsUtils'
@@ -588,25 +588,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 </span>
                 <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setReqPage(1) }} />
               </div>
-              {totalPages > 1 && (
-                <div className="flex items-center gap-1.5">
-                  <button
-                    className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    disabled={reqPage === 1}
-                    onClick={() => setReqPage(p => p - 1)}
-                  >
-                    <ChevronLeftIcon className="h-4 w-4" />
-                  </button>
-                  <span className="text-xs text-gray-500 px-1">Page {reqPage} of {totalPages}</span>
-                  <button
-                    className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    disabled={reqPage === totalPages}
-                    onClick={() => setReqPage(p => p + 1)}
-                  >
-                    <ChevronRightIcon className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
+              <Pagination page={reqPage} totalPages={totalPages} onPageChange={setReqPage} />
             </div>
           </div>
           )})()}

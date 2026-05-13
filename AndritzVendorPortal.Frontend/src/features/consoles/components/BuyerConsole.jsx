@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
          ClockIcon, ExclamationCircleIcon, ChevronDownIcon, ArrowUpTrayIcon, ArrowDownTrayIcon, XMarkIcon,
-         ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+         MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { ExclamationTriangleIcon, CheckBadgeIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
          Cell } from 'recharts'
@@ -14,6 +14,7 @@ import StatusBadge from '../../../shared/components/StatusBadge'
 import VendorDetailModal from '../../vendors/components/VendorDetailModal'
 import Toast from '../../../shared/components/Toast'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
+import Pagination from '../../../shared/components/Pagination'
 import { CITIES } from '../../../data/mockData'
 import { Country, State } from 'country-state-city'
 
@@ -1081,15 +1082,15 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               </button>
               <button
                 onClick={() => { setRequestsFilter('Pending'); onNavigate('requests') }}
-                className={`bg-white rounded-xl ring-1 px-5 py-4 flex items-center gap-4 hover:ring-2 hover:ring-slate-600 transition-all text-left ${finalPendingReqs.length > 0 ? 'ring-indigo-200' : 'ring-gray-200'}`}
+                className={`bg-white rounded-xl ring-1 px-5 py-4 flex items-center gap-4 hover:ring-2 hover:ring-slate-600 transition-all text-left ${finalPendingReqs.length > 0 ? 'ring-red-200' : 'ring-gray-200'}`}
                 title="Approved by other approvers — awaiting Pardeep Sharma's final review"
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${finalPendingReqs.length > 0 ? 'bg-indigo-50' : 'bg-gray-50'}`}>
-                  <CheckBadgeIcon className={`h-5 w-5 ${finalPendingReqs.length > 0 ? 'text-indigo-500' : 'text-gray-400'}`} />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${finalPendingReqs.length > 0 ? 'bg-red-50' : 'bg-gray-50'}`}>
+                  <CheckBadgeIcon className={`h-5 w-5 ${finalPendingReqs.length > 0 ? 'text-red-500' : 'text-gray-400'}`} />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">{finalPendingReqs.length}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 leading-tight">Pending Final Approver</p>
+                  <p className={`text-xs mt-0.5 leading-tight ${finalPendingReqs.length > 0 ? 'text-red-600 font-medium' : 'text-gray-500'}`}>Pending Final Approval</p>
                 </div>
               </button>
               <button
@@ -1440,13 +1441,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                     <span className="text-xs text-gray-400">Showing {filteredReqs.length === 0 ? 0 : (reqsPage - 1) * pageSize + 1}–{Math.min(reqsPage * pageSize, filteredReqs.length)} of {filteredReqs.length}</span>
                     <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setReqsPage(1) }} />
                   </div>
-                  {totalPages > 1 && (
-                    <div className="flex items-center gap-1.5">
-                      <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={reqsPage === 1} onClick={() => setReqsPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
-                      <span className="text-xs text-gray-500 px-1">Page {reqsPage} of {totalPages}</span>
-                      <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={reqsPage === totalPages} onClick={() => setReqsPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
-                    </div>
-                  )}
+                  <Pagination page={reqsPage} totalPages={totalPages} onPageChange={setReqsPage} />
                 </div>
               </div>
             )}
@@ -1532,13 +1527,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   <span className="text-xs text-gray-400">Showing {filteredRev.length === 0 ? 0 : (revPage - 1) * pageSize + 1}–{Math.min(revPage * pageSize, filteredRev.length)} of {filteredRev.length}</span>
                   <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setRevPage(1) }} />
                 </div>
-                {totalPages > 1 && (
-                  <div className="flex items-center gap-1.5">
-                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={revPage === 1} onClick={() => setRevPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
-                    <span className="text-xs text-gray-500 px-1">Page {revPage} of {totalPages}</span>
-                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={revPage === totalPages} onClick={() => setRevPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
-                  </div>
-                )}
+                <Pagination page={revPage} totalPages={totalPages} onPageChange={setRevPage} />
               </div>
             </div>
           )}

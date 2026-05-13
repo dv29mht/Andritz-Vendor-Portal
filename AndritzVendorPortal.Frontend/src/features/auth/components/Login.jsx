@@ -318,7 +318,13 @@ export default function Login() {
     setLoading(true)
     try {
       await login(email, password)
-      navigate(redirectTo, { replace: true })
+      // Do NOT replace the /login entry here: keeping it in history means
+      // pressing browser Back from /dashboard lands on /login, which then
+      // re-renders and bounces straight back to redirectTo (line 308's
+      // `if (isAuthenticated) return <Navigate replace />`). Net effect: the
+      // user is trapped inside the app on Back, rather than exiting to the
+      // browser's start page.
+      navigate(redirectTo)
     } catch (err) {
       setError(err.response?.data?.message ?? 'Invalid email or password.')
     } finally {

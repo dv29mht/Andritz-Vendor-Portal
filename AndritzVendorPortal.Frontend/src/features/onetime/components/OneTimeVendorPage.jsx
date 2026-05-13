@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { ChevronLeftIcon, ChevronRightIcon, ArchiveBoxIcon, ArrowPathIcon, EyeIcon, MagnifyingGlassIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
+import { ArchiveBoxIcon, ArrowPathIcon, EyeIcon, MagnifyingGlassIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 import { vendorsService } from '../../vendors/services/vendorsService'
 import StatusBadge from '../../../shared/components/StatusBadge'
 import VendorDetailModal from '../../vendors/components/VendorDetailModal'
 import Toast from '../../../shared/components/Toast'
 import ConfirmDialog from '../../../shared/components/ConfirmDialog'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
+import Pagination from '../../../shared/components/Pagination'
 import { exportRequestsToExcel } from '../../../utils/exportUtils'
 
 export default function OneTimeVendorPage({ workflow, currentUser }) {
@@ -236,25 +237,7 @@ export default function OneTimeVendorPage({ workflow, currentUser }) {
             </span>
             <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setPage(1) }} />
           </div>
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1.5">
-              <button
-                className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                disabled={page === 1}
-                onClick={() => setPage(p => p - 1)}
-              >
-                <ChevronLeftIcon className="h-4 w-4" />
-              </button>
-              <span className="text-xs text-gray-500 px-1">Page {page} of {totalPages}</span>
-              <button
-                className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                disabled={page === totalPages}
-                onClick={() => setPage(p => p + 1)}
-              >
-                <ChevronRightIcon className="h-4 w-4" />
-              </button>
-            </div>
-          )}
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
 

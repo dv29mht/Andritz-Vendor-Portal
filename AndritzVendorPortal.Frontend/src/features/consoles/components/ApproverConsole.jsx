@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { CheckIcon, XMarkIcon, EyeIcon, ClockIcon, ArchiveBoxIcon,
-         ExclamationCircleIcon, ChevronLeftIcon, ChevronRightIcon,
+         ExclamationCircleIcon,
          MagnifyingGlassIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
@@ -10,6 +10,7 @@ import ApprovalTimeline from '../../../shared/components/ApprovalTimeline'
 import VendorDetailModal from '../../vendors/components/VendorDetailModal'
 import Toast from '../../../shared/components/Toast'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
+import Pagination from '../../../shared/components/Pagination'
 import { useViewedRequests } from '../../notifications/hooks/useViewedRequests'
 import { buildMonthlyData } from '../../../utils/statsUtils'
 import { exportRequestsToExcel, formatDateTime } from '../../../utils/exportUtils'
@@ -343,13 +344,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                   <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (pendingPage - 1) * pageSize + 1}–{Math.min(pendingPage * pageSize, filtered.length)} of {filtered.length}</span>
                   <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setPendingPage(1) }} />
                 </div>
-                {totalPages > 1 && (
-                  <div className="flex items-center gap-1.5">
-                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={pendingPage === 1} onClick={() => setPendingPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
-                    <span className="text-xs text-gray-500 px-1">Page {pendingPage} of {totalPages}</span>
-                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={pendingPage === totalPages} onClick={() => setPendingPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
-                  </div>
-                )}
+                <Pagination page={pendingPage} totalPages={totalPages} onPageChange={setPendingPage} />
               </div>
             </div>
           )}
@@ -441,13 +436,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                   <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (waitingPage - 1) * pageSize + 1}–{Math.min(waitingPage * pageSize, filtered.length)} of {filtered.length}</span>
                   <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setWaitingPage(1) }} />
                 </div>
-                {totalPages > 1 && (
-                  <div className="flex items-center gap-1.5">
-                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={waitingPage === 1} onClick={() => setWaitingPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
-                    <span className="text-xs text-gray-500 px-1">Page {waitingPage} of {totalPages}</span>
-                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={waitingPage === totalPages} onClick={() => setWaitingPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
-                  </div>
-                )}
+                <Pagination page={waitingPage} totalPages={totalPages} onPageChange={setWaitingPage} />
               </div>
             </div>
           )}
@@ -550,13 +539,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                   <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (historyPage - 1) * pageSize + 1}–{Math.min(historyPage * pageSize, filtered.length)} of {filtered.length}</span>
                   <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setHistoryPage(1) }} />
                 </div>
-                {totalPages > 1 && (
-                  <div className="flex items-center gap-1.5">
-                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === 1} onClick={() => setHistoryPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
-                    <span className="text-xs text-gray-500 px-1">Page {historyPage} of {totalPages}</span>
-                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === totalPages} onClick={() => setHistoryPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
-                  </div>
-                )}
+                <Pagination page={historyPage} totalPages={totalPages} onPageChange={setHistoryPage} />
               </div>
             </div>
           )}

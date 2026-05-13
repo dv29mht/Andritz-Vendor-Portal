@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { CheckBadgeIcon, StarIcon } from '@heroicons/react/24/solid'
 import { XMarkIcon, EyeIcon, CheckIcon, ClockIcon, ArchiveBoxIcon,
          UsersIcon, ArrowPathIcon, NoSymbolIcon, TrophyIcon, BuildingOfficeIcon,
-         ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
+         MagnifyingGlassIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts'
 import VendorDatabase from '../../vendors/components/VendorDatabase'
@@ -12,6 +12,7 @@ import ApprovalTimeline from '../../../shared/components/ApprovalTimeline'
 import VendorDetailModal from '../../vendors/components/VendorDetailModal'
 import Toast from '../../../shared/components/Toast'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
+import Pagination from '../../../shared/components/Pagination'
 import { useViewedRequests } from '../../notifications/hooks/useViewedRequests'
 import { buildStats, buildMonthlyData } from '../../../utils/statsUtils'
 import { exportRequestsToExcel, formatDateTime } from '../../../utils/exportUtils'
@@ -374,13 +375,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                   <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (queuePage - 1) * pageSize + 1}–{Math.min(queuePage * pageSize, filtered.length)} of {filtered.length}</span>
                   <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setQueuePage(1) }} />
                 </div>
-                {totalPages > 1 && (
-                  <div className="flex items-center gap-1.5">
-                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={queuePage === 1} onClick={() => setQueuePage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
-                    <span className="text-xs text-gray-500 px-1">Page {queuePage} of {totalPages}</span>
-                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={queuePage === totalPages} onClick={() => setQueuePage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
-                  </div>
-                )}
+                <Pagination page={queuePage} totalPages={totalPages} onPageChange={setQueuePage} />
               </div>
             </div>
           )}
@@ -501,13 +496,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                   <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (historyPage - 1) * pageSize + 1}–{Math.min(historyPage * pageSize, filtered.length)} of {filtered.length}</span>
                   <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setHistoryPage(1) }} />
                 </div>
-                {totalPages > 1 && (
-                  <div className="flex items-center gap-1.5">
-                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === 1} onClick={() => setHistoryPage(p => p - 1)}><ChevronLeftIcon className="h-4 w-4" /></button>
-                    <span className="text-xs text-gray-500 px-1">Page {historyPage} of {totalPages}</span>
-                    <button className="inline-flex items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" disabled={historyPage === totalPages} onClick={() => setHistoryPage(p => p + 1)}><ChevronRightIcon className="h-4 w-4" /></button>
-                  </div>
-                )}
+                <Pagination page={historyPage} totalPages={totalPages} onPageChange={setHistoryPage} />
               </div>
             </div>
           )}
