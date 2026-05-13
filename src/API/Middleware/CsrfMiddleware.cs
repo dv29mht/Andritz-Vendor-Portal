@@ -16,8 +16,15 @@ public class CsrfMiddleware(RequestDelegate next)
         // (?access_token=...), so CSRF protection is redundant and would block
         // every WebSocket handshake.
         bool isHubRoute = ctx.Request.Path.StartsWithSegments("/hubs");
+        // Email-action POSTs come from a plain HTML form in the email's
+        // confirmation page and carry their own signed, time-limited token in
+        // the URL — that token IS the auth + integrity check, and CSRF cookies
+        // don't apply (the user may not even be logged in to the portal in
+        // this tab). If they happen to be logged in elsewhere, the auth cookie
+        // would otherwise trip this middleware on the form POST.
+        bool isEmailAction = ctx.Request.Path.StartsWithSegments("/api/vendor-requests/email-action");
 
-        if (!isSafe && !isAuthRoute && !isHubRoute && ctx.User.Identity?.IsAuthenticated == true)
+        if (!isSafe && !isAuthRoute && !isHubRoute && !isEmailAction && ctx.User.Identity?.IsAuthenticated == true)
         {
             var header = ctx.Request.Headers["X-CSRF-Token"].ToString();
             var cookie = ctx.Request.Cookies["csrf_token"] ?? string.Empty;

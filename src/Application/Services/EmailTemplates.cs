@@ -109,7 +109,7 @@ public static class EmailTemplates
         return (subject, Wrap(subject, $"{v.VendorName} approved by {by}.", $"""
             <h2 style="margin:0 0 16px;color:#111827;font-size:18px;">Approval step completed</h2>
             {intro}
-            {Badge("Approved", "#10b981")}{VendorTable(v)}{nextLine}{ActionRow(approveUrl, rejectUrl, portalUrl, "View Request")}
+            {VendorTable(v)}{nextLine}{ActionRow(approveUrl, rejectUrl, portalUrl, "View Request")}
             """));
     }
 
