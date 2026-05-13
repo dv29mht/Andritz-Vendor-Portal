@@ -19,3 +19,10 @@ dist/
 
 # Recovery backup of corrupted .git metadata — kept locally for safety, never committed
 .git.broken-backup/
+
+# API runtime artifacts: SPA bundle is produced by the Dockerfile, Serilog writes logs/ at runtime
+src/API/wwwroot/
+src/API/logs/
+
+# Claude Code per-project metadata (auto-memory, settings, etc.)
+.claude/

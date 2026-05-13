@@ -15,10 +15,10 @@ public record AdminEditVendorRequestCommand(
     string ContactPerson,
     string? Telephone,
     string GstNumber,
-    string PanCard,
+    string? PanCard,
     string AddressDetails,
     string City,
-    string Locality,
+    string? Locality,
     string? MaterialGroup,
     string? PostalCode,
     string? State,
@@ -29,7 +29,17 @@ public record AdminEditVendorRequestCommand(
     string? Reason,
     string? YearlyPvo,
     bool? IsOneTimeVendor,
-    string? ProposedBy) : IRequest<VendorRequestDetailDto>;
+    string? ProposedBy,
+    string? PurchasingOrganization,
+    string? MsmeCategory,
+    string? BankName,
+    string? BranchName,
+    string? BankAccountNumber,
+    string? IfscCode,
+    string? BankDocument1,
+    string? BankDocument2,
+    string? GstDocument,
+    string? PanDocument) : IRequest<VendorRequestDetailDto>;
 
 public class AdminEditVendorRequestCommandValidator : AbstractValidator<AdminEditVendorRequestCommand>
 {
@@ -38,10 +48,11 @@ public class AdminEditVendorRequestCommandValidator : AbstractValidator<AdminEdi
         RuleFor(x => x.VendorName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.ContactPerson).NotEmpty().MaximumLength(100);
         RuleFor(x => x.GstNumber).NotEmpty().Matches(ValidationPatterns.Gst).WithMessage(ValidationPatterns.GstError);
-        RuleFor(x => x.PanCard).NotEmpty().Matches(ValidationPatterns.Pan).WithMessage(ValidationPatterns.PanError);
+        RuleFor(x => x.PanCard)
+            .Matches(ValidationPatterns.Pan).WithMessage(ValidationPatterns.PanError)
+            .When(x => !string.IsNullOrWhiteSpace(x.PanCard));
         RuleFor(x => x.AddressDetails).NotEmpty().MaximumLength(500);
         RuleFor(x => x.City).NotEmpty().MaximumLength(100);
-        RuleFor(x => x.Locality).NotEmpty().MaximumLength(100);
     }
 }
 
@@ -66,7 +77,10 @@ public class AdminEditVendorRequestCommandHandler(
             request.City, request.Locality, request.MaterialGroup, request.PostalCode,
             request.State, request.Country, request.Currency, request.PaymentTerms,
             request.Incoterms, request.Reason, request.YearlyPvo,
-            request.IsOneTimeVendor, request.ProposedBy);
+            request.IsOneTimeVendor, request.ProposedBy,
+            request.PurchasingOrganization, request.MsmeCategory,
+            request.BankName, request.BranchName, request.BankAccountNumber, request.IfscCode,
+            request.BankDocument1, request.BankDocument2, request.GstDocument, request.PanDocument);
 
         var changes = TrackedFields.ComputeDiff(entity, input);
 

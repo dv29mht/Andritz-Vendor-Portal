@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { CheckBadgeIcon, StarIcon } from '@heroicons/react/24/solid'
 import { XMarkIcon, EyeIcon, CheckIcon, ClockIcon, ArchiveBoxIcon,
          UsersIcon, ArrowPathIcon, NoSymbolIcon, TrophyIcon, BuildingOfficeIcon,
-         ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+         ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts'
 import VendorDatabase from '../../vendors/components/VendorDatabase'
@@ -14,6 +14,7 @@ import Toast from '../../../shared/components/Toast'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
 import { useViewedRequests } from '../../notifications/hooks/useViewedRequests'
 import { buildStats, buildMonthlyData } from '../../../utils/statsUtils'
+import { exportRequestsToExcel, formatDateTime } from '../../../utils/exportUtils'
 
 const BAR_COLORS = ['#096fb3','#f59e0b','#10b981','#ef4444','#8b5cf6','#f97316','#06b6d4','#84cc16']
 
@@ -279,6 +280,15 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
               className="form-input text-sm w-36 shrink-0" title="From date" />
             <input type="date" value={queueDateTo} onChange={e => { setQueueDateTo(e.target.value); setQueuePage(1) }}
               className="form-input text-sm w-36 shrink-0" title="To date" />
+            <button
+              className="btn-secondary ml-auto"
+              disabled={filtered.length === 0}
+              title="Export current view to Excel"
+              onClick={() => exportRequestsToExcel(filtered, 'final_approval_queue.xlsx')}
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              Export Excel
+            </button>
           </div>
           {filtered.length === 0 && (
             <div className="card p-12 text-center">
@@ -295,6 +305,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Intermediates</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Created On</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Submitted On</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -331,7 +342,10 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                           </span>
                         </td>
                         <td className="px-4 py-3.5 text-xs text-gray-400 whitespace-nowrap">
-                          {new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                          {formatDateTime(req.createdAt)}
+                        </td>
+                        <td className="px-4 py-3.5 text-xs text-gray-400 whitespace-nowrap">
+                          {formatDateTime(req.updatedAt)}
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
@@ -406,6 +420,15 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
               className="form-input text-sm w-36 shrink-0" title="From date" />
             <input type="date" value={historyDateTo} onChange={e => { setHistoryDateTo(e.target.value); setHistoryPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="To date" />
+            <button
+              className="btn-secondary ml-auto"
+              disabled={filtered.length === 0}
+              title="Export current view to Excel"
+              onClick={() => exportRequestsToExcel(filtered, 'final_approval_history.xlsx')}
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              Export Excel
+            </button>
           </div>
           {filtered.length === 0 && (
             <div className="card p-12 text-center">
@@ -423,6 +446,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">SAP Code</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Decision</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Created On</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Decided On</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -456,7 +480,10 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                           </span>
                         </td>
                         <td className="px-4 py-3.5 text-xs text-gray-400 whitespace-nowrap">
-                          {step?.decidedAt ? new Date(step.decidedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—'}
+                          {formatDateTime(req.createdAt)}
+                        </td>
+                        <td className="px-4 py-3.5 text-xs text-gray-400 whitespace-nowrap">
+                          {step?.decidedAt ? formatDateTime(step.decidedAt) : '—'}
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => setViewingRequest(req)}>

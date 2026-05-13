@@ -29,6 +29,17 @@ public class VendorRequestConfiguration : IEntityTypeConfiguration<VendorRequest
         e.Property(x => x.Reason).HasMaxLength(1000);
         e.Property(x => x.YearlyPvo).HasMaxLength(100);
         e.Property(x => x.ProposedBy).HasMaxLength(200);
+        e.Property(x => x.PurchasingOrganization).HasMaxLength(10);
+        e.Property(x => x.MsmeCategory).HasMaxLength(20);
+        e.Property(x => x.BankName).HasMaxLength(200);
+        e.Property(x => x.BranchName).HasMaxLength(200);
+        e.Property(x => x.BankAccountNumber).HasMaxLength(50);
+        e.Property(x => x.IfscCode).HasMaxLength(20);
+        // Document uploads — store as base64 data URIs in unbounded text column
+        e.Property(x => x.BankDocument1).HasColumnType("longtext");
+        e.Property(x => x.BankDocument2).HasColumnType("longtext");
+        e.Property(x => x.GstDocument).HasColumnType("longtext");
+        e.Property(x => x.PanDocument).HasColumnType("longtext");
         e.Property(x => x.VendorCode).HasMaxLength(50);
         e.Property(x => x.VendorCodeAssignedBy).HasMaxLength(200);
         e.Property(x => x.CreatedByName).HasMaxLength(200);
@@ -36,10 +47,8 @@ public class VendorRequestConfiguration : IEntityTypeConfiguration<VendorRequest
         e.Property(x => x.CreatedBy).HasMaxLength(450);
         e.Property(x => x.ModifiedBy).HasMaxLength(450);
 
-        // Partial unique index — vendor codes must be unique across non-null values
-        e.HasIndex(x => x.VendorCode)
-         .IsUnique()
-         .HasFilter("[VendorCode] IS NOT NULL");
+        // Unique index on vendor codes — null values are allowed by MySQL multi-null indexes
+        e.HasIndex(x => x.VendorCode).IsUnique();
 
         e.HasMany(x => x.ApprovalSteps)
          .WithOne(s => s.VendorRequest!)

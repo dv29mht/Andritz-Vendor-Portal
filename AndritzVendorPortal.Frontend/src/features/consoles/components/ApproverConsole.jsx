@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CheckIcon, XMarkIcon, EyeIcon, ClockIcon, ArchiveBoxIcon,
          ExclamationCircleIcon, ChevronLeftIcon, ChevronRightIcon,
-         MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+         MagnifyingGlassIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import Modal from '../../../shared/components/Modal'
@@ -12,6 +12,7 @@ import Toast from '../../../shared/components/Toast'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
 import { useViewedRequests } from '../../notifications/hooks/useViewedRequests'
 import { buildMonthlyData } from '../../../utils/statsUtils'
+import { exportRequestsToExcel, formatDateTime } from '../../../utils/exportUtils'
 
 export default function ApproverConsole({ workflow, currentUser, activePage, onNavigate }) {
   const pending         = workflow.getPendingFor(currentUser.id)
@@ -266,6 +267,15 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               className="form-input text-sm w-36 shrink-0" title="From date" />
             <input type="date" value={pendingDateTo} onChange={e => { setPendingDateTo(e.target.value); setPendingPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="To date" />
+            <button
+              className="btn-secondary ml-auto"
+              disabled={filtered.length === 0}
+              title="Export current view to Excel"
+              onClick={() => exportRequestsToExcel(filtered, 'pending_approvals.xlsx')}
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              Export Excel
+            </button>
           </div>
           {filtered.length === 0 ? (
             <div className="card p-12 text-center">
@@ -281,13 +291,16 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Submitted By</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Created On</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Submitted On</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Final Approval</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {paginated.map((req, idx) => {
                     const serial = (pendingPage - 1) * pageSize + idx + 1
+                    const fs = req.approvalSteps?.find(s => s.isFinalApproval)
                     return (
                       <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
                         <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
@@ -302,7 +315,13 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                         <td className="px-4 py-3 text-xs text-gray-500">{req.createdByName}</td>
                         <td className="px-4 py-3 text-xs text-gray-500">{[req.city, req.locality].filter(Boolean).join(', ')}</td>
                         <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
-                          {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                          {formatDateTime(req.createdAt)}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                          {formatDateTime(req.updatedAt)}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                          {fs?.decidedAt ? formatDateTime(fs.decidedAt) : '—'}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
@@ -356,6 +375,15 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               className="form-input text-sm w-36 shrink-0" title="From date" />
             <input type="date" value={waitingDateTo} onChange={e => { setWaitingDateTo(e.target.value); setWaitingPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="To date" />
+            <button
+              className="btn-secondary ml-auto"
+              disabled={filtered.length === 0}
+              title="Export current view to Excel"
+              onClick={() => exportRequestsToExcel(filtered, 'awaiting_revision.xlsx')}
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              Export Excel
+            </button>
           </div>
           {filtered.length === 0 ? (
             <div className="card p-12 text-center">
@@ -371,6 +399,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Rejection Reason</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Submitted By</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Created On</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Rejected On</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -392,7 +421,10 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                         <td className="px-4 py-3 text-xs text-red-600 italic max-w-xs truncate">{step?.comment || '—'}</td>
                         <td className="px-4 py-3 text-xs text-gray-500">{req.createdByName}</td>
                         <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
-                          {step?.decidedAt ? new Date(step.decidedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—'}
+                          {formatDateTime(req.createdAt)}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                          {step?.decidedAt ? formatDateTime(step.decidedAt) : '—'}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => openView(req)}>
@@ -445,6 +477,15 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               className="form-input text-sm w-36 shrink-0" title="From date" />
             <input type="date" value={historyDateTo} onChange={e => { setHistoryDateTo(e.target.value); setHistoryPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="To date" />
+            <button
+              className="btn-secondary ml-auto"
+              disabled={filtered.length === 0}
+              title="Export current view to Excel"
+              onClick={() => exportRequestsToExcel(filtered, 'approver_history.xlsx')}
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              Export Excel
+            </button>
           </div>
           {filtered.length === 0 ? (
             <div className="card p-12 text-center">
@@ -461,7 +502,9 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Submitted By</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Comment</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Created On</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Decided On</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Final Approval</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -469,6 +512,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                   {paginated.map((req, idx) => {
                     const step   = myStepFor(req)
                     const serial = (historyPage - 1) * pageSize + idx + 1
+                    const fs = req.approvalSteps?.find(s => s.isFinalApproval)
                     return (
                       <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
                         <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
@@ -483,7 +527,13 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                         <td className="px-4 py-3 text-xs text-gray-500">{req.createdByName}</td>
                         <td className="px-4 py-3 text-xs text-gray-400 italic max-w-xs truncate">{step?.comment || '—'}</td>
                         <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
-                          {step?.decidedAt ? new Date(step.decidedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—'}
+                          {formatDateTime(req.createdAt)}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                          {step?.decidedAt ? formatDateTime(step.decidedAt) : '—'}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                          {fs?.decidedAt ? formatDateTime(fs.decidedAt) : '—'}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <button className="btn-secondary !py-1 !px-2 !text-xs" onClick={() => openView(req)}>

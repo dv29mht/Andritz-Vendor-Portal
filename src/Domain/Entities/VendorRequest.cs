@@ -31,6 +31,24 @@ public class VendorRequest : ISoftDelete, IAuditable
     public bool IsOneTimeVendor { get; set; } = false;
     public string ProposedBy { get; set; } = string.Empty;
 
+    // Purchasing scope (900D / 900I / P20D / T20I)
+    public string PurchasingOrganization { get; set; } = string.Empty;
+
+    // MSME classification (Micro / Small / Medium / blank if NA)
+    public string MsmeCategory { get; set; } = string.Empty;
+
+    // Financial / Bank info
+    public string BankName { get; set; } = string.Empty;
+    public string BranchName { get; set; } = string.Empty;
+    public string BankAccountNumber { get; set; } = string.Empty;
+    public string IfscCode { get; set; } = string.Empty;
+
+    // Document uploads (base64 data URIs — image/pdf). Stored as longtext on MySQL.
+    public string? BankDocument1 { get; set; }
+    public string? BankDocument2 { get; set; }
+    public string? GstDocument { get; set; }
+    public string? PanDocument { get; set; }
+
     // Workflow State
     public VendorRequestStatus Status { get; set; } = VendorRequestStatus.Draft;
     public int RevisionNo { get; set; } = 0;

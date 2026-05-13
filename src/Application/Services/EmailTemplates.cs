@@ -16,7 +16,9 @@ public static class EmailTemplates
         string State,
         string Country,
         string BuyerName,
-        int RevisionNo);
+        int RevisionNo,
+        string AddressDetails = "",
+        string Reason = "");
 
     private static string Wrap(string title, string preheader, string bodyHtml) => $"""
         <!DOCTYPE html>
@@ -51,8 +53,10 @@ public static class EmailTemplates
           {Row("Vendor Name", v.VendorName)}
           {Row("Material Group", v.MaterialGroup)}
           {Row("GST / PAN", $"{v.GstNumber} / {v.PanCard}")}
+          {(string.IsNullOrWhiteSpace(v.AddressDetails) ? "" : Row("Address", v.AddressDetails))}
           {Row("Location", $"{v.City}, {v.State}, {v.Country}")}
           {Row("Submitted by", v.BuyerName)}
+          {(string.IsNullOrWhiteSpace(v.Reason) ? "" : Row("Reason for Registration", v.Reason))}
           {(v.RevisionNo > 0 ? Row("Revision", $"REV {v.RevisionNo}") : "")}
         </table>
         """;

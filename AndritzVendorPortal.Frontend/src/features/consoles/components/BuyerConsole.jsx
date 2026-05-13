@@ -21,88 +21,128 @@ const ALL_COUNTRIES = Country.getAllCountries()
 const getStates = (isoCode) => State.getStatesOfCountry(isoCode)
 import { usersService } from '../../users/services/usersService'
 import { masterDataService } from '../../vendors/services/masterDataService'
-import { buildMonthlyData } from '../../../utils/statsUtils'
+import { buildMonthlyData, buildWeeklyData, buildCustomRangeData } from '../../../utils/statsUtils'
+import { exportRequestsToExcel, formatDateTime } from '../../../utils/exportUtils'
 
 const EMPTY_FORM = {
-  vendorName: '', materialGroup: '', reason: '',
+  purchasingOrganization: '',
+  vendorName: '', materialGroup: '', reason: '', msmeCategory: '',
   contactPerson: '', telephone: '',
   gstNumber: '', panCard: '',
   addressDetails: '', postalCode: '', city: '', locality: '', state: '', country: 'IN',
   currency: 'INR', paymentTerms: '', incoterms: '', yearlyPvo: '',
   isOneTimeVendor: false, proposedBy: '',
+  bankName: '', branchName: '', bankAccountNumber: '', ifscCode: '',
+  bankDocument1: null, bankDocument2: null, gstDocument: null, panDocument: null,
 }
 
 const CURRENCIES    = ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'SGD', 'AED']
 const INCOTERMS     = ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FAS','FOB','CFR','CIF']
+const PURCHASING_ORGS = ['900D', '900I', 'P20D', 'T20I']
+const MSME_CATEGORIES = ['Micro', 'Small', 'Medium']
 const ALL_LOCALITIES = [...new Set(Object.values(CITIES).flat())]
 
 const GST_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/
 const PAN_RE = /^[A-Z]{5}[0-9]{4}[A-Z]$/
+const IFSC_RE = /^[A-Z]{4}0[A-Z0-9]{6}$/
+const REASON_MAX = 500
+
+// Reads a File into a base64 data URI for backend storage in a longtext column.
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) return resolve(null)
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+}
 
 // Maps Excel column headers (lowercase, asterisks stripped) → EMPTY_FORM field names
 const EXCEL_COL_MAP = {
-  'vendor name':        'vendorName',
-  'material group':     'materialGroup',
-  'reason':             'reason',
-  'contact person':     'contactPerson',
-  'telephone':          'telephone',
-  'gst number':         'gstNumber',
-  'pan card':           'panCard',
-  'address details':    'addressDetails',
-  'postal code':        'postalCode',
-  'city':               'city',
-  'locality':           'locality',
-  'state':              'state',
-  'country':            'country',
-  'currency':           'currency',
-  'payment terms':      'paymentTerms',
-  'incoterms':          'incoterms',
-  'yearly pvo':         'yearlyPvo',
-  'proposed by':        'proposedBy',
-  'is one-time vendor': 'isOneTimeVendor',
+  'purchasing organization': 'purchasingOrganization',
+  'vendor name':             'vendorName',
+  'material group':          'materialGroup',
+  'msme category':           'msmeCategory',
+  'reason for registration': 'reason',
+  'reason':                  'reason',
+  'contact person':          'contactPerson',
+  'telephone':               'telephone',
+  'gst number':              'gstNumber',
+  'pan card':                'panCard',
+  'address details':         'addressDetails',
+  'postal code':             'postalCode',
+  'city':                    'city',
+  'locality':                'locality',
+  'state':                   'state',
+  'country':                 'country',
+  'currency':                'currency',
+  'payment terms':           'paymentTerms',
+  'incoterms':               'incoterms',
+  'yearly pvo':              'yearlyPvo',
+  'proposed by':             'proposedBy',
+  'bank name':               'bankName',
+  'branch name':             'branchName',
+  'bank account number':     'bankAccountNumber',
+  'ifsc code':               'ifscCode',
+  'is one-time vendor':      'isOneTimeVendor',
 }
 
 // Required fields get a red asterisk in the template header
 const TEMPLATE_HEADERS = [
-  { label: 'Vendor Name *',     required: true  },
-  { label: 'Material Group',    required: false },
-  { label: 'Reason',            required: false },
-  { label: 'Contact Person *',  required: true  },
-  { label: 'Telephone',         required: false },
-  { label: 'GST Number *',      required: true  },
-  { label: 'PAN Card *',        required: true  },
-  { label: 'Address Details *', required: true  },
-  { label: 'Postal Code',       required: false },
-  { label: 'City *',            required: true  },
-  { label: 'Locality *',        required: true  },
-  { label: 'State',             required: false },
-  { label: 'Country',           required: false },
-  { label: 'Currency',          required: false },
-  { label: 'Payment Terms',     required: false },
-  { label: 'Incoterms',         required: false },
-  { label: 'Yearly PVO',        required: false },
-  { label: 'Proposed By',       required: false },
-  { label: 'Is One-Time Vendor',required: false },
+  { label: 'Purchasing Organization *', required: true  },
+  { label: 'Vendor Name *',             required: true  },
+  { label: 'Material Group',            required: false },
+  { label: 'MSME Category *',           required: true  },
+  { label: 'Reason for Registration *', required: true  },
+  { label: 'Contact Person *',          required: true  },
+  { label: 'Telephone *',               required: true  },
+  { label: 'GST Number *',              required: true  },
+  { label: 'PAN Card',                  required: false },
+  { label: 'Address Details *',         required: true  },
+  { label: 'Postal Code *',             required: true  },
+  { label: 'City *',                    required: true  },
+  { label: 'Locality',                  required: false },
+  { label: 'State *',                   required: true  },
+  { label: 'Country *',                 required: true  },
+  { label: 'Currency *',                required: true  },
+  { label: 'Payment Terms',             required: false },
+  { label: 'Incoterms *',               required: true  },
+  { label: 'Yearly PVO',                required: false },
+  { label: 'Proposed By',               required: false },
+  { label: 'Bank Name *',               required: true  },
+  { label: 'Branch Name *',             required: true  },
+  { label: 'Bank Account Number *',     required: true  },
+  { label: 'IFSC Code *',               required: true  },
+  { label: 'Is One-Time Vendor',        required: false },
 ]
 
 // Generates and downloads a blank .xlsx template with required-field asterisks
 function downloadTemplate() {
   const headers = TEMPLATE_HEADERS.map(h => h.label)
   const sample = [
-    'Acme Supplies Pvt Ltd', 'Raw Materials', 'New strategic supplier', 'Rajiv Mehta', '9876543210',
-    '27AAAAA0000A1Z5', 'AAAAA1234A', 'Plot 12, Industrial Area, Phase 2', '400001', 'Mumbai', 'Andheri',
-    'Maharashtra', 'India', 'INR', 'Net 30', 'FOB', '50,00,000', 'Vikram Nair', 'No',
+    '900D', 'Acme Supplies Pvt Ltd', 'Raw Materials', 'Small',
+    'New strategic supplier for FY2026 — supplies precision-machined components used in line A',
+    'Rajiv Mehta', '9876543210',
+    '27AAAAA0000A1Z5', 'AAAAA1234A',
+    'Plot 12, Industrial Area, Phase 2', '400001', 'Mumbai', 'Andheri',
+    'Maharashtra', 'India', 'INR', 'Net 30', 'FOB', '50,00,000', 'Vikram Nair',
+    'State Bank of India', 'Andheri East', '000123456789', 'SBIN0001234',
+    'No',
   ]
   const wb = XLSX.utils.book_new()
   const ws = XLSX.utils.aoa_to_sheet([headers, sample])
 
-  // Style required-field headers red (xlsx supports limited cell styles via xlsx-style or SheetJS Pro;
-  // we use a note in the sample row instead to stay with the free SheetJS package)
   ws['!cols'] = headers.map(() => ({ wch: 24 }))
 
-  // Add a legend row below the sample so the user knows * = required
-  XLSX.utils.sheet_add_aoa(ws, [['* = Required field. Do not change column headers.']], { origin: 'A3' })
-  ws['A3'] = { v: '* = Required field. Do not change column headers.', t: 's' }
+  // Legend below the sample row — note we can't ship file uploads through the
+  // template, so the importer still has to pick docs in the form before submitting.
+  XLSX.utils.sheet_add_aoa(ws, [
+    ['* = Required field. Do not change column headers.'],
+    ['Note: GST document and Bank document uploads are mandatory in the form but cannot be imported via this template — attach them after the form pre-fills.'],
+    ['Purchasing Organization must be one of: 900D, 900I, P20D, T20I'],
+    ['MSME Category must be one of: Micro, Small, Medium'],
+  ], { origin: 'A3' })
 
   XLSX.utils.book_append_sheet(wb, ws, 'Vendor Request')
   XLSX.writeFile(wb, 'Andritz_Vendor_Request_Template.xlsx')
@@ -117,13 +157,51 @@ function FormSection({ title, children }) {
   )
 }
 
-function Field({ label, required, error, span = 1, children }) {
+function Field({ label, required, error, span = 1, children, hint }) {
   return (
     <div className={span === 2 ? 'sm:col-span-2' : ''}>
       <label className="form-label">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
       {children}
+      {hint && !error && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
+      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+    </div>
+  )
+}
+
+function FileUploadField({ label, required, value, error, accept = "image/*,application/pdf", onPick, onClear }) {
+  const inputRef = useRef(null)
+  return (
+    <div className="sm:col-span-2">
+      <label className="form-label">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => inputRef.current?.click()}
+        >
+          <ArrowUpTrayIcon className="h-4 w-4" />
+          {value ? 'Replace File' : 'Choose File'}
+        </button>
+        {value && (
+          <>
+            <span className="text-xs text-gray-600 truncate flex-1 min-w-0">{value.name}</span>
+            <button type="button" className="text-gray-400 hover:text-red-500" onClick={onClear}>
+              <XMarkIcon className="h-4 w-4" />
+            </button>
+          </>
+        )}
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          className="hidden"
+          onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; onPick(f) }}
+        />
+      </div>
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   )
@@ -301,6 +379,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const rejectedReqs   = myRequests.filter(r => r.status === 'Rejected')
   const completedReqs  = myRequests.filter(r => r.status === 'Completed')
   const inProgressReqs = activeReqs.filter(r => r.status !== 'Completed')
+  // Requests cleared by every intermediate approver but still waiting on Pardeep Sharma
+  const finalPendingReqs = activeReqs.filter(r => r.status === 'PendingFinalApproval')
 
   const [showForm, setShowForm]                     = useState(false)
   const [editingRequest, setEditingRequest]         = useState(null)
@@ -332,6 +412,10 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const [showNoApproverConfirm, setShowNoApproverConfirm] = useState(false)
 
   const [pageSize, setPageSize] = useState(10)
+  // Buyer dashboard "My Requests" chart filter — 'weekly' | 'monthly' | 'custom'
+  const [chartFilter, setChartFilter] = useState('monthly')
+  const [chartDateFrom, setChartDateFrom] = useState('')
+  const [chartDateTo, setChartDateTo]     = useState('')
 
   const handleImportExcel = (e) => {
     const file = e.target.files?.[0]
@@ -382,27 +466,46 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
         // Validate required fields + formats
         const errs = []
+        if (!parsed.purchasingOrganization.trim())
+          errs.push('Purchasing Organization is required.')
+        else if (!PURCHASING_ORGS.includes(parsed.purchasingOrganization.trim()))
+          errs.push(`Purchasing Organization must be one of: ${PURCHASING_ORGS.join(', ')}.`)
         if (!parsed.vendorName.trim())     errs.push('Vendor Name is required.')
         if (/\d/.test(parsed.vendorName))  errs.push('Vendor Name should not contain numbers.')
+        if (!parsed.msmeCategory.trim())   errs.push('MSME Category is required.')
+        else if (!MSME_CATEGORIES.includes(parsed.msmeCategory.trim()))
+          errs.push(`MSME Category must be one of: ${MSME_CATEGORIES.join(', ')}.`)
+        if (!parsed.reason.trim())         errs.push('Reason for Registration is required.')
+        else if (parsed.reason.length > REASON_MAX) errs.push(`Reason for Registration must be ${REASON_MAX} characters or fewer.`)
         if (!parsed.contactPerson.trim())  errs.push('Contact Person is required.')
         else if (/\d/.test(parsed.contactPerson)) errs.push('Contact Person should not contain numbers — enter a person\'s name, not a number.')
-        if (parsed.telephone.trim() && !/^[0-9+\-()\s]+$/.test(parsed.telephone.trim()))
+        if (!parsed.telephone.trim())      errs.push('Telephone is required.')
+        else if (!/^[0-9+\-()\s]+$/.test(parsed.telephone.trim()))
           errs.push('Telephone / Mobile should contain only digits, spaces, and +, -, (, ) characters.')
         if (!parsed.gstNumber.trim())      errs.push('GST Number is required.')
         else if (!GST_RE.test(parsed.gstNumber.trim()))
           errs.push('GST Number format is invalid (expected: 22AAAAA0000A1Z5).')
-        if (!parsed.panCard.trim())        errs.push('PAN Card is required.')
-        else if (!PAN_RE.test(parsed.panCard.trim()))
+        if (parsed.panCard.trim() && !PAN_RE.test(parsed.panCard.trim()))
           errs.push('PAN Card format is invalid (expected: ABCDE1234F).')
         if (!parsed.addressDetails.trim()) errs.push('Address Details is required.')
+        if (!parsed.postalCode.trim())     errs.push('Postal Code is required.')
+        if (!parsed.country)               errs.push('Country is required.')
+        if (!parsed.state.trim())          errs.push('State is required.')
         if (!parsed.city.trim())           errs.push('City is required.')
         else if (/[^a-zA-Z\s]/.test(parsed.city.trim()))
           errs.push('City must contain letters only — no numbers or special characters.')
-        if (!parsed.locality.trim())       errs.push('Locality is required.')
+        if (!parsed.currency.trim())       errs.push('Currency is required.')
+        if (!parsed.incoterms.trim())      errs.push('Incoterms is required.')
         if (parsed.yearlyPvo.trim() && /[^0-9,]/.test(parsed.yearlyPvo.trim()))
           errs.push('Yearly PVO must contain digits and commas only — no letters or special characters.')
         if (parsed.proposedBy.trim() && /[^a-zA-Z\s]/.test(parsed.proposedBy.trim()))
           errs.push('Proposed By must contain letters only — no numbers or special characters.')
+        if (!parsed.bankName.trim())       errs.push('Bank Name is required.')
+        if (!parsed.branchName.trim())     errs.push('Branch Name is required.')
+        if (!parsed.bankAccountNumber.trim()) errs.push('Bank Account Number is required.')
+        if (!parsed.ifscCode.trim())       errs.push('IFSC Code is required.')
+        else if (!IFSC_RE.test(parsed.ifscCode.trim().toUpperCase()))
+          errs.push('IFSC Code format is invalid (expected: SBIN0001234, 11 characters).')
 
         if (errs.length) {
           setImportErrors(errs)
@@ -415,7 +518,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         openCreate()
         setTimeout(() => {
           setForm(parsed)
-          setToast({ type: 'success', title: 'Form pre-filled from Excel', body: 'Please review all fields before submitting.' })
+          setToast({ type: 'success', title: 'Form pre-filled from Excel', body: 'Review all fields and attach the GST document and Bank document before submitting — uploads are not carried over from Excel.' })
         }, 50)
       } catch {
         setImportErrors(['Could not read the file. Make sure you are uploading the official Andritz template (.xlsx).'])
@@ -452,6 +555,16 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     setShowForm(true)
   }
 
+  const setFile = async (field, file) => {
+    if (!file) { set(field, null); return }
+    if (file.size > 5 * 1024 * 1024) {
+      setToast({ type: 'error', title: 'File too large', body: `${file.name} exceeds the 5 MB limit. Please upload a smaller file.` })
+      return
+    }
+    const dataUrl = await readFileAsDataUrl(file)
+    set(field, { name: file.name, data: dataUrl })
+  }
+
   const openEdit = (req) => {
     setEditingRequest(req)
 
@@ -485,9 +598,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     }
 
     setForm({
+      purchasingOrganization: req.purchasingOrganization ?? '',
       vendorName:     req.vendorName     ?? '',
       materialGroup:  req.materialGroup  ?? '',
       reason:         req.reason         ?? '',
+      msmeCategory:   req.msmeCategory   ?? '',
       contactPerson:  req.contactPerson  || req.contactInformation || '',
       telephone:      req.telephone      ?? '',
       gstNumber:      req.gstNumber      ?? '',
@@ -504,6 +619,14 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       yearlyPvo:      req.yearlyPvo      ?? '',
       isOneTimeVendor:req.isOneTimeVendor ?? false,
       proposedBy:     req.proposedBy     ?? '',
+      bankName:           req.bankName           ?? '',
+      branchName:         req.branchName         ?? '',
+      bankAccountNumber:  req.bankAccountNumber  ?? '',
+      ifscCode:           req.ifscCode           ?? '',
+      bankDocument1: req.bankDocument1 ? { name: 'Bank document (saved)', data: req.bankDocument1, existing: true } : null,
+      bankDocument2: req.bankDocument2 ? { name: 'Bank document 2 (saved)', data: req.bankDocument2, existing: true } : null,
+      gstDocument:   req.gstDocument   ? { name: 'GST document (saved)',   data: req.gstDocument,   existing: true } : null,
+      panDocument:   req.panDocument   ? { name: 'PAN document (saved)',   data: req.panDocument,   existing: true } : null,
     })
     setErrors({})
     setApiError(null)
@@ -512,15 +635,30 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
   const validate = () => {
     const e = {}
+    if (!form.purchasingOrganization) e.purchasingOrganization = 'Purchasing Organization is required.'
     if (!form.vendorName.trim())     e.vendorName     = 'Vendor name is required.'
+    if (!form.reason.trim())         e.reason         = 'Reason for registration is required.'
+    else if (form.reason.length > REASON_MAX) e.reason = `Reason must be ${REASON_MAX} characters or fewer.`
+    if (!form.msmeCategory)          e.msmeCategory   = 'MSME Category is required.'
     if (!form.contactPerson.trim())  e.contactPerson  = 'Contact person is required.'
+    if (!form.telephone.trim())      e.telephone      = 'Telephone is required.'
     if (!form.gstNumber.trim())      e.gstNumber      = 'GST Number is required.'
     else if (!GST_RE.test(form.gstNumber.trim())) e.gstNumber = 'GST must be in the format 22AAAAA0000A1Z5 (15 characters).'
-    if (!form.panCard.trim())        e.panCard        = 'PAN Card is required.'
-    else if (!PAN_RE.test(form.panCard.trim()))   e.panCard   = 'PAN must be in the format ABCDE1234F (10 characters).'
+    if (form.panCard.trim() && !PAN_RE.test(form.panCard.trim())) e.panCard = 'PAN must be in the format ABCDE1234F (10 characters).'
     if (!form.addressDetails.trim()) e.addressDetails = 'Address is required.'
+    if (!form.postalCode.trim())     e.postalCode     = 'Postal Code is required.'
+    if (!form.country)               e.country        = 'Country is required.'
+    if (!form.state.trim())          e.state          = 'State is required.'
     if (!form.city.trim())           e.city           = 'City is required.'
-    if (!form.locality.trim())       e.locality       = 'Locality is required.'
+    if (!form.currency)              e.currency       = 'Currency is required.'
+    if (!form.incoterms)             e.incoterms      = 'Incoterms is required.'
+    if (!form.bankName.trim())       e.bankName       = 'Bank Name is required.'
+    if (!form.branchName.trim())     e.branchName     = 'Branch Name is required.'
+    if (!form.bankAccountNumber.trim()) e.bankAccountNumber = 'Bank Account Number is required.'
+    if (!form.ifscCode.trim())       e.ifscCode       = 'IFSC Code is required.'
+    else if (!IFSC_RE.test(form.ifscCode.trim().toUpperCase())) e.ifscCode = 'IFSC must be 11 characters (e.g. SBIN0001234).'
+    if (!form.gstDocument)           e.gstDocument    = 'GST document upload is required.'
+    if (!form.bankDocument1)         e.bankDocument1  = 'Bank document upload is required.'
     // approvers: warn only if chain rebuild is required (stale approver case)
     if (chainNeedsRebuild && selectedApprovers.length === 0)
       e.approvers = 'The original approval chain has stale approvers — please select at least one approver to rebuild the chain.'
@@ -558,7 +696,12 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       'currency','paymentTerms','incoterms','materialGroup','reason',
       'yearlyPvo','proposedBy',
     ]
-    return strFields.some(f => (form[f] ?? '') !== (original[f] ?? ''))
+    const hasStrChange = strFields.some(f => (form[f] ?? '') !== (original[f] ?? ''))
+    const newExtFields = ['purchasingOrganization','msmeCategory','bankName','branchName','bankAccountNumber','ifscCode']
+    const hasExtChange = newExtFields.some(f => (form[f] ?? '') !== (editingRequest[f] ?? ''))
+    const docFields = ['bankDocument1','bankDocument2','gstDocument','panDocument']
+    const hasDocChange = docFields.some(f => !!form[f] && !form[f]?.existing)
+    return hasStrChange || hasExtChange || hasDocChange
         || (form.isOneTimeVendor ?? false) !== (original.isOneTimeVendor ?? false)
   }
 
@@ -587,7 +730,19 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
     setSubmitting(true)
     setApiError(null)
-    const payload = { ...form, country: Country.getCountryByCode(form.country)?.name ?? form.country }
+    const docFor = (slot) => {
+      if (!slot) return null
+      // Already-saved documents come back with `existing: true`; don't resend them as new uploads.
+      return slot.existing ? null : slot.data
+    }
+    const payload = {
+      ...form,
+      country: Country.getCountryByCode(form.country)?.name ?? form.country,
+      bankDocument1: docFor(form.bankDocument1),
+      bankDocument2: docFor(form.bankDocument2),
+      gstDocument:   docFor(form.gstDocument),
+      panDocument:   docFor(form.panDocument),
+    }
     try {
       if (editingRequest && editingRequest.status === 'Completed') {
         const name = editingRequest.vendorName
@@ -626,6 +781,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           AddressDetails: 'addressDetails', City: 'city', Locality: 'locality',
           Telephone: 'telephone', PostalCode: 'postalCode', State: 'state',
           MaterialGroup: 'materialGroup', Reason: 'reason',
+          PurchasingOrganization: 'purchasingOrganization', MsmeCategory: 'msmeCategory',
+          BankName: 'bankName', BranchName: 'branchName',
+          BankAccountNumber: 'bankAccountNumber', IfscCode: 'ifscCode',
+          GstDocument: 'gstDocument', BankDocument1: 'bankDocument1',
+          Currency: 'currency', Incoterms: 'incoterms',
         }
         const fieldErrors = {}
         for (const [key, msgs] of Object.entries(detail.errors)) {
@@ -651,7 +811,15 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const handleSaveDraft = async () => {
     setSavingDraft(true)
     setApiError(null)
-    const payload = { ...form, country: Country.getCountryByCode(form.country)?.name ?? form.country }
+    const docFor = (slot) => (!slot || slot.existing) ? null : slot.data
+    const payload = {
+      ...form,
+      country: Country.getCountryByCode(form.country)?.name ?? form.country,
+      bankDocument1: docFor(form.bankDocument1),
+      bankDocument2: docFor(form.bankDocument2),
+      gstDocument:   docFor(form.gstDocument),
+      panDocument:   docFor(form.panDocument),
+    }
     try {
       const name = form.vendorName?.trim() || 'Untitled Draft'
       await workflow.saveDraft(payload, selectedApprovers, editingRequest?.status === 'Draft' ? editingRequest.id : null)
@@ -801,7 +969,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           {/* ── Left column (main) ── */}
           <div className="lg:col-span-2 flex flex-col gap-5">
             {/* Stat cards */}
-            <div className={`grid gap-4 ${draftReqs.length > 0 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
+            <div className={`grid gap-4 ${draftReqs.length > 0 ? 'grid-cols-2 sm:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4'}`}>
               {draftReqs.length > 0 && (
                 <button
                   onClick={() => { setRequestsFilter('Draft'); onNavigate('requests') }}
@@ -826,6 +994,19 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 <div>
                   <p className="text-2xl font-bold text-gray-900">{inProgressReqs.length}</p>
                   <p className="text-xs text-gray-500 mt-0.5">Pending</p>
+                </div>
+              </button>
+              <button
+                onClick={() => { setRequestsFilter('Pending'); onNavigate('requests') }}
+                className={`bg-white rounded-xl ring-1 px-5 py-4 flex items-center gap-4 hover:ring-2 hover:ring-slate-600 transition-all text-left ${finalPendingReqs.length > 0 ? 'ring-indigo-200' : 'ring-gray-200'}`}
+                title="Approved by other approvers — awaiting Pardeep Sharma's final review"
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${finalPendingReqs.length > 0 ? 'bg-indigo-50' : 'bg-gray-50'}`}>
+                  <CheckBadgeIcon className={`h-5 w-5 ${finalPendingReqs.length > 0 ? 'text-indigo-500' : 'text-gray-400'}`} />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{finalPendingReqs.length}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-tight">Pending Final Approver</p>
                 </div>
               </button>
               <button
@@ -854,25 +1035,62 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               </button>
             </div>
 
-            {/* Monthly requests chart */}
+            {/* Requests chart with weekly / monthly / custom filter */}
             <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-900">My Requests — Last 6 Months</h3>
+              <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between gap-2 flex-wrap">
+                <h3 className="text-sm font-semibold text-gray-900">
+                  My Requests — {chartFilter === 'weekly' ? 'Last 8 Weeks' : chartFilter === 'custom' ? 'Custom Range' : 'Last 6 Months'}
+                </h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="inline-flex rounded-lg ring-1 ring-gray-200 overflow-hidden text-xs">
+                    {['weekly', 'monthly', 'custom'].map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => setChartFilter(opt)}
+                        className={`px-2.5 py-1 transition-colors ${chartFilter === opt ? 'bg-[#096fb3] text-white font-semibold' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                      >
+                        {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                  {chartFilter === 'custom' && (
+                    <>
+                      <input type="date" value={chartDateFrom} onChange={e => setChartDateFrom(e.target.value)}
+                        className="form-input text-xs py-1 w-32" title="From date" />
+                      <input type="date" value={chartDateTo} onChange={e => setChartDateTo(e.target.value)}
+                        className="form-input text-xs py-1 w-32" title="To date" />
+                    </>
+                  )}
+                </div>
               </div>
               <div className="px-2 py-4">
-                <ResponsiveContainer width="100%" height={160}>
-                  <BarChart data={buildMonthlyData(myRequests)} barSize={28} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                    <Tooltip
-                      cursor={{ fill: '#f0f7ff' }}
-                      contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
-                      formatter={(v) => [v, 'Requests']}
-                    />
-                    <Bar dataKey="count" fill="#096fb3" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {(() => {
+                  const chartData = chartFilter === 'weekly'
+                    ? buildWeeklyData(myRequests)
+                    : chartFilter === 'custom'
+                      ? buildCustomRangeData(myRequests, 'createdAt', chartDateFrom, chartDateTo)
+                      : buildMonthlyData(myRequests)
+                  if (chartFilter === 'custom' && (!chartDateFrom || !chartDateTo)) {
+                    return (
+                      <div className="py-10 text-center text-xs text-gray-400">Pick a "from" and "to" date to plot the custom range.</div>
+                    )
+                  }
+                  return (
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={chartData} barSize={chartFilter === 'custom' ? 14 : 24} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                        <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                        <Tooltip
+                          cursor={{ fill: '#f0f7ff' }}
+                          contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
+                          formatter={(v) => [v, 'Requests']}
+                        />
+                        <Bar dataKey="count" fill="#096fb3" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )
+                })()}
               </div>
             </div>
 
@@ -1022,6 +1240,15 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   className="form-input text-sm w-36 shrink-0" title="To date" />
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  className="btn-secondary"
+                  disabled={filteredReqs.length === 0}
+                  title="Export current view to Excel"
+                  onClick={() => exportRequestsToExcel(filteredReqs, 'my_vendor_requests.xlsx')}
+                >
+                  <ArrowDownTrayIcon className="h-4 w-4" />
+                  Export Excel
+                </button>
                 <button className="btn-secondary" onClick={() => { setImportErrors([]); setShowImportDialog(true) }}>
                   <ArrowUpTrayIcon className="h-4 w-4" />
                   Import Request
@@ -1048,6 +1275,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Material Group</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Created On</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Final Approval</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
@@ -1079,7 +1307,13 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                             }
                           </td>
                           <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
-                            {new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                            {formatDateTime(req.createdAt)}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                            {(() => {
+                              const fs = req.approvalSteps?.find(s => s.isFinalApproval)
+                              return fs?.decidedAt ? formatDateTime(fs.decidedAt) : '—'
+                            })()}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
                             <div className="flex items-center gap-1.5">
@@ -1268,6 +1502,17 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           )}
 
           <div className="space-y-6">
+            <FormSection title="Purchasing Scope">
+              <Field label="Purchasing Organization" required error={errors.purchasingOrganization} span={2}>
+                <select className="form-input"
+                  value={form.purchasingOrganization}
+                  onChange={e => set('purchasingOrganization', e.target.value)}>
+                  <option value="">Select Purchasing Organization</option>
+                  {PURCHASING_ORGS.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </Field>
+            </FormSection>
+
             <FormSection title="Vendor Information">
               <Field label="Supplier Name" required error={errors.vendorName} span={2}>
                 <input className="form-input" placeholder="e.g. Tata Components Pvt. Ltd."
@@ -1280,16 +1525,32 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   {materialGroups.map(g => <option key={g} value={g} />)}
                 </datalist>
               </Field>
-              <Field label="Reason for Registration" error={errors.reason}>
-                <input className="form-input" placeholder="e.g. New supplier for FY2026"
-                  value={form.reason} onChange={e => set('reason', e.target.value)} />
+              <Field label="MSME Category" required error={errors.msmeCategory}>
+                <select className="form-input"
+                  value={form.msmeCategory}
+                  onChange={e => set('msmeCategory', e.target.value)}>
+                  <option value="">Select MSME Category</option>
+                  {MSME_CATEGORIES.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
               </Field>
-              <Field label="Proposed By" error={errors.proposedBy} span={2}>
+              <Field label="Proposed By" error={errors.proposedBy}>
                 <input className="form-input" list="proposed-by-list" placeholder="Name / department proposing this vendor"
                   value={form.proposedBy} onChange={e => set('proposedBy', e.target.value.replace(/[^a-zA-Z\s]/g, ''))} />
                 <datalist id="proposed-by-list">
                   {proposedByNames.map(n => <option key={n} value={n} />)}
                 </datalist>
+              </Field>
+              <Field
+                label="Reason for Registration"
+                required
+                error={errors.reason}
+                hint={`${form.reason.length} / ${REASON_MAX}`}
+                span={2}
+              >
+                <textarea className="form-input resize-none" rows={3} maxLength={REASON_MAX}
+                  placeholder="e.g. New supplier for FY2026 — describe the business need and approval context"
+                  value={form.reason}
+                  onChange={e => set('reason', e.target.value.slice(0, REASON_MAX))} />
               </Field>
               <Field label="" span={2}>
                 <label className="flex items-center gap-3 cursor-pointer select-none">
@@ -1306,18 +1567,18 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 <textarea className="form-input resize-none" rows={2} placeholder="Plot No., Building Name, Area"
                   value={form.addressDetails} onChange={e => set('addressDetails', e.target.value)} />
               </Field>
-              <Field label="Postal Code" error={errors.postalCode}>
+              <Field label="Postal Code" required error={errors.postalCode}>
                 <input className="form-input" placeholder="e.g. 400001" maxLength={10}
                   value={form.postalCode} onChange={e => set('postalCode', e.target.value.replace(/\D/g, ''))} />
               </Field>
-              <Field label="Country" error={errors.country}>
+              <Field label="Country" required error={errors.country}>
                 <select className="form-input" value={form.country} onChange={e => {
                   setForm(f => ({ ...f, country: e.target.value, state: '', city: '', locality: '' }))
                 }}>
                   {ALL_COUNTRIES.map(c => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
                 </select>
               </Field>
-              <Field label="State" error={errors.state}>
+              <Field label="State" required error={errors.state}>
                 {getStates(form.country).length > 0 ? (
                   <select className="form-input" value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value, city: '', locality: '' }))}>
                     <option value="">Select State</option>
@@ -1330,8 +1591,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               <Field label="City" required error={errors.city}>
                 <input className="form-input" placeholder="Enter city" value={form.city} onChange={e => set('city', e.target.value.replace(/[^a-zA-Z\s]/g, ''))} />
               </Field>
-              <Field label="Locality" required error={errors.locality}>
-                <input className="form-input" list="locality-list" placeholder="Type or select locality"
+              <Field label="Locality" error={errors.locality}>
+                <input className="form-input" list="locality-list" placeholder="Type or select locality (optional)"
                   value={form.locality} onChange={e => set('locality', e.target.value)} />
                 <datalist id="locality-list">
                   {ALL_LOCALITIES.map(l => <option key={l} value={l} />)}
@@ -1340,8 +1601,9 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             </FormSection>
 
             <FormSection title="Commercial Terms">
-              <Field label="Currency" error={errors.currency}>
+              <Field label="Currency" required error={errors.currency}>
                 <select className="form-input" value={form.currency} onChange={e => set('currency', e.target.value)}>
+                  <option value="">Select Currency</option>
                   {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </Field>
@@ -1349,7 +1611,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 <input className="form-input" placeholder="e.g. Net 30, Advance 50%"
                   value={form.paymentTerms} onChange={e => set('paymentTerms', e.target.value)} />
               </Field>
-              <Field label="Incoterms" error={errors.incoterms}>
+              <Field label="Incoterms" required error={errors.incoterms}>
                 <select className="form-input" value={form.incoterms} onChange={e => set('incoterms', e.target.value)}>
                   <option value="">Select Incoterms</option>
                   {INCOTERMS.map(t => <option key={t} value={t}>{t}</option>)}
@@ -1366,10 +1628,61 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 <input className="form-input font-mono uppercase tracking-wider" placeholder="e.g. 27AABCT1332L1ZV"
                   value={form.gstNumber} onChange={e => set('gstNumber', e.target.value.toUpperCase())} />
               </Field>
-              <Field label="PAN Card" required error={errors.panCard}>
+              <Field label="PAN Card" error={errors.panCard} hint="Optional">
                 <input className="form-input font-mono uppercase tracking-wider" placeholder="e.g. AABCT1332L"
                   value={form.panCard} onChange={e => set('panCard', e.target.value.toUpperCase())} />
               </Field>
+              <FileUploadField
+                label="GST Document Upload"
+                required
+                value={form.gstDocument}
+                error={errors.gstDocument}
+                onPick={f => setFile('gstDocument', f)}
+                onClear={() => set('gstDocument', null)}
+              />
+              <FileUploadField
+                label="PAN Document Upload (optional)"
+                value={form.panDocument}
+                error={errors.panDocument}
+                onPick={f => setFile('panDocument', f)}
+                onClear={() => set('panDocument', null)}
+              />
+            </FormSection>
+
+            <FormSection title="Financial / Bank Details">
+              <Field label="Bank Name" required error={errors.bankName}>
+                <input className="form-input" placeholder="e.g. State Bank of India"
+                  value={form.bankName} onChange={e => set('bankName', e.target.value)} />
+              </Field>
+              <Field label="Branch Name" required error={errors.branchName}>
+                <input className="form-input" placeholder="e.g. Andheri East"
+                  value={form.branchName} onChange={e => set('branchName', e.target.value)} />
+              </Field>
+              <Field label="Bank Account Number" required error={errors.bankAccountNumber}>
+                <input className="form-input font-mono" placeholder="e.g. 000123456789" maxLength={50}
+                  value={form.bankAccountNumber}
+                  onChange={e => set('bankAccountNumber', e.target.value.replace(/[^0-9A-Za-z]/g, ''))} />
+              </Field>
+              <Field label="IFSC Code" required error={errors.ifscCode}>
+                <input className="form-input font-mono uppercase tracking-wider" placeholder="e.g. SBIN0001234" maxLength={11}
+                  value={form.ifscCode}
+                  onChange={e => set('ifscCode', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} />
+              </Field>
+              <FileUploadField
+                label="Bank Document (cheque / passbook copy)"
+                required
+                value={form.bankDocument1}
+                error={errors.bankDocument1}
+                onPick={f => setFile('bankDocument1', f)}
+                onClear={() => set('bankDocument1', null)}
+              />
+              <FileUploadField
+                label="Additional Bank Document (optional)"
+                value={form.bankDocument2}
+                error={errors.bankDocument2}
+                onPick={f => setFile('bankDocument2', f)}
+                onClear={() => set('bankDocument2', null)}
+              />
             </FormSection>
 
             <FormSection title="Contact Details">
@@ -1378,7 +1691,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   value={form.contactPerson}
                   onChange={e => set('contactPerson', e.target.value.replace(/[^a-zA-Z\s.''-]/g, ''))} />
               </Field>
-              <Field label="Telephone / Mobile" error={errors.telephone}>
+              <Field label="Telephone / Mobile" required error={errors.telephone}>
                 <input className="form-input" placeholder="e.g. 9876543210" inputMode="numeric"
                   value={form.telephone}
                   onChange={e => set('telephone', e.target.value.replace(/[^0-9+\-() ]/g, ''))} />

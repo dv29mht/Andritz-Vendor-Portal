@@ -20,6 +20,7 @@ import PageSizeSelect from '../../../shared/components/PageSizeSelect'
 import UserManagement from '../../users/components/UserManagement'
 import { vendorsService } from '../../vendors/services/vendorsService'
 import { buildStats, buildMonthlyData } from '../../../utils/statsUtils'
+import { exportRequestsToExcel, formatDateTime } from '../../../utils/exportUtils'
 
 const BAR_COLORS = ['#096fb3','#f59e0b','#10b981','#ef4444','#8b5cf6','#f97316','#06b6d4','#84cc16']
 
@@ -456,6 +457,15 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 </option>
               ))}
             </select>
+            <button
+              className="btn-secondary ml-auto"
+              disabled={visible.length === 0}
+              title="Export current view to Excel"
+              onClick={() => exportRequestsToExcel(visible, 'all_vendor_requests.xlsx')}
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              Export Excel
+            </button>
           </div>
 
           {/* Archived banner */}
@@ -478,14 +488,14 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
             <table className="text-sm" style={{ minWidth: '900px', width: '100%' }}>
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
-                  {['Serial No.', 'Vendor Name', 'Buyer', 'City', 'Revision', 'Status', 'Updated', 'Actions'].map(h => (
+                  {['Serial No.', 'Vendor Name', 'Buyer', 'City', 'Revision', 'Status', 'Created On', 'Final Approval', 'Updated', 'Actions'].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
                 {paginated.length === 0 && (
-                  <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-400">No requests match the current filter.</td></tr>
+                  <tr><td colSpan={10} className="px-4 py-10 text-center text-sm text-gray-400">No requests match the current filter.</td></tr>
                 )}
                 {paginated.map((req, idx) => (
                   <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
@@ -504,7 +514,16 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                     </td>
                     <td className="px-4 py-3.5"><StatusBadge status={req.status} /></td>
                     <td className="px-4 py-3.5 text-gray-400 whitespace-nowrap text-xs">
-                      {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                      {formatDateTime(req.createdAt)}
+                    </td>
+                    <td className="px-4 py-3.5 text-gray-400 whitespace-nowrap text-xs">
+                      {(() => {
+                        const fs = req.approvalSteps?.find(s => s.isFinalApproval)
+                        return fs?.decidedAt ? formatDateTime(fs.decidedAt) : '—'
+                      })()}
+                    </td>
+                    <td className="px-4 py-3.5 text-gray-400 whitespace-nowrap text-xs">
+                      {formatDateTime(req.updatedAt)}
                     </td>
                     <td className="px-4 py-3.5 whitespace-nowrap">
                       {req.isArchived ? (

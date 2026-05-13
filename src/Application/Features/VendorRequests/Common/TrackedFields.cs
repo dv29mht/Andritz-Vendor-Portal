@@ -16,24 +16,30 @@ public static class TrackedFields
 
     public static readonly TrackedField[] All =
     [
+        new("purchasingOrganization", "Purchasing Organization", r => r.PurchasingOrganization, d => d.PurchasingOrganization ?? string.Empty),
         new("vendorName",     "Vendor Name",     r => r.VendorName,     d => d.VendorName),
         new("materialGroup",  "Material Group",  r => r.MaterialGroup,  d => d.MaterialGroup ?? string.Empty),
         new("reason",         "Reason",          r => r.Reason,         d => d.Reason ?? string.Empty),
+        new("msmeCategory",   "MSME Category",   r => r.MsmeCategory,   d => d.MsmeCategory ?? string.Empty),
         new("contactPerson",  "Contact Person",  r => r.ContactPerson,  d => d.ContactPerson ?? string.Empty),
         new("telephone",      "Telephone",       r => r.Telephone,      d => d.Telephone ?? string.Empty),
         new("gstNumber",      "GST Number",      r => r.GstNumber,      d => d.GstNumber),
-        new("panCard",        "PAN Card",        r => r.PanCard,        d => d.PanCard),
+        new("panCard",        "PAN Card",        r => r.PanCard,        d => d.PanCard ?? string.Empty),
         new("addressDetails", "Address Details", r => r.AddressDetails, d => d.AddressDetails),
         new("postalCode",     "Postal Code",     r => r.PostalCode,     d => d.PostalCode ?? string.Empty),
         new("city",           "City",            r => r.City,           d => d.City),
-        new("locality",       "Locality",        r => r.Locality,       d => d.Locality),
+        new("locality",       "Locality",        r => r.Locality,       d => d.Locality ?? string.Empty),
         new("state",          "State",           r => r.State,          d => d.State ?? string.Empty),
         new("country",        "Country",         r => r.Country,        d => d.Country ?? string.Empty),
         new("currency",       "Currency",        r => r.Currency,       d => d.Currency ?? string.Empty),
         new("paymentTerms",   "Payment Terms",   r => r.PaymentTerms,   d => d.PaymentTerms ?? string.Empty),
         new("incoterms",      "Incoterms",       r => r.Incoterms,      d => d.Incoterms ?? string.Empty),
         new("yearlyPvo",      "Yearly PVO",      r => r.YearlyPvo,      d => d.YearlyPvo ?? string.Empty),
-        new("proposedBy",     "Proposed By",     r => r.ProposedBy,     d => d.ProposedBy ?? string.Empty)
+        new("proposedBy",     "Proposed By",     r => r.ProposedBy,     d => d.ProposedBy ?? string.Empty),
+        new("bankName",       "Bank Name",       r => r.BankName,       d => d.BankName ?? string.Empty),
+        new("branchName",     "Branch Name",     r => r.BranchName,     d => d.BranchName ?? string.Empty),
+        new("bankAccountNumber", "Bank Account Number", r => r.BankAccountNumber, d => d.BankAccountNumber ?? string.Empty),
+        new("ifscCode",       "IFSC Code",       r => r.IfscCode,       d => d.IfscCode ?? string.Empty)
     ];
 
     public static List<FieldChangeRecord> ComputeDiff(VendorRequest before, VendorFieldsInput after) =>
@@ -54,10 +60,10 @@ public static class TrackedFields
         r.ContactInformation = d.ContactPerson ?? string.Empty;
         r.Telephone = d.Telephone ?? string.Empty;
         r.GstNumber = d.GstNumber;
-        r.PanCard = d.PanCard;
+        r.PanCard = d.PanCard ?? string.Empty;
         r.AddressDetails = d.AddressDetails;
         r.City = d.City;
-        r.Locality = d.Locality;
+        r.Locality = d.Locality ?? string.Empty;
         r.MaterialGroup = d.MaterialGroup ?? string.Empty;
         r.PostalCode = d.PostalCode ?? string.Empty;
         r.State = d.State ?? string.Empty;
@@ -69,6 +75,16 @@ public static class TrackedFields
         r.YearlyPvo = d.YearlyPvo ?? string.Empty;
         r.IsOneTimeVendor = d.IsOneTimeVendor ?? false;
         r.ProposedBy = d.ProposedBy ?? string.Empty;
+        r.PurchasingOrganization = d.PurchasingOrganization ?? string.Empty;
+        r.MsmeCategory = d.MsmeCategory ?? string.Empty;
+        r.BankName = d.BankName ?? string.Empty;
+        r.BranchName = d.BranchName ?? string.Empty;
+        r.BankAccountNumber = d.BankAccountNumber ?? string.Empty;
+        r.IfscCode = d.IfscCode ?? string.Empty;
+        if (d.BankDocument1 is not null) r.BankDocument1 = d.BankDocument1;
+        if (d.BankDocument2 is not null) r.BankDocument2 = d.BankDocument2;
+        if (d.GstDocument is not null) r.GstDocument = d.GstDocument;
+        if (d.PanDocument is not null) r.PanDocument = d.PanDocument;
     }
 }
 
@@ -78,10 +94,10 @@ public record VendorFieldsInput(
     string? ContactPerson,
     string? Telephone,
     string GstNumber,
-    string PanCard,
+    string? PanCard,
     string AddressDetails,
     string City,
-    string Locality,
+    string? Locality,
     string? MaterialGroup,
     string? PostalCode,
     string? State,
@@ -92,4 +108,14 @@ public record VendorFieldsInput(
     string? Reason,
     string? YearlyPvo,
     bool? IsOneTimeVendor,
-    string? ProposedBy);
+    string? ProposedBy,
+    string? PurchasingOrganization,
+    string? MsmeCategory,
+    string? BankName,
+    string? BranchName,
+    string? BankAccountNumber,
+    string? IfscCode,
+    string? BankDocument1,
+    string? BankDocument2,
+    string? GstDocument,
+    string? PanDocument);

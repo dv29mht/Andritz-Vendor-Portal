@@ -30,6 +30,16 @@ public record CreateDraftCommand(
     string? YearlyPvo,
     bool? IsOneTimeVendor,
     string? ProposedBy,
+    string? PurchasingOrganization,
+    string? MsmeCategory,
+    string? BankName,
+    string? BranchName,
+    string? BankAccountNumber,
+    string? IfscCode,
+    string? BankDocument1,
+    string? BankDocument2,
+    string? GstDocument,
+    string? PanDocument,
     List<string>? ApproverUserIds) : IRequest<VendorRequestDetailDto>;
 
 public class CreateDraftCommandHandler(
@@ -68,6 +78,16 @@ public class CreateDraftCommandHandler(
             YearlyPvo = request.YearlyPvo ?? string.Empty,
             IsOneTimeVendor = request.IsOneTimeVendor ?? false,
             ProposedBy = request.ProposedBy ?? string.Empty,
+            PurchasingOrganization = request.PurchasingOrganization ?? string.Empty,
+            MsmeCategory = request.MsmeCategory ?? string.Empty,
+            BankName = request.BankName ?? string.Empty,
+            BranchName = request.BranchName ?? string.Empty,
+            BankAccountNumber = request.BankAccountNumber ?? string.Empty,
+            IfscCode = request.IfscCode ?? string.Empty,
+            BankDocument1 = request.BankDocument1,
+            BankDocument2 = request.BankDocument2,
+            GstDocument = request.GstDocument,
+            PanDocument = request.PanDocument,
             CreatedAt = clock.UtcNow,
             UpdatedAt = clock.UtcNow
         };

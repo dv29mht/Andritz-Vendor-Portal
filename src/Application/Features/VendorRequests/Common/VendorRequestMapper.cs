@@ -57,6 +57,9 @@ public static class VendorRequestMapper
             r.MaterialGroup, r.PostalCode, r.State, r.Country,
             r.Currency, r.PaymentTerms, r.Incoterms, r.Reason, r.YearlyPvo,
             r.IsOneTimeVendor, r.ProposedBy,
+            r.PurchasingOrganization, r.MsmeCategory,
+            r.BankName, r.BranchName, r.BankAccountNumber, r.IfscCode,
+            r.BankDocument1, r.BankDocument2, r.GstDocument, r.PanDocument,
             r.Status, r.RevisionNo, r.RejectionComment,
             r.VendorCode, r.VendorCodeAssignedAt, r.VendorCodeAssignedBy,
             r.CreatedByUserId, r.CreatedByName, r.CreatedAt, r.UpdatedAt,
@@ -71,7 +74,8 @@ public static class VendorRequestMapper
 
     public static EmailTemplates.VendorSummary ToSummary(VendorRequest r) => new(
         r.Id, r.VendorName, r.MaterialGroup, r.GstNumber, r.PanCard,
-        r.City, r.State, r.Country, r.CreatedByName, r.RevisionNo);
+        r.City, r.State, r.Country, r.CreatedByName, r.RevisionNo,
+        r.AddressDetails, r.Reason);
 
     public static string SerializeChanges(IEnumerable<FieldChangeRecord> changes) =>
         JsonSerializer.Serialize(changes, JsonOpts);

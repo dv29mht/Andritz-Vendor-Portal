@@ -14,27 +14,39 @@ public record CreateDraftModel(
     string? AddressDetails, string? City, string? Locality, string? MaterialGroup, string? PostalCode,
     string? State, string? Country, string? Currency, string? PaymentTerms, string? Incoterms,
     string? Reason, string? YearlyPvo, bool? IsOneTimeVendor, string? ProposedBy,
+    string? PurchasingOrganization, string? MsmeCategory,
+    string? BankName, string? BranchName, string? BankAccountNumber, string? IfscCode,
+    string? BankDocument1, string? BankDocument2, string? GstDocument, string? PanDocument,
     List<string>? ApproverUserIds);
 
 public record CreateVendorRequestModel(
-    string VendorName, string ContactPerson, string? Telephone, string GstNumber, string PanCard,
-    string AddressDetails, string City, string Locality, string? MaterialGroup, string? PostalCode,
+    string VendorName, string ContactPerson, string? Telephone, string GstNumber, string? PanCard,
+    string AddressDetails, string City, string? Locality, string? MaterialGroup, string? PostalCode,
     string? State, string? Country, string? Currency, string? PaymentTerms, string? Incoterms,
     string? Reason, string? YearlyPvo, bool? IsOneTimeVendor, string? ProposedBy,
+    string? PurchasingOrganization, string? MsmeCategory,
+    string? BankName, string? BranchName, string? BankAccountNumber, string? IfscCode,
+    string? BankDocument1, string? BankDocument2, string? GstDocument, string? PanDocument,
     List<string>? ApproverUserIds);
 
 public record ResubmitVendorRequestModel(
-    string VendorName, string ContactPerson, string? Telephone, string GstNumber, string PanCard,
-    string AddressDetails, string City, string Locality, string? MaterialGroup, string? PostalCode,
+    string VendorName, string ContactPerson, string? Telephone, string GstNumber, string? PanCard,
+    string AddressDetails, string City, string? Locality, string? MaterialGroup, string? PostalCode,
     string? State, string? Country, string? Currency, string? PaymentTerms, string? Incoterms,
     string? Reason, string? YearlyPvo, bool? IsOneTimeVendor, string? ProposedBy,
+    string? PurchasingOrganization, string? MsmeCategory,
+    string? BankName, string? BranchName, string? BankAccountNumber, string? IfscCode,
+    string? BankDocument1, string? BankDocument2, string? GstDocument, string? PanDocument,
     List<string>? ApproverUserIds);
 
 public record AdminEditModel(
-    string VendorName, string ContactPerson, string? Telephone, string GstNumber, string PanCard,
-    string AddressDetails, string City, string Locality, string? MaterialGroup, string? PostalCode,
+    string VendorName, string ContactPerson, string? Telephone, string GstNumber, string? PanCard,
+    string AddressDetails, string City, string? Locality, string? MaterialGroup, string? PostalCode,
     string? State, string? Country, string? Currency, string? PaymentTerms, string? Incoterms,
-    string? Reason, string? YearlyPvo, bool? IsOneTimeVendor, string? ProposedBy);
+    string? Reason, string? YearlyPvo, bool? IsOneTimeVendor, string? ProposedBy,
+    string? PurchasingOrganization, string? MsmeCategory,
+    string? BankName, string? BranchName, string? BankAccountNumber, string? IfscCode,
+    string? BankDocument1, string? BankDocument2, string? GstDocument, string? PanDocument);
 
 public record ApproveModel(string? Comment);
 public record RejectModel(string Comment);
@@ -69,6 +81,9 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
             m.VendorName, m.ContactPerson, m.Telephone, m.GstNumber, m.PanCard, m.AddressDetails,
             m.City, m.Locality, m.MaterialGroup, m.PostalCode, m.State, m.Country, m.Currency,
             m.PaymentTerms, m.Incoterms, m.Reason, m.YearlyPvo, m.IsOneTimeVendor, m.ProposedBy,
+            m.PurchasingOrganization, m.MsmeCategory,
+            m.BankName, m.BranchName, m.BankAccountNumber, m.IfscCode,
+            m.BankDocument1, m.BankDocument2, m.GstDocument, m.PanDocument,
             m.ApproverUserIds));
         return CreatedAtAction(nameof(GetById), new { id = dto.Id }, Result<VendorRequestDetailDto>.Ok(dto));
     }
@@ -81,6 +96,9 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
             m.VendorName, m.ContactPerson, m.Telephone, m.GstNumber, m.PanCard, m.AddressDetails,
             m.City, m.Locality, m.MaterialGroup, m.PostalCode, m.State, m.Country, m.Currency,
             m.PaymentTerms, m.Incoterms, m.Reason, m.YearlyPvo, m.IsOneTimeVendor, m.ProposedBy,
+            m.PurchasingOrganization, m.MsmeCategory,
+            m.BankName, m.BranchName, m.BankAccountNumber, m.IfscCode,
+            m.BankDocument1, m.BankDocument2, m.GstDocument, m.PanDocument,
             m.ApproverUserIds));
         return CreatedAtAction(nameof(GetById), new { id = dto.Id }, Result<VendorRequestDetailDto>.Ok(dto));
     }
@@ -93,6 +111,9 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
             id, m.VendorName, m.ContactPerson, m.Telephone, m.GstNumber, m.PanCard, m.AddressDetails,
             m.City, m.Locality, m.MaterialGroup, m.PostalCode, m.State, m.Country, m.Currency,
             m.PaymentTerms, m.Incoterms, m.Reason, m.YearlyPvo, m.IsOneTimeVendor, m.ProposedBy,
+            m.PurchasingOrganization, m.MsmeCategory,
+            m.BankName, m.BranchName, m.BankAccountNumber, m.IfscCode,
+            m.BankDocument1, m.BankDocument2, m.GstDocument, m.PanDocument,
             m.ApproverUserIds));
         return Ok(Result<VendorRequestDetailDto>.Ok(dto));
     }
@@ -110,6 +131,9 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
             id, m.VendorName, m.ContactPerson, m.Telephone, m.GstNumber, m.PanCard, m.AddressDetails,
             m.City, m.Locality, m.MaterialGroup, m.PostalCode, m.State, m.Country, m.Currency,
             m.PaymentTerms, m.Incoterms, m.Reason, m.YearlyPvo, m.IsOneTimeVendor, m.ProposedBy,
+            m.PurchasingOrganization, m.MsmeCategory,
+            m.BankName, m.BranchName, m.BankAccountNumber, m.IfscCode,
+            m.BankDocument1, m.BankDocument2, m.GstDocument, m.PanDocument,
             m.ApproverUserIds));
         return Ok(Result<VendorRequestDetailDto>.Ok(dto));
     }
@@ -136,7 +160,10 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
         var dto = await mediator.Send(new AdminEditVendorRequestCommand(
             id, m.VendorName, m.ContactPerson, m.Telephone, m.GstNumber, m.PanCard, m.AddressDetails,
             m.City, m.Locality, m.MaterialGroup, m.PostalCode, m.State, m.Country, m.Currency,
-            m.PaymentTerms, m.Incoterms, m.Reason, m.YearlyPvo, m.IsOneTimeVendor, m.ProposedBy));
+            m.PaymentTerms, m.Incoterms, m.Reason, m.YearlyPvo, m.IsOneTimeVendor, m.ProposedBy,
+            m.PurchasingOrganization, m.MsmeCategory,
+            m.BankName, m.BranchName, m.BankAccountNumber, m.IfscCode,
+            m.BankDocument1, m.BankDocument2, m.GstDocument, m.PanDocument));
         return Ok(Result<VendorRequestDetailDto>.Ok(dto));
     }
 
@@ -148,6 +175,9 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
             id, m.VendorName, m.ContactPerson, m.Telephone, m.GstNumber, m.PanCard, m.AddressDetails,
             m.City, m.Locality, m.MaterialGroup, m.PostalCode, m.State, m.Country, m.Currency,
             m.PaymentTerms, m.Incoterms, m.Reason, m.YearlyPvo, m.IsOneTimeVendor, m.ProposedBy,
+            m.PurchasingOrganization, m.MsmeCategory,
+            m.BankName, m.BranchName, m.BankAccountNumber, m.IfscCode,
+            m.BankDocument1, m.BankDocument2, m.GstDocument, m.PanDocument,
             m.ApproverUserIds));
         return Ok(Result<VendorRequestDetailDto>.Ok(dto));
     }

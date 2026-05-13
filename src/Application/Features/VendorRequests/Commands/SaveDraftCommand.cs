@@ -28,6 +28,16 @@ public record SaveDraftCommand(
     string? YearlyPvo,
     bool? IsOneTimeVendor,
     string? ProposedBy,
+    string? PurchasingOrganization,
+    string? MsmeCategory,
+    string? BankName,
+    string? BranchName,
+    string? BankAccountNumber,
+    string? IfscCode,
+    string? BankDocument1,
+    string? BankDocument2,
+    string? GstDocument,
+    string? PanDocument,
     List<string>? ApproverUserIds) : IRequest<VendorRequestDetailDto>;
 
 public class SaveDraftCommandHandler(
@@ -68,6 +78,16 @@ public class SaveDraftCommandHandler(
         if (request.YearlyPvo is not null) entity.YearlyPvo = request.YearlyPvo;
         if (request.IsOneTimeVendor is not null) entity.IsOneTimeVendor = request.IsOneTimeVendor.Value;
         if (request.ProposedBy is not null) entity.ProposedBy = request.ProposedBy;
+        if (request.PurchasingOrganization is not null) entity.PurchasingOrganization = request.PurchasingOrganization;
+        if (request.MsmeCategory is not null) entity.MsmeCategory = request.MsmeCategory;
+        if (request.BankName is not null) entity.BankName = request.BankName;
+        if (request.BranchName is not null) entity.BranchName = request.BranchName;
+        if (request.BankAccountNumber is not null) entity.BankAccountNumber = request.BankAccountNumber;
+        if (request.IfscCode is not null) entity.IfscCode = request.IfscCode;
+        if (request.BankDocument1 is not null) entity.BankDocument1 = request.BankDocument1;
+        if (request.BankDocument2 is not null) entity.BankDocument2 = request.BankDocument2;
+        if (request.GstDocument is not null) entity.GstDocument = request.GstDocument;
+        if (request.PanDocument is not null) entity.PanDocument = request.PanDocument;
         entity.UpdatedAt = clock.UtcNow;
 
         if (request.ApproverUserIds is { Count: > 0 })
