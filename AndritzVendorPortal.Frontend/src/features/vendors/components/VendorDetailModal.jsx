@@ -101,13 +101,15 @@ function DetailsTab({ request }) {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-2 space-y-5">
         <InfoTable title="Vendor Information" rows={[
-          ['Vendor Name',     request.vendorName],
-          ['Material Group',  request.materialGroup],
-          ['Reason',          request.reason],
-          ['GST Number',      request.gstNumber, true],
-          ['PAN Card',        request.panCard,   true],
-          ['One-Time Vendor', request.isOneTimeVendor ? 'Yes' : 'No'],
-          ['Proposed By',     request.proposedBy],
+          ['Vendor Name',            request.vendorName],
+          ['Purchasing Organization', request.purchasingOrganization],
+          ['Material Group',         request.materialGroup],
+          ['Reason',                 request.reason],
+          ['GST Number',             request.gstNumber, true],
+          ['PAN Card',               request.panCard,   true],
+          ['MSME Vendor',            request.msmeCategory ? `Yes — ${request.msmeCategory}` : 'No'],
+          ['One-Time Vendor',        request.isOneTimeVendor ? 'Yes' : 'No'],
+          ['Proposed By',            request.proposedBy],
         ]} />
 
         <InfoTable title="Address" rows={[
@@ -121,6 +123,13 @@ function DetailsTab({ request }) {
           ['Payment Terms', request.paymentTerms],
           ['Incoterms',     request.incoterms],
           ['Yearly PVO',    request.yearlyPvo],
+        ]} />
+
+        <InfoTable title="Banking Details" rows={[
+          ['Bank Name',          request.bankName],
+          ['Branch Name',        request.branchName],
+          ['Bank Account Number', request.bankAccountNumber, true],
+          ['IFSC Code',          request.ifscCode, true],
         ]} />
 
         <InfoTable title="Contact" rows={[
@@ -449,29 +458,36 @@ function PreviewTab({ request }) {
   <table>
     ${sec('A','Vendor Particulars')}
     ${row(1,'Vendor / Company Name',request.vendorName)}
-    ${row(2,'Material Group',request.materialGroup)}
-    ${row(3,'Reason',request.reason)}
-    ${row(4,'GST Number',request.gstNumber,true)}
-    ${row(5,'PAN Card',request.panCard,true)}
-    ${row(6,'Proposed By',request.proposedBy)}
-    ${row(7,'One-Time Vendor',request.isOneTimeVendor ? 'Yes' : 'No')}
+    ${row(2,'Purchasing Organization',request.purchasingOrganization)}
+    ${row(3,'Material Group',request.materialGroup)}
+    ${row(4,'Reason',request.reason)}
+    ${row(5,'GST Number',request.gstNumber,true)}
+    ${row(6,'PAN Card',request.panCard,true)}
+    ${row(7,'MSME Vendor',request.msmeCategory ? `Yes — ${request.msmeCategory}` : 'No')}
+    ${row(8,'Proposed By',request.proposedBy)}
+    ${row(9,'One-Time Vendor',request.isOneTimeVendor ? 'Yes' : 'No')}
     ${sec('B','Address Details')}
-    ${row(8,'Street / Building / Plot',request.addressDetails)}
-    ${row(9,'Postal Code',request.postalCode)}
-    ${row(10,'City',request.city)}
-    ${row(11,'Locality',request.locality)}
-    ${row(12,'State',request.state)}
-    ${row(13,'Country',request.country || 'India')}
+    ${row(10,'Street / Building / Plot',request.addressDetails)}
+    ${row(11,'Postal Code',request.postalCode)}
+    ${row(12,'City',request.city)}
+    ${row(13,'Locality',request.locality)}
+    ${row(14,'State',request.state)}
+    ${row(15,'Country',request.country || 'India')}
     ${sec('C','Commercial Terms')}
-    ${row(14,'Currency',request.currency || 'INR')}
-    ${row(15,'Payment Terms',request.paymentTerms)}
-    ${row(16,'Incoterms',request.incoterms)}
-    ${row(17,'Yearly PVO',request.yearlyPvo)}
-    ${sec('D','Contact Details')}
-    ${row(18,'Contact Person',request.contactPerson)}
-    ${row(19,'Telephone',request.telephone)}
+    ${row(16,'Currency',request.currency || 'INR')}
+    ${row(17,'Payment Terms',request.paymentTerms)}
+    ${row(18,'Incoterms',request.incoterms)}
+    ${row(19,'Yearly PVO',request.yearlyPvo)}
+    ${sec('D','Banking Details')}
+    ${row(20,'Bank Name',request.bankName)}
+    ${row(21,'Branch Name',request.branchName)}
+    ${row(22,'Bank Account Number',request.bankAccountNumber,true)}
+    ${row(23,'IFSC Code',request.ifscCode,true)}
+    ${sec('E','Contact Details')}
+    ${row(24,'Contact Person',request.contactPerson)}
+    ${row(25,'Telephone',request.telephone)}
   </table>
-  <p style="font-size:11px;font-weight:700;letter-spacing:.05em;margin-bottom:6px">E. APPROVAL RECORD</p>
+  <p style="font-size:11px;font-weight:700;letter-spacing:.05em;margin-bottom:6px">F. APPROVAL RECORD</p>
   <table>
     <thead><tr>
       <th>Step</th><th>Approver</th><th>Decision</th><th>Date</th><th>Remarks</th>
@@ -548,59 +564,76 @@ function PreviewTab({ request }) {
           <SectionHeader letter="A" title="Vendor Particulars" />
           <FormRow no="1" label="Vendor / Company Name"   value={request.vendorName} />
           <div className="grid grid-cols-2 gap-4">
-            <FormRow no="2" label="Material Group" value={request.materialGroup} />
-            <FormRow no="3" label="Reason"         value={request.reason} />
+            <FormRow no="2" label="Purchasing Organization" value={request.purchasingOrganization} />
+            <FormRow no="3" label="Material Group"          value={request.materialGroup} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <FormRow no="4" label="GST Number" value={request.gstNumber} mono />
-            <FormRow no="5" label="PAN Card"   value={request.panCard}   mono />
+            <FormRow no="4" label="Reason"     value={request.reason} />
+            <FormRow no="5" label="GST Number" value={request.gstNumber} mono />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <FormRow no="6" label="Proposed By"     value={request.proposedBy} />
-            <FormRow no="7" label="One-Time Vendor" value={request.isOneTimeVendor ? 'Yes' : 'No'} />
+            <FormRow no="6" label="PAN Card"    value={request.panCard} mono />
+            <FormRow no="7" label="MSME Vendor" value={request.msmeCategory ? `Yes — ${request.msmeCategory}` : 'No'} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <FormRow no="8" label="Proposed By"     value={request.proposedBy} />
+            <FormRow no="9" label="One-Time Vendor" value={request.isOneTimeVendor ? 'Yes' : 'No'} />
           </div>
 
           <hr className="border-gray-200 my-4" />
 
           {/* ── Section B: Address ── */}
           <SectionHeader letter="B" title="Address Details" />
-          <FormRow no="8" label="Street / Building / Plot" value={request.addressDetails} />
+          <FormRow no="10" label="Street / Building / Plot" value={request.addressDetails} />
           <div className="grid grid-cols-2 gap-4">
-            <FormRow no="9"  label="Postal Code" value={request.postalCode} />
-            <FormRow no="10" label="City"        value={request.city} />
+            <FormRow no="11" label="Postal Code" value={request.postalCode} />
+            <FormRow no="12" label="City"        value={request.city} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <FormRow no="11" label="Locality" value={request.locality} />
-            <FormRow no="12" label="State"    value={request.state} />
+            <FormRow no="13" label="Locality" value={request.locality} />
+            <FormRow no="14" label="State"    value={request.state} />
           </div>
-          <FormRow no="13" label="Country" value={request.country || 'India'} />
+          <FormRow no="15" label="Country" value={request.country || 'India'} />
 
           <hr className="border-gray-200 my-4" />
 
           {/* ── Section C: Commercial Terms ── */}
           <SectionHeader letter="C" title="Commercial Terms" />
           <div className="grid grid-cols-2 gap-4">
-            <FormRow no="14" label="Currency"      value={request.currency     || 'INR'} />
-            <FormRow no="15" label="Payment Terms" value={request.paymentTerms} />
+            <FormRow no="16" label="Currency"      value={request.currency     || 'INR'} />
+            <FormRow no="17" label="Payment Terms" value={request.paymentTerms} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <FormRow no="16" label="Incoterms"  value={request.incoterms} />
-            <FormRow no="17" label="Yearly PVO" value={request.yearlyPvo} />
+            <FormRow no="18" label="Incoterms"  value={request.incoterms} />
+            <FormRow no="19" label="Yearly PVO" value={request.yearlyPvo} />
           </div>
 
           <hr className="border-gray-200 my-4" />
 
-          {/* ── Section D: Contact ── */}
-          <SectionHeader letter="D" title="Contact Details" />
+          {/* ── Section D: Banking Details ── */}
+          <SectionHeader letter="D" title="Banking Details" />
           <div className="grid grid-cols-2 gap-4">
-            <FormRow no="18" label="Contact Person" value={request.contactPerson || request.contactInformation} />
-            <FormRow no="19" label="Telephone"      value={request.telephone} />
+            <FormRow no="20" label="Bank Name"   value={request.bankName} />
+            <FormRow no="21" label="Branch Name" value={request.branchName} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <FormRow no="22" label="Bank Account Number" value={request.bankAccountNumber} mono />
+            <FormRow no="23" label="IFSC Code"           value={request.ifscCode}          mono />
           </div>
 
           <hr className="border-gray-200 my-4" />
 
-          {/* ── Section E: Approval Record ── */}
-          <SectionHeader letter="E" title="Approval Record" />
+          {/* ── Section E: Contact ── */}
+          <SectionHeader letter="E" title="Contact Details" />
+          <div className="grid grid-cols-2 gap-4">
+            <FormRow no="24" label="Contact Person" value={request.contactPerson || request.contactInformation} />
+            <FormRow no="25" label="Telephone"      value={request.telephone} />
+          </div>
+
+          <hr className="border-gray-200 my-4" />
+
+          {/* ── Section F: Approval Record ── */}
+          <SectionHeader letter="F" title="Approval Record" />
           <table className="w-full text-xs border-collapse mb-1 font-sans">
             <thead>
               <tr className="bg-gray-100">
@@ -643,12 +676,12 @@ function PreviewTab({ request }) {
 
           <hr className="border-gray-200 my-4" />
 
-          {/* ── Section F: SAP Vendor Code ── */}
-          <SectionHeader letter="F" title="SAP Vendor Code" />
+          {/* ── Section G: SAP Vendor Code ── */}
+          <SectionHeader letter="G" title="SAP Vendor Code" />
           {request.vendorCode ? (
             <div className="grid grid-cols-2 gap-4">
-              <FormRow no="20" label="Vendor Code (SAP)" value={request.vendorCode} mono />
-              <FormRow no="21" label="Date Assigned"     value={fmtDateFull(request.vendorCodeAssignedAt)} />
+              <FormRow no="26" label="Vendor Code (SAP)" value={request.vendorCode} mono />
+              <FormRow no="27" label="Date Assigned"     value={fmtDateFull(request.vendorCodeAssignedAt)} />
               <FormRow no=""   label="Assigned By"       value="Pardeep Sharma (Final Approver)" />
             </div>
           ) : (

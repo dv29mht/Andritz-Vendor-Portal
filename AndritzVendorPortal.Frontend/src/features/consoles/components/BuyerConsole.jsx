@@ -1471,6 +1471,15 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               className="form-input text-sm w-36 shrink-0" title="From date" />
             <input type="date" value={revDateTo} onChange={e => { setRevDateTo(e.target.value); setRevPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="To date" />
+            <button
+              className="btn-secondary shrink-0"
+              disabled={filteredRev.length === 0}
+              title="Export current view to Excel"
+              onClick={() => exportRequestsToExcel(filteredRev, 'awaiting_revision.xlsx')}
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              Export Excel
+            </button>
           </div>
           {filteredRev.length === 0 ? (
             <div className="card p-12 text-center">

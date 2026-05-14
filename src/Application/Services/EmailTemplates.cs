@@ -107,7 +107,6 @@ public static class EmailTemplates
             ? $"<p style=\"margin:0 0 16px;color:#374151;font-size:14px;\"><strong>{Enc(by)}</strong> has approved the vendor request. It is now your turn to review.</p>"
             : $"<p style=\"margin:0 0 16px;color:#374151;font-size:14px;\"><strong>{Enc(by)}</strong> has approved the vendor request.</p>";
         return (subject, Wrap(subject, $"{v.VendorName} approved by {by}.", $"""
-            <h2 style="margin:0 0 16px;color:#111827;font-size:18px;">Approval step completed</h2>
             {intro}
             {VendorTable(v)}{nextLine}{ActionRow(approveUrl, rejectUrl, portalUrl, "View Request")}
             """));
