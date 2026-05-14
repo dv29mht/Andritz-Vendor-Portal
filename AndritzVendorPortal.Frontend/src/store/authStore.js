@@ -15,17 +15,57 @@ function normalizeUser(apiUser) {
   }
 }
 
+// Decode the `exp` claim from a JWT without any extra dependency. Returns the
+// expiry as a JS timestamp (ms), or null when the token is missing/unparseable.
+function jwtExpiryMs(token) {
+  if (!token || typeof token !== 'string') return null
+  const parts = token.split('.')
+  if (parts.length < 2) return null
+  try {
+    const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const json = atob(padded + '==='.slice((padded.length + 3) % 4))
+    const exp = JSON.parse(json)?.exp
+    return typeof exp === 'number' ? exp * 1000 : null
+  } catch {
+    return null
+  }
+}
+
+function clearPersistedAuth() {
+  try {
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('csrfToken')
+    localStorage.removeItem('auth-store')
+  } catch { /* ignore */ }
+}
+
 // Read persisted currentUser directly from localStorage during module load.
 // Zustand persist's own rehydration runs async (via .then chains) in the
 // production bundle, which loses the race against ProtectedRoute's first
 // render — the store reads null and the user gets bounced to /login even
 // though their session is intact. Seeding the initial value synchronously
 // here makes that race unwinnable.
+//
+// Also validates the JWT's exp claim: if the token is already expired we
+// clear the persisted user up-front so the app routes straight to /login
+// instead of rendering protected pages, firing API calls, and only then
+// surfacing a "Failed to load…" / session-expired banner.
 function readPersistedCurrentUser() {
   try {
-    const raw = typeof localStorage !== 'undefined' && localStorage.getItem('auth-store')
+    if (typeof localStorage === 'undefined') return null
+    const raw = localStorage.getItem('auth-store')
     if (!raw) return null
-    return JSON.parse(raw)?.state?.currentUser ?? null
+    const user = JSON.parse(raw)?.state?.currentUser ?? null
+    if (!user) return null
+
+    const token = localStorage.getItem('authToken')
+    const expMs = jwtExpiryMs(token)
+    // Treat tokens within 5 s of expiry as already expired to avoid edge races.
+    if (expMs !== null && expMs <= Date.now() + 5_000) {
+      clearPersistedAuth()
+      return null
+    }
+    return user
   } catch {
     return null
   }

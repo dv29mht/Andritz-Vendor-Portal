@@ -1,12 +1,12 @@
 /**
- * Builds counts grouped by the last N ISO weeks (Monday start) from a list of requests.
+ * Builds daily counts for the last N days (default 7), one bucket per day,
+ * labelled by weekday + date (e.g. "Mon 13"). Used by the "Weekly" chart view
+ * to show submissions per day across the past week.
  */
-export function buildWeeklyData(requests, dateField = 'createdAt', weekCount = 8) {
-  const startOfWeek = (d) => {
+export function buildWeeklyData(requests, dateField = 'createdAt', dayCount = 7) {
+  const startOfDay = (d) => {
     const x = new Date(d)
     x.setHours(0, 0, 0, 0)
-    const day = (x.getDay() + 6) % 7 // Monday-based
-    x.setDate(x.getDate() - day)
     return x
   }
   const fmtKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -14,16 +14,16 @@ export function buildWeeklyData(requests, dateField = 'createdAt', weekCount = 8
   requests.forEach(r => {
     const raw = r[dateField]
     if (!raw) return
-    counts[fmtKey(startOfWeek(new Date(raw)))] = (counts[fmtKey(startOfWeek(new Date(raw)))] ?? 0) + 1
+    counts[fmtKey(startOfDay(new Date(raw)))] = (counts[fmtKey(startOfDay(new Date(raw)))] ?? 0) + 1
   })
-  const weeks = []
-  for (let i = weekCount - 1; i >= 0; i--) {
-    const d = startOfWeek(new Date())
-    d.setDate(d.getDate() - i * 7)
-    const label = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', timeZone: 'Asia/Kolkata' })
-    weeks.push({ key: fmtKey(d), label, count: counts[fmtKey(d)] ?? 0 })
+  const days = []
+  for (let i = dayCount - 1; i >= 0; i--) {
+    const d = startOfDay(new Date())
+    d.setDate(d.getDate() - i)
+    const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', timeZone: 'Asia/Kolkata' })
+    days.push({ key: fmtKey(d), label, count: counts[fmtKey(d)] ?? 0 })
   }
-  return weeks
+  return days
 }
 
 /**

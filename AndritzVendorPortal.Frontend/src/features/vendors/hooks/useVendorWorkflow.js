@@ -17,7 +17,11 @@ export function useVendorWorkflow() {
       const data = await vendorsService.list()
       setRequests(data)
     } catch (err) {
-      setFetchError(err?.response?.data?.message ?? 'Failed to load requests. Please refresh.')
+      // A 401 means the session lapsed — the SessionExpiredBanner already
+      // tells the user to sign in again, so don't pile on with an inline error.
+      if (err?.response?.status !== 401) {
+        setFetchError(err?.response?.data?.message ?? 'Failed to load requests. Please refresh.')
+      }
     } finally {
       setLoading(false)
     }

@@ -1123,7 +1123,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
               <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between gap-2 flex-wrap">
                 <h3 className="text-sm font-semibold text-gray-900">
-                  My Requests — {chartFilter === 'weekly' ? 'Last 8 Weeks' : chartFilter === 'custom' ? 'Custom Range' : 'Last 6 Months'}
+                  My Requests — {chartFilter === 'weekly' ? 'Last 7 Days' : chartFilter === 'custom' ? 'Custom Range' : 'Last 6 Months'}
                 </h3>
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="inline-flex rounded-lg ring-1 ring-gray-200 overflow-hidden text-xs">
