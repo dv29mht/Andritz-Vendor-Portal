@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
-         ClockIcon, ExclamationCircleIcon, ChevronDownIcon, ArrowUpTrayIcon, ArrowDownTrayIcon, XMarkIcon,
+         ClockIcon, ExclamationCircleIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon,
+         ArrowUpTrayIcon, ArrowDownTrayIcon, XMarkIcon,
          MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { ExclamationTriangleIcon, CheckBadgeIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -477,6 +478,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const [pageSize, setPageSize] = useState(10)
   // Buyer dashboard "My Requests" chart filter — 'weekly' | 'monthly' | 'custom'
   const [chartFilter, setChartFilter] = useState('monthly')
+  // For the weekly view: how many 7-day windows back from today (0 = current).
+  const [weekOffset, setWeekOffset]       = useState(0)
   const [chartDateFrom, setChartDateFrom] = useState('')
   const [chartDateTo, setChartDateTo]     = useState('')
 
@@ -1121,16 +1124,62 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
             {/* Requests chart with weekly / monthly / custom filter */}
             <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+              {(() => {
+                const weeklyChartData = chartFilter === 'weekly'
+                  ? buildWeeklyData(myRequests, 'createdAt', 7, weekOffset)
+                  : null
+                const weeklyRangeLabel = weeklyChartData && weeklyChartData.length > 0
+                  ? (() => {
+                      const fmtRange = (d) => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', timeZone: 'Asia/Kolkata' })
+                      return `${fmtRange(weeklyChartData[0].key)} – ${fmtRange(weeklyChartData[weeklyChartData.length - 1].key)}`
+                    })()
+                  : null
+                const headerLabel = chartFilter === 'weekly'
+                  ? (weekOffset === 0 ? 'Last 7 Days' : `${weekOffset} week${weekOffset === 1 ? '' : 's'} ago`)
+                  : chartFilter === 'custom' ? 'Custom Range' : 'Last 6 Months'
+                return (
               <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between gap-2 flex-wrap">
-                <h3 className="text-sm font-semibold text-gray-900">
-                  My Requests — {chartFilter === 'weekly' ? 'Last 7 Days' : chartFilter === 'custom' ? 'Custom Range' : 'Last 6 Months'}
-                </h3>
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <h3 className="text-sm font-semibold text-gray-900">My Requests — {headerLabel}</h3>
+                  {weeklyRangeLabel && <span className="text-xs text-gray-400">{weeklyRangeLabel}</span>}
+                </div>
                 <div className="flex items-center gap-2 flex-wrap">
+                  {chartFilter === 'weekly' && (
+                    <div className="inline-flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setWeekOffset(o => o + 1)}
+                        className="rounded-md ring-1 ring-gray-200 px-1.5 py-1 text-gray-600 hover:bg-gray-50"
+                        title="Previous week"
+                      >
+                        <ChevronLeftIcon className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWeekOffset(o => Math.max(0, o - 1))}
+                        disabled={weekOffset === 0}
+                        className="rounded-md ring-1 ring-gray-200 px-1.5 py-1 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Next week"
+                      >
+                        <ChevronRightIcon className="h-3.5 w-3.5" />
+                      </button>
+                      {weekOffset > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setWeekOffset(0)}
+                          className="text-[11px] text-[#096fb3] hover:underline font-medium px-1"
+                          title="Jump back to this week"
+                        >
+                          This week
+                        </button>
+                      )}
+                    </div>
+                  )}
                   <div className="inline-flex rounded-lg ring-1 ring-gray-200 overflow-hidden text-xs">
                     {['weekly', 'monthly', 'custom'].map(opt => (
                       <button
                         key={opt}
-                        onClick={() => setChartFilter(opt)}
+                        onClick={() => { setChartFilter(opt); if (opt !== 'weekly') setWeekOffset(0) }}
                         className={`px-2.5 py-1 transition-colors ${chartFilter === opt ? 'bg-[#096fb3] text-white font-semibold' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
                       >
                         {opt.charAt(0).toUpperCase() + opt.slice(1)}
@@ -1147,10 +1196,12 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   )}
                 </div>
               </div>
+                )
+              })()}
               <div className="px-2 py-4">
                 {(() => {
                   const chartData = chartFilter === 'weekly'
-                    ? buildWeeklyData(myRequests)
+                    ? buildWeeklyData(myRequests, 'createdAt', 7, weekOffset)
                     : chartFilter === 'custom'
                       ? buildCustomRangeData(myRequests, 'createdAt', chartDateFrom, chartDateTo)
                       : buildMonthlyData(myRequests)

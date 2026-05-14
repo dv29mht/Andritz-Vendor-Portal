@@ -1,9 +1,13 @@
 /**
- * Builds daily counts for the last N days (default 7), one bucket per day,
- * labelled by weekday + date (e.g. "Mon 13"). Used by the "Weekly" chart view
- * to show submissions per day across the past week.
+ * Builds daily counts for a 7-day window, one bucket per day, labelled by
+ * weekday + date (e.g. "Mon 13"). Used by the "Weekly" chart view.
+ *
+ * `weekOffset` shifts the window back in 7-day steps: 0 = the last 7 days
+ * ending today, 1 = the 7 days before that, and so on. Negative values are
+ * clamped to 0 (no future weeks).
  */
-export function buildWeeklyData(requests, dateField = 'createdAt', dayCount = 7) {
+export function buildWeeklyData(requests, dateField = 'createdAt', dayCount = 7, weekOffset = 0) {
+  const offset = Math.max(0, Math.floor(weekOffset))
   const startOfDay = (d) => {
     const x = new Date(d)
     x.setHours(0, 0, 0, 0)
@@ -19,7 +23,7 @@ export function buildWeeklyData(requests, dateField = 'createdAt', dayCount = 7)
   const days = []
   for (let i = dayCount - 1; i >= 0; i--) {
     const d = startOfDay(new Date())
-    d.setDate(d.getDate() - i)
+    d.setDate(d.getDate() - i - offset * dayCount)
     const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', timeZone: 'Asia/Kolkata' })
     days.push({ key: fmtKey(d), label, count: counts[fmtKey(d)] ?? 0 })
   }
