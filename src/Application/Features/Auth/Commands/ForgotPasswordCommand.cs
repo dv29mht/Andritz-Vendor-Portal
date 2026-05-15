@@ -28,7 +28,7 @@ public class ForgotPasswordCommandHandler(
             var encoded = Uri.EscapeDataString(token);
             var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
             var resetLink = $"{portalUrl}/reset-password?email={Uri.EscapeDataString(user.Email)}&token={encoded}";
-            var (subject, body) = EmailTemplates.PasswordReset(user.FullName, resetLink);
+            var (subject, body) = LegacyEmailTemplates.PasswordReset(user.FullName, resetLink);
             await email.SendAsync(user.Email, subject, body);
         }
         return Unit.Value;

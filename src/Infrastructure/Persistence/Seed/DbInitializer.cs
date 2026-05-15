@@ -1,4 +1,6 @@
+using AndritzVendorPortal.Application.Services;
 using AndritzVendorPortal.Domain.Constants;
+using AndritzVendorPortal.Domain.Entities;
 using AndritzVendorPortal.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -65,6 +67,56 @@ public static class DbInitializer
             designation: "Final Approver",
             password: defaultAdminPassword,
             role: Roles.FinalApprover);
+
+        await SeedEmailTemplatesAsync(db, logger);
+    }
+
+    private static async Task SeedEmailTemplatesAsync(ApplicationDbContext db, ILogger logger)
+    {
+        var existing = await db.EmailTemplates
+            .Select(t => t.Code)
+            .ToListAsync();
+        var existingSet = new HashSet<string>(existing, StringComparer.OrdinalIgnoreCase);
+
+        var added = 0;
+        foreach (var def in EmailTemplateDefaults.All)
+        {
+            if (existingSet.Contains(def.Code)) continue;
+            db.EmailTemplates.Add(new EmailTemplate
+            {
+                Code = def.Code,
+                Name = def.Name,
+                Audience = def.Audience,
+                Subject = def.Subject,
+                BodyText = def.BodyText,
+                DefaultSubject = def.Subject,
+                DefaultBodyText = def.BodyText,
+                Placeholders = def.Placeholders,
+            });
+            added++;
+        }
+
+        if (added > 0)
+        {
+            await db.SaveChangesAsync();
+            logger.LogInformation("[Seed] Inserted {Count} email template(s).", added);
+        }
+
+        // Refresh DefaultSubject/DefaultBodyText if they ever drift from code-level
+        // canonical values — admins can still customise Subject/BodyText freely.
+        var templates = await db.EmailTemplates.ToListAsync();
+        var dirty = false;
+        foreach (var tpl in templates)
+        {
+            var def = EmailTemplateDefaults.All.FirstOrDefault(d => d.Code == tpl.Code);
+            if (def is null) continue;
+            if (tpl.DefaultSubject != def.Subject) { tpl.DefaultSubject = def.Subject; dirty = true; }
+            if (tpl.DefaultBodyText != def.BodyText) { tpl.DefaultBodyText = def.BodyText; dirty = true; }
+            if (tpl.Placeholders != def.Placeholders) { tpl.Placeholders = def.Placeholders; dirty = true; }
+            if (tpl.Name != def.Name) { tpl.Name = def.Name; dirty = true; }
+            if (tpl.Audience != def.Audience) { tpl.Audience = def.Audience; dirty = true; }
+        }
+        if (dirty) await db.SaveChangesAsync();
     }
 
     private static async Task EnsureUserAsync(

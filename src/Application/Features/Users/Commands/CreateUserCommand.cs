@@ -32,6 +32,7 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
 public class CreateUserCommandHandler(
     IIdentityService identity,
     IEmailService email,
+    IEmailTemplateService templates,
     IConfiguration config) : IRequestHandler<CreateUserCommand, UserDto>
 {
     public async Task<UserDto> Handle(CreateUserCommand request, CancellationToken ct)
@@ -46,8 +47,33 @@ public class CreateUserCommandHandler(
             throw new BadRequestException("Failed to create user.", errors);
 
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
-        var (subject, body) = EmailTemplates.WelcomeUser(request.FullName, request.Email, request.Role, portalUrl);
-        await email.SendAsync(request.Email, subject, body);
+
+        var inviteCode = request.Role switch
+        {
+            Roles.Buyer    => EmailTemplateCodes.BuyerInvitation,
+            Roles.Approver => EmailTemplateCodes.ApproverInvitation,
+            _              => null,
+        };
+
+        if (inviteCode is not null)
+        {
+            var values = new Dictionary<string, string?>
+            {
+                ["[Buyer Name]"]    = request.FullName,
+                ["[Approver Name]"] = request.FullName,
+                ["[Email]"]         = request.Email,
+                ["[Portal URL]"]    = portalUrl,
+            };
+            var (subject, body) = await templates.RenderAsync(inviteCode, values, ct);
+            await email.SendAsync(request.Email, subject, body);
+        }
+        else
+        {
+            // Admin (and any future non-spec role) — keep the legacy generic welcome template.
+            var (subject, body) = LegacyEmailTemplates.WelcomeUser(
+                request.FullName, request.Email, request.Role, portalUrl);
+            await email.SendAsync(request.Email, subject, body);
+        }
 
         return new UserDto(userId, request.FullName, request.Email, request.Designation ?? string.Empty, [request.Role]);
     }

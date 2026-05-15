@@ -43,4 +43,10 @@ export const ENDPOINTS = {
   settings: {
     profile: '/users/profile',
   },
+  emailTemplates: {
+    list:    '/email-templates',
+    one:     (code) => `/email-templates/${code}`,
+    reset:   (code) => `/email-templates/${code}/reset`,
+    preview: (code) => `/email-templates/${code}/preview`,
+  },
 }

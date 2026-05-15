@@ -30,8 +30,10 @@ public class CompleteVendorRequestCommandHandler(
     IIdentityService identity,
     ICurrentUserService currentUser,
     IEmailService email,
+    IEmailTemplateService templates,
     IConfiguration config,
-    IDateTimeProvider clock) : IRequestHandler<CompleteVendorRequestCommand, VendorRequestDetailDto>
+    IDateTimeProvider clock,
+    IVendorRequestPdfService pdfService) : IRequestHandler<CompleteVendorRequestCommand, VendorRequestDetailDto>
 {
     public async Task<VendorRequestDetailDto> Handle(CompleteVendorRequestCommand request, CancellationToken ct)
     {
@@ -67,14 +69,33 @@ public class CompleteVendorRequestCommandHandler(
         }
 
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
-        var summary = VendorRequestMapper.ToSummary(entity);
-        var (subj, body) = EmailTemplates.Completed(summary, request.VendorCode, step.ApproverName, portalUrl);
+        var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
 
         var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
-        if (buyer is not null) await email.SendAsync(buyer.Email, subj, body);
+        if (buyer is not null)
+        {
+            var values = EmailValues.ForVendor(
+                entity, clock.UtcNow,
+                recipientName: buyer.FullName,
+                finalApproverName: step.ApproverName,
+                buyerName: buyer.FullName);
+            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "Download Vendor PDF");
+            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.BuyerVendorApproved, values, ct, footer);
+            await email.SendAsync(buyer.Email, s, b, pdf);
+        }
+
         var admin = await identity.FindByEmailAsync(SystemAccounts.AdminEmail);
         if (admin is not null && !admin.IsArchived && admin.Email != buyer?.Email)
-            await email.SendAsync(admin.Email, subj, body);
+        {
+            var values = EmailValues.ForVendor(
+                entity, clock.UtcNow,
+                recipientName: admin.FullName,
+                finalApproverName: step.ApproverName,
+                buyerName: entity.CreatedByName);
+            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "View Vendor Record");
+            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.AdminVendorApproved, values, ct, footer);
+            await email.SendAsync(admin.Email, s, b, pdf);
+        }
 
         return VendorRequestMapper.ToDetailDto(entity);
     }

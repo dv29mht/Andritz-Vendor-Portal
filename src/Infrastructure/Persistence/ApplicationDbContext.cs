@@ -16,6 +16,7 @@ public class ApplicationDbContext(
     public DbSet<VendorRequest> VendorRequests => Set<VendorRequest>();
     public DbSet<ApprovalStep> ApprovalSteps => Set<ApprovalStep>();
     public DbSet<VendorRevision> VendorRevisions => Set<VendorRevision>();
+    public DbSet<EmailTemplate> EmailTemplates => Set<EmailTemplate>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

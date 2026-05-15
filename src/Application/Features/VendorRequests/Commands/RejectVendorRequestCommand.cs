@@ -28,8 +28,10 @@ public class RejectVendorRequestCommandHandler(
     IIdentityService identity,
     ICurrentUserService currentUser,
     IEmailService email,
+    IEmailTemplateService templates,
     IConfiguration config,
-    IDateTimeProvider clock) : IRequestHandler<RejectVendorRequestCommand, VendorRequestDetailDto>
+    IDateTimeProvider clock,
+    IVendorRequestPdfService pdfService) : IRequestHandler<RejectVendorRequestCommand, VendorRequestDetailDto>
 {
     public async Task<VendorRequestDetailDto> Handle(RejectVendorRequestCommand request, CancellationToken ct)
     {
@@ -50,14 +52,38 @@ public class RejectVendorRequestCommandHandler(
         await db.SaveChangesAsync(ct);
 
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
-        var summary = VendorRequestMapper.ToSummary(entity);
-        var (subj, body) = EmailTemplates.Rejected(summary, step.ApproverName, request.Comment, portalUrl);
+        var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
 
         var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
-        if (buyer is not null) await email.SendAsync(buyer.Email, subj, body);
+        if (buyer is not null)
+        {
+            var values = EmailValues.ForVendor(
+                entity, clock.UtcNow,
+                recipientName: buyer.FullName,
+                approverName: step.ApproverName,
+                buyerName: buyer.FullName,
+                comments: request.Comment);
+            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "Revise & Resubmit");
+            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.BuyerRejected, values, ct, footer);
+            await email.SendAsync(buyer.Email, s, b, pdf);
+        }
+
         var admin = await identity.FindByEmailAsync(SystemAccounts.AdminEmail);
         if (admin is not null && !admin.IsArchived && admin.Email != buyer?.Email)
-            await email.SendAsync(admin.Email, subj, body);
+        {
+            // Reuse the BuyerRejected template for the admin notification — the
+            // body opens with "[Buyer Name]" but the content is informational for
+            // any reviewer copy. Admin gets visibility, not action.
+            var values = EmailValues.ForVendor(
+                entity, clock.UtcNow,
+                recipientName: admin.FullName,
+                approverName: step.ApproverName,
+                buyerName: entity.CreatedByName,
+                comments: request.Comment);
+            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "View in Admin Dashboard");
+            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.BuyerRejected, values, ct, footer);
+            await email.SendAsync(admin.Email, s, b, pdf);
+        }
 
         return VendorRequestMapper.ToDetailDto(entity);
     }

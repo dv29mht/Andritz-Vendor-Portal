@@ -72,7 +72,7 @@ public static class VendorRequestMapper
             revisionHistory);
     }
 
-    public static EmailTemplates.VendorSummary ToSummary(VendorRequest r) => new(
+    public static LegacyEmailTemplates.VendorSummary ToSummary(VendorRequest r) => new(
         r.Id, r.VendorName, r.MaterialGroup, r.GstNumber, r.PanCard,
         r.City, r.State, r.Country, r.CreatedByName, r.RevisionNo,
         r.AddressDetails, r.Reason);

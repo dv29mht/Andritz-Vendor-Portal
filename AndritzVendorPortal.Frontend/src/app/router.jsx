@@ -6,6 +6,7 @@ import ConsoleRoute from './ConsoleRoute'
 import Login from '../features/auth/components/Login'
 import SettingsRoute from '../features/settings/components/SettingsRoute'
 import OneTimeRoute from '../features/onetime/components/OneTimeRoute'
+import EmailTemplatesRoute from '../features/emailTemplates/components/EmailTemplatesRoute'
 import { ROLES } from '../shared/constants/roles'
 
 // Each "page" of the app is a route. Pages backed by a role's console
@@ -41,6 +42,14 @@ export const router = createBrowserRouter([
         element: (
           <RoleRoute allow={[ROLES.Admin, ROLES.FinalApprover]}>
             <OneTimeRoute />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'email-templates',
+        element: (
+          <RoleRoute allow={[ROLES.Admin]}>
+            <EmailTemplatesRoute />
           </RoleRoute>
         ),
       },

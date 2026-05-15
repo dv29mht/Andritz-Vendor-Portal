@@ -12,6 +12,7 @@ public interface IApplicationDbContext
     DbSet<VendorRequest> VendorRequests { get; }
     DbSet<ApprovalStep> ApprovalSteps { get; }
     DbSet<VendorRevision> VendorRevisions { get; }
+    DbSet<EmailTemplate> EmailTemplates { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

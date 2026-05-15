@@ -67,6 +67,7 @@ public class ResubmitVendorRequestCommandHandler(
     IIdentityService identity,
     ICurrentUserService currentUser,
     IEmailService email,
+    IEmailTemplateService templates,
     IConfiguration config,
     IDateTimeProvider clock,
     IVendorRequestPdfService pdfService,
@@ -124,7 +125,6 @@ public class ResubmitVendorRequestCommandHandler(
         }
         else
         {
-            // Reuse old chain — reset all decisions
             foreach (var s in entity.ApprovalSteps)
             {
                 s.Decision = ApprovalDecision.Pending;
@@ -182,13 +182,17 @@ public class ResubmitVendorRequestCommandHandler(
     private async Task SendNotificationsAsync(VendorRequest entity, CancellationToken ct)
     {
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
-        var summary = VendorRequestMapper.ToSummary(entity);
         var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
 
         var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
         if (buyer is not null)
         {
-            var (s, b) = EmailTemplates.SubmissionConfirmed(summary, portalUrl);
+            var values = EmailValues.ForVendor(
+                entity, clock.UtcNow,
+                recipientName: buyer.FullName,
+                buyerName: buyer.FullName);
+            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "Track Request");
+            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.BuyerResubmissionConfirmation, values, ct, footer);
             await email.SendAsync(buyer.Email, s, b);
         }
 
@@ -203,25 +207,39 @@ public class ResubmitVendorRequestCommandHandler(
             var approver = await identity.FindByIdAsync(firstStep.ApproverUserId);
             if (approver is not null)
             {
+                var values = EmailValues.ForVendor(
+                    entity, clock.UtcNow,
+                    recipientName: firstStep.ApproverName,
+                    approverName: firstStep.ApproverName,
+                    buyerName: entity.CreatedByName);
+
+                string footer;
                 if (firstStep.IsFinalApproval)
                 {
                     var rejectUrl = EmailActionLinks.BuildRejectOnly(tokens, config, entity, firstStep);
-                    var (s, b) = EmailTemplates.ReadyForFinalApproval(summary, portalUrl, null, rejectUrl);
-                    await email.SendAsync(approver.Email, s, b, pdf);
+                    footer = EmailHtmlShell.BuildActionFooter(null, rejectUrl, portalUrl, "Review & Assign SAP Code");
                 }
                 else
                 {
                     var (approveUrl, rejectUrl) = EmailActionLinks.BuildFor(tokens, config, entity, firstStep);
-                    var (s, b) = EmailTemplates.Resubmitted(summary, firstStep.ApproverName, portalUrl, approveUrl, rejectUrl);
-                    await email.SendAsync(approver.Email, s, b, pdf);
+                    footer = EmailHtmlShell.BuildActionFooter(approveUrl, rejectUrl, portalUrl, "View in Portal");
                 }
+
+                var (s, b) = await templates.RenderAsync(EmailTemplateCodes.ApproverResubmitted, values, ct, footer);
+                await email.SendAsync(approver.Email, s, b, pdf);
             }
         }
 
         var admin = await identity.FindByEmailAsync(SystemAccounts.AdminEmail);
         if (admin is not null && !admin.IsArchived && admin.Email != buyer?.Email)
         {
-            var (s, b) = EmailTemplates.Resubmitted(summary, admin.FullName, portalUrl);
+            var values = EmailValues.ForVendor(
+                entity, clock.UtcNow,
+                recipientName: admin.FullName,
+                approverName: admin.FullName,
+                buyerName: entity.CreatedByName);
+            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "View in Admin Dashboard");
+            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.ApproverResubmitted, values, ct, footer);
             await email.SendAsync(admin.Email, s, b, pdf);
         }
     }

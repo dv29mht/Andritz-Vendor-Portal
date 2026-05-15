@@ -4,7 +4,6 @@ using AndritzVendorPortal.Application.Features.VendorRequests.Common;
 using AndritzVendorPortal.Application.Interfaces;
 using AndritzVendorPortal.Application.Services;
 using AndritzVendorPortal.Domain.Constants;
-using AndritzVendorPortal.Domain.Entities;
 using AndritzVendorPortal.Domain.Enums;
 using MediatR;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +18,7 @@ public class SubmitVendorRequestCommandHandler(
     IIdentityService identity,
     ICurrentUserService currentUser,
     IEmailService email,
+    IEmailTemplateService templates,
     IConfiguration config,
     IDateTimeProvider clock,
     IVendorRequestPdfService pdfService,
@@ -45,13 +45,14 @@ public class SubmitVendorRequestCommandHandler(
 
         // Notifications — buyer + first approver + admin
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
-        var summary = VendorRequestMapper.ToSummary(entity);
         var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
 
         var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
         if (buyer is not null)
         {
-            var (s, b) = EmailTemplates.SubmissionConfirmed(summary, portalUrl);
+            var values = EmailValues.ForVendor(entity, clock.UtcNow, recipientName: buyer.FullName);
+            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "Track Request");
+            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.BuyerRequestSubmitted, values, ct, footer);
             await email.SendAsync(buyer.Email, s, b);
         }
 
@@ -65,26 +66,39 @@ public class SubmitVendorRequestCommandHandler(
             var approver = await identity.FindByIdAsync(firstStep.ApproverUserId);
             if (approver is not null)
             {
+                var code = firstStep.IsFinalApproval
+                    ? EmailTemplateCodes.FinalApproverPending
+                    : EmailTemplateCodes.ApproverApprovalRequest;
+                var values = EmailValues.ForVendor(
+                    entity, clock.UtcNow,
+                    recipientName: firstStep.ApproverName,
+                    approverName: firstStep.ApproverName,
+                    finalApproverName: firstStep.IsFinalApproval ? firstStep.ApproverName : null,
+                    buyerName: entity.CreatedByName);
+
+                string footer;
                 if (firstStep.IsFinalApproval)
                 {
                     var rejectUrl = EmailActionLinks.BuildRejectOnly(tokens, config, entity, firstStep);
-                    var (s, b) = EmailTemplates.ReadyForFinalApproval(summary, portalUrl, null, rejectUrl);
-                    await email.SendAsync(approver.Email, s, b, pdf);
+                    footer = EmailHtmlShell.BuildActionFooter(null, rejectUrl, portalUrl, "Review & Assign SAP Code");
                 }
                 else
                 {
                     var (approveUrl, rejectUrl) = EmailActionLinks.BuildFor(tokens, config, entity, firstStep);
-                    var (s, b) = EmailTemplates.NewSubmission(summary, firstStep.ApproverName, portalUrl, approveUrl, rejectUrl);
-                    await email.SendAsync(approver.Email, s, b, pdf);
+                    footer = EmailHtmlShell.BuildActionFooter(approveUrl, rejectUrl, portalUrl, "View in Portal");
                 }
+
+                var (s, b) = await templates.RenderAsync(code, values, ct, footer);
+                await email.SendAsync(approver.Email, s, b, pdf);
             }
         }
 
         var admin = await identity.FindByEmailAsync(SystemAccounts.AdminEmail);
         if (admin is not null && !admin.IsArchived && admin.Email != buyer?.Email)
         {
-            // Admin is observer-only on submissions — no action buttons, but include PDF.
-            var (s, b) = EmailTemplates.NewSubmission(summary, admin.FullName, portalUrl);
+            var values = EmailValues.ForVendor(entity, clock.UtcNow, buyerName: entity.CreatedByName);
+            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "View in Admin Dashboard");
+            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.AdminNewVendorRequest, values, ct, footer);
             await email.SendAsync(admin.Email, s, b, pdf);
         }
 

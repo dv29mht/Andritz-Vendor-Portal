@@ -4,6 +4,7 @@ import {
   ExclamationCircleIcon, BuildingOfficeIcon, TableCellsIcon,
   UserGroupIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon,
   ChevronRightIcon, ChevronLeftIcon, Bars3Icon, StarIcon,
+  EnvelopeIcon,
 } from '@heroicons/react/24/outline'
 import NotificationBell from '../../features/notifications/components/NotificationBell'
 import { useNotifications } from '../../features/notifications/hooks/useNotifications'
@@ -33,12 +34,13 @@ const NAV = {
     { id: 'settings',    label: 'Settings',           icon: Cog6ToothIcon },
   ],
   Admin: [
-    { id: 'dashboard',   label: 'Dashboard',         icon: HomeIcon },
-    { id: 'requests',    label: 'All Requests',      icon: TableCellsIcon },
-    { id: 'vendors',     label: 'Permanent Vendors', icon: BuildingOfficeIcon },
-    { id: 'users',       label: 'User Management',   icon: UserGroupIcon },
-    { id: 'onetime',     label: 'One-Time Vendors',  icon: StarIcon },
-    { id: 'settings',    label: 'Settings',           icon: Cog6ToothIcon },
+    { id: 'dashboard',       label: 'Dashboard',         icon: HomeIcon },
+    { id: 'requests',        label: 'All Requests',      icon: TableCellsIcon },
+    { id: 'vendors',         label: 'Permanent Vendors', icon: BuildingOfficeIcon },
+    { id: 'users',           label: 'User Management',   icon: UserGroupIcon },
+    { id: 'onetime',         label: 'One-Time Vendors',  icon: StarIcon },
+    { id: 'email-templates', label: 'Email Templates',   icon: EnvelopeIcon },
+    { id: 'settings',        label: 'Settings',           icon: Cog6ToothIcon },
   ],
 }
 

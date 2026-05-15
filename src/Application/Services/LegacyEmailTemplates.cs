@@ -4,7 +4,7 @@ namespace AndritzVendorPortal.Application.Services;
 /// Branded HTML email templates for vendor-request workflow events.
 /// Pure functions — no I/O, no DI. Safe to call from any handler.
 /// </summary>
-public static class EmailTemplates
+public static class LegacyEmailTemplates
 {
     public record VendorSummary(
         int Id,
