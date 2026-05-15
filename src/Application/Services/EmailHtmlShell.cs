@@ -42,14 +42,14 @@ public static class EmailHtmlShell
               <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f8;padding:32px 0;">
                 <tr><td align="center">
                   <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);">
-                    <tr><td style="background-color:#064e80;background:#064e80;padding:22px 36px;">
+                    <tr><td style="background-color:#ffffff;background:#ffffff;padding:24px 36px;border-bottom:3px solid #064e80;">
                       <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">
                         <tr>
                           <td style="vertical-align:middle;padding-right:14px;">
-                            <img src="{logoSrc}" alt="Andritz" height="22" style="display:block;height:22px;width:auto;border:0;outline:none;text-decoration:none;"/>
+                            <img src="{logoSrc}" alt="Andritz" height="24" style="display:block;height:24px;width:auto;border:0;outline:none;text-decoration:none;"/>
                           </td>
-                          <td style="vertical-align:middle;border-left:1px solid rgba(255,255,255,.2);padding-left:14px;">
-                            <p style="margin:0;color:rgba(255,255,255,.55);font-size:9px;letter-spacing:.28em;text-transform:uppercase;line-height:1;font-weight:600;">Supplier Connect</p>
+                          <td style="vertical-align:middle;border-left:1px solid #d1d5db;padding-left:14px;">
+                            <p style="margin:0;color:#6b7280;font-size:9px;letter-spacing:.28em;text-transform:uppercase;line-height:1;font-weight:600;">Supplier Connect</p>
                           </td>
                         </tr>
                       </table>
@@ -68,12 +68,13 @@ public static class EmailHtmlShell
     private static string BuildLogoUrl(string? portalUrl)
     {
         // Fall back to the production domain when no portalUrl is configured.
-        // Outlook downloads PNG/SVG from absolute https URLs but strips inline
-        // data: URIs and SVGs, so we must reference a hosted asset.
+        // Outlook downloads PNG via absolute https URL. We use the brand-blue
+        // PNG on a white header band (Outlook strips CSS filters, so we can't
+        // recolour it to white at render time).
         var baseUrl = string.IsNullOrWhiteSpace(portalUrl)
             ? "https://andritz-vendor-portal-production.up.railway.app"
             : portalUrl.TrimEnd('/');
-        return $"{baseUrl}/andritz-logo-white.svg";
+        return $"{baseUrl}/andritz-logo.png";
     }
 
     /// <summary>

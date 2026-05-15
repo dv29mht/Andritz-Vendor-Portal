@@ -213,15 +213,15 @@ export default function EmailTemplateEditModal({ template, onClose, onSaved }) {
                     <p className="text-[11px] uppercase tracking-wider text-gray-400 flex-shrink-0">Subject</p>
                     <p className="text-sm font-medium text-gray-700 truncate">{preview.subject}</p>
                   </div>
-                  <div className="rounded-xl ring-1 ring-gray-200 overflow-hidden">
-                    <div style={{ background: '#064e80' }} className="px-6 py-5 text-white flex items-center gap-3">
+                  <div className="rounded-xl ring-1 ring-gray-200 overflow-hidden bg-white">
+                    <div className="px-6 py-5 bg-white flex items-center gap-3" style={{ borderBottom: '3px solid #064e80' }}>
                       <img
-                        src="/andritz-logo-white.svg"
+                        src="/andritz-logo.png"
                         alt="Andritz"
                         className="block flex-shrink-0"
-                        style={{ height: 22, width: 'auto' }}
+                        style={{ height: 24, width: 'auto' }}
                       />
-                      <span className="text-white/55 text-[9px] font-semibold tracking-[0.28em] uppercase leading-none border-l border-white/20 pl-3">
+                      <span className="text-gray-500 text-[9px] font-semibold tracking-[0.28em] uppercase leading-none border-l border-gray-300 pl-3">
                         Supplier Connect
                       </span>
                     </div>
