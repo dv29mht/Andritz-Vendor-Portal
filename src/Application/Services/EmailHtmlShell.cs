@@ -11,16 +11,16 @@ namespace AndritzVendorPortal.Application.Services;
 /// </summary>
 public static class EmailHtmlShell
 {
-    // Mirrors AndritzVendorPortal.Frontend/public/favicon.svg — the blue "A"
-    // brand mark used as the site favicon. Embedded as a data URI so the
-    // header renders without an external asset fetch (works in the preview
-    // iframe and in any email client that allows data: image URIs).
+    // The brand "A" letter taken from AndritzVendorPortal.Frontend/public/andritz-logo.svg
+    // (the same wordmark used in the side nav and login screen) — rendered white
+    // so it sits cleanly on the dark-blue email header. Embedded as a data URI
+    // so the header renders with no external asset fetch, and uses the
+    // brand-correct letterform rather than the stylized favicon glyph.
     private const string FaviconDataUri =
         "data:image/svg+xml;utf8," +
-        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>" +
-        "<rect width='64' height='64' rx='13' fill='%231c8cd4'/>" +
-        "<path fill='white' fill-rule='evenodd' " +
-        "d='M32 10 L10 54 L54 54 Z M32 26 L24 42 L40 42 Z M31 42 L31 54 L33 54 L33 42 Z'/>" +
+        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 76 100' fill='white'>" +
+        "<polygon points='0,95 18,95 38,20 58,95 76,95 50,5 26,5'/>" +
+        "<polygon points='22,65 54,65 50,52 26,52'/>" +
         "</svg>";
 
     public static string Wrap(string title, string preheader, string plainBody, string? actionFooterHtml = null)
@@ -39,8 +39,8 @@ public static class EmailHtmlShell
                     <tr><td style="background-color:#064e80;background:#064e80;padding:24px 36px;">
                       <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">
                         <tr>
-                          <td style="padding-right:14px;vertical-align:middle;width:44px;">
-                            <img src="{FaviconDataUri}" alt="Andritz Supplier Connect" width="44" height="44" style="display:block;width:44px;height:44px;border:0;outline:none;text-decoration:none;border-radius:10px;"/>
+                          <td style="padding-right:14px;vertical-align:middle;width:34px;">
+                            <img src="{FaviconDataUri}" alt="Andritz Supplier Connect" width="34" height="44" style="display:block;width:34px;height:44px;border:0;outline:none;text-decoration:none;"/>
                           </td>
                           <td style="vertical-align:middle;">
                             <p style="margin:0;color:#fff;font-weight:900;font-size:22px;letter-spacing:.18em;line-height:1;">ANDRITZ</p>

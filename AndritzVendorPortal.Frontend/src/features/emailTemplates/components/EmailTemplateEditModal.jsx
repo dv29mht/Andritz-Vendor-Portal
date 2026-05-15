@@ -210,11 +210,13 @@ export default function EmailTemplateEditModal({ template, onClose, onSaved }) {
               {!previewing && preview && (
                 <div className="rounded-xl ring-1 ring-gray-200 overflow-hidden">
                   <div className="bg-gradient-to-br from-[#064e80] to-[#096fb3] px-6 py-4 text-white flex items-center gap-3">
-                    <img
-                      src="/favicon.svg"
-                      alt="Andritz Supplier Connect"
-                      className="h-10 w-10 rounded-[10px] flex-shrink-0 bg-white/5 ring-1 ring-white/10"
-                    />
+                    {/* Brand "A" lifted straight from /public/andritz-logo.svg so the
+                        preview's mark matches the wordmark used elsewhere in the app
+                        (side nav, login screen) instead of the stylized favicon glyph. */}
+                    <svg viewBox="0 0 76 100" fill="white" className="h-10 w-auto flex-shrink-0" aria-label="Andritz Supplier Connect">
+                      <polygon points="0,95 18,95 38,20 58,95 76,95 50,5 26,5" />
+                      <polygon points="22,65 54,65 50,52 26,52" />
+                    </svg>
                     <div>
                       <p className="font-black tracking-[0.18em] text-lg leading-none">ANDRITZ</p>
                       <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 mt-1">Vendor Onboarding &amp; Compliance</p>
