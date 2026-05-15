@@ -210,13 +210,13 @@ export default function EmailTemplateEditModal({ template, onClose, onSaved }) {
               {!previewing && preview && (
                 <div className="rounded-xl ring-1 ring-gray-200 overflow-hidden">
                   <div className="bg-gradient-to-br from-[#064e80] to-[#096fb3] px-6 py-4 text-white flex items-center gap-3">
-                    {/* Brand "A" lifted straight from /public/andritz-logo.svg so the
-                        preview's mark matches the wordmark used elsewhere in the app
-                        (side nav, login screen) instead of the stylized favicon glyph. */}
-                    <svg viewBox="0 0 76 100" fill="white" className="h-10 w-auto flex-shrink-0" aria-label="Andritz Supplier Connect">
-                      <polygon points="0,95 18,95 38,20 58,95 76,95 50,5 26,5" />
-                      <polygon points="22,65 54,65 50,52 26,52" />
-                    </svg>
+                    {/* Use the site favicon exactly as the browser tab shows it. */}
+                    <img
+                      src="/favicon.svg"
+                      alt="Andritz Supplier Connect"
+                      className="h-10 w-10 flex-shrink-0"
+                      style={{ display: 'block' }}
+                    />
                     <div>
                       <p className="font-black tracking-[0.18em] text-lg leading-none">ANDRITZ</p>
                       <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 mt-1">Vendor Onboarding &amp; Compliance</p>
@@ -228,8 +228,34 @@ export default function EmailTemplateEditModal({ template, onClose, onSaved }) {
                   </div>
                   <div className="px-6 py-5 bg-white">
                     {preview.bodyText.split(/\n\n+/).map((para, i) => {
-                      const lines = para.split('\n')
-                      const isBullets = lines.every(l => l.trim().startsWith('•'))
+                      const lines = para.split('\n').filter(l => l.length > 0)
+                      const isBullets = lines.length > 0 && lines.every(l => l.trim().startsWith('•'))
+                      // If every bullet looks like "Label: Value", render the
+                      // block as a tidy two-column table instead of a plain list.
+                      const labelValuePairs = isBullets
+                        ? lines.map(l => {
+                            const stripped = l.replace(/^\s*•\s*/, '')
+                            const idx = stripped.indexOf(':')
+                            if (idx <= 0 || idx === stripped.length - 1) return null
+                            return [stripped.slice(0, idx).trim(), stripped.slice(idx + 1).trim()]
+                          })
+                        : null
+                      const isLabelValueTable = labelValuePairs && labelValuePairs.every(p => p !== null)
+
+                      if (isLabelValueTable) {
+                        return (
+                          <table key={i} className="w-full mb-4 border border-gray-200 rounded-lg overflow-hidden text-sm">
+                            <tbody>
+                              {labelValuePairs.map(([label, value], j) => (
+                                <tr key={j} className={j % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                                  <td className="px-3 py-2 text-gray-500 font-medium w-1/3 align-top border-b border-gray-100 last:border-0">{label}</td>
+                                  <td className="px-3 py-2 text-gray-900 align-top border-b border-gray-100 last:border-0">{value}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )
+                      }
                       if (isBullets) {
                         return (
                           <ul key={i} className="list-disc pl-5 mb-4 text-sm text-gray-700">
