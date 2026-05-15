@@ -209,16 +209,20 @@ export default function EmailTemplateEditModal({ template, onClose, onSaved }) {
               {previewing && <p className="text-sm text-gray-500">Rendering…</p>}
               {!previewing && preview && (
                 <div className="rounded-xl ring-1 ring-gray-200 overflow-hidden">
-                  <div className="bg-gradient-to-br from-[#064e80] to-[#096fb3] px-6 py-4 text-white">
-                    {/* Same wordmark logo the sidebar shows — served as
-                        andritz-logo-white.svg from /public so the preview and
-                        the sent email reference the exact same asset. */}
+                  <div className="bg-gradient-to-br from-[#064e80] to-[#096fb3] px-6 py-4 text-white flex items-center gap-3">
+                    {/* The "A" symbol the collapsed sidebar shows, served as a
+                        white-fill SVG so it renders the same in the preview
+                        and the sent email (Outlook strips inline SVG, but
+                        loads /andritz-a-white.svg via absolute URL). */}
                     <img
-                      src="/andritz-logo-white.svg"
-                      alt="ANDRITZ"
-                      className="h-5 w-auto block"
+                      src="/andritz-a-white.svg"
+                      alt="Andritz"
+                      className="h-10 w-10 flex-shrink-0 block"
                     />
-                    <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 mt-2 leading-none">Supplier Connect</p>
+                    <div>
+                      <p className="font-black tracking-[0.18em] text-lg leading-none">ANDRITZ</p>
+                      <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 mt-1.5 leading-none">Supplier Connect</p>
+                    </div>
                   </div>
                   <div className="px-6 py-4 bg-white border-b border-gray-100">
                     <p className="text-xs text-gray-400 uppercase tracking-wider">Subject</p>

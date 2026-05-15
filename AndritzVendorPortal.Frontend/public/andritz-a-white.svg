@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!--
+    Same stylized "A" mark used by the favicon and the collapsed-sidebar logo,
+    but with no background tile and a white fill so it renders directly on the
+    dark-blue email header gradient (CSS filters don't apply inside emails).
+  -->
+  <path fill="#ffffff" fill-rule="evenodd"
+        d="M32 10 L10 54 L54 54 Z
+           M32 26 L24 42 L40 42 Z
+           M31 42 L31 54 L33 54 L33 42 Z"/>
+</svg>

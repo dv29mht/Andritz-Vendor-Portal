@@ -11,7 +11,10 @@ const AUDIENCE_COLORS = {
   Buyer:           { bg: 'bg-blue-50',    text: 'text-blue-700',    ring: 'ring-blue-200'    },
   Approver:        { bg: 'bg-amber-50',   text: 'text-amber-700',   ring: 'ring-amber-200'   },
   'Final Approver':{ bg: 'bg-violet-50',  text: 'text-violet-700',  ring: 'ring-violet-200'  },
-  Admin:           { bg: 'bg-slate-50',   text: 'text-slate-700',   ring: 'ring-slate-200'   },
+  // Admin templates cover user-management notifications (account invites,
+  // password resets, archive/restore). Red so admin-only emails stand out
+  // in the list from the role-based audiences above.
+  Admin:           { bg: 'bg-red-50',     text: 'text-red-700',     ring: 'ring-red-200'     },
 }
 
 export default function EmailTemplatesPage() {

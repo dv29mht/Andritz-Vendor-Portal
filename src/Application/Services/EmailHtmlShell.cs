@@ -43,8 +43,17 @@ public static class EmailHtmlShell
                 <tr><td align="center">
                   <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);">
                     <tr><td style="background-color:#064e80;background:#064e80;padding:24px 36px;">
-                      <img src="{logoSrc}" alt="ANDRITZ" height="22" style="display:block;height:22px;width:auto;border:0;outline:none;text-decoration:none;"/>
-                      <p style="margin:8px 0 0;color:rgba(255,255,255,.6);font-size:10px;letter-spacing:.3em;text-transform:uppercase;line-height:1;">Supplier Connect</p>
+                      <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">
+                        <tr>
+                          <td style="padding-right:14px;vertical-align:middle;width:44px;">
+                            <img src="{logoSrc}" alt="Andritz" width="44" height="44" style="display:block;width:44px;height:44px;border:0;outline:none;text-decoration:none;"/>
+                          </td>
+                          <td style="vertical-align:middle;">
+                            <p style="margin:0;color:#fff;font-weight:900;font-size:22px;letter-spacing:.18em;line-height:1;">ANDRITZ</p>
+                            <p style="margin:6px 0 0;color:rgba(255,255,255,.6);font-size:10px;letter-spacing:.3em;text-transform:uppercase;line-height:1;">Supplier Connect</p>
+                          </td>
+                        </tr>
+                      </table>
                     </td></tr>
                     <tr><td style="padding:32px 36px;color:#374151;font-size:14px;line-height:1.6;">{html}{actions}</td></tr>
                     <tr><td style="background:#f8f9fa;padding:20px 36px;border-top:1px solid #e9ecef;">
@@ -65,7 +74,7 @@ public static class EmailHtmlShell
         var baseUrl = string.IsNullOrWhiteSpace(portalUrl)
             ? "https://andritz-vendor-portal-production.up.railway.app"
             : portalUrl.TrimEnd('/');
-        return $"{baseUrl}/andritz-logo-white.svg";
+        return $"{baseUrl}/andritz-a-white.svg";
     }
 
     /// <summary>
