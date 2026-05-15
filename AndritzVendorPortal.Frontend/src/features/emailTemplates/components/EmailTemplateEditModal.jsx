@@ -208,27 +208,24 @@ export default function EmailTemplateEditModal({ template, onClose, onSaved }) {
               </p>
               {previewing && <p className="text-sm text-gray-500">Rendering…</p>}
               {!previewing && preview && (
-                <div className="rounded-xl ring-1 ring-gray-200 overflow-hidden">
-                  <div className="bg-gradient-to-br from-[#064e80] to-[#096fb3] px-6 py-4 text-white flex items-center gap-3">
-                    {/* The "A" symbol the collapsed sidebar shows, served as a
-                        white-fill SVG so it renders the same in the preview
-                        and the sent email (Outlook strips inline SVG, but
-                        loads /andritz-a-white.svg via absolute URL). */}
-                    <img
-                      src="/andritz-a-white.svg"
-                      alt="Andritz"
-                      className="h-10 w-10 flex-shrink-0 block"
-                    />
-                    <div>
-                      <p className="font-black tracking-[0.18em] text-lg leading-none">ANDRITZ</p>
-                      <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 mt-1.5 leading-none">Supplier Connect</p>
+                <>
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <p className="text-[11px] uppercase tracking-wider text-gray-400 flex-shrink-0">Subject</p>
+                    <p className="text-sm font-medium text-gray-700 truncate">{preview.subject}</p>
+                  </div>
+                  <div className="rounded-xl ring-1 ring-gray-200 overflow-hidden">
+                    <div style={{ background: '#064e80' }} className="px-6 py-5 text-white flex items-center gap-3">
+                      <img
+                        src="/andritz-logo-white.svg"
+                        alt="Andritz"
+                        className="block flex-shrink-0"
+                        style={{ height: 22, width: 'auto' }}
+                      />
+                      <span className="text-white/55 text-[9px] font-semibold tracking-[0.28em] uppercase leading-none border-l border-white/20 pl-3">
+                        Supplier Connect
+                      </span>
                     </div>
-                  </div>
-                  <div className="px-6 py-4 bg-white border-b border-gray-100">
-                    <p className="text-xs text-gray-400 uppercase tracking-wider">Subject</p>
-                    <p className="text-sm font-medium text-gray-900 mt-0.5">{preview.subject}</p>
-                  </div>
-                  <div className="px-6 py-5 bg-white">
+                    <div className="px-6 py-5 bg-white">
                     {preview.bodyText.split(/\n\n+/).map((para, i) => {
                       const lines = para.split('\n').filter(l => l.length > 0)
                       // Split each paragraph into a leading non-bullet
@@ -285,10 +282,11 @@ export default function EmailTemplateEditModal({ template, onClose, onSaved }) {
                       )
                     })}
                   </div>
-                  <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 text-xs text-gray-400">
-                    Automated notification from the Andritz Vendor Portal. Do not reply.
+                    <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 text-xs text-gray-400">
+                      Automated notification from the Andritz Vendor Portal. Do not reply.
+                    </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
           )}
