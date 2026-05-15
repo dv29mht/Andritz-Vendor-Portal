@@ -209,9 +209,16 @@ export default function EmailTemplateEditModal({ template, onClose, onSaved }) {
               {previewing && <p className="text-sm text-gray-500">Rendering…</p>}
               {!previewing && preview && (
                 <div className="rounded-xl ring-1 ring-gray-200 overflow-hidden">
-                  <div className="bg-gradient-to-br from-[#064e80] to-[#096fb3] px-6 py-4 text-white">
-                    <p className="font-black tracking-[0.18em] text-lg">ANDRITZ</p>
-                    <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 mt-0.5">Vendor Onboarding &amp; Compliance</p>
+                  <div className="bg-gradient-to-br from-[#064e80] to-[#096fb3] px-6 py-4 text-white flex items-center gap-3">
+                    <img
+                      src="/favicon.svg"
+                      alt="Andritz Supplier Connect"
+                      className="h-10 w-10 rounded-[10px] flex-shrink-0 bg-white/5 ring-1 ring-white/10"
+                    />
+                    <div>
+                      <p className="font-black tracking-[0.18em] text-lg leading-none">ANDRITZ</p>
+                      <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 mt-1">Vendor Onboarding &amp; Compliance</p>
+                    </div>
                   </div>
                   <div className="px-6 py-4 bg-white border-b border-gray-100">
                     <p className="text-xs text-gray-400 uppercase tracking-wider">Subject</p>

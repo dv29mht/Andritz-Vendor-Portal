@@ -148,8 +148,8 @@ export default function EmailTemplatesPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 align-top">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset ${colors.bg} ${colors.text} ${colors.ring}`}>
+                    <td className="px-4 py-3.5 align-top whitespace-nowrap">
+                      <span className={`inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset ${colors.bg} ${colors.text} ${colors.ring}`}>
                         {t.audience}
                       </span>
                     </td>
