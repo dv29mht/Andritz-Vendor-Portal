@@ -214,7 +214,7 @@ export default function EmailTemplateEditModal({ template, onClose, onSaved }) {
                     <p className="text-sm font-medium text-gray-700 truncate">{preview.subject}</p>
                   </div>
                   <div className="rounded-xl ring-1 ring-gray-200 overflow-hidden bg-white">
-                    <div className="px-6 py-5 bg-white flex items-center gap-3" style={{ borderBottom: '3px solid #064e80' }}>
+                    <div className="px-6 pt-6 pb-4 bg-white flex items-center gap-3">
                       <img
                         src="/andritz-logo.png"
                         alt="Andritz"
@@ -225,7 +225,7 @@ export default function EmailTemplateEditModal({ template, onClose, onSaved }) {
                         Supplier Connect
                       </span>
                     </div>
-                    <div className="px-6 py-5 bg-white">
+                    <div className="px-6 pb-6 bg-white">
                     {preview.bodyText.split(/\n\n+/).map((para, i) => {
                       const lines = para.split('\n').filter(l => l.length > 0)
                       // Split each paragraph into a leading non-bullet
