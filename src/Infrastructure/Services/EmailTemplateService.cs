@@ -1,6 +1,7 @@
 using AndritzVendorPortal.Application.Interfaces;
 using AndritzVendorPortal.Application.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace AndritzVendorPortal.Infrastructure.Services;
@@ -13,6 +14,7 @@ namespace AndritzVendorPortal.Infrastructure.Services;
 /// </summary>
 public class EmailTemplateService(
     IApplicationDbContext db,
+    IConfiguration config,
     ILogger<EmailTemplateService> logger) : IEmailTemplateService
 {
     public async Task<(string Subject, string HtmlBody)> RenderAsync(
@@ -47,7 +49,8 @@ public class EmailTemplateService(
         var subject = Substitute(subjectText, values);
         var bodyPlain = Substitute(bodyText, values);
         var preheader = FirstNonEmptyLine(bodyPlain);
-        var html = EmailHtmlShell.Wrap(subject, preheader, bodyPlain, actionFooterHtml);
+        var portalUrl = config["PortalUrl"];
+        var html = EmailHtmlShell.Wrap(subject, preheader, bodyPlain, actionFooterHtml, portalUrl);
         return (subject, html);
     }
 

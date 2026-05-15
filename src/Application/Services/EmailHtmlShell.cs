@@ -11,22 +11,28 @@ namespace AndritzVendorPortal.Application.Services;
 /// </summary>
 public static class EmailHtmlShell
 {
-    // Mirrors AndritzVendorPortal.Frontend/public/favicon.svg exactly — the
-    // same blue rounded-square "A" that shows in the browser tab — so the
-    // email header in both the preview and sent mail matches the site favicon.
-    // Embedded as a data URI so it renders without an external asset fetch.
-    private const string FaviconDataUri =
-        "data:image/svg+xml;utf8," +
-        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>" +
-        "<rect width='64' height='64' rx='13' fill='%231c8cd4'/>" +
-        "<path fill='white' fill-rule='evenodd' " +
-        "d='M32 10 L10 54 L54 54 Z M32 26 L24 42 L40 42 Z M31 42 L31 54 L33 54 L33 42 Z'/>" +
-        "</svg>";
-
-    public static string Wrap(string title, string preheader, string plainBody, string? actionFooterHtml = null)
+    /// <summary>
+    /// Wraps the plain-text body in the branded Andritz email shell.
+    /// </summary>
+    /// <param name="title">Used as the &lt;title&gt; and accessible label.</param>
+    /// <param name="preheader">Hidden preview text shown by Gmail/Outlook list view.</param>
+    /// <param name="plainBody">Plain text body (bullets, label-value rows, paragraphs).</param>
+    /// <param name="actionFooterHtml">Pre-built CTA buttons.</param>
+    /// <param name="portalUrl">
+    /// Public base URL of the portal (e.g. https://andritz-vendor-portal-production.up.railway.app).
+    /// Used to build an absolute <c>&lt;img src&gt;</c> for the wordmark logo, which Outlook
+    /// and other Microsoft clients will load (they strip data: URIs and inline SVG).
+    /// </param>
+    public static string Wrap(
+        string title,
+        string preheader,
+        string plainBody,
+        string? actionFooterHtml = null,
+        string? portalUrl = null)
     {
         var html = FormatBody(plainBody);
         var actions = string.IsNullOrWhiteSpace(actionFooterHtml) ? string.Empty : actionFooterHtml;
+        var logoSrc = BuildLogoUrl(portalUrl);
         return $"""
             <!DOCTYPE html>
             <html lang="en">
@@ -37,27 +43,29 @@ public static class EmailHtmlShell
                 <tr><td align="center">
                   <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);">
                     <tr><td style="background-color:#064e80;background:#064e80;padding:24px 36px;">
-                      <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">
-                        <tr>
-                          <td style="padding-right:14px;vertical-align:middle;width:44px;">
-                            <img src="{FaviconDataUri}" alt="Andritz Supplier Connect" width="44" height="44" style="display:block;width:44px;height:44px;border:0;outline:none;text-decoration:none;"/>
-                          </td>
-                          <td style="vertical-align:middle;">
-                            <p style="margin:0;color:#fff;font-weight:900;font-size:22px;letter-spacing:.18em;line-height:1;">ANDRITZ</p>
-                            <p style="margin:4px 0 0;color:rgba(255,255,255,.6);font-size:11px;letter-spacing:.3em;text-transform:uppercase;line-height:1;">Vendor Onboarding &amp; Compliance</p>
-                          </td>
-                        </tr>
-                      </table>
+                      <img src="{logoSrc}" alt="ANDRITZ" height="22" style="display:block;height:22px;width:auto;border:0;outline:none;text-decoration:none;"/>
+                      <p style="margin:8px 0 0;color:rgba(255,255,255,.6);font-size:10px;letter-spacing:.3em;text-transform:uppercase;line-height:1;">Supplier Connect</p>
                     </td></tr>
                     <tr><td style="padding:32px 36px;color:#374151;font-size:14px;line-height:1.6;">{html}{actions}</td></tr>
                     <tr><td style="background:#f8f9fa;padding:20px 36px;border-top:1px solid #e9ecef;">
-                      <p style="margin:0;color:#9ca3af;font-size:12px;">Automated notification from the Andritz Vendor Portal. Do not reply.</p>
+                      <p style="margin:0;color:#9ca3af;font-size:12px;">Automated notification from the Andritz Supplier Connect portal. Do not reply.</p>
                     </td></tr>
                   </table>
                 </td></tr>
               </table>
             </body></html>
             """;
+    }
+
+    private static string BuildLogoUrl(string? portalUrl)
+    {
+        // Fall back to the production domain when no portalUrl is configured.
+        // Outlook downloads PNG/SVG from absolute https URLs but strips inline
+        // data: URIs and SVGs, so we must reference a hosted asset.
+        var baseUrl = string.IsNullOrWhiteSpace(portalUrl)
+            ? "https://andritz-vendor-portal-production.up.railway.app"
+            : portalUrl.TrimEnd('/');
+        return $"{baseUrl}/andritz-logo-white.svg";
     }
 
     /// <summary>
@@ -96,58 +104,75 @@ public static class EmailHtmlShell
             var para = raw.Trim('\n');
             if (string.IsNullOrWhiteSpace(para)) continue;
 
-            var lines = para.Split('\n');
-            var bulletBlock = lines.Length > 0 && lines.All(l => l.TrimStart().StartsWith("•"));
+            var lines = para.Split('\n').Where(l => l.Length > 0).ToArray();
 
-            if (bulletBlock)
+            // Split the paragraph into a leading non-bullet "header" section
+            // (e.g. "Request Details:") and a trailing run of bullet lines.
+            // This lets us render the bullets as a table even when the
+            // template author put a heading line right above them without a
+            // blank line separating the two blocks.
+            var firstBulletIdx = -1;
+            for (int i = 0; i < lines.Length; i++)
             {
-                // If every bullet is a "Label: Value" pair, render it as a
-                // two-column table so admins see the metadata as structured
-                // info instead of a plain bulleted list.
-                var pairs = new List<(string Label, string Value)>();
-                var allPairs = true;
-                foreach (var line in lines)
-                {
-                    var item = line.TrimStart().TrimStart('•').Trim();
-                    var idx = item.IndexOf(':');
-                    if (idx <= 0 || idx == item.Length - 1) { allPairs = false; break; }
-                    pairs.Add((item[..idx].Trim(), item[(idx + 1)..].Trim()));
-                }
+                if (lines[i].TrimStart().StartsWith("•")) { firstBulletIdx = i; break; }
+            }
+            var hasBullets = firstBulletIdx >= 0
+                && lines.Skip(firstBulletIdx).All(l => l.TrimStart().StartsWith("•"));
+            var headerLines = hasBullets ? lines.Take(firstBulletIdx).ToArray() : lines;
+            var bulletLines = hasBullets ? lines.Skip(firstBulletIdx).ToArray() : Array.Empty<string>();
 
-                if (allPairs)
+            if (headerLines.Length > 0)
+            {
+                sb.Append("<p style=\"margin:0 0 8px 0;\">");
+                for (int i = 0; i < headerLines.Length; i++)
                 {
-                    sb.Append("<table cellpadding=\"0\" cellspacing=\"0\" style=\"width:100%;border-collapse:collapse;margin:0 0 16px 0;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;\">");
-                    for (int i = 0; i < pairs.Count; i++)
-                    {
-                        var (label, value) = pairs[i];
-                        var rowBg = i % 2 == 0 ? "#f9fafb" : "#ffffff";
-                        sb.Append($"<tr style=\"background:{rowBg};\">")
-                          .Append($"<td style=\"padding:8px 12px;color:#6b7280;font-size:13px;font-weight:600;width:38%;vertical-align:top;border-bottom:1px solid #f1f5f9;\">{HtmlEnc(label)}</td>")
-                          .Append($"<td style=\"padding:8px 12px;color:#111827;font-size:13px;vertical-align:top;border-bottom:1px solid #f1f5f9;\">{HtmlEnc(value)}</td>")
-                          .Append("</tr>");
-                    }
-                    sb.Append("</table>");
+                    sb.Append(HtmlEnc(headerLines[i]));
+                    if (i < headerLines.Length - 1) sb.Append("<br/>");
                 }
-                else
+                sb.Append("</p>");
+            }
+
+            if (!hasBullets)
+            {
+                continue;
+            }
+
+            // If every bullet is a "Label: Value" pair, render it as a
+            // two-column table so admins see the metadata as structured
+            // info instead of a plain bulleted list.
+            var pairs = new List<(string Label, string Value)>();
+            var allPairs = true;
+            foreach (var line in bulletLines)
+            {
+                var item = line.TrimStart().TrimStart('•').Trim();
+                var idx = item.IndexOf(':');
+                if (idx <= 0 || idx == item.Length - 1) { allPairs = false; break; }
+                pairs.Add((item[..idx].Trim(), item[(idx + 1)..].Trim()));
+            }
+
+            if (allPairs)
+            {
+                sb.Append("<table cellpadding=\"0\" cellspacing=\"0\" style=\"width:100%;border-collapse:collapse;margin:0 0 16px 0;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;\">");
+                for (int i = 0; i < pairs.Count; i++)
                 {
-                    sb.Append("<ul style=\"margin:0 0 16px 0;padding-left:18px;color:#374151;\">");
-                    foreach (var line in lines)
-                    {
-                        var item = line.TrimStart().TrimStart('•').Trim();
-                        sb.Append("<li style=\"margin:4px 0;\">").Append(HtmlEnc(item)).Append("</li>");
-                    }
-                    sb.Append("</ul>");
+                    var (label, value) = pairs[i];
+                    var rowBg = i % 2 == 0 ? "#f9fafb" : "#ffffff";
+                    sb.Append($"<tr style=\"background:{rowBg};\">")
+                      .Append($"<td style=\"padding:8px 12px;color:#6b7280;font-size:13px;font-weight:600;width:38%;vertical-align:top;border-bottom:1px solid #f1f5f9;\">{HtmlEnc(label)}</td>")
+                      .Append($"<td style=\"padding:8px 12px;color:#111827;font-size:13px;vertical-align:top;border-bottom:1px solid #f1f5f9;\">{HtmlEnc(value)}</td>")
+                      .Append("</tr>");
                 }
+                sb.Append("</table>");
             }
             else
             {
-                sb.Append("<p style=\"margin:0 0 16px 0;\">");
-                for (int i = 0; i < lines.Length; i++)
+                sb.Append("<ul style=\"margin:0 0 16px 0;padding-left:18px;color:#374151;\">");
+                foreach (var line in bulletLines)
                 {
-                    sb.Append(HtmlEnc(lines[i]));
-                    if (i < lines.Length - 1) sb.Append("<br/>");
+                    var item = line.TrimStart().TrimStart('•').Trim();
+                    sb.Append("<li style=\"margin:4px 0;\">").Append(HtmlEnc(item)).Append("</li>");
                 }
-                sb.Append("</p>");
+                sb.Append("</ul>");
             }
         }
 

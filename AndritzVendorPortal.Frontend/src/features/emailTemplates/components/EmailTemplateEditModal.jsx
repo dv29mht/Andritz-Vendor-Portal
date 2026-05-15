@@ -209,18 +209,16 @@ export default function EmailTemplateEditModal({ template, onClose, onSaved }) {
               {previewing && <p className="text-sm text-gray-500">Rendering…</p>}
               {!previewing && preview && (
                 <div className="rounded-xl ring-1 ring-gray-200 overflow-hidden">
-                  <div className="bg-gradient-to-br from-[#064e80] to-[#096fb3] px-6 py-4 text-white flex items-center gap-3">
-                    {/* Use the site favicon exactly as the browser tab shows it. */}
+                  <div className="bg-gradient-to-br from-[#064e80] to-[#096fb3] px-6 py-4 text-white">
+                    {/* Same wordmark logo the sidebar shows — served as
+                        andritz-logo-white.svg from /public so the preview and
+                        the sent email reference the exact same asset. */}
                     <img
-                      src="/favicon.svg"
-                      alt="Andritz Supplier Connect"
-                      className="h-10 w-10 flex-shrink-0"
-                      style={{ display: 'block' }}
+                      src="/andritz-logo-white.svg"
+                      alt="ANDRITZ"
+                      className="h-5 w-auto block"
                     />
-                    <div>
-                      <p className="font-black tracking-[0.18em] text-lg leading-none">ANDRITZ</p>
-                      <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 mt-1">Vendor Onboarding &amp; Compliance</p>
-                    </div>
+                    <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 mt-2 leading-none">Supplier Connect</p>
                   </div>
                   <div className="px-6 py-4 bg-white border-b border-gray-100">
                     <p className="text-xs text-gray-400 uppercase tracking-wider">Subject</p>
@@ -229,46 +227,57 @@ export default function EmailTemplateEditModal({ template, onClose, onSaved }) {
                   <div className="px-6 py-5 bg-white">
                     {preview.bodyText.split(/\n\n+/).map((para, i) => {
                       const lines = para.split('\n').filter(l => l.length > 0)
-                      const isBullets = lines.length > 0 && lines.every(l => l.trim().startsWith('•'))
-                      // If every bullet looks like "Label: Value", render the
-                      // block as a tidy two-column table instead of a plain list.
-                      const labelValuePairs = isBullets
-                        ? lines.map(l => {
+                      // Split each paragraph into a leading non-bullet
+                      // "header" block (e.g. "Request Details:") and a
+                      // trailing run of bullet lines. This keeps the table
+                      // rendering even when the template has a heading line
+                      // above the bullets without a blank line between them.
+                      const firstBulletIdx = lines.findIndex(l => l.trim().startsWith('•'))
+                      const hasBullets = firstBulletIdx >= 0
+                        && lines.slice(firstBulletIdx).every(l => l.trim().startsWith('•'))
+                      const headerLines = hasBullets ? lines.slice(0, firstBulletIdx) : lines
+                      const bulletLines = hasBullets ? lines.slice(firstBulletIdx) : []
+
+                      const labelValuePairs = bulletLines.length > 0
+                        ? bulletLines.map(l => {
                             const stripped = l.replace(/^\s*•\s*/, '')
                             const idx = stripped.indexOf(':')
                             if (idx <= 0 || idx === stripped.length - 1) return null
                             return [stripped.slice(0, idx).trim(), stripped.slice(idx + 1).trim()]
                           })
-                        : null
-                      const isLabelValueTable = labelValuePairs && labelValuePairs.every(p => p !== null)
+                        : []
+                      const isLabelValueTable = labelValuePairs.length > 0
+                        && labelValuePairs.every(p => p !== null)
 
-                      if (isLabelValueTable) {
-                        return (
-                          <table key={i} className="w-full mb-4 border border-gray-200 rounded-lg overflow-hidden text-sm">
-                            <tbody>
-                              {labelValuePairs.map(([label, value], j) => (
-                                <tr key={j} className={j % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                                  <td className="px-3 py-2 text-gray-500 font-medium w-1/3 align-top border-b border-gray-100 last:border-0">{label}</td>
-                                  <td className="px-3 py-2 text-gray-900 align-top border-b border-gray-100 last:border-0">{value}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        )
-                      }
-                      if (isBullets) {
-                        return (
-                          <ul key={i} className="list-disc pl-5 mb-4 text-sm text-gray-700">
-                            {lines.map((l, j) => <li key={j} className="my-1">{l.replace(/^\s*•\s*/, '')}</li>)}
-                          </ul>
-                        )
-                      }
                       return (
-                        <p key={i} className="text-sm text-gray-700 mb-4 leading-relaxed">
-                          {lines.map((l, j) => (
-                            <span key={j}>{l}{j < lines.length - 1 && <br />}</span>
-                          ))}
-                        </p>
+                        <div key={i} className="mb-4 last:mb-0">
+                          {headerLines.length > 0 && (
+                            <p className="text-sm text-gray-700 leading-relaxed mb-2 last:mb-0">
+                              {headerLines.map((l, j) => (
+                                <span key={j}>{l}{j < headerLines.length - 1 && <br />}</span>
+                              ))}
+                            </p>
+                          )}
+                          {bulletLines.length > 0 && isLabelValueTable && (
+                            <table className="w-full border border-gray-200 rounded-lg overflow-hidden text-sm">
+                              <tbody>
+                                {labelValuePairs.map(([label, value], j) => (
+                                  <tr key={j} className={j % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                                    <td className="px-3 py-2 text-gray-500 font-medium w-1/3 align-top border-b border-gray-100 last:border-0">{label}</td>
+                                    <td className="px-3 py-2 text-gray-900 align-top border-b border-gray-100 last:border-0">{value}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+                          {bulletLines.length > 0 && !isLabelValueTable && (
+                            <ul className="list-disc pl-5 text-sm text-gray-700">
+                              {bulletLines.map((l, j) => (
+                                <li key={j} className="my-1">{l.replace(/^\s*•\s*/, '')}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
                       )
                     })}
                   </div>
