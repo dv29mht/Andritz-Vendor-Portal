@@ -173,7 +173,7 @@ public class QuestPdfVendorRequestPdfService : IVendorRequestPdfService
                     h.Cell().PaddingBottom(4).Text("#").FontSize(8).Bold().FontColor(Label);
                     h.Cell().PaddingBottom(4).Text("Approver").FontSize(8).Bold().FontColor(Label);
                     h.Cell().PaddingBottom(4).Text("Decision").FontSize(8).Bold().FontColor(Label);
-                    h.Cell().PaddingBottom(4).Text("Decided At").FontSize(8).Bold().FontColor(Label);
+                    h.Cell().PaddingBottom(4).Text("Updated On").FontSize(8).Bold().FontColor(Label);
                 });
 
                 foreach (var step in r.ApprovalSteps.OrderBy(s => s.StepOrder))
