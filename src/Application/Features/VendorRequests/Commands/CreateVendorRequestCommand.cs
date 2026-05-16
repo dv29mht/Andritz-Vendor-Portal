@@ -63,8 +63,8 @@ public class CreateVendorRequestCommandValidator : AbstractValidator<CreateVendo
         RuleFor(x => x.Incoterms).NotEmpty();
         RuleFor(x => x.PurchasingOrganization)
             .NotEmpty()
-            .Must(v => v is "900D" or "900I" or "P20D" or "T20I")
-            .WithMessage("Purchasing Organization must be one of: 900D, 900I, P20D, T20I.");
+            .Must(v => v is "900D" or "900I" or "T20D" or "T20I")
+            .WithMessage("Purchasing Organization must be one of: 900D, 900I, T20D, T20I.");
         RuleFor(x => x.MsmeCategory)
             .Must(v => v is "Micro" or "Small" or "Medium")
             .When(x => !string.IsNullOrWhiteSpace(x.MsmeCategory))

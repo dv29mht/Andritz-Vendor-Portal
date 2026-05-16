@@ -41,7 +41,7 @@ const EMPTY_FORM = {
 
 const CURRENCIES    = ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'SGD', 'AED']
 const INCOTERMS     = ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FAS','FOB','CFR','CIF']
-const PURCHASING_ORGS = ['900D', '900I', 'P20D', 'T20I']
+const PURCHASING_ORGS = ['900D', '900I', 'T20D', 'T20I']
 const MSME_CATEGORIES = ['Micro', 'Small', 'Medium']
 const ALL_LOCALITIES = [...new Set(Object.values(CITIES).flat())]
 
@@ -143,7 +143,7 @@ function downloadTemplate() {
   XLSX.utils.sheet_add_aoa(ws, [
     ['* = Required field. Do not change column headers.'],
     ['Note: GST document and Bank document uploads are mandatory in the form but cannot be imported via this template — attach them after the form pre-fills.'],
-    ['Purchasing Organization must be one of: 900D, 900I, P20D, T20I'],
+    ['Purchasing Organization must be one of: 900D, 900I, T20D, T20I'],
     ['MSME Category (optional): leave blank if vendor is not MSME, otherwise enter Micro, Small, or Medium.'],
   ], { origin: 'A3' })
 

@@ -31,7 +31,7 @@ public class VendorRequest : ISoftDelete, IAuditable
     public bool IsOneTimeVendor { get; set; } = false;
     public string ProposedBy { get; set; } = string.Empty;
 
-    // Purchasing scope (900D / 900I / P20D / T20I)
+    // Purchasing scope (900D / 900I / T20D / T20I)
     public string PurchasingOrganization { get; set; } = string.Empty;
 
     // MSME classification (Micro / Small / Medium / blank if NA)
