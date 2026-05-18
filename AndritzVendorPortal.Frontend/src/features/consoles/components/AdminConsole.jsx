@@ -488,7 +488,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
             <table className="text-sm" style={{ minWidth: '900px', width: '100%' }}>
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
-                  {['Serial No.', 'Vendor Name', 'Buyer', 'City', 'Revision', 'Status', 'Final Approval', 'Updated', 'Actions'].map(h => (
+                  {['Serial No.', 'Vendor Name', 'Buyer', 'City', 'Revision', 'Status', 'Final Approval', 'Updated On', 'Actions'].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
