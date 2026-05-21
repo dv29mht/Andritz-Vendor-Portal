@@ -40,7 +40,14 @@ public static class DbInitializer
             {
                 logger.LogInformation("[Seed] Probing DB connectivity (attempt {Attempt}/{Max})", attempt, maxAttempts);
                 var conn = db.Database.GetDbConnection();
-                await conn.OpenAsync();
+                // Wrap in our own CTS — SqlClient's "Connect Timeout" can be
+                // bypassed by internal SNI/pre-login retries that stretch a
+                // single OpenAsync to a minute+. The outer CTS guarantees
+                // every attempt is bounded so the retry loop actually runs.
+                using (var probeCts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
+                {
+                    await conn.OpenAsync(probeCts.Token);
+                }
                 await conn.CloseAsync();
 
                 logger.LogInformation("[Seed] DB reachable — applying migrations");
