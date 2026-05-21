@@ -8,7 +8,7 @@ deviation or update this document — don't add a third pattern.
 
 ## 1. Solution layout
 
-Four projects under `/src/`, plus a test project at the repo root.
+Four projects under `/src/`, plus a test project under `/tests/`.
 
 ```
 src/
@@ -17,7 +17,9 @@ src/
 ├── Infrastructure/    ← EF Core, Identity, JWT, email. Depends on Application + Domain.
 └── API/               ← Controllers, middleware, SignalR. Depends on all three.
 
-AndritzVendorPortal.Tests/   ← xUnit tests against Domain + Application.
+tests/
+└── AndritzVendorPortal.Tests/   ← xUnit tests against Domain + Application.
+
 AndritzVendorPortal.Frontend/ ← React (unrelated to backend layout).
 ```
 

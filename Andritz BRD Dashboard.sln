@@ -12,7 +12,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "src\Infra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API", "src\API\API.csproj", "{44444444-4444-4444-4444-444444444444}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndritzVendorPortal.Tests", "AndritzVendorPortal.Tests\AndritzVendorPortal.Tests.csproj", "{4060D818-5546-4C48-8203-75F0C8F68AEF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndritzVendorPortal.Tests", "tests\AndritzVendorPortal.Tests\AndritzVendorPortal.Tests.csproj", "{4060D818-5546-4C48-8203-75F0C8F68AEF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
