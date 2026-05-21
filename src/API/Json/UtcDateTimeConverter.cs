@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace AndritzVendorPortal.API.Json;
 
-// MySQL/EF Core returns DateTime values with Kind=Unspecified, which causes
+// EF Core returns DateTime values with Kind=Unspecified, which causes
 // System.Text.Json to serialize them without a 'Z' suffix. JavaScript clients
 // then interpret the string as local time. These converters always emit UTC ISO
 // 8601 with 'Z' so the wire format is unambiguous and the frontend can render

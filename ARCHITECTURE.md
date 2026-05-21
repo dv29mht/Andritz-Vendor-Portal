@@ -349,13 +349,12 @@ Every error response:
 
 ## 6. Persistence
 
-- **EF Core 8** + **MySQL** (via `Pomelo.EntityFrameworkCore.MySql`). Connection
-  string from `ConnectionStrings:DefaultConnection`. Server version is
-  auto-detected at startup (override via `MySqlServerVersion`). On startup
+- **EF Core 8** + **SQL Server** (via `Microsoft.EntityFrameworkCore.SqlServer`).
+  Connection string from `ConnectionStrings:DefaultConnection`. On startup
   `DbInitializer.InitializeAsync` retries the connection up to 10× with 2s
-  backoff, then runs `Database.MigrateAsync()` — Pomelo issues
-  `CREATE DATABASE IF NOT EXISTS` implicitly, so a fresh dev box or server only
-  needs MySQL running and valid credentials to come up clean.
+  backoff, then runs `Database.MigrateAsync()` — EF Core creates the target
+  database if it doesn't exist, so a fresh dev box or server only needs SQL
+  Server running and valid credentials to come up clean.
 - **Code-first migrations**. Never modify schema by hand.
   ```
   dotnet ef migrations add <Name> --project src/Infrastructure --startup-project src/API
@@ -451,13 +450,13 @@ Every error response:
 
 | Key                           | Purpose                                           |
 |-------------------------------|---------------------------------------------------|
-| `ConnectionStrings:DefaultConnection` | MySQL connection string (e.g. `Server=localhost;Port=3306;Database=AndritzVendorPortal;User=root;Password=root`). |
-| `Jwt:Key`                     | Symmetric signing key (≥ 32 chars).               |
-| `Jwt:Issuer`, `Jwt:Audience`  | Token validation parameters.                      |
+| `ConnectionStrings:DefaultConnection` | SQL Server connection string (e.g. `Server=localhost;Database=AndritzVendorPortal;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true`). |
+| `JwtSettings:SecretKey`       | Symmetric signing key (≥ 32 chars).               |
+| `JwtSettings:Issuer`, `JwtSettings:Audience` | Token validation parameters.       |
+| `JwtSettings:ExpiryHours`     | Token lifetime in hours.                          |
 | `EmailSettings:BrevoApiKey`   | Brevo API key.                                    |
 | `EmailSettings:FromEmail`     | Sender email.                                     |
 | `EmailSettings:FromName`      | Sender display name.                              |
-| `AllowedOrigins`              | String array of allowed CORS origins.             |
 | `PortalUrl`                   | Used in email links.                              |
 | `Seed:DefaultAdminPassword`   | Initial admin password on first run.              |
 

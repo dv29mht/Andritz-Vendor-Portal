@@ -21,11 +21,11 @@ public static class DbInitializer
         ILogger logger,
         string defaultAdminPassword)
     {
-        // Wait for the MySQL server to accept connections (helps when the app
-        // and the DB container start at the same time on a fresh machine),
-        // then create the database and apply migrations. Pomelo's MigrateAsync
-        // will issue CREATE DATABASE IF NOT EXISTS implicitly, so a brand-new
-        // server only needs the user credentials — nothing else to set up.
+        // Wait for SQL Server to accept connections (helps when the app and
+        // the DB container start at the same time on a fresh machine), then
+        // create the database and apply migrations. MigrateAsync will create
+        // the target database if it doesn't exist, so a brand-new server only
+        // needs valid credentials — nothing else to set up.
         const int maxAttempts = 10;
         for (var attempt = 1; ; attempt++)
         {

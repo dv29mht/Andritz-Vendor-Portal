@@ -13,8 +13,8 @@ public class EmailTemplateConfiguration : IEntityTypeConfiguration<EmailTemplate
         e.Property(x => x.Code).IsRequired().HasMaxLength(100);
         e.Property(x => x.Name).IsRequired().HasMaxLength(200);
         e.Property(x => x.Subject).IsRequired().HasMaxLength(300);
-        // Bodies are unbounded — let the provider pick the right type (longtext on MySQL,
-        // nvarchar(max) on SQL Server) instead of pinning to a specific type string.
+        // Bodies are unbounded — let the provider pick the right type
+        // (nvarchar(max) on SQL Server) instead of pinning to a specific type string.
         e.Property(x => x.BodyText).IsRequired();
         e.Property(x => x.DefaultSubject).IsRequired().HasMaxLength(300);
         e.Property(x => x.DefaultBodyText).IsRequired();

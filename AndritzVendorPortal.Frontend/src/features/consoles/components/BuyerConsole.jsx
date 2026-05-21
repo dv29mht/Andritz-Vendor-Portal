@@ -50,7 +50,7 @@ const PAN_RE = /^[A-Z]{5}[0-9]{4}[A-Z]$/
 const IFSC_RE = /^[A-Z]{4}0[A-Z0-9]{6}$/
 const REASON_MAX = 500
 
-// Reads a File into a base64 data URI for backend storage in a longtext column.
+// Reads a File into a base64 data URI for backend storage in an nvarchar(max) column.
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
     if (!file) return resolve(null)

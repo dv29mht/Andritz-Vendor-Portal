@@ -43,7 +43,7 @@ public class VendorRequest : ISoftDelete, IAuditable
     public string BankAccountNumber { get; set; } = string.Empty;
     public string IfscCode { get; set; } = string.Empty;
 
-    // Document uploads (base64 data URIs — image/pdf). Stored as longtext on MySQL.
+    // Document uploads (base64 data URIs — image/pdf). Stored as nvarchar(max) on SQL Server.
     public string? BankDocument1 { get; set; }
     public string? BankDocument2 { get; set; }
     public string? GstDocument { get; set; }
