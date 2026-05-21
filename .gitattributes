@@ -1,0 +1,6 @@
+# Shell scripts and Dockerfiles must use LF endings so they run inside
+# Linux containers regardless of the host's core.autocrlf setting.
+*.sh        text eol=lf
+Dockerfile  text eol=lf
+*.Dockerfile text eol=lf
+entrypoint.sh text eol=lf

@@ -11,4 +11,12 @@ RUN mkdir -p /.system /log /data /secrets /backup \
     && chown mssql:mssql /.system /log /data /secrets /backup \
     && chmod 770 /.system /log /data /secrets /backup
 
-USER mssql
+# Railway bind-mounts the persistent volume at /var/opt/mssql at runtime
+# and the mount is owned by root, overlaying any build-time chown. The
+# entrypoint chowns the mount before dropping to the mssql user.
+COPY infra/mssql/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Stay as root so the entrypoint can chown the bind-mount; it drops to
+# mssql via setpriv before exec'ing sqlservr.
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
