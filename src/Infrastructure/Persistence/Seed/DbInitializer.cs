@@ -28,19 +28,20 @@ public static class DbInitializer
         var safe = SafeConnectionString(db.Database.GetDbConnection().ConnectionString);
         logger.LogInformation("[Seed] Target DB connection: {ConnString}", safe);
 
-        // Probe connectivity with a hard timeout so a half-up SQL Server
-        // (TCP listening but query engine still recovering) can't hang the
-        // whole boot. CanConnectAsync issues a SELECT 1, so it'll surface
-        // exactly that "connect succeeds, query hangs" failure mode.
+        // Open the underlying DbConnection directly (instead of EF Core's
+        // CanConnectAsync, which swallows the inner exception and just
+        // returns false). This way the actual SqlException message —
+        // login failed, network error, TLS handshake failure, "Cannot
+        // open database X" — shows up verbatim in the deploy logs.
         const int maxAttempts = 10;
         for (var attempt = 1; ; attempt++)
         {
             try
             {
                 logger.LogInformation("[Seed] Probing DB connectivity (attempt {Attempt}/{Max})", attempt, maxAttempts);
-                using var probeCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                var ok = await db.Database.CanConnectAsync(probeCts.Token);
-                if (!ok) throw new InvalidOperationException("CanConnectAsync returned false");
+                var conn = db.Database.GetDbConnection();
+                await conn.OpenAsync();
+                await conn.CloseAsync();
 
                 logger.LogInformation("[Seed] DB reachable — applying migrations");
                 using var migrateCts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
@@ -51,8 +52,8 @@ public static class DbInitializer
             catch (Exception ex) when (attempt < maxAttempts)
             {
                 logger.LogWarning(ex,
-                    "[Seed] Database not reachable yet (attempt {Attempt}/{Max}); retrying in 2s",
-                    attempt, maxAttempts);
+                    "[Seed] Connect/migrate failed (attempt {Attempt}/{Max}): {Message}; retrying in 2s",
+                    attempt, maxAttempts, ex.Message);
                 await Task.Delay(TimeSpan.FromSeconds(2));
             }
             catch (Exception ex)
