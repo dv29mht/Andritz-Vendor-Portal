@@ -2,21 +2,24 @@
 # Build context: repository root. Build command (Railway / local):
 #   docker build -f src/API/Dockerfile .
 #
-# Single-container deployment: builds the React SPA and copies it into the
-# .NET app's wwwroot, so one origin serves both the API (/api, /swagger,
+# Single-container deployment: one origin serves the API (/api, /swagger,
 # /hubs/notifications) and the SPA (/, /assets/*, client routes).
+#
+# The SPA is built by the API.csproj's BuildFrontend + CopyFrontendDist
+# MSBuild targets, which fire automatically on `dotnet publish -c Release`.
+# Node is therefore required in the build image (alongside the .NET SDK).
 
-# ── Frontend build stage ─────────────────────────────────────────────────────
-FROM node:20-alpine AS frontend
-WORKDIR /frontend
-COPY AndritzVendorPortal.Frontend/package.json AndritzVendorPortal.Frontend/package-lock.json ./
-RUN npm ci
-COPY AndritzVendorPortal.Frontend/ ./
-# Production build resolves baseURL to '/api' (same-origin) — no env var needed.
-RUN npm run build
-
-# ── Backend build stage ──────────────────────────────────────────────────────
+# ── Build stage ──────────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+
+# Install Node 20 alongside the .NET SDK so the MSBuild targets can run
+# `npm ci && npm run build` during `dotnet publish`.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl ca-certificates gnupg \
+ && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+ && apt-get install -y --no-install-recommends nodejs \
+ && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /src
 
 # Copy csproj files first to leverage Docker layer caching for restore
@@ -27,16 +30,18 @@ COPY src/API/API.csproj                           src/API/
 
 RUN dotnet restore "src/API/API.csproj"
 
-# Copy the rest and publish
+# Copy the rest (.NET sources + frontend) and publish.
+# `dotnet publish -c Release` invokes the BuildFrontend (npm ci + npm run build)
+# and CopyFrontendDist (dist/ → publish/wwwroot/) MSBuild targets.
 COPY src/ src/
+COPY AndritzVendorPortal.Frontend/ AndritzVendorPortal.Frontend/
+
 RUN dotnet publish "src/API/API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # ── Runtime stage ────────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-# Drop the SPA build into wwwroot so UseStaticFiles + MapFallbackToFile serve it.
-COPY --from=frontend /frontend/dist ./wwwroot
 
 # Railway sets PORT — Program.cs reads it. Default to 8080 for local `docker run`.
 ENV PORT=8080

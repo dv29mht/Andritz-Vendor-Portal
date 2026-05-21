@@ -17,6 +17,7 @@ public class ApplicationDbContext(
     public DbSet<ApprovalStep> ApprovalSteps => Set<ApprovalStep>();
     public DbSet<VendorRevision> VendorRevisions => Set<VendorRevision>();
     public DbSet<EmailTemplate> EmailTemplates => Set<EmailTemplate>();
+    public DbSet<LoginSecurity> LoginSecurities => Set<LoginSecurity>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

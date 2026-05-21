@@ -161,33 +161,23 @@ var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrEmpty(port))
     app.Urls.Add($"http://0.0.0.0:{port}");
 
-// ── Migrate + seed DB in the background ──────────────────────────────────────
-// We deliberately do NOT block startup on this. DbInitializer.InitializeAsync
-// retries the DB connection up to 10× with 2s backoff; on a cold Railway
-// deploy the mssql service can take longer than the API healthcheck window
-// to accept connections. Running migration off the request thread lets
-// /api/health answer as soon as Kestrel is bound, so the deploy is marked
-// healthy and the DB work can take as long as it needs.
-_ = Task.Run(async () =>
+// ── Migrate + seed DB (fail-fast) ────────────────────────────────────────────
+// Block startup on migration + seed so a half-migrated DB can never serve
+// traffic — a SPA that loads but whose every API call 500s is the failure
+// mode we want to avoid. If MigrateAsync throws, the process exits and the
+// orchestrator (Railway/IIS) keeps the previous version live.
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
     var bootLogger = services.GetRequiredService<ILogger<Program>>();
-    try
-    {
-        bootLogger.LogInformation("[Boot] Starting database migration + seed");
-        var context = services.GetRequiredService<ApplicationDbContext>();
-        var users = services.GetRequiredService<UserManager<ApplicationUser>>();
-        var roles = services.GetRequiredService<RoleManager<IdentityRole>>();
-        var defaultPw = app.Configuration["Seed:DefaultAdminPassword"] ?? "Andritz@1234";
-        await DbInitializer.InitializeAsync(context, users, roles, bootLogger, defaultPw);
-        bootLogger.LogInformation("[Boot] Database migration + seed complete");
-    }
-    catch (Exception ex)
-    {
-        bootLogger.LogError(ex, "[Boot] Migration + seed failed; API will keep running but DB-backed endpoints will error");
-    }
-});
+    bootLogger.LogInformation("[Boot] Starting database migration + seed");
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    var users = services.GetRequiredService<UserManager<ApplicationUser>>();
+    var roles = services.GetRequiredService<RoleManager<IdentityRole>>();
+    var defaultPw = app.Configuration["Seed:DefaultAdminPassword"] ?? "Andritz@1234";
+    await DbInitializer.InitializeAsync(context, users, roles, bootLogger, defaultPw);
+    bootLogger.LogInformation("[Boot] Database migration + seed complete");
+}
 
 app.Run();
 

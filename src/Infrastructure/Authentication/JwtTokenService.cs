@@ -17,23 +17,32 @@ public class JwtTokenService(IOptions<JwtSettings> settings, IDateTimeProvider c
         if (string.IsNullOrWhiteSpace(_settings.SecretKey))
             throw new InvalidOperationException("JWT signing key is not configured.");
 
+        // iat is stamped from our IDateTimeProvider (UTC) so it lines up with
+        // LoginSecurity.TokensValidSince comparisons in OnTokenValidated.
+        // Clock skew is set to zero in the bearer config, so we need
+        // second-level precision here too.
+        var issuedAt = clock.UtcNow;
+        var issuedAtUnix = new DateTimeOffset(issuedAt).ToUnixTimeSeconds();
+
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id),
             new(JwtRegisteredClaimNames.Email, user.Email),
             new("name", user.FullName),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(JwtRegisteredClaimNames.Iat, issuedAtUnix.ToString(), ClaimValueTypes.Integer64)
         };
         claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expiresAt = clock.UtcNow.AddHours(_settings.ExpiryHours);
+        var expiresAt = issuedAt.AddHours(_settings.ExpiryHours);
 
         var token = new JwtSecurityToken(
             issuer: _settings.Issuer,
             audience: _settings.Audience,
             claims: claims,
+            notBefore: issuedAt,
             expires: expiresAt,
             signingCredentials: creds);
 

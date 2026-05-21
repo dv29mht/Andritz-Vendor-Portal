@@ -13,6 +13,7 @@ public interface IApplicationDbContext
     DbSet<ApprovalStep> ApprovalSteps { get; }
     DbSet<VendorRevision> VendorRevisions { get; }
     DbSet<EmailTemplate> EmailTemplates { get; }
+    DbSet<LoginSecurity> LoginSecurities { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
