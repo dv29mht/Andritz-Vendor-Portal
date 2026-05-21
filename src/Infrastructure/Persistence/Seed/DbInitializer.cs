@@ -28,35 +28,24 @@ public static class DbInitializer
         var safe = SafeConnectionString(db.Database.GetDbConnection().ConnectionString);
         logger.LogInformation("[Seed] Target DB connection: {ConnString}", safe);
 
-        // Open the underlying DbConnection directly (instead of EF Core's
-        // CanConnectAsync, which swallows the inner exception and just
-        // returns false). This way the actual SqlException message —
-        // login failed, network error, TLS handshake failure, "Cannot
-        // open database X" — shows up verbatim in the deploy logs.
+        // Call MigrateAsync directly with retry. Earlier versions of this
+        // method opened a probe connection first, but the probe used the full
+        // connection string (Database=AndritzVendorPortal) which fails on a
+        // fresh server with "Login failed for user 'sa'. Reason: Failed to
+        // open the explicitly specified database" — the target DB doesn't
+        // exist yet, and only MigrateAsync knows how to bootstrap it (it
+        // connects to master first to issue CREATE DATABASE).
         //
-        // 60 attempts × ~3-5s each = up to ~5 minutes of patience. SQL
-        // Server's first-run init on a fresh Railway volume can take 30-90s
-        // before TCP 1433 is bound (template master.mdf copying, recovery
-        // of master/msdb/tempdb). Warm restarts come up in ~5-10s and only
-        // burn 1-2 attempts.
+        // 60 attempts × 2s sleep = ~2-3 minutes of patience. Warm restarts
+        // succeed on the first attempt; cold-server first-boots eat 15-30s
+        // worth of failed attempts while MSSQL completes its template-DB
+        // upgrades, then succeed.
         const int maxAttempts = 60;
         for (var attempt = 1; ; attempt++)
         {
             try
             {
-                logger.LogInformation("[Seed] Probing DB connectivity (attempt {Attempt}/{Max})", attempt, maxAttempts);
-                var conn = db.Database.GetDbConnection();
-                // Wrap in our own CTS — SqlClient's "Connect Timeout" can be
-                // bypassed by internal SNI/pre-login retries that stretch a
-                // single OpenAsync to a minute+. The outer CTS guarantees
-                // every attempt is bounded so the retry loop actually runs.
-                using (var probeCts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
-                {
-                    await conn.OpenAsync(probeCts.Token);
-                }
-                await conn.CloseAsync();
-
-                logger.LogInformation("[Seed] DB reachable — applying migrations");
+                logger.LogInformation("[Seed] Applying migrations (attempt {Attempt}/{Max})", attempt, maxAttempts);
                 using var migrateCts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
                 await db.Database.MigrateAsync(migrateCts.Token);
                 logger.LogInformation("[Seed] Migrations applied");
@@ -64,8 +53,8 @@ public static class DbInitializer
             }
             catch (Exception ex) when (attempt < maxAttempts)
             {
-                logger.LogWarning(ex,
-                    "[Seed] Connect/migrate failed (attempt {Attempt}/{Max}): {Message}; retrying in 2s",
+                logger.LogWarning(
+                    "[Seed] Migration attempt {Attempt}/{Max} failed: {Message}; retrying in 2s",
                     attempt, maxAttempts, ex.Message);
                 await Task.Delay(TimeSpan.FromSeconds(2));
             }
