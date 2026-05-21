@@ -33,7 +33,13 @@ public static class DbInitializer
         // returns false). This way the actual SqlException message —
         // login failed, network error, TLS handshake failure, "Cannot
         // open database X" — shows up verbatim in the deploy logs.
-        const int maxAttempts = 10;
+        //
+        // 60 attempts × ~3-5s each = up to ~5 minutes of patience. SQL
+        // Server's first-run init on a fresh Railway volume can take 30-90s
+        // before TCP 1433 is bound (template master.mdf copying, recovery
+        // of master/msdb/tempdb). Warm restarts come up in ~5-10s and only
+        // burn 1-2 attempts.
+        const int maxAttempts = 60;
         for (var attempt = 1; ; attempt++)
         {
             try

@@ -7,7 +7,7 @@
   "deploy": {
     "startCommand": "dotnet AndritzVendorPortal.API.dll",
     "healthcheckPath": "/api/health",
-    "healthcheckTimeout": 120,
+    "healthcheckTimeout": 600,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 5
   }
