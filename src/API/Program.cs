@@ -14,6 +14,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using QuestPDF.Infrastructure;
 using Serilog;
@@ -81,13 +82,7 @@ builder.Services.AddControllers().AddJsonOptions(opts =>
 });
 builder.Services.AddFluentValidationAutoValidation();
 
-// CORS
-var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
-builder.Services.AddCors(opts => opts.AddDefaultPolicy(p => p
-    .WithOrigins(allowedOrigins)
-    .AllowAnyHeader()
-    .AllowAnyMethod()
-    .AllowCredentials()));
+// CORS registered inline at UseCors below.
 
 // Rate limiting — login endpoint
 builder.Services.AddRateLimiter(options =>
@@ -141,14 +136,11 @@ app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Swagger:Enabled"))
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Andritz Vendor Portal API v1"));
-}
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Andritz Vendor Portal API v1"));
 
 app.UseRouting();
-app.UseCors();
+app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 app.UseAuthentication();
 app.UseMiddleware<CsrfMiddleware>();
 app.UseAuthorization();
@@ -163,22 +155,25 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok", timestamp = Date
 // returns index.html so React Router can resolve client-side routes like /login.
 app.MapFallbackToFile("index.html");
 
-// ── Seed DB on startup ───────────────────────────────────────────────────────
+// ── Migrate + seed DB on startup ─────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
-    var sp = scope.ServiceProvider;
-    var logger = sp.GetRequiredService<ILogger<Program>>();
+    var services = scope.ServiceProvider;
     try
     {
-        var db = sp.GetRequiredService<ApplicationDbContext>();
-        var users = sp.GetRequiredService<UserManager<ApplicationUser>>();
-        var roles = sp.GetRequiredService<RoleManager<IdentityRole>>();
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        await context.Database.MigrateAsync();
+
+        var users = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var roles = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var seedLogger = services.GetRequiredService<ILogger<Program>>();
         var defaultPw = builder.Configuration["Seed:DefaultAdminPassword"] ?? "Andritz@1234";
-        await DbInitializer.InitializeAsync(db, users, roles, logger, defaultPw);
+        await DbInitializer.InitializeAsync(context, users, roles, seedLogger, defaultPw);
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "[Startup] Seeding failed");
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occured during migration");
     }
 }
 

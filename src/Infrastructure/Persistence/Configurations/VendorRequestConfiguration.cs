@@ -36,10 +36,10 @@ public class VendorRequestConfiguration : IEntityTypeConfiguration<VendorRequest
         e.Property(x => x.BankAccountNumber).HasMaxLength(50);
         e.Property(x => x.IfscCode).HasMaxLength(20);
         // Document uploads — store as base64 data URIs in unbounded text column
-        e.Property(x => x.BankDocument1).HasColumnType("longtext");
-        e.Property(x => x.BankDocument2).HasColumnType("longtext");
-        e.Property(x => x.GstDocument).HasColumnType("longtext");
-        e.Property(x => x.PanDocument).HasColumnType("longtext");
+        e.Property(x => x.BankDocument1).HasColumnType("nvarchar(max)");
+        e.Property(x => x.BankDocument2).HasColumnType("nvarchar(max)");
+        e.Property(x => x.GstDocument).HasColumnType("nvarchar(max)");
+        e.Property(x => x.PanDocument).HasColumnType("nvarchar(max)");
         e.Property(x => x.VendorCode).HasMaxLength(50);
         e.Property(x => x.VendorCodeAssignedBy).HasMaxLength(200);
         e.Property(x => x.CreatedByName).HasMaxLength(200);
@@ -47,8 +47,11 @@ public class VendorRequestConfiguration : IEntityTypeConfiguration<VendorRequest
         e.Property(x => x.CreatedBy).HasMaxLength(450);
         e.Property(x => x.ModifiedBy).HasMaxLength(450);
 
-        // Unique index on vendor codes — null values are allowed by MySQL multi-null indexes
-        e.HasIndex(x => x.VendorCode).IsUnique();
+        // Unique index on vendor codes. SQL Server treats NULL as equal in unique
+        // indexes, so we add a filter to allow multiple unassigned (NULL) rows.
+        e.HasIndex(x => x.VendorCode)
+         .IsUnique()
+         .HasFilter("[VendorCode] IS NOT NULL");
 
         e.HasMany(x => x.ApprovalSteps)
          .WithOne(s => s.VendorRequest!)

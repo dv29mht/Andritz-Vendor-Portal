@@ -14,7 +14,7 @@ public class JwtTokenService(IOptions<JwtSettings> settings, IDateTimeProvider c
 
     public (string Token, DateTime ExpiresAt) GenerateToken(UserInfoDto user, IEnumerable<string> roles)
     {
-        if (string.IsNullOrWhiteSpace(_settings.Key))
+        if (string.IsNullOrWhiteSpace(_settings.SecretKey))
             throw new InvalidOperationException("JWT signing key is not configured.");
 
         var claims = new List<Claim>
@@ -26,7 +26,7 @@ public class JwtTokenService(IOptions<JwtSettings> settings, IDateTimeProvider c
         };
         claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Key));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var expiresAt = clock.UtcNow.AddHours(_settings.ExpiryHours);
 

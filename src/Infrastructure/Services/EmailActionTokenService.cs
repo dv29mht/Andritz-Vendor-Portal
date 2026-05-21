@@ -19,7 +19,7 @@ public class EmailActionTokenService(IConfiguration config) : IEmailActionTokenS
     private byte[] SigningKey()
     {
         // Reuse the JWT signing secret — already a 32+ char random configured value.
-        var key = config["Jwt:Key"] ?? "PLACEHOLDER_KEY_REPLACE_VIA_CONFIG";
+        var key = config["JwtSettings:SecretKey"] ?? "PLACEHOLDER_KEY_REPLACE_VIA_CONFIG";
         return Encoding.UTF8.GetBytes("email-action:" + key);
     }
 
