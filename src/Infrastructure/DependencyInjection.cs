@@ -64,8 +64,20 @@ public static class DependencyInjection
         services.AddSingleton<IVendorRequestPdfService, QuestPdfVendorRequestPdfService>();
         services.AddSingleton<IEmailActionTokenService, EmailActionTokenService>();
 
-        // JWT token validation
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        // JWT token validation.
+        // AddIdentity (above) sets DefaultAuthenticateScheme and
+        // DefaultChallengeScheme to Identity.Application (cookie). The
+        // single-string AddAuthentication("Bearer") overload only sets
+        // DefaultScheme — leaving cookie as the authenticate/challenge
+        // default, which makes [Authorize] ignore the Authorization header
+        // entirely and 401 every JWT-bearing request. Override all three
+        // here so Bearer is what [Authorize] actually uses.
+        services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
              .AddJwtBearer(opt =>
              {
                  opt.TokenValidationParameters = new TokenValidationParameters
@@ -90,6 +102,21 @@ public static class DependencyInjection
                  // role-revocation invalidate prior sessions.
                  opt.Events = new JwtBearerEvents
                  {
+                     // Browsers can't set Authorization on a WebSocket upgrade,
+                     // so the SignalR JS client passes the JWT as ?access_token=
+                     // for hub connections. Pull it off the query string for
+                     // /hubs/* paths so the WS handshake authenticates.
+                     OnMessageReceived = ctx =>
+                     {
+                         var accessToken = ctx.Request.Query["access_token"];
+                         var path = ctx.HttpContext.Request.Path;
+                         if (!string.IsNullOrEmpty(accessToken)
+                             && path.StartsWithSegments("/hubs"))
+                         {
+                             ctx.Token = accessToken;
+                         }
+                         return Task.CompletedTask;
+                     },
                      OnTokenValidated = OnJwtTokenValidated
                  };
              });
