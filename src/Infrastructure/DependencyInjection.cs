@@ -59,7 +59,7 @@ public static class DependencyInjection
         services.Configure<JwtSettings>(config.GetSection("JwtSettings"));
         services.Configure<EmailSettings>(config.GetSection("EmailSettings"));
         services.AddHttpClient();
-        services.AddScoped<IEmailService, BrevoEmailService>();
+        services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddScoped<IEmailTemplateService, EmailTemplateService>();
         services.AddSingleton<IVendorRequestPdfService, QuestPdfVendorRequestPdfService>();
         services.AddSingleton<IEmailActionTokenService, EmailActionTokenService>();

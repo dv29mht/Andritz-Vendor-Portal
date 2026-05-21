@@ -3,18 +3,17 @@ import { useUIStore } from '../store/uiStore'
 
 const productionApiUrl = 'https://andritz-vendor-portal-production.up.railway.app/api'
 
-// In production (Vercel), use a relative base URL so every request goes to
-// /api/... on the same origin. Vercel's proxy rewrite (vercel.json) forwards
-// these to the Render backend transparently. This means the auth_token cookie
-// is set on the Vercel domain — same-origin — so browser cross-site cookie
-// restrictions (Privacy Sandbox, incognito) can never block it.
+// In production, use a same-origin base URL so every request goes to
+// {BASE_URL}api/... on the same origin. BASE_URL is "/" for Railway and
+// "/SOT/" for the office IIS sub-app build (set by vite.config.js `base`).
+// Same-origin means the auth cookie + JWT both stay first-party.
 //
-// In dev, fall back to the Render URL directly (or VITE_API_URL for local backend).
-// Production builds ALWAYS use the Vercel proxy (/api → Render via vercel.json rewrite).
-// VITE_API_URL is only honoured in dev so local development can target a local backend.
+// In dev, fall back to the production Railway URL directly (or VITE_API_URL
+// for a local backend). VITE_API_URL is only honoured in dev so local
+// development can target a local server.
 const baseURL = import.meta.env.DEV
   ? (import.meta.env.VITE_API_URL ?? productionApiUrl)
-  : '/api'
+  : `${import.meta.env.BASE_URL}api`
 
 if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
   console.warn(

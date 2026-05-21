@@ -130,14 +130,26 @@ app.UseSerilogRequestLogging();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 
+// Sub-path hosting (e.g. office IIS at /SOT). Must come before UseStaticFiles
+// and UseRouting so the prefix is stripped from PathBase before any matching.
+// Empty/unset → no-op, app serves at root (Railway, local dev).
+var pathBase = builder.Configuration["App:PathBase"];
+if (!string.IsNullOrWhiteSpace(pathBase))
+{
+    app.UsePathBase(pathBase);
+}
+
 // Serve the React SPA from wwwroot so a single origin hosts both the API
 // (/api, /swagger, /hubs) and the frontend (/, /assets/*, client routes).
 // MapFallbackToFile below sends any unmatched GET to index.html for React Router.
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.UseSwagger();
-app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Andritz Vendor Portal API v1"));
+if (app.Configuration.GetValue("Swagger:Enabled", true))
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Andritz Vendor Portal API v1"));
+}
 
 app.UseRouting();
 app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());

@@ -5,16 +5,14 @@ let connection = null
 let connectPromise = null
 
 function resolveHubUrl() {
-  // api.js uses '/api' in production (Vercel proxy) and an absolute URL in dev.
-  // Vercel's HTTP rewrite does not reliably forward WebSocket upgrades, so for
-  // production we point SignalR at the API origin directly when VITE_API_URL is set.
-  // In dev, VITE_API_URL should point at the local API.
+  // In dev, VITE_API_URL points at the local API; strip /api and append the hub path.
+  // In production, hubs live at {BASE_URL}hubs/notifications same-origin — BASE_URL
+  // is "/" for Railway and "/SOT/" for the office IIS sub-app build.
   const apiOrigin = import.meta.env.VITE_API_URL
   if (apiOrigin) {
-    // Strip trailing /api so we can append /hubs/notifications cleanly.
     return apiOrigin.replace(/\/api\/?$/, '') + '/hubs/notifications'
   }
-  return '/hubs/notifications'
+  return `${import.meta.env.BASE_URL}hubs/notifications`
 }
 
 export function startNotifications(onWorkflowChanged) {

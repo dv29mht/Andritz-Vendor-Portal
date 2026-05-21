@@ -46,5 +46,10 @@ COPY --from=build /app/publish .
 # Railway sets PORT — Program.cs reads it. Default to 8080 for local `docker run`.
 ENV PORT=8080
 ENV ASPNETCORE_ENVIRONMENT=Production
+# appsettings.json carries the office-IIS template defaults (PathBase=/SOT).
+# Railway serves at the root of its domain, so explicitly zero PathBase here
+# instead of relying on a Railway-dashboard env var. Empty string passes the
+# IsNullOrWhiteSpace check in Program.cs, so UsePathBase is skipped.
+ENV App__PathBase=""
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "AndritzVendorPortal.API.dll"]
