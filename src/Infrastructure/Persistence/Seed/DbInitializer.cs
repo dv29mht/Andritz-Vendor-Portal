@@ -21,17 +21,31 @@ public static class DbInitializer
         ILogger logger,
         string defaultAdminPassword)
     {
-        // Wait for SQL Server to accept connections (helps when the app and
-        // the DB container start at the same time on a fresh machine), then
-        // create the database and apply migrations. MigrateAsync will create
-        // the target database if it doesn't exist, so a brand-new server only
-        // needs valid credentials — nothing else to set up.
+        // Log where we're dialing — without the password — so production
+        // deploy logs make it obvious if the connection string is pointing
+        // at the wrong server (e.g. localhost fallback when the env var
+        // ConnectionStrings__DefaultConnection isn't set).
+        var safe = SafeConnectionString(db.Database.GetDbConnection().ConnectionString);
+        logger.LogInformation("[Seed] Target DB connection: {ConnString}", safe);
+
+        // Probe connectivity with a hard timeout so a half-up SQL Server
+        // (TCP listening but query engine still recovering) can't hang the
+        // whole boot. CanConnectAsync issues a SELECT 1, so it'll surface
+        // exactly that "connect succeeds, query hangs" failure mode.
         const int maxAttempts = 10;
         for (var attempt = 1; ; attempt++)
         {
             try
             {
-                await db.Database.MigrateAsync();
+                logger.LogInformation("[Seed] Probing DB connectivity (attempt {Attempt}/{Max})", attempt, maxAttempts);
+                using var probeCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                var ok = await db.Database.CanConnectAsync(probeCts.Token);
+                if (!ok) throw new InvalidOperationException("CanConnectAsync returned false");
+
+                logger.LogInformation("[Seed] DB reachable — applying migrations");
+                using var migrateCts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+                await db.Database.MigrateAsync(migrateCts.Token);
+                logger.LogInformation("[Seed] Migrations applied");
                 break;
             }
             catch (Exception ex) when (attempt < maxAttempts)
@@ -163,5 +177,18 @@ public static class DbInitializer
             return;
         }
         await users.AddToRoleAsync(user, role);
+    }
+
+    // Returns the connection string with any "Password=..." segment masked,
+    // so deploy logs can show which server/database/user we're dialing
+    // without leaking the SA password.
+    private static string SafeConnectionString(string? raw)
+    {
+        if (string.IsNullOrEmpty(raw)) return "<empty>";
+        return System.Text.RegularExpressions.Regex.Replace(
+            raw,
+            @"(Password|Pwd)\s*=\s*[^;]*",
+            "$1=***",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     }
 }
