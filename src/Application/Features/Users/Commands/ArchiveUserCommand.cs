@@ -1,4 +1,5 @@
 using AndritzVendorPortal.Application.Common.Exceptions;
+using AndritzVendorPortal.Application.Common.Time;
 using AndritzVendorPortal.Application.Interfaces;
 using AndritzVendorPortal.Domain.Constants;
 using AndritzVendorPortal.Domain.Enums;
@@ -55,7 +56,7 @@ public class ArchiveUserCommandHandler(
         foreach (var step in pendingSteps)
         {
             step.IsDeletedApprover = true;
-            step.DeletedApproverNote = $"User deleted by Admin on {clock.UtcNow:yyyy-MM-dd HH:mm} UTC";
+            step.DeletedApproverNote = $"User deleted by Admin on {IstTime.FormatIso(clock.UtcNow)}";
         }
 
         var affectedIds = pendingSteps.Select(s => s.VendorRequestId).Distinct().ToList();

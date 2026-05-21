@@ -1,3 +1,4 @@
+using AndritzVendorPortal.Application.Common.Time;
 using AndritzVendorPortal.Domain.Entities;
 
 namespace AndritzVendorPortal.Application.Features.VendorRequests.Common;
@@ -33,6 +34,5 @@ internal static class EmailValues
         };
     }
 
-    public static string FormatTimestamp(DateTime utc) =>
-        utc.ToString("dd MMM yyyy, HH:mm 'UTC'", System.Globalization.CultureInfo.InvariantCulture);
+    public static string FormatTimestamp(DateTime utc) => IstTime.FormatLong(utc);
 }

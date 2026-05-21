@@ -1,3 +1,4 @@
+using AndritzVendorPortal.Application.Common.Time;
 using AndritzVendorPortal.Application.Interfaces;
 using AndritzVendorPortal.Domain.Entities;
 using AndritzVendorPortal.Domain.Enums;
@@ -38,7 +39,7 @@ public class QuestPdfVendorRequestPdfService : IVendorRequestPdfService
                 {
                     t.DefaultTextStyle(s => s.FontSize(9).FontColor(Muted));
                     t.Span("Andritz Vendor Portal · Generated ");
-                    t.Span($"{DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC");
+                    t.Span(IstTime.FormatIso(DateTime.UtcNow));
                     t.Span("  ·  Page ");
                     t.CurrentPageNumber();
                     t.Span(" / ");
@@ -117,8 +118,8 @@ public class QuestPdfVendorRequestPdfService : IVendorRequestPdfService
             col.Item().Element(e => Section(e, "Record", new (string, string)[]
             {
                 ("Created By", r.CreatedByName),
-                ("Created On", r.CreatedAt.ToString("yyyy-MM-dd HH:mm 'UTC'")),
-                ("Last Updated", r.UpdatedAt.ToString("yyyy-MM-dd HH:mm 'UTC'")),
+                ("Created On", IstTime.FormatIso(r.CreatedAt)),
+                ("Last Updated", IstTime.FormatIso(r.UpdatedAt)),
                 ("Assigned By", r.VendorCodeAssignedBy ?? ""),
                 ("Revision No.", r.RevisionNo.ToString()),
             }));
@@ -191,7 +192,7 @@ public class QuestPdfVendorRequestPdfService : IVendorRequestPdfService
                     table.Cell().BorderBottom(1).BorderColor(RowLine).PaddingVertical(3)
                         .Text(step.Decision.ToString()).FontSize(9).FontColor(DecisionColor(step.Decision));
                     table.Cell().BorderBottom(1).BorderColor(RowLine).PaddingVertical(3)
-                        .Text(step.DecidedAt?.ToString("yyyy-MM-dd HH:mm 'UTC'") ?? "—").FontSize(9);
+                        .Text(step.DecidedAt.HasValue ? IstTime.FormatIso(step.DecidedAt.Value) : "—").FontSize(9);
                 }
             });
         });

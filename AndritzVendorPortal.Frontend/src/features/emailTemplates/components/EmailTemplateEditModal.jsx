@@ -14,7 +14,7 @@ const SAMPLE_VALUES = {
   '[Vendor Name]':                    'Acme Industries Pvt. Ltd.',
   '[Vendor Code]':                    'V-0001234',
   '[Revision Number]':                '2',
-  '[Date & Time]':                    new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
+  '[Date & Time]':                    new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' }),
   '[Comments]':                       'Please verify the GST certificate and resubmit with the updated PAN scan.',
   '[Email]':                          'anita.sharma@example.com',
   '[Portal URL]':                     'https://vendor-portal.andritz.com',
