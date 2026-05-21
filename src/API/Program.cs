@@ -155,33 +155,39 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok", timestamp = Date
 // returns index.html so React Router can resolve client-side routes like /login.
 app.MapFallbackToFile("index.html");
 
-// ── Migrate + seed DB on startup ─────────────────────────────────────────────
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<ApplicationDbContext>();
-        await context.Database.MigrateAsync();
-
-        var users = services.GetRequiredService<UserManager<ApplicationUser>>();
-        var roles = services.GetRequiredService<RoleManager<IdentityRole>>();
-        var seedLogger = services.GetRequiredService<ILogger<Program>>();
-        var defaultPw = builder.Configuration["Seed:DefaultAdminPassword"] ?? "Andritz@1234";
-        await DbInitializer.InitializeAsync(context, users, roles, seedLogger, defaultPw);
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occured during migration");
-    }
-}
-
 // Honour Railway/Docker conventions: PORT env var wins, else ASPNETCORE_URLS,
 // else Kestrel's default. This avoids fighting with ASPNETCORE_URLS in the container.
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrEmpty(port))
     app.Urls.Add($"http://0.0.0.0:{port}");
+
+// ── Migrate + seed DB in the background ──────────────────────────────────────
+// We deliberately do NOT block startup on this. DbInitializer.InitializeAsync
+// retries the DB connection up to 10× with 2s backoff; on a cold Railway
+// deploy the mssql service can take longer than the API healthcheck window
+// to accept connections. Running migration off the request thread lets
+// /api/health answer as soon as Kestrel is bound, so the deploy is marked
+// healthy and the DB work can take as long as it needs.
+_ = Task.Run(async () =>
+{
+    using var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+    var bootLogger = services.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        bootLogger.LogInformation("[Boot] Starting database migration + seed");
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        var users = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var roles = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var defaultPw = app.Configuration["Seed:DefaultAdminPassword"] ?? "Andritz@1234";
+        await DbInitializer.InitializeAsync(context, users, roles, bootLogger, defaultPw);
+        bootLogger.LogInformation("[Boot] Database migration + seed complete");
+    }
+    catch (Exception ex)
+    {
+        bootLogger.LogError(ex, "[Boot] Migration + seed failed; API will keep running but DB-backed endpoints will error");
+    }
+});
 
 app.Run();
 
