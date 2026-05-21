@@ -26,7 +26,8 @@ public class UpdateProfileCommandValidator : AbstractValidator<UpdateProfileComm
 
 public class UpdateProfileCommandHandler(
     ICurrentUserService currentUser,
-    IIdentityService identity) : IRequestHandler<UpdateProfileCommand, object>
+    IIdentityService identity,
+    ILoginSecurityService loginSecurity) : IRequestHandler<UpdateProfileCommand, object>
 {
     public async Task<object> Handle(UpdateProfileCommand request, CancellationToken ct)
     {
@@ -37,6 +38,8 @@ public class UpdateProfileCommandHandler(
         if (user.IsArchived)
             throw new UnauthorizedException("This account has been deactivated. Contact your administrator.");
 
+        var passwordChanging = !string.IsNullOrEmpty(request.NewPassword);
+
         var (ok, errors) = await identity.UpdateProfileAsync(
             userId, request.FullName.Trim(), request.CurrentPassword, request.NewPassword);
         if (!ok)
@@ -45,6 +48,13 @@ public class UpdateProfileCommandHandler(
         await identity.PropagateUserNameChangeAsync(userId, request.FullName.Trim(), ct);
 
         var roles = await identity.GetRolesAsync(userId);
+
+        // Self-service password change must invalidate every JWT issued before
+        // the new credential — including the one the user is holding right now;
+        // the frontend should follow up with a redirect to /login.
+        if (passwordChanging && roles.Count > 0)
+            await loginSecurity.RevokeAllAsync(userId, roles, ct);
+
         return new
         {
             id = userId,

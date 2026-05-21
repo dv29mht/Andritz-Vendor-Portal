@@ -59,8 +59,13 @@ public class AuthController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost("logout")]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
+        // Bump LoginSecurity.TokensValidSince for the caller's roles so any
+        // outstanding JWTs (other tabs, other devices, the one we're about to
+        // expire below) are rejected by OnTokenValidated on their next use.
+        await mediator.Send(new LogoutCommand());
+
         var expired = new CookieOptions
         {
             HttpOnly = true,

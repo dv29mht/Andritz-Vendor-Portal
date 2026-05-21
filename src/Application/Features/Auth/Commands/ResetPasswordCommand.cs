@@ -17,7 +17,9 @@ public class ResetPasswordCommandValidator : AbstractValidator<ResetPasswordComm
     }
 }
 
-public class ResetPasswordCommandHandler(IIdentityService identity)
+public class ResetPasswordCommandHandler(
+    IIdentityService identity,
+    ILoginSecurityService loginSecurity)
     : IRequestHandler<ResetPasswordCommand, Unit>
 {
     public async Task<Unit> Handle(ResetPasswordCommand request, CancellationToken ct)
@@ -29,6 +31,12 @@ public class ResetPasswordCommandHandler(IIdentityService identity)
         var (succeeded, errors) = await identity.ResetPasswordAsync(request.Email, request.Token, request.NewPassword);
         if (!succeeded)
             throw new BadRequestException(errors.FirstOrDefault() ?? "Reset failed.", errors);
+
+        // A password reset must invalidate every JWT previously issued to this
+        // user — otherwise a stolen token outlives the credential change.
+        var roles = await identity.GetRolesAsync(user.Id);
+        if (roles.Count > 0)
+            await loginSecurity.RevokeAllAsync(user.Id, roles, ct);
 
         return Unit.Value;
     }

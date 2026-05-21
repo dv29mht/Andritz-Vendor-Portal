@@ -13,7 +13,8 @@ public record ArchiveUserCommand(string Id) : IRequest<Unit>;
 public class ArchiveUserCommandHandler(
     IIdentityService identity,
     IApplicationDbContext db,
-    IDateTimeProvider clock) : IRequestHandler<ArchiveUserCommand, Unit>
+    IDateTimeProvider clock,
+    ILoginSecurityService loginSecurity) : IRequestHandler<ArchiveUserCommand, Unit>
 {
     public async Task<Unit> Handle(ArchiveUserCommand request, CancellationToken ct)
     {
@@ -73,11 +74,21 @@ public class ArchiveUserCommandHandler(
             }
         }
 
+        var rolesToRevoke = await identity.GetRolesAsync(request.Id);
+
         var (ok, errors) = await identity.ArchiveUserAsync(request.Id);
         if (!ok)
             throw new BadRequestException("Archive failed.", errors);
 
         await db.SaveChangesAsync(ct);
+
+        // Tear down any active sessions for the archived account — login is
+        // already blocked downstream by the IsArchived guards, but a token
+        // that's already in someone's browser would keep working until it
+        // naturally expires without this.
+        if (rolesToRevoke.Count > 0)
+            await loginSecurity.RevokeAllAsync(request.Id, rolesToRevoke, ct);
+
         return Unit.Value;
     }
 }
