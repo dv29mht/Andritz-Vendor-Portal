@@ -59,7 +59,8 @@ public class SmtpEmailService(
                 UseDefaultCredentials = false,
                 Credentials = string.IsNullOrEmpty(_cfg.Username)
                     ? null
-                    : new NetworkCredential(_cfg.Username, _cfg.Password)
+                    : new NetworkCredential(_cfg.Username, _cfg.Password),
+                Timeout = 15000
             };
 
             await client.SendMailAsync(message);

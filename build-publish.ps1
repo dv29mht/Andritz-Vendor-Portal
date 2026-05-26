@@ -41,6 +41,13 @@ if (-not $gitCommit) { $gitCommit = 'unknown' }
 $env:GIT_COMMIT = $gitCommit
 Write-Host ("Embedding GIT_COMMIT={0}" -f $gitCommit) -ForegroundColor Cyan
 
+# 2a. This bundle is hosted under the /SOT IIS sub-application. vite.config.js
+#     reads VITE_BASE_PATH so the SPA emits its assets as /SOT/assets/* and
+#     derives the router basename + API/SignalR URLs from it. Without this the
+#     SPA builds for root ('/') and every asset 404s under /SOT.
+$env:VITE_BASE_PATH = '/SOT/'
+Write-Host ("Embedding VITE_BASE_PATH={0}" -f $env:VITE_BASE_PATH) -ForegroundColor Cyan
+
 # 3. Publish (the csproj's BuildFrontend + CopyFrontendDist targets are gated on Release).
 #    dotnet publish auto-emits web.config for the AspNetCoreModuleV2 handler when
 #    targeting an ASP.NET Core web project - we keep that file.
