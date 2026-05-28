@@ -27,3 +27,18 @@ src/API/logs/
 
 # Claude Code per-project metadata (auto-memory, settings, etc.)
 .claude/
+
+# Publish bundles and any side-by-side variants (publish_out, publish_out v3, etc.) plus the zips
+publish_out/
+publish_out*/
+publish_out*.zip
+
+# Root-level runtime log directory (different from src/API/logs/)
+/logs/
+
+# Local SQL bootstrap scripts and SQL Server backup files — not part of the app
+*.sql
+*.bak
+
+# Scratch projects (one-off tools that aren't part of the build)
+_hashgen/
