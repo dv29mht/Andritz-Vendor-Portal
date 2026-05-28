@@ -7,6 +7,11 @@
     <RootNamespace>AndritzVendorPortal.API</RootNamespace>
     <AssemblyName>AndritzVendorPortal.API</AssemblyName>
     <UserSecretsId>andritz-vendor-portal-api</UserSecretsId>
+    <!-- Ship our hand-managed web.config verbatim instead of the auto-generated
+         one. The committed src/API/web.config carries the WebDAV removal,
+         300s startupTimeLimit, and stdout logging that the office IIS deploy
+         depends on; the auto-generated version would drop all three. -->
+    <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
   </PropertyGroup>
 
   <ItemGroup>
