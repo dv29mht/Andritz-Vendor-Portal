@@ -24,6 +24,12 @@ const basename = import.meta.env.BASE_URL === '/'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
+  // Password-reset links from email land here with ?email=&token=. Login.jsx
+  // detects those query params and renders the ResetPasswordView. Without this
+  // explicit route, the catch-all `path: '*'` inside ProtectedRoute below would
+  // bounce the request to /dashboard → /login and strip the query string,
+  // making every reset link dead-end on the sign-in form.
+  { path: '/reset-password', element: <Login /> },
   {
     path: '/',
     element: (

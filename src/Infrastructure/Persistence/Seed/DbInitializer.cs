@@ -136,50 +136,101 @@ public static class DbInitializer
         if (dirty) await db.SaveChangesAsync();
     }
 
+    // Bulletproof, idempotent repair of a seeded system account. Runs on every
+    // startup and *unconditionally* snaps the account back to a usable state:
+    // unlocks it, unarchives it, confirms the email, force-resets the password
+    // to the configured seed value, and re-adds the role. This is the
+    // emergency-recovery escape hatch — if anyone gets locked out, can't log
+    // in, or the password hash drifts (manual SQL, half-baked admin reset,
+    // hash-algorithm upgrade), restart the app and the seeded credentials are
+    // guaranteed valid again. Logs every action so the prod log file is
+    // self-diagnosing without DB access.
     private static async Task EnsureUserAsync(
         UserManager<ApplicationUser> users,
         ILogger logger,
         string email, string fullName, string designation, string password, string role)
     {
         var existing = await users.FindByEmailAsync(email);
-        if (existing is not null)
+        if (existing is null)
         {
-            if (!await users.IsInRoleAsync(existing, role))
-                await users.AddToRoleAsync(existing, role);
-
-            if (!await users.CheckPasswordAsync(existing, password))
+            var user = new ApplicationUser
             {
-                var token = await users.GeneratePasswordResetTokenAsync(existing);
-                var reset = await users.ResetPasswordAsync(existing, token, password);
-                if (!reset.Succeeded)
-                {
-                    logger.LogError("[Seed] Failed to reset password for {Email}: {Errors}",
-                        email, string.Join(", ", reset.Errors.Select(e => e.Description)));
-                }
-                else
-                {
-                    logger.LogInformation("[Seed] Reset password for seeded account {Email}", email);
-                }
+                UserName = email,
+                Email = email,
+                EmailConfirmed = true,
+                FullName = fullName,
+                Designation = designation
+            };
+            var create = await users.CreateAsync(user, password);
+            if (!create.Succeeded)
+            {
+                logger.LogError("[Seed] CREATE failed for {Email}: {Errors}",
+                    email, string.Join(", ", create.Errors.Select(e => e.Description)));
+                return;
             }
+            var roleAdd = await users.AddToRoleAsync(user, role);
+            logger.LogInformation(
+                "[Seed] Created {Email} in role {Role} (roleAdd={RoleSucceeded})",
+                email, role, roleAdd.Succeeded);
             return;
         }
 
-        var user = new ApplicationUser
+        var changes = new List<string>();
+
+        if (existing.IsArchived)              { existing.IsArchived = false;         changes.Add("unarchived"); }
+        if (!existing.EmailConfirmed)         { existing.EmailConfirmed = true;      changes.Add("email-confirmed"); }
+        if (existing.LockoutEnd is not null)  { existing.LockoutEnd = null;          changes.Add("lockout-cleared"); }
+        if (existing.AccessFailedCount != 0)  { existing.AccessFailedCount = 0;      changes.Add("fail-count-reset"); }
+        if (!string.Equals(existing.FullName, fullName, StringComparison.Ordinal))
+            { existing.FullName = fullName; changes.Add("fullname-updated"); }
+
+        if (changes.Count > 0)
         {
-            UserName = email,
-            Email = email,
-            EmailConfirmed = true,
-            FullName = fullName,
-            Designation = designation
-        };
-        var result = await users.CreateAsync(user, password);
-        if (!result.Succeeded)
-        {
-            logger.LogError("[Seed] Failed to create {Email}: {Errors}",
-                email, string.Join(", ", result.Errors.Select(e => e.Description)));
-            return;
+            var update = await users.UpdateAsync(existing);
+            if (!update.Succeeded)
+            {
+                logger.LogError("[Seed] UpdateAsync failed for {Email}: {Errors}",
+                    email, string.Join(", ", update.Errors.Select(e => e.Description)));
+            }
         }
-        await users.AddToRoleAsync(user, role);
+
+        if (!await users.IsInRoleAsync(existing, role))
+        {
+            var roleAdd = await users.AddToRoleAsync(existing, role);
+            changes.Add(roleAdd.Succeeded ? $"role-added:{role}" : $"role-add-FAILED:{role}");
+        }
+
+        // Force-reset password every boot regardless of whether the existing
+        // hash matches. If it matches, this is a transparent no-op for the
+        // user; if it has drifted, this restores it. Cheap insurance.
+        var token = await users.GeneratePasswordResetTokenAsync(existing);
+        var reset = await users.ResetPasswordAsync(existing, token, password);
+        if (!reset.Succeeded)
+        {
+            logger.LogError("[Seed] FORCE-RESET password failed for {Email}: {Errors}",
+                email, string.Join(", ", reset.Errors.Select(e => e.Description)));
+        }
+        else
+        {
+            changes.Add("password-force-reset");
+        }
+
+        // Final verification — re-fetch and confirm the password hash actually
+        // accepts the seed password, so the log shows a definitive yes/no the
+        // seeded credentials work right now.
+        var verify = await users.FindByEmailAsync(email);
+        var passwordOk = verify is not null && await users.CheckPasswordAsync(verify, password);
+        logger.LogInformation(
+            "[Seed] Repaired {Email}: changes=[{Changes}], roles=[{Roles}], " +
+            "archived={Archived}, lockoutEnd={LockoutEnd}, failCount={FailCount}, " +
+            "passwordCheck={PasswordOk}",
+            email,
+            changes.Count == 0 ? "none" : string.Join(", ", changes),
+            verify is null ? "<missing>" : string.Join(",", await users.GetRolesAsync(verify)),
+            verify?.IsArchived,
+            verify?.LockoutEnd?.ToString("o") ?? "null",
+            verify?.AccessFailedCount,
+            passwordOk ? "OK" : "FAIL");
     }
 
     // Returns the connection string with any "Password=..." segment masked,

@@ -70,7 +70,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
   const [historyDateFrom, setHistoryDateFrom] = useState('')
   const [historyDateTo, setHistoryDateTo]     = useState('')
 
-  const isAuthorizedFinalApprover = currentUser?.email === 'pardeep.sharma@yopmail.com'
+  const isAuthorizedFinalApprover = currentUser?.email === 'pardeep.sharma@andritz.com'
   const { isNew, markViewed } = useViewedRequests(currentUser.id)
 
   const openReview = (req) => {
