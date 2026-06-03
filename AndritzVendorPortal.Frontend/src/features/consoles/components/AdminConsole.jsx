@@ -17,6 +17,7 @@ import Toast from '../../../shared/components/Toast'
 import ConfirmDialog from '../../../shared/components/ConfirmDialog'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
 import Pagination from '../../../shared/components/Pagination'
+import ClearFiltersButton from '../../../shared/components/ClearFiltersButton'
 import UserManagement from '../../users/components/UserManagement'
 import { vendorsService } from '../../vendors/services/vendorsService'
 import { buildStats, buildMonthlyData } from '../../../utils/statsUtils'
@@ -442,9 +443,9 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 onChange={e => { setSearch(e.target.value); setReqPage(1) }}
               />
             </div>
-            <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setReqPage(1) }}
+            <input type="date" value={dateFrom} max={dateTo || undefined} onChange={e => { setDateFrom(e.target.value); setReqPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="From date" />
-            <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setReqPage(1) }}
+            <input type="date" value={dateTo} min={dateFrom || undefined} onChange={e => { setDateTo(e.target.value); setReqPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="To date" />
             <select
               value={filterStatus}
@@ -457,6 +458,10 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 </option>
               ))}
             </select>
+            <ClearFiltersButton
+              active={!!(search || dateFrom || dateTo)}
+              onClear={() => { setSearch(''); setDateFrom(''); setDateTo(''); setReqPage(1) }}
+            />
             <button
               className="btn-secondary ml-auto"
               disabled={visible.length === 0}

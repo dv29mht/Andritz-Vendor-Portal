@@ -6,6 +6,7 @@ import {
 import { emailTemplatesService } from '../services/emailTemplatesService'
 import EmailTemplateEditModal from './EmailTemplateEditModal'
 import Toast from '../../../shared/components/Toast'
+import ClearFiltersButton from '../../../shared/components/ClearFiltersButton'
 
 const AUDIENCE_COLORS = {
   Buyer:           { bg: 'bg-blue-50',    text: 'text-blue-700',    ring: 'ring-blue-200'    },
@@ -91,6 +92,10 @@ export default function EmailTemplatesPage() {
         >
           {audiences.map(a => <option key={a} value={a}>{a}</option>)}
         </select>
+        <ClearFiltersButton
+          active={!!search}
+          onClear={() => setSearch('')}
+        />
       </div>
 
       {/* Error */}

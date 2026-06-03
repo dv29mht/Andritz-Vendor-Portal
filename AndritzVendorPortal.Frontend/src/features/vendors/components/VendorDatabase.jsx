@@ -4,6 +4,7 @@ import VendorDetailModal from './VendorDetailModal'
 import Toast from '../../../shared/components/Toast'
 import ConfirmDialog from '../../../shared/components/ConfirmDialog'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
+import ClearFiltersButton from '../../../shared/components/ClearFiltersButton'
 import { vendorsService } from '../services/vendorsService'
 import { exportRequestsToExcel } from '../../../utils/exportUtils'
 
@@ -115,6 +116,10 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
             placeholder="Search vendor, code, city, GST…"
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1) }}
+          />
+          <ClearFiltersButton
+            active={!!search}
+            onClear={() => { setSearch(''); setPage(1) }}
           />
           <button
             className="btn-secondary"

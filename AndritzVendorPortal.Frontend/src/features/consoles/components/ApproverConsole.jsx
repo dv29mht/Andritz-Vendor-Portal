@@ -11,9 +11,12 @@ import VendorDetailModal from '../../vendors/components/VendorDetailModal'
 import Toast from '../../../shared/components/Toast'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
 import Pagination from '../../../shared/components/Pagination'
+import ClearFiltersButton from '../../../shared/components/ClearFiltersButton'
 import { useViewedRequests } from '../../notifications/hooks/useViewedRequests'
 import { buildMonthlyData } from '../../../utils/statsUtils'
 import { exportRequestsToExcel, formatDateTime } from '../../../utils/exportUtils'
+
+const REJECT_REASON_MAX = 100
 
 export default function ApproverConsole({ workflow, currentUser, activePage, onNavigate }) {
   const pending         = workflow.getPendingFor(currentUser.id)
@@ -277,10 +280,14 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                 onChange={e => { setPendingSearch(e.target.value); setPendingPage(1) }}
                 className="form-input pl-9 text-sm w-48" />
             </div>
-            <input type="date" value={pendingDateFrom} onChange={e => { setPendingDateFrom(e.target.value); setPendingPage(1) }}
+            <input type="date" value={pendingDateFrom} max={pendingDateTo || undefined} onChange={e => { setPendingDateFrom(e.target.value); setPendingPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="From date" />
-            <input type="date" value={pendingDateTo} onChange={e => { setPendingDateTo(e.target.value); setPendingPage(1) }}
+            <input type="date" value={pendingDateTo} min={pendingDateFrom || undefined} onChange={e => { setPendingDateTo(e.target.value); setPendingPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="To date" />
+            <ClearFiltersButton
+              active={!!(pendingSearch || pendingDateFrom || pendingDateTo)}
+              onClear={() => { setPendingSearch(''); setPendingDateFrom(''); setPendingDateTo(''); setPendingPage(1) }}
+            />
             <button
               className="btn-secondary ml-auto"
               disabled={filtered.length === 0}
@@ -379,10 +386,14 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                 onChange={e => { setWaitingSearch(e.target.value); setWaitingPage(1) }}
                 className="form-input pl-9 text-sm w-48" />
             </div>
-            <input type="date" value={waitingDateFrom} onChange={e => { setWaitingDateFrom(e.target.value); setWaitingPage(1) }}
+            <input type="date" value={waitingDateFrom} max={waitingDateTo || undefined} onChange={e => { setWaitingDateFrom(e.target.value); setWaitingPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="From date" />
-            <input type="date" value={waitingDateTo} onChange={e => { setWaitingDateTo(e.target.value); setWaitingPage(1) }}
+            <input type="date" value={waitingDateTo} min={waitingDateFrom || undefined} onChange={e => { setWaitingDateTo(e.target.value); setWaitingPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="To date" />
+            <ClearFiltersButton
+              active={!!(waitingSearch || waitingDateFrom || waitingDateTo)}
+              onClear={() => { setWaitingSearch(''); setWaitingDateFrom(''); setWaitingDateTo(''); setWaitingPage(1) }}
+            />
             <button
               className="btn-secondary ml-auto"
               disabled={filtered.length === 0}
@@ -475,10 +486,14 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                 onChange={e => { setHistorySearch(e.target.value); setHistoryPage(1) }}
                 className="form-input pl-9 text-sm w-48" />
             </div>
-            <input type="date" value={historyDateFrom} onChange={e => { setHistoryDateFrom(e.target.value); setHistoryPage(1) }}
+            <input type="date" value={historyDateFrom} max={historyDateTo || undefined} onChange={e => { setHistoryDateFrom(e.target.value); setHistoryPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="From date" />
-            <input type="date" value={historyDateTo} onChange={e => { setHistoryDateTo(e.target.value); setHistoryPage(1) }}
+            <input type="date" value={historyDateTo} min={historyDateFrom || undefined} onChange={e => { setHistoryDateTo(e.target.value); setHistoryPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="To date" />
+            <ClearFiltersButton
+              active={!!(historySearch || historyDateFrom || historyDateTo)}
+              onClear={() => { setHistorySearch(''); setHistoryDateFrom(''); setHistoryDateTo(''); setHistoryPage(1) }}
+            />
             <button
               className="btn-secondary ml-auto"
               disabled={filtered.length === 0}
@@ -615,9 +630,12 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               </div>
               <div>
                 <label className="form-label">Rejection Reason <span className="text-red-500">*</span></label>
-                <textarea className="form-input resize-none" rows={3} placeholder="Describe what needs to be corrected..."
-                  value={rejectComment} onChange={e => { setRejectComment(e.target.value); setRejectError('') }} />
-                {rejectError && <p className="mt-1 text-xs text-red-600">{rejectError}</p>}
+                <textarea className="form-input resize-none" rows={3} maxLength={REJECT_REASON_MAX} placeholder="Describe what needs to be corrected..."
+                  value={rejectComment} onChange={e => { setRejectComment(e.target.value.slice(0, REJECT_REASON_MAX)); setRejectError('') }} />
+                <div className="mt-1 flex items-center justify-between">
+                  {rejectError ? <p className="text-xs text-red-600">{rejectError}</p> : <span />}
+                  <span className="text-xs text-gray-400">{rejectComment.length} / {REJECT_REASON_MAX}</span>
+                </div>
               </div>
               <div className="flex justify-end gap-3">
                 <button className="btn-secondary" disabled={workflow.actionLoading} onClick={() => setRejectMode(false)}>Back</button>

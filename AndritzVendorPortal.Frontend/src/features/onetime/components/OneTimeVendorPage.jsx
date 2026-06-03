@@ -7,6 +7,7 @@ import Toast from '../../../shared/components/Toast'
 import ConfirmDialog from '../../../shared/components/ConfirmDialog'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
 import Pagination from '../../../shared/components/Pagination'
+import ClearFiltersButton from '../../../shared/components/ClearFiltersButton'
 import { exportRequestsToExcel } from '../../../utils/exportUtils'
 
 export default function OneTimeVendorPage({ workflow, currentUser }) {
@@ -120,6 +121,10 @@ export default function OneTimeVendorPage({ workflow, currentUser }) {
               className="form-input pl-9 text-sm"
             />
           </div>
+          <ClearFiltersButton
+            active={!!search}
+            onClear={() => { setSearch(''); setPage(1) }}
+          />
           <button
             className="btn-secondary"
             disabled={filtered.length === 0}

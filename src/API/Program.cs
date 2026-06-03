@@ -142,8 +142,33 @@ if (!string.IsNullOrWhiteSpace(pathBase))
 // Serve the React SPA from wwwroot so a single origin hosts both the API
 // (/api, /swagger, /hubs) and the frontend (/, /assets/*, client routes).
 // MapFallbackToFile below sends any unmatched GET to index.html for React Router.
+//
+// Cache policy is critical for a hashed-asset SPA: index.html must NEVER be
+// cached, or after a redeploy the browser keeps a stale index.html that points
+// at asset hashes the server no longer has — producing blank styles, MIME
+// errors, and stale JS. The /assets/* files ARE content-hashed, so they are
+// safe to cache forever (immutable). The same options are reused by
+// MapFallbackToFile below so client-route requests also get no-cache HTML.
+var spaStaticFileOptions = new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        var headers = ctx.Context.Response.Headers;
+        if (ctx.File.Name.Equals("index.html", StringComparison.OrdinalIgnoreCase))
+        {
+            headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+            headers["Pragma"] = "no-cache";
+            headers["Expires"] = "0";
+        }
+        else if (ctx.Context.Request.Path.StartsWithSegments("/assets"))
+        {
+            headers["Cache-Control"] = "public, max-age=31536000, immutable";
+        }
+    },
+};
+
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(spaStaticFileOptions);
 
 if (app.Configuration.GetValue("Swagger:Enabled", true))
 {
@@ -165,7 +190,7 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok", timestamp = Date
 
 // SPA fallback — any GET that didn't match a controller, hub, or static file
 // returns index.html so React Router can resolve client-side routes like /login.
-app.MapFallbackToFile("index.html");
+app.MapFallbackToFile("index.html", spaStaticFileOptions);
 
 // Honour Railway/Docker conventions: PORT env var wins, else ASPNETCORE_URLS,
 // else Kestrel's default. This avoids fighting with ASPNETCORE_URLS in the container.

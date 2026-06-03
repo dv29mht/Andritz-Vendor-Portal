@@ -13,11 +13,14 @@ import VendorDetailModal from '../../vendors/components/VendorDetailModal'
 import Toast from '../../../shared/components/Toast'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
 import Pagination from '../../../shared/components/Pagination'
+import ClearFiltersButton from '../../../shared/components/ClearFiltersButton'
 import { useViewedRequests } from '../../notifications/hooks/useViewedRequests'
 import { buildStats, buildMonthlyData } from '../../../utils/statsUtils'
 import { exportRequestsToExcel, formatDateTime } from '../../../utils/exportUtils'
 
 const BAR_COLORS = ['#096fb3','#f59e0b','#10b981','#ef4444','#8b5cf6','#f97316','#06b6d4','#84cc16']
+
+const REJECT_REASON_MAX = 100
 
 function buildMaterialData(requests) {
   const counts = {}
@@ -285,10 +288,14 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                 onChange={e => { setQueueSearch(e.target.value); setQueuePage(1) }}
                 className="form-input pl-9 text-sm w-52" />
             </div>
-            <input type="date" value={queueDateFrom} onChange={e => { setQueueDateFrom(e.target.value); setQueuePage(1) }}
+            <input type="date" value={queueDateFrom} max={queueDateTo || undefined} onChange={e => { setQueueDateFrom(e.target.value); setQueuePage(1) }}
               className="form-input text-sm w-36 shrink-0" title="From date" />
-            <input type="date" value={queueDateTo} onChange={e => { setQueueDateTo(e.target.value); setQueuePage(1) }}
+            <input type="date" value={queueDateTo} min={queueDateFrom || undefined} onChange={e => { setQueueDateTo(e.target.value); setQueuePage(1) }}
               className="form-input text-sm w-36 shrink-0" title="To date" />
+            <ClearFiltersButton
+              active={!!(queueSearch || queueDateFrom || queueDateTo)}
+              onClear={() => { setQueueSearch(''); setQueueDateFrom(''); setQueueDateTo(''); setQueuePage(1) }}
+            />
             <button
               className="btn-secondary ml-auto"
               disabled={filtered.length === 0}
@@ -419,10 +426,14 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                 onChange={e => { setHistorySearch(e.target.value); setHistoryPage(1) }}
                 className="form-input pl-9 text-sm w-52" />
             </div>
-            <input type="date" value={historyDateFrom} onChange={e => { setHistoryDateFrom(e.target.value); setHistoryPage(1) }}
+            <input type="date" value={historyDateFrom} max={historyDateTo || undefined} onChange={e => { setHistoryDateFrom(e.target.value); setHistoryPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="From date" />
-            <input type="date" value={historyDateTo} onChange={e => { setHistoryDateTo(e.target.value); setHistoryPage(1) }}
+            <input type="date" value={historyDateTo} min={historyDateFrom || undefined} onChange={e => { setHistoryDateTo(e.target.value); setHistoryPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="To date" />
+            <ClearFiltersButton
+              active={!!(historySearch || historyDateFrom || historyDateTo)}
+              onClear={() => { setHistorySearch(''); setHistoryDateFrom(''); setHistoryDateTo(''); setHistoryPage(1) }}
+            />
             <button
               className="btn-secondary ml-auto"
               disabled={filtered.length === 0}
@@ -638,9 +649,12 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
               </div>
               <div>
                 <label className="form-label">Rejection Reason <span className="text-red-500">*</span></label>
-                <textarea className="form-input resize-none" rows={3} placeholder="Describe the issue..."
-                  value={rejectComment} onChange={e => { setRejectComment(e.target.value); setRejectError('') }} />
-                {rejectError && <p className="mt-1 text-xs text-red-600">{rejectError}</p>}
+                <textarea className="form-input resize-none" rows={3} maxLength={REJECT_REASON_MAX} placeholder="Describe the issue..."
+                  value={rejectComment} onChange={e => { setRejectComment(e.target.value.slice(0, REJECT_REASON_MAX)); setRejectError('') }} />
+                <div className="mt-1 flex items-center justify-between">
+                  {rejectError ? <p className="text-xs text-red-600">{rejectError}</p> : <span />}
+                  <span className="text-xs text-gray-400">{rejectComment.length} / {REJECT_REASON_MAX}</span>
+                </div>
               </div>
               <div className="flex justify-end gap-3">
                 <button className="btn-secondary" disabled={workflow.actionLoading} onClick={() => setRejectMode(false)}>Back</button>

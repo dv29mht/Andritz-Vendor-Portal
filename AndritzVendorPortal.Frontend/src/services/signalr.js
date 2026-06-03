@@ -8,7 +8,12 @@ function resolveHubUrl() {
   // In dev, VITE_API_URL points at the local API; strip /api and append the hub path.
   // In production, hubs live at {BASE_URL}hubs/notifications same-origin — BASE_URL
   // is "/" for Railway and "/SOT/" for the office IIS sub-app build.
-  const apiOrigin = import.meta.env.VITE_API_URL
+  //
+  // VITE_API_URL is only honoured in dev (mirrors api.js). Vite bakes .env into
+  // every build, so without the DEV guard the production /SOT bundle would point
+  // SignalR at the dev server (localhost:5000) while all REST calls correctly go
+  // same-origin — exactly the negotiate/ERR_CONNECTION_REFUSED failure.
+  const apiOrigin = import.meta.env.DEV ? import.meta.env.VITE_API_URL : null
   if (apiOrigin) {
     return apiOrigin.replace(/\/api\/?$/, '') + '/hubs/notifications'
   }

@@ -234,7 +234,7 @@ function ResetPasswordView({ email, token }) {
             </svg>
           </div>
           <p className="text-sm text-gray-600">Password reset successfully!</p>
-          <a href="/" className="block text-sm font-semibold" style={{ color: BRAND }}>Sign in with new password</a>
+          <a href={import.meta.env.BASE_URL} className="block text-sm font-semibold" style={{ color: BRAND }}>Sign in with new password</a>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5">

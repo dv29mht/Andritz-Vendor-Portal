@@ -14,6 +14,7 @@ import { useUsers } from '../hooks/useUsers'
 import { useAuth } from '../../auth/hooks/useAuth'
 import Toast from '../../../shared/components/Toast'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
+import ClearFiltersButton from '../../../shared/components/ClearFiltersButton'
 import { exportUsersToExcel } from '../../../utils/exportUtils'
 
 const ROLES = ['Buyer', 'Approver']
@@ -560,6 +561,10 @@ export default function UserManagement() {
                 <input className="form-input pl-9" placeholder="Search by name, email, role…"
                   value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} />
               </div>
+              <ClearFiltersButton
+                active={!!search}
+                onClear={() => { setSearch(''); setPage(1) }}
+              />
               <div className="flex flex-wrap gap-1.5">
                 {['All', 'Buyer', 'Approver'].map(r => (
                   <button

@@ -17,6 +17,7 @@ import VendorDetailModal from '../../vendors/components/VendorDetailModal'
 import Toast from '../../../shared/components/Toast'
 import PageSizeSelect from '../../../shared/components/PageSizeSelect'
 import Pagination from '../../../shared/components/Pagination'
+import ClearFiltersButton from '../../../shared/components/ClearFiltersButton'
 import { CITIES } from '../../../data/mockData'
 import { Country, State } from 'country-state-city'
 
@@ -1196,9 +1197,9 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   </div>
                   {chartFilter === 'custom' && (
                     <>
-                      <input type="date" value={chartDateFrom} onChange={e => setChartDateFrom(e.target.value)}
+                      <input type="date" value={chartDateFrom} max={chartDateTo || undefined} onChange={e => setChartDateFrom(e.target.value)}
                         className="form-input text-xs py-1 w-32" title="From date" />
-                      <input type="date" value={chartDateTo} onChange={e => setChartDateTo(e.target.value)}
+                      <input type="date" value={chartDateTo} min={chartDateFrom || undefined} onChange={e => setChartDateTo(e.target.value)}
                         className="form-input text-xs py-1 w-32" title="To date" />
                     </>
                   )}
@@ -1386,10 +1387,14 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                     onChange={e => { setReqsSearch(e.target.value); setReqsPage(1) }}
                     className="form-input pl-9 text-sm w-44" />
                 </div>
-                <input type="date" value={reqsDateFrom} onChange={e => { setReqsDateFrom(e.target.value); setReqsPage(1) }}
+                <input type="date" value={reqsDateFrom} max={reqsDateTo || undefined} onChange={e => { setReqsDateFrom(e.target.value); setReqsPage(1) }}
                   className="form-input text-sm w-36 shrink-0" title="From date" />
-                <input type="date" value={reqsDateTo} onChange={e => { setReqsDateTo(e.target.value); setReqsPage(1) }}
+                <input type="date" value={reqsDateTo} min={reqsDateFrom || undefined} onChange={e => { setReqsDateTo(e.target.value); setReqsPage(1) }}
                   className="form-input text-sm w-36 shrink-0" title="To date" />
+                <ClearFiltersButton
+                  active={!!(reqsSearch || reqsDateFrom || reqsDateTo)}
+                  onClear={() => { setReqsSearch(''); setReqsDateFrom(''); setReqsDateTo(''); setReqsPage(1) }}
+                />
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -1533,10 +1538,14 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 onChange={e => { setRevSearch(e.target.value); setRevPage(1) }}
                 className="form-input pl-9 text-sm w-44" />
             </div>
-            <input type="date" value={revDateFrom} onChange={e => { setRevDateFrom(e.target.value); setRevPage(1) }}
+            <input type="date" value={revDateFrom} max={revDateTo || undefined} onChange={e => { setRevDateFrom(e.target.value); setRevPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="From date" />
-            <input type="date" value={revDateTo} onChange={e => { setRevDateTo(e.target.value); setRevPage(1) }}
+            <input type="date" value={revDateTo} min={revDateFrom || undefined} onChange={e => { setRevDateTo(e.target.value); setRevPage(1) }}
               className="form-input text-sm w-36 shrink-0" title="To date" />
+            <ClearFiltersButton
+              active={!!(revSearch || revDateFrom || revDateTo)}
+              onClear={() => { setRevSearch(''); setRevDateFrom(''); setRevDateTo(''); setRevPage(1) }}
+            />
             <button
               className="btn-secondary shrink-0"
               disabled={filteredRev.length === 0}
