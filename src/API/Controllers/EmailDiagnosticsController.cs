@@ -49,7 +49,7 @@ public record EmailDiagnosticError(
 
 [ApiController]
 [Route("api/email-diagnostics")]
-[Authorize(Roles = Roles.Admin)]
+[Authorize(Roles = Roles.FinalApprover)]
 public class EmailDiagnosticsController(IOptions<EmailSettings> options) : ControllerBase
 {
     private readonly EmailSettings _cfg = options.Value;

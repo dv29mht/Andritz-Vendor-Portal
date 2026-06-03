@@ -36,6 +36,14 @@ RUN dotnet restore "src/API/API.csproj"
 COPY src/ src/
 COPY AndritzVendorPortal.Frontend/ AndritzVendorPortal.Frontend/
 
+# Optional sub-path build. Pass --build-arg VITE_BASE_PATH=/SOT/ to emit the SPA's
+# assets under /SOT/assets/* and derive the router basename + API/SignalR URLs from
+# it — mirroring the office IIS sub-app (and the UAT replica). vite.config.js reads
+# this from the environment during `npm run build`. Defaults to '/' so root hosting
+# (Railway / local) is unchanged.
+ARG VITE_BASE_PATH=/
+ENV VITE_BASE_PATH=${VITE_BASE_PATH}
+
 RUN dotnet publish "src/API/API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # ── Runtime stage ────────────────────────────────────────────────────────────

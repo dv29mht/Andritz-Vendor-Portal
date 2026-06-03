@@ -4,10 +4,13 @@ import { XMarkIcon } from '@heroicons/react/24/outline'
 
 const WIDTHS = { sm: 'max-w-md', md: 'max-w-2xl', lg: 'max-w-4xl', xl: 'max-w-5xl' }
 
-export default function Modal({ title, onClose, children, size = 'md', open = true }) {
+export default function Modal({ title, onClose, children, size = 'md', open = true, dismissOnBackdrop = true }) {
   return (
     <Transition appear show={open} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      {/* When dismissOnBackdrop is false, a backdrop click / Escape is a no-op —
+          the modal can only be closed via the ✕ button (used for the vendor form
+          so an accidental outside-click never discards a half-filled submission). */}
+      <Dialog as="div" className="relative z-50" onClose={dismissOnBackdrop ? onClose : () => {}}>
         <TransitionChild
           as={Fragment}
           enter="ease-out duration-200" enterFrom="opacity-0" enterTo="opacity-100"

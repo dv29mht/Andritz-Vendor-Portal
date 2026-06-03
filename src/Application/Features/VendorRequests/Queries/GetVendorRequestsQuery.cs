@@ -18,7 +18,7 @@ public class GetVendorRequestsQueryHandler(
 
         IReadOnlyList<Domain.Entities.VendorRequest> results;
 
-        if (currentUser.IsInRole(Roles.Admin))
+        if (currentUser.IsInRole(Roles.FinalApprover))
             results = await repo.GetAllWithDetailsAsync(ct);
         else if (currentUser.IsInRole(Roles.Buyer))
             results = await repo.GetForBuyerAsync(userId, ct);

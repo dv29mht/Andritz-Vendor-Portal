@@ -12,7 +12,6 @@ export default function WelcomeScreen({ user, onDone }) {
   }, [onDone])
 
   const roleLabel = {
-    [ROLES.Admin]:         'Administrator',
     [ROLES.Buyer]:         'Buyer',
     [ROLES.Approver]:      'Approver',
     [ROLES.FinalApprover]: 'Final Approver',

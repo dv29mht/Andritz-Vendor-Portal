@@ -212,32 +212,45 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                 <h3 className="text-sm font-semibold text-gray-900">Pending Your Review</h3>
                 <span className="text-xs text-gray-400">{pending.length} request{pending.length !== 1 ? 's' : ''}</span>
               </div>
-              <div className="divide-y divide-gray-50">
-                {pending.slice(0, 3).map(req => (
-                  <div key={req.id} className="px-5 py-3.5 flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-gray-900">{req.vendorName}</p>
-                        {isNew(req) && (
-                          <span className="text-xs bg-violet-500 text-white font-bold px-2 py-0.5 rounded-full">NEW</span>
-                        )}
-                        {req.revisionNo > 0 && (
-                          <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        Submitted by {req.createdByName} · {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })}
-                      </p>
-                    </div>
-                    <button
-                      className="inline-flex items-center gap-1.5 rounded-md bg-[#096fb3] hover:bg-[#075d99] px-3 py-1.5 text-xs font-semibold text-white transition-colors flex-shrink-0"
-                      onClick={() => openReview(req)}
-                    >
-                      Review
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-40">Submitted By</th>
+                    <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-28 whitespace-nowrap">Submitted On</th>
+                    <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {pending.slice(0, 5).map(req => (
+                    <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium text-gray-900 leading-snug">{req.vendorName}</p>
+                          {isNew(req) && (
+                            <span className="text-xs bg-violet-500 text-white font-bold px-2 py-0.5 rounded-full">NEW</span>
+                          )}
+                          {req.revisionNo > 0 && (
+                            <span className="text-xs bg-amber-50 text-amber-700 ring-1 ring-amber-200 ring-inset px-2 py-0.5 rounded-full">REV {req.revisionNo}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5 text-gray-500 text-xs whitespace-nowrap">{req.createdByName}</td>
+                      <td className="px-5 py-3.5 text-gray-400 text-xs whitespace-nowrap text-center">
+                        {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })}
+                      </td>
+                      <td className="px-5 py-3.5 text-center">
+                        <button
+                          className="inline-flex items-center gap-1.5 rounded-md bg-[#096fb3] hover:bg-[#075d99] px-3 py-1.5 text-xs font-semibold text-white transition-colors"
+                          onClick={() => openReview(req)}
+                        >
+                          Review
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 

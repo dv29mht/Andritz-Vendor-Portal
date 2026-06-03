@@ -73,17 +73,6 @@ export default function EmailTemplatesPage() {
   return (
     <div className="p-6 space-y-4">
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900">Email Templates</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Customise the subject and body of every notification sent by the portal.
-            Placeholders like <span className="font-mono text-[12px]">[Vendor Name]</span> are filled in at send time.
-          </p>
-        </div>
-      </div>
-
       {/* Filters */}
       <div className="flex flex-row items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-0 max-w-xs">

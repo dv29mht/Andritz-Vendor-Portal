@@ -14,7 +14,7 @@ public record PreviewEmailTemplateRequestModel(Dictionary<string, string?>? Valu
 
 [ApiController]
 [Route("api/email-templates")]
-[Authorize(Roles = Roles.Admin)]
+[Authorize(Roles = Roles.FinalApprover)]
 public class EmailTemplatesController(IMediator mediator) : ControllerBase
 {
     [HttpGet]

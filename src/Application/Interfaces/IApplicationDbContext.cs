@@ -14,6 +14,7 @@ public interface IApplicationDbContext
     DbSet<VendorRevision> VendorRevisions { get; }
     DbSet<EmailTemplate> EmailTemplates { get; }
     DbSet<LoginSecurity> LoginSecurities { get; }
+    DbSet<Notification> Notifications { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

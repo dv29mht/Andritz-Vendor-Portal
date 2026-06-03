@@ -9,9 +9,11 @@ public class NotificationHub : Hub
 {
     public override async Task OnConnectedAsync()
     {
-        // Admins join a shared group so workflow events on any request reach all
-        // admins without enumerating user IDs.
-        if (Context.User?.IsInRole(Roles.Admin) == true)
+        // The elevated user (Final Approver, who now also holds every former admin
+        // capability) joins a shared group so workflow events on any request reach
+        // them without enumerating user IDs. Group name kept as "admins" so the
+        // SignalRNotificationService broadcast target is unchanged.
+        if (Context.User?.IsInRole(Roles.FinalApprover) == true)
             await Groups.AddToGroupAsync(Context.ConnectionId, "admins");
 
         await base.OnConnectedAsync();

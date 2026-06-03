@@ -93,7 +93,9 @@ public class SubmitVendorRequestCommandHandler(
             }
         }
 
-        var admin = await identity.FindByEmailAsync(SystemAccounts.AdminEmail);
+        // Oversight copy to the elevated account (Final Approver, who now also holds
+        // every former admin capability). Skipped when it would duplicate the buyer.
+        var admin = await identity.FindByEmailAsync(SystemAccounts.FinalApproverEmail);
         if (admin is not null && !admin.IsArchived && admin.Email != buyer?.Email)
         {
             var values = EmailValues.ForVendor(entity, clock.UtcNow, buyerName: entity.CreatedByName);

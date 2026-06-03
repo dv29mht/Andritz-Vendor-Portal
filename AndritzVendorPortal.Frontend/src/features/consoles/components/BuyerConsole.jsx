@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
          ClockIcon, ExclamationCircleIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon,
          ArrowUpTrayIcon, ArrowDownTrayIcon, XMarkIcon,
@@ -120,9 +121,10 @@ const TEMPLATE_HEADERS = [
   { label: 'Is One-Time Vendor',        required: false },
 ]
 
-// Generates and downloads a blank .xlsx template with required-field asterisks
-function downloadTemplate() {
-  const headers = TEMPLATE_HEADERS.map(h => h.label)
+// Generates and downloads a blank .xlsx template with required-field asterisks.
+// Built with ExcelJS (not the xlsx lib) specifically so the header row can be
+// frozen — xlsx 0.18.5 community cannot write freeze panes.
+async function downloadTemplate() {
   const sample = [
     '900D', 'Acme Supplies Pvt Ltd', 'Raw Materials', 'Small',
     'New strategic supplier for FY2026 — supplies precision-machined components used in line A',
@@ -133,22 +135,28 @@ function downloadTemplate() {
     'State Bank of India', 'Andheri East', '000123456789', 'SBIN0001234',
     'No',
   ]
-  const wb = XLSX.utils.book_new()
-  const ws = XLSX.utils.aoa_to_sheet([headers, sample])
 
-  ws['!cols'] = headers.map(() => ({ wch: 24 }))
+  const wb = new ExcelJS.Workbook()
+  const ws = wb.addWorksheet('Vendor Request', {
+    // Freeze the header row so it stays visible while scrolling.
+    views: [{ state: 'frozen', ySplit: 1 }],
+  })
+  ws.columns = TEMPLATE_HEADERS.map(h => ({ header: h.label, width: 24 }))
+  ws.addRow(sample)
+  ws.getRow(1).font = { bold: true }
 
-  // Legend below the sample row — note we can't ship file uploads through the
-  // template, so the importer still has to pick docs in the form before submitting.
-  XLSX.utils.sheet_add_aoa(ws, [
-    ['* = Required field. Do not change column headers.'],
-    ['Note: GST document and Bank document uploads are mandatory in the form but cannot be imported via this template — attach them after the form pre-fills.'],
-    ['Purchasing Organization must be one of: 900D, 900I, T20D, T20I'],
-    ['MSME Category (optional): leave blank if vendor is not MSME, otherwise enter Micro, Small, or Medium.'],
-  ], { origin: 'A3' })
-
-  XLSX.utils.book_append_sheet(wb, ws, 'Vendor Request')
-  XLSX.writeFile(wb, 'Andritz_Vendor_Request_Template.xlsx')
+  const buf = await wb.xlsx.writeBuffer()
+  const blob = new Blob([buf], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'Andritz_Vendor_Request_Template.xlsx'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
 }
 
 function FormSection({ title, children }) {
@@ -1240,20 +1248,29 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 )}
               </div>
               {recentReqs.length > 0 ? (
-                <div className="divide-y divide-gray-50">
-                  {recentReqs.map(req => (
-                    <div key={req.id} className="px-5 py-3.5 flex items-center justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{req.vendorName}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {[req.city, req.locality].filter(Boolean).join(', ')}
-                          {' · '}{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })}
-                        </p>
-                      </div>
-                      <StatusBadge status={req.status} />
-                    </div>
-                  ))}
-                </div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
+                      <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
+                      <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-40">Location</th>
+                      <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-32">Status</th>
+                      <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-28 whitespace-nowrap">Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {recentReqs.map(req => (
+                      <tr key={req.id} className="hover:bg-gray-50 cursor-pointer transition-colors divide-x divide-gray-200" onClick={() => setViewingRequest(req)}>
+                        <td className="px-5 py-3.5">
+                          <p className="font-medium text-gray-900 leading-snug">{req.vendorName}</p>
+                          {req.vendorCode && <p className="text-xs text-emerald-600 font-mono mt-0.5">{req.vendorCode}</p>}
+                        </td>
+                        <td className="px-5 py-3.5 text-gray-500 text-xs">{[req.city, req.locality].filter(Boolean).join(', ') || '—'}</td>
+                        <td className="px-5 py-3.5 text-center"><StatusBadge status={req.status} /></td>
+                        <td className="px-5 py-3.5 text-gray-400 text-xs whitespace-nowrap text-center">{new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               ) : (
                 <div className="p-10 text-center">
                   <p className="text-sm text-gray-400">No requests yet. Use the button on the right to get started.</p>
@@ -1406,7 +1423,6 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                     <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">Serial No.</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Material Group</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Created On</th>
@@ -1433,7 +1449,6 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                             </div>
                             <p className="text-xs text-gray-400 mt-0.5">{req.contactPerson || req.contactInformation}</p>
                           </td>
-                          <td className="px-4 py-3 text-xs text-gray-500">{[req.city, req.locality].filter(Boolean).join(', ') || '—'}</td>
                           <td className="px-4 py-3 text-xs text-gray-500">{req.materialGroup || '—'}</td>
                           <td className="px-4 py-3">
                             {isDraft
@@ -1545,7 +1560,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">Serial No.</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Rejection Reason</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Material Group</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Rejected On</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -1561,7 +1576,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                           <p className="text-xs text-gray-400 mt-0.5">{req.contactPerson || req.contactInformation}</p>
                         </td>
                         <td className="px-4 py-3 text-xs text-red-600 italic max-w-xs truncate">{req.rejectionComment || '—'}</td>
-                        <td className="px-4 py-3 text-xs text-gray-500">{[req.city, req.locality].filter(Boolean).join(', ') || '—'}</td>
+                        <td className="px-4 py-3 text-xs text-gray-500">{req.materialGroup || '—'}</td>
                         <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
                           {new Date(req.updatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })}
                         </td>
@@ -1616,6 +1631,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           }
           onClose={() => setShowForm(false)}
           size="xl"
+          dismissOnBackdrop={false}
         >
           {editingRequest?.rejectionComment && (
             <div className="mb-5 flex items-start gap-3 rounded-lg bg-red-50 ring-1 ring-red-200 p-4">

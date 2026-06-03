@@ -59,7 +59,7 @@ public record ClassifyModel(bool IsOneTimeVendor);
 public class VendorRequestsController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Roles = $"{Roles.Admin},{Roles.Buyer},{Roles.Approver},{Roles.FinalApprover}")]
+    [Authorize(Roles = $"{Roles.Buyer},{Roles.Approver},{Roles.FinalApprover}")]
     public async Task<ActionResult<Result<List<VendorRequestDetailDto>>>> GetAll() =>
         Ok(Result<List<VendorRequestDetailDto>>.Ok(await mediator.Send(new GetVendorRequestsQuery())));
 
@@ -69,7 +69,7 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
         Ok(Result<List<VendorRequestDetailDto>>.Ok(await mediator.Send(new GetVendorRequestHistoryQuery())));
 
     [HttpGet("{id:int}")]
-    [Authorize(Roles = $"{Roles.Admin},{Roles.Buyer},{Roles.Approver},{Roles.FinalApprover}")]
+    [Authorize(Roles = $"{Roles.Buyer},{Roles.Approver},{Roles.FinalApprover}")]
     public async Task<ActionResult<Result<VendorRequestDetailDto>>> GetById(int id) =>
         Ok(Result<VendorRequestDetailDto>.Ok(await mediator.Send(new GetVendorRequestByIdQuery(id))));
 
@@ -154,7 +154,7 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
         Ok(Result<VendorRequestDetailDto>.Ok(await mediator.Send(new CompleteVendorRequestCommand(id, m.VendorCode))));
 
     [HttpPut("{id:int}")]
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = Roles.FinalApprover)]
     public async Task<ActionResult<Result<VendorRequestDetailDto>>> AdminEdit(int id, [FromBody] AdminEditModel m)
     {
         var dto = await mediator.Send(new AdminEditVendorRequestCommand(
@@ -183,12 +183,12 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
     }
 
     [HttpPatch("{id:int}/classify")]
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = Roles.FinalApprover)]
     public async Task<ActionResult<Result<VendorRequestDetailDto>>> Classify(int id, [FromBody] ClassifyModel m) =>
         Ok(Result<VendorRequestDetailDto>.Ok(await mediator.Send(new ClassifyVendorRequestCommand(id, m.IsOneTimeVendor))));
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = Roles.FinalApprover)]
     public async Task<ActionResult<Result>> Archive(int id)
     {
         await mediator.Send(new ArchiveVendorRequestCommand(id));
@@ -196,7 +196,7 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost("{id:int}/restore")]
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = Roles.FinalApprover)]
     public async Task<ActionResult<Result>> Restore(int id)
     {
         await mediator.Send(new RestoreVendorRequestCommand(id));

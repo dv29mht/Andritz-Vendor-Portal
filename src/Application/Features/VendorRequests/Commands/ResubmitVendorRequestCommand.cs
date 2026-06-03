@@ -230,7 +230,8 @@ public class ResubmitVendorRequestCommandHandler(
             }
         }
 
-        var admin = await identity.FindByEmailAsync(SystemAccounts.AdminEmail);
+        // Oversight copy to the elevated account (Final Approver, formerly the admin).
+        var admin = await identity.FindByEmailAsync(SystemAccounts.FinalApproverEmail);
         if (admin is not null && !admin.IsArchived && admin.Email != buyer?.Email)
         {
             var values = EmailValues.ForVendor(

@@ -71,19 +71,19 @@ public static class DbInitializer
                 await roles.CreateAsync(new IdentityRole(role));
         }
 
-        await EnsureUserAsync(users, logger,
-            email: SystemAccounts.AdminEmail,
-            fullName: "Andritz Admin",
-            designation: "Administrator",
-            password: defaultAdminPassword,
-            role: Roles.Admin);
-
+        // Single elevated account: the Final Approver now holds every former admin
+        // capability (the Admin role was collapsed into FinalApprover).
         await EnsureUserAsync(users, logger,
             email: SystemAccounts.FinalApproverEmail,
             fullName: "Pardeep Sharma",
             designation: "Final Approver",
             password: defaultAdminPassword,
             role: Roles.FinalApprover);
+
+        // Decommission the legacy admin@andritz.com login if it still exists, so it
+        // can't authenticate into a now role-less, blank app. Reversible: the account
+        // and its data are retained, just archived with its roles stripped.
+        await ArchiveLegacyAdminAsync(users, logger);
 
         await SeedEmailTemplatesAsync(db, logger);
     }
@@ -231,6 +231,39 @@ public static class DbInitializer
             verify?.LockoutEnd?.ToString("o") ?? "null",
             verify?.AccessFailedCount,
             passwordOk ? "OK" : "FAIL");
+    }
+
+    // Idempotently decommissions the legacy admin@andritz.com account now that the
+    // Admin role no longer exists. Archives it and strips every role so it can't log
+    // into a usable app. No-op once archived. Reversible (the row is retained).
+    private static async Task ArchiveLegacyAdminAsync(
+        UserManager<ApplicationUser> users, ILogger logger)
+    {
+        var legacy = await users.FindByEmailAsync(SystemAccounts.LegacyAdminEmail);
+        if (legacy is null) return;
+
+        var changes = new List<string>();
+
+        var roles = await users.GetRolesAsync(legacy);
+        if (roles.Count > 0)
+        {
+            var remove = await users.RemoveFromRolesAsync(legacy, roles);
+            changes.Add(remove.Succeeded
+                ? $"roles-removed:{string.Join(",", roles)}"
+                : "role-remove-FAILED");
+        }
+
+        if (!legacy.IsArchived)
+        {
+            legacy.IsArchived = true;
+            var update = await users.UpdateAsync(legacy);
+            changes.Add(update.Succeeded ? "archived" : "archive-FAILED");
+        }
+
+        logger.LogInformation(
+            "[Seed] Legacy admin {Email}: {Changes}",
+            SystemAccounts.LegacyAdminEmail,
+            changes.Count == 0 ? "already decommissioned" : string.Join(", ", changes));
     }
 
     // Returns the connection string with any "Password=..." segment masked,

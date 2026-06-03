@@ -10,7 +10,9 @@ import Pagination from '../../../shared/components/Pagination'
 import { exportRequestsToExcel } from '../../../utils/exportUtils'
 
 export default function OneTimeVendorPage({ workflow, currentUser }) {
-  const isAdmin = currentUser?.role === 'Admin'
+  // The elevated account (Final Approver, formerly Admin) holds the admin powers
+  // here: archive / restore / reclassify one-time vendors.
+  const isAdmin = currentUser?.role === 'FinalApprover'
   const [viewing,          setViewing]          = useState(null)
   const [page,             setPage]             = useState(1)
   const [pageSize,         setPageSize]         = useState(10)
@@ -82,9 +84,7 @@ export default function OneTimeVendorPage({ workflow, currentUser }) {
   return (
     <div className="p-6 space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-gray-900">One-Time Vendors</h2>
-          <div className="flex items-center gap-3 mt-1.5">
+        <div className="flex items-center gap-3">
             <button
               onClick={() => { setShowArchived(false); setPage(1) }}
               className={`inline-flex items-center gap-1.5 rounded-lg text-sm font-semibold px-4 py-2 transition-colors select-none ${
@@ -108,17 +108,16 @@ export default function OneTimeVendorPage({ workflow, currentUser }) {
                 {archivedCount} Archived
               </button>
             )}
-          </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative">
+        <div className="flex items-center gap-2">
+          <div className="relative w-64">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Search vendor, GST, city…"
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
-              className="form-input pl-9 text-sm max-w-xs"
+              className="form-input pl-9 text-sm"
             />
           </div>
           <button

@@ -20,7 +20,7 @@ public class GetVendorRequestByIdQueryHandler(
 
         var userId = currentUser.RequireUserId();
         bool canView =
-            currentUser.IsInRole(Roles.Admin) ||
+            currentUser.IsInRole(Roles.FinalApprover) ||
             (currentUser.IsInRole(Roles.Buyer) && entity.CreatedByUserId == userId) ||
             entity.ApprovalSteps.Any(s => s.ApproverUserId == userId);
 

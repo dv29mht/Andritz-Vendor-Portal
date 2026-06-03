@@ -55,7 +55,7 @@ export const router = createBrowserRouter([
       {
         path: 'onetime',
         element: (
-          <RoleRoute allow={[ROLES.Admin, ROLES.FinalApprover]}>
+          <RoleRoute allow={[ROLES.FinalApprover]}>
             <OneTimeRoute />
           </RoleRoute>
         ),
@@ -63,7 +63,7 @@ export const router = createBrowserRouter([
       {
         path: 'email-templates',
         element: (
-          <RoleRoute allow={[ROLES.Admin]}>
+          <RoleRoute allow={[ROLES.FinalApprover]}>
             <EmailTemplatesRoute />
           </RoleRoute>
         ),

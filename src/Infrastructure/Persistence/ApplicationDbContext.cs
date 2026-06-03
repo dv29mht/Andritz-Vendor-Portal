@@ -18,6 +18,7 @@ public class ApplicationDbContext(
     public DbSet<VendorRevision> VendorRevisions => Set<VendorRevision>();
     public DbSet<EmailTemplate> EmailTemplates => Set<EmailTemplate>();
     public DbSet<LoginSecurity> LoginSecurities => Set<LoginSecurity>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

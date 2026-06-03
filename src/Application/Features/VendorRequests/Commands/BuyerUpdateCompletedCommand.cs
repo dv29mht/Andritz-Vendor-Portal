@@ -173,7 +173,8 @@ public class BuyerUpdateCompletedCommandHandler(
         var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
 
         var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
-        var admin = await identity.FindByEmailAsync(SystemAccounts.AdminEmail);
+        // Oversight copy to the elevated account (Final Approver, formerly the admin).
+        var admin = await identity.FindByEmailAsync(SystemAccounts.FinalApproverEmail);
 
         if (buyer is not null)
         {

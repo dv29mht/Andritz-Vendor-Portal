@@ -84,8 +84,11 @@ public class CompleteVendorRequestCommandHandler(
             await email.SendAsync(buyer.Email, s, b, pdf);
         }
 
-        var admin = await identity.FindByEmailAsync(SystemAccounts.AdminEmail);
-        if (admin is not null && !admin.IsArchived && admin.Email != buyer?.Email)
+        // Oversight copy to the elevated account (Final Approver, formerly the admin).
+        // Suppressed when the final approver is the actor (they just completed it)
+        // so they don't email themselves.
+        var admin = await identity.FindByEmailAsync(SystemAccounts.FinalApproverEmail);
+        if (admin is not null && !admin.IsArchived && admin.Id != userId && admin.Email != buyer?.Email)
         {
             var values = EmailValues.ForVendor(
                 entity, clock.UtcNow,

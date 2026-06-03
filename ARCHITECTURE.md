@@ -64,7 +64,7 @@ Domain/
 │   ├── IAuditable.cs            // CreatedAt/UpdatedAt + CreatedByUserId/Name
 │   └── ISoftDelete.cs           // IsArchived + ArchivedAt
 ├── Constants/
-│   └── Roles.cs                 // Admin/Buyer/Approver/FinalApprover + Policies.FinalApproverOnly
+│   └── Roles.cs                 // Buyer/Approver/FinalApprover (elevated) + Policies.FinalApproverOnly
 ├── Entities/                    // VendorRequest, ApprovalStep, VendorRevision
 ├── Enums/                       // VendorRequestStatus, ApprovalDecision
 └── Services/
@@ -379,13 +379,17 @@ Every error response:
   WebSocket handshake (configured in `Infrastructure/DependencyInjection.cs`).
 - **ASP.NET Core Identity** stores users + roles. `ApplicationUser` extends
   `IdentityUser` with `FullName`, `Designation`, `IsArchived`.
-- **4 roles** (constants in `Domain/Constants/Roles.cs`):
-  - `Admin` — manages users and views all requests.
+- **3 roles** (constants in `Domain/Constants/Roles.cs`). The former `Admin` role was
+  collapsed into `FinalApprover` — there is one elevated account that does everything:
   - `Buyer` — creates and resubmits requests.
   - `Approver` — intermediate approval/rejection.
-  - `FinalApprover` — final approval + vendor code entry. **Pardeep Sharma only**
-    (enforced by `FinalApproverRequirement` policy in `API/Authorization/` —
-    role check + email guard).
+  - `FinalApprover` — the single elevated role: final approval + vendor code entry
+    **and** every former admin capability (user management, all-requests view, email
+    templates, vendor admin edit/archive). **Pardeep Sharma only** (enforced by
+    `FinalApproverRequirement` policy in `API/Authorization/` — role check + email
+    guard). Only `Buyer`/`Approver` are assignable to new users (`Roles.AssignableByAdmin`),
+    so a second elevated account can't be minted from the UI. The legacy
+    `admin@andritz.com` login is archived on seed.
 - **Authorize at the action**, not the controller, when endpoints in the same
   controller need different roles. Use `[Authorize(Roles = $"{Roles.X},{Roles.Y}")]`
   for OR. Use `[Authorize(Policy = Policies.FinalApproverOnly)]` for the

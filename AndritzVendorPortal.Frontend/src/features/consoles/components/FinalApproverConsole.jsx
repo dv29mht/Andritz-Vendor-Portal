@@ -54,6 +54,10 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
   const [reviewing, setReviewing]           = useState(null)
   const [vendorCode, setVendorCode]         = useState('')
   const [vendorCodeErr, setVendorCodeErr]   = useState('')
+  // When a previously-completed request is re-edited by the buyer it re-enters the
+  // queue still carrying its original SAP code. The final approver then chooses to
+  // keep that code or assign a fresh one. 'keep' | 'new'
+  const [codeMode, setCodeMode]             = useState('new')
   const [rejectMode, setRejectMode]         = useState(false)
   const [rejectComment, setRejectComment]   = useState('')
   const [rejectError, setRejectError]       = useState('')
@@ -75,8 +79,10 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
 
   const openReview = (req) => {
     markViewed(req)
+    const priorCode = req.vendorCode?.trim() || ''
     setReviewing(req)
-    setVendorCode('')
+    setVendorCode(priorCode)
+    setCodeMode(priorCode ? 'keep' : 'new')
     setVendorCodeErr('')
     setRejectMode(false)
     setRejectComment('')
@@ -84,7 +90,9 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
   }
 
   const handleComplete = async () => {
-    const trimmed = vendorCode.trim()
+    const priorCode = reviewing.vendorCode?.trim() || ''
+    // Keep mode reuses the original code; new mode takes whatever was typed.
+    const trimmed = codeMode === 'keep' && priorCode ? priorCode : vendorCode.trim()
     if (!trimmed)                    { setVendorCodeErr('SAP Vendor Code is required.'); return }
     if (!/^\d{1,10}$/.test(trimmed)) { setVendorCodeErr('Vendor code must be 1–10 digits only.'); return }
     const name = reviewing.vendorName
@@ -537,23 +545,74 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
 
           {!rejectMode ? (
             <div className="border-t border-gray-100 pt-5 space-y-4">
-              <div className="rounded-xl bg-amber-50 ring-1 ring-amber-200 p-4">
-                <p className="text-sm font-semibold text-amber-800 mb-1">Enter SAP Vendor Code</p>
-                <p className="text-xs text-amber-700">
-                  Retrieve the code from SAP after final approval. Once submitted, the workflow will be marked <strong>Completed</strong>.
-                </p>
-              </div>
-              <div>
-                <label className="form-label">SAP Vendor Code <span className="text-red-500">*</span></label>
-                <input
-                  className="form-input font-mono text-base tracking-widest"
-                  placeholder="e.g. 1234567890 (1–10 digits)"
-                  value={vendorCode}
-                  onChange={e => { setVendorCode(e.target.value); setVendorCodeErr('') }}
-                  autoFocus
-                />
-                {vendorCodeErr && <p className="mt-1 text-xs text-red-600">{vendorCodeErr}</p>}
-              </div>
+              {(() => {
+                const priorCode = reviewing.vendorCode?.trim() || ''
+                if (priorCode) {
+                  // Re-edited completed request: offer to keep the original SAP code or assign a new one.
+                  return (
+                    <>
+                      <div className="rounded-xl bg-blue-50 ring-1 ring-blue-200 p-4">
+                        <p className="text-sm font-semibold text-blue-800 mb-1">This vendor already has a SAP Code</p>
+                        <p className="text-xs text-blue-700">
+                          The buyer edited an already-completed vendor (<span className="font-mono">{priorCode}</span>). Keep the existing code or assign a new one from SAP.
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                          codeMode === 'keep' ? 'border-[#096fb3] bg-[#096fb3]/5' : 'border-gray-200 hover:bg-gray-50'
+                        }`}>
+                          <input type="radio" name="codeMode" className="mt-0.5" checked={codeMode === 'keep'}
+                            onChange={() => { setCodeMode('keep'); setVendorCode(priorCode); setVendorCodeErr('') }} />
+                          <span className="min-w-0">
+                            <span className="block text-sm font-medium text-gray-800">Keep existing code</span>
+                            <span className="block font-mono text-base tracking-widest text-emerald-700 mt-0.5">{priorCode}</span>
+                          </span>
+                        </label>
+                        <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                          codeMode === 'new' ? 'border-[#096fb3] bg-[#096fb3]/5' : 'border-gray-200 hover:bg-gray-50'
+                        }`}>
+                          <input type="radio" name="codeMode" className="mt-0.5" checked={codeMode === 'new'}
+                            onChange={() => { setCodeMode('new'); setVendorCode(''); setVendorCodeErr('') }} />
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-medium text-gray-800">Assign a new code</span>
+                            {codeMode === 'new' && (
+                              <input
+                                className="form-input font-mono text-base tracking-widest mt-2"
+                                placeholder="e.g. 1234567890 (1–10 digits)"
+                                value={vendorCode}
+                                onChange={e => { setVendorCode(e.target.value); setVendorCodeErr('') }}
+                                autoFocus
+                              />
+                            )}
+                          </span>
+                        </label>
+                        {vendorCodeErr && <p className="mt-1 text-xs text-red-600">{vendorCodeErr}</p>}
+                      </div>
+                    </>
+                  )
+                }
+                return (
+                  <>
+                    <div className="rounded-xl bg-amber-50 ring-1 ring-amber-200 p-4">
+                      <p className="text-sm font-semibold text-amber-800 mb-1">Enter SAP Vendor Code</p>
+                      <p className="text-xs text-amber-700">
+                        Retrieve the code from SAP after final approval. Once submitted, the workflow will be marked <strong>Completed</strong>.
+                      </p>
+                    </div>
+                    <div>
+                      <label className="form-label">SAP Vendor Code <span className="text-red-500">*</span></label>
+                      <input
+                        className="form-input font-mono text-base tracking-widest"
+                        placeholder="e.g. 1234567890 (1–10 digits)"
+                        value={vendorCode}
+                        onChange={e => { setVendorCode(e.target.value); setVendorCodeErr('') }}
+                        autoFocus
+                      />
+                      {vendorCodeErr && <p className="mt-1 text-xs text-red-600">{vendorCodeErr}</p>}
+                    </div>
+                  </>
+                )
+              })()}
               <div className="flex justify-end gap-3">
                 <button className="btn-danger" disabled={workflow.actionLoading} onClick={() => setRejectMode(true)}>
                   <XMarkIcon className="h-4 w-4" />

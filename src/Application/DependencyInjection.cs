@@ -22,6 +22,10 @@ public static class DependencyInjection
             cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
             cfg.AddOpenBehavior(typeof(WorkflowBroadcastBehavior<,>));
+            // Inner-most workflow behavior: persists per-action notification rows
+            // before WorkflowBroadcast fires the SignalR event, so clients that
+            // refetch on that event already see the new notifications.
+            cfg.AddOpenBehavior(typeof(NotificationBehavior<,>));
         });
 
         return services;

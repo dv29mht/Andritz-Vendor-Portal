@@ -49,4 +49,10 @@ export const ENDPOINTS = {
     reset:   (code) => `/email-templates/${code}/reset`,
     preview: (code) => `/email-templates/${code}/preview`,
   },
+  notifications: {
+    list:    '/notifications',
+    read:    (id) => `/notifications/${id}/read`,
+    unread:  (id) => `/notifications/${id}/unread`,
+    readAll: '/notifications/read-all',
+  },
 }

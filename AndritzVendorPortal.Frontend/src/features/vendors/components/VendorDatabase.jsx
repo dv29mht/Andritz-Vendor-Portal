@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BuildingOfficeIcon, ArrowPathIcon, EyeIcon, ArchiveBoxIcon, ChevronLeftIcon, ChevronRightIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
+import { ArrowPathIcon, EyeIcon, ArchiveBoxIcon, ChevronLeftIcon, ChevronRightIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 import VendorDetailModal from './VendorDetailModal'
 import Toast from '../../../shared/components/Toast'
 import ConfirmDialog from '../../../shared/components/ConfirmDialog'
@@ -84,12 +84,7 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
     <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-            <BuildingOfficeIcon className="h-5 w-5 text-[#0062AC]" />
-            Permanent Vendor Master
-          </h2>
-          <div className="flex items-center gap-3 mt-1.5">
+        <div className="flex items-center gap-3">
             <button
               onClick={() => { setShowArchived(false); setPage(1) }}
               className={`inline-flex items-center gap-1.5 rounded-lg text-sm font-semibold px-4 py-2 transition-colors select-none ${
@@ -113,11 +108,10 @@ export default function VendorDatabase({ requests, isAdmin, onReclassified, work
                 {archivedCount} Archived
               </button>
             )}
-          </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
           <input
-            className="form-input max-w-xs"
+            className="form-input w-64"
             placeholder="Search vendor, code, city, GST…"
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1) }}

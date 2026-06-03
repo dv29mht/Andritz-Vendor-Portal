@@ -3,7 +3,7 @@ import {
   HomeIcon, DocumentTextIcon, ClockIcon, ArchiveBoxIcon,
   ExclamationCircleIcon, BuildingOfficeIcon, TableCellsIcon,
   UserGroupIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon,
-  ChevronRightIcon, ChevronLeftIcon, Bars3Icon, StarIcon,
+  ChevronLeftIcon, Bars3Icon, StarIcon,
   EnvelopeIcon,
 } from '@heroicons/react/24/outline'
 import NotificationBell from '../../features/notifications/components/NotificationBell'
@@ -25,28 +25,24 @@ const NAV = {
     { id: 'history',   label: 'History',          icon: ArchiveBoxIcon },
     { id: 'settings',  label: 'Settings',          icon: Cog6ToothIcon },
   ],
+  // Single elevated account: the Final Approver now also holds every former admin
+  // capability, so this nav is the union of the old Admin + Final Approver menus.
+  // ConsoleRoute dispatches each page to the console that owns it.
   FinalApprover: [
-    { id: 'dashboard',   label: 'Dashboard',         icon: HomeIcon },
-    { id: 'pending',     label: 'Pending Queue',     icon: ClockIcon },
-    { id: 'history',     label: 'History',           icon: ArchiveBoxIcon },
-    { id: 'vendors',     label: 'Permanent Vendors', icon: BuildingOfficeIcon },
-    { id: 'onetime',     label: 'One-Time Vendors',  icon: StarIcon },
-    { id: 'settings',    label: 'Settings',           icon: Cog6ToothIcon },
-  ],
-  Admin: [
     { id: 'dashboard',       label: 'Dashboard',         icon: HomeIcon },
     { id: 'requests',        label: 'All Requests',      icon: TableCellsIcon },
+    { id: 'pending',         label: 'Pending Queue',     icon: ClockIcon },
+    { id: 'history',         label: 'History',           icon: ArchiveBoxIcon },
     { id: 'vendors',         label: 'Permanent Vendors', icon: BuildingOfficeIcon },
-    { id: 'users',           label: 'User Management',   icon: UserGroupIcon },
     { id: 'onetime',         label: 'One-Time Vendors',  icon: StarIcon },
+    { id: 'users',           label: 'User Management',   icon: UserGroupIcon },
     { id: 'email-templates', label: 'Email Templates',   icon: EnvelopeIcon },
     { id: 'settings',        label: 'Settings',           icon: Cog6ToothIcon },
   ],
 }
 
 const ROLE_LABELS = {
-  Admin: 'Administrator', Buyer: 'Buyer',
-  Approver: 'Approver', FinalApprover: 'Final Approver',
+  Buyer: 'Buyer', Approver: 'Approver', FinalApprover: 'Final Approver + Admin',
 }
 
 const getInitials = (name = '') =>
@@ -145,30 +141,15 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
           })}
         </nav>
 
-        {/* Sign out */}
-        <div className="px-2 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
-          {collapsed && (
-            <div className="flex justify-center mb-2">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-                style={{ background: ACTIVE_BG }}>
-                {getInitials(currentUser.name)}
-              </div>
+        {/* Signed-in user (collapsed state) — Sign out lives in the top header now */}
+        {collapsed && (
+          <div className="px-2 py-3 flex justify-center" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+              style={{ background: ACTIVE_BG }}>
+              {getInitials(currentUser.name)}
             </div>
-          )}
-          <button
-            onClick={() => setConfirmSignOut(true)}
-            title={collapsed ? 'Sign out' : undefined}
-            className={`w-full flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all py-2 ${
-              collapsed ? 'justify-center px-0' : 'px-3'
-            }`}
-            style={{ color: 'rgba(255,255,255,0.5)' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'white' }}
-            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.5)' }}
-          >
-            <ArrowRightOnRectangleIcon className="h-4 w-4 flex-shrink-0" />
-            {!collapsed && 'Sign out'}
-          </button>
-        </div>
+          </div>
+        )}
       </aside>
 
       {/* ── Main area ───────────────────────────────────────────────────────── */}
@@ -187,21 +168,14 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
                 <Bars3Icon className="h-5 w-5" />
               </button>
             )}
-            <div className="flex items-center gap-2 text-sm">
-              <button
-                onClick={() => setActivePage('dashboard')}
-                className="text-gray-400 text-xs font-medium hover:text-[#096fb3] transition-colors"
-              >
-                {ROLE_LABELS[role] ?? role}
-              </button>
-              <ChevronRightIcon className="h-3 w-3 text-gray-300" />
-              <span className="font-semibold text-gray-900">{activeItem?.label ?? 'Dashboard'}</span>
-            </div>
+            <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-none">
+              {activeItem?.label ?? 'Dashboard'}
+            </h1>
           </div>
 
           <div className="flex items-center gap-3">
             <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold text-white"
-              style={{ background: ACTIVE_BG }}>
+              style={{ background: role === 'FinalApprover' ? '#dc2626' : ACTIVE_BG }}>
               {ROLE_LABELS[role] ?? role}
             </span>
             <div className="flex items-center gap-2">
@@ -222,6 +196,15 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
               onMarkAllRead={markAllRead}
               label="Notifications"
             />
+            <div className="w-px h-5 bg-gray-200" />
+            <button
+              onClick={() => setConfirmSignOut(true)}
+              title="Sign out"
+              className="inline-flex items-center gap-1.5 p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <ArrowRightOnRectangleIcon className="h-5 w-5" />
+              <span className="hidden lg:inline text-sm font-medium">Sign out</span>
+            </button>
           </div>
         </header>
 

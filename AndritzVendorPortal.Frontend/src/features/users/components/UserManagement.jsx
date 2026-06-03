@@ -2,7 +2,7 @@ import { useState, useRef, Fragment } from 'react'
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react'
 import {
   UserPlusIcon, ArrowPathIcon, MagnifyingGlassIcon,
-  XMarkIcon, CheckIcon, ExclamationCircleIcon,
+  XMarkIcon, CheckIcon,
   ShieldCheckIcon, ClipboardDocumentIcon,
   PencilSquareIcon, TrashIcon, EyeIcon, EyeSlashIcon,
   EnvelopeIcon, BriefcaseIcon, ComputerDesktopIcon, FingerPrintIcon,
@@ -442,7 +442,6 @@ export default function UserManagement() {
     applyUpdated,
     applyDeleted,
     restoreUser,
-    syncAd,
   } = useUsers()
   const [showArchived, setShowArchived] = useState(false)
   const [search, setSearch]             = useState('')
@@ -453,8 +452,6 @@ export default function UserManagement() {
   const [saving, setSaving]             = useState(false)
   const [showNewUserPwd, setShowNewUserPwd]         = useState(false)
   const [showNewUserConfirmPwd, setShowNewUserConfirmPwd] = useState(false)
-  const [syncing, setSyncing]           = useState(false)
-  const [syncMsg, setSyncMsg]           = useState(null)
   const [toast, setToast]               = useState(null)
   const [copiedPwd, setCopiedPwd]       = useState(false)
   const [detailUser, setDetailUser]     = useState(null)
@@ -462,7 +459,10 @@ export default function UserManagement() {
   const [pageSize,   setPageSize]       = useState(10)
 
   const visible = users.filter(u => {
-    if (u.roles.includes('Admin')) return false
+    // Hide elevated/legacy accounts from the editable list: the single elevated
+    // account (FinalApprover) must not be able to archive or edit itself, and the
+    // decommissioned legacy Admin shouldn't appear.
+    if (u.roles.includes('Admin') || u.roles.includes('FinalApprover')) return false
     const q = search.toLowerCase()
     const matchSearch = !q
       || u.fullName.toLowerCase().includes(q)
@@ -521,20 +521,6 @@ export default function UserManagement() {
     setTimeout(() => setCopiedPwd(false), 2000)
   }
 
-  const handleSyncAd = async () => {
-    setSyncing(true)
-    setSyncMsg(null)
-    try {
-      const data = await syncAd()
-      setSyncMsg({ type: 'info', text: data.message })
-    } catch {
-      setSyncMsg({ type: 'error', text: 'Sync request failed. Please try again.' })
-    } finally {
-      setSyncing(false)
-      setTimeout(() => setSyncMsg(null), 6000)
-    }
-  }
-
   const handleUserUpdated = (updated) => {
     applyUpdated(updated)
     // If the admin edited their own account, sync the auth context so the header updates
@@ -561,13 +547,38 @@ export default function UserManagement() {
 
   return (
     <div>
-      {/* Header row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">User Management</h2>
-          <p className="text-sm text-gray-500 mt-0.5">{users.length} registered account{users.length !== 1 ? 's' : ''}</p>
+      {/* Action bar — count + search + filters on the left, actions on the right, one row */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="inline-flex items-center rounded-lg text-sm font-semibold px-4 py-2 bg-blue-50 ring-1 ring-blue-200 text-blue-700 whitespace-nowrap select-none">
+            {users.length} registered account{users.length !== 1 ? 's' : ''}
+          </span>
+          {!showForm && (
+            <>
+              <div className="relative w-64">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                <input className="form-input pl-9" placeholder="Search by name, email, role…"
+                  value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} />
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {['All', 'Buyer', 'Approver'].map(r => (
+                  <button
+                    key={r}
+                    onClick={() => { setRoleFilter(r); setPage(1) }}
+                    className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
+                      roleFilter === r
+                        ? 'bg-slate-700 text-white ring-slate-700'
+                        : 'bg-white text-gray-600 ring-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => exportUsersToExcel(
               showArchived && archivedUsers.length > 0 ? archivedUsers : visible,
@@ -581,10 +592,6 @@ export default function UserManagement() {
             <ArrowDownTrayIcon className="h-4 w-4" />
             Export Excel
           </button>
-          <button onClick={handleSyncAd} disabled={syncing} className="btn-secondary">
-            <ArrowPathIcon className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-            {syncing ? 'Syncing…' : 'Sync from AD'}
-          </button>
           <button
             onClick={() => { setForm(EMPTY_FORM); setShowForm(true); setFormErrors([]) }}
             className="btn-primary"
@@ -594,18 +601,6 @@ export default function UserManagement() {
           </button>
         </div>
       </div>
-
-      {/* AD sync message */}
-      {syncMsg && (
-        <div className={`mb-4 flex items-start gap-2 rounded-lg px-4 py-3 text-sm ring-1 ring-inset ${
-          syncMsg.type === 'error'
-            ? 'bg-red-50 text-red-700 ring-red-200'
-            : 'bg-blue-50 text-blue-700 ring-blue-200'
-        }`}>
-          <ExclamationCircleIcon className="h-4 w-4 flex-shrink-0 mt-0.5" />
-          {syncMsg.text}
-        </div>
-      )}
 
 
       {/* Add User inline form */}
@@ -701,36 +696,14 @@ export default function UserManagement() {
         </div>
       )}
 
-      {/* Search + table — hidden while Add User form is open */}
+      {/* Table — hidden while Add User form is open */}
       {!showForm && (<>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-        <div className="relative max-w-xs flex-shrink-0">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-          <input className="form-input pl-9" placeholder="Search by name, email, role…"
-            value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} />
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {['All', 'Buyer', 'Approver', 'FinalApprover'].map(r => (
-            <button
-              key={r}
-              onClick={() => { setRoleFilter(r); setPage(1) }}
-              className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
-                roleFilter === r
-                  ? 'bg-slate-700 text-white ring-slate-700'
-                  : 'bg-white text-gray-600 ring-gray-200 hover:bg-gray-50'
-              }`}
-            >
-              {r === 'FinalApprover' ? 'Final Approver' : r}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Users table */}
       <div className="rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
         <table className="text-sm" style={{ minWidth: '700px', width: '100%' }}>
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
+            <tr className="bg-gray-50 border-b border-gray-200 divide-x divide-gray-200">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">#</th>
               {['Full Name', 'Designation', 'Email', 'Role(s)', 'Actions'].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   {h}
@@ -740,11 +713,11 @@ export default function UserManagement() {
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
             {loading && (
-              <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-400">Loading users…</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">Loading users…</td></tr>
             )}
             {!loading && fetchError && (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center">
+                <td colSpan={6} className="px-4 py-10 text-center">
                   <p className="text-sm text-red-600 mb-3">{fetchError}</p>
                   <button onClick={fetchUsers} className="btn-primary !text-xs !py-1.5 !px-4">
                     <ArrowPathIcon className="h-3.5 w-3.5" />
@@ -754,14 +727,16 @@ export default function UserManagement() {
               </tr>
             )}
             {!loading && !fetchError && visible.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-400">No users match the search.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">No users match the search.</td></tr>
             )}
-            {!loading && !fetchError && visible.slice((page - 1) * pageSize, page * pageSize).map(user => {
+            {!loading && !fetchError && visible.slice((page - 1) * pageSize, page * pageSize).map((user, idx) => {
               const primaryRole = user.roles[0]
               const consoleLabel = CONSOLE_LABEL[primaryRole] ?? '—'
               const hasEmailGuard = primaryRole === 'FinalApprover'
+              const serial = (page - 1) * pageSize + idx + 1
               return (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={user.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
+                  <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
                   <td className="px-4 py-3">
                     <button
                       className="font-medium text-[#0062AC] hover:underline whitespace-nowrap text-left"

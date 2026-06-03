@@ -1,0 +1,81 @@
+# UAT replica of the client's SOT environment, runnable on any Docker host.
+#
+# Mirrors the production deployment shape so UAT can be done off-server before
+# touching QNFSMS025:
+#   - App hosted under the /SOT sub-path (App__PathBase=/SOT, SPA built for /SOT/)
+#   - SQL Server engine, database named "SOT", code-first migrations on boot
+#   - Single elevated account seeded: pardeep.sharma@andritz.com / Andritz@1234
+#   - Single-origin: one container serves both the API and the React SPA
+#
+# Documented deltas from prod (only what a Linux container can't reproduce):
+#   - SQL auth (sa) instead of Windows Trusted_Connection
+#   - Outbound email captured by MailHog instead of the mail.andritz.com relay
+#
+# Run:   docker compose -f docker-compose.uat.yml up --build
+# Open:  http://localhost:8080/SOT      (login pardeep.sharma@andritz.com / Andritz@1234)
+# Mail:  http://localhost:8025          (MailHog inbox — every notification lands here)
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Uat#SqlServer2024!"
+      MSSQL_PID: "Developer"
+    ports:
+      - "11433:1433"          # host:container — avoids clashing with a local SQL instance
+    volumes:
+      - mssql_data:/var/opt/mssql
+    healthcheck:
+      # The server image ships no sqlcmd, so probe the TCP port from bash instead.
+      test: ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/localhost/1433' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+
+  api:
+    build:
+      context: .
+      dockerfile: src/API/Dockerfile
+      args:
+        # Build the SPA for the /SOT sub-path so assets emit under /SOT/assets/*.
+        VITE_BASE_PATH: /SOT/
+    depends_on:
+      mssql:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      PORT: "8080"
+      # Sub-path hosting, matching the client's IIS sub-app (overrides the
+      # Dockerfile's App__PathBase="" default used for root/Railway hosting).
+      App__PathBase: "/SOT"
+      PortalUrl: "http://localhost:8080/SOT"
+      # SQL auth against the sidecar SQL Server. DbInitializer creates the SOT
+      # database + schema and seeds the elevated account on first boot (it retries
+      # the connection for ~2 minutes, so no race with SQL Server warm-up).
+      ConnectionStrings__DefaultConnection: "Server=mssql;Database=SOT;User Id=sa;Password=Uat#SqlServer2024!;TrustServerCertificate=True;MultipleActiveResultSets=true"
+      Seed__DefaultAdminPassword: "Andritz@1234"
+      JwtSettings__SecretKey: "UAT-Only-Change-Me-Min-32-Chars-Secret-Key-123456"
+      JwtSettings__Issuer: "AndritzVendorPortal"
+      JwtSettings__Audience: "AndritzVendorPortalClient"
+      JwtSettings__ExpiryHours: "8"
+      # Capture all outbound mail in MailHog (SMTP 1025) instead of the office relay.
+      EmailSettings__Host: "mailhog"
+      EmailSettings__Port: "1025"
+      EmailSettings__EnableSsl: "false"
+      EmailSettings__Username: ""
+      EmailSettings__Password: ""
+      EmailSettings__FromEmail: "uat-noreply@andritz.com"
+      EmailSettings__FromName: "SOT UAT Notifications"
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "8025:8025"           # web UI
+      - "1025:1025"           # SMTP (referenced by the api service as mailhog:1025)
+
+volumes:
+  mssql_data:
