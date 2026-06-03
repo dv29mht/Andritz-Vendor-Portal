@@ -14,6 +14,7 @@ public interface IIdentityService
     Task<bool> IsLockedOutAsync(string email);
     Task<IReadOnlyList<string>> GetRolesAsync(string userId);
     Task<IReadOnlyList<UserInfoDto>> GetAllUsersAsync(bool includeArchived = false);
+    Task<IReadOnlyList<UserWithRolesDto>> GetUsersWithRolesAsync(bool includeArchived = false);
     Task<IReadOnlyList<UserInfoDto>> GetUsersInRoleAsync(string role);
     Task<(bool Succeeded, string UserId, IReadOnlyList<string> Errors)> CreateUserAsync(
         string email, string password, string fullName, string? designation, string role);

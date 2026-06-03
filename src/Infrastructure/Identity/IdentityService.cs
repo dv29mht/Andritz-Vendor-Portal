@@ -37,17 +37,50 @@ public class IdentityService(
         return u is not null && await userManager.IsLockedOutAsync(u);
     }
 
-    public async Task<IReadOnlyList<string>> GetRolesAsync(string userId)
-    {
-        var u = await userManager.FindByIdAsync(userId);
-        return u is null ? [] : (await userManager.GetRolesAsync(u)).ToList();
-    }
+    public async Task<IReadOnlyList<string>> GetRolesAsync(string userId) =>
+        // Single join instead of FindByIdAsync (loads the whole user row) followed by
+        // GetRolesAsync (a second query) — this path runs on every login and list call.
+        await (from ur in db.UserRoles
+               join r in db.Roles on ur.RoleId equals r.Id
+               where ur.UserId == userId
+               select r.Name!)
+              .ToListAsync();
 
     public async Task<IReadOnlyList<UserInfoDto>> GetAllUsersAsync(bool includeArchived = false) =>
         await userManager.Users
             .Where(u => includeArchived || !u.IsArchived)
             .Select(u => new UserInfoDto(u.Id, u.Email!, u.FullName, u.Designation, u.IsArchived))
             .ToListAsync();
+
+    public async Task<IReadOnlyList<UserWithRolesDto>> GetUsersWithRolesAsync(bool includeArchived = false)
+    {
+        // Resolve every user's roles in a fixed number of queries (users + role names +
+        // user-role links) rather than one round-trip per user.
+        var users = await userManager.Users
+            .Where(u => includeArchived || !u.IsArchived)
+            .Select(u => new UserInfoDto(u.Id, u.Email!, u.FullName, u.Designation, u.IsArchived))
+            .ToListAsync();
+
+        var roleNameById = await db.Roles
+            .Select(r => new { r.Id, r.Name })
+            .ToDictionaryAsync(r => r.Id, r => r.Name ?? string.Empty);
+
+        var rolesByUserId = (await db.UserRoles.ToListAsync())
+            .GroupBy(ur => ur.UserId)
+            .ToDictionary(
+                g => g.Key,
+                g => (IReadOnlyList<string>)g
+                    .Select(ur => roleNameById.TryGetValue(ur.RoleId, out var name) ? name : null)
+                    .Where(name => !string.IsNullOrEmpty(name))
+                    .Select(name => name!)
+                    .ToList());
+
+        return users
+            .Select(u => new UserWithRolesDto(
+                u.Id, u.Email, u.FullName, u.Designation, u.IsArchived,
+                rolesByUserId.TryGetValue(u.Id, out var roles) ? roles : []))
+            .ToList();
+    }
 
     public async Task<IReadOnlyList<UserInfoDto>> GetUsersInRoleAsync(string role)
     {
@@ -70,7 +103,14 @@ public class IdentityService(
         if (!result.Succeeded)
             return (false, string.Empty, result.Errors.Select(e => e.Description).ToList());
 
-        await userManager.AddToRoleAsync(user, role);
+        var addRole = await userManager.AddToRoleAsync(user, role);
+        if (!addRole.Succeeded)
+        {
+            // Don't leave a role-less orphan behind — roll back the just-created user.
+            await userManager.DeleteAsync(user);
+            return (false, string.Empty, addRole.Errors.Select(e => e.Description).ToList());
+        }
+
         return (true, user.Id, []);
     }
 
@@ -95,9 +135,23 @@ public class IdentityService(
         if (!update.Succeeded)
             return (false, update.Errors.Select(e => e.Description).ToList());
 
+        // Swap roles add-first-then-remove so a failure can never leave the user with
+        // zero roles (which would 403 them out of every [Authorize(Roles=…)] endpoint).
         var current = await userManager.GetRolesAsync(user);
-        await userManager.RemoveFromRolesAsync(user, current);
-        await userManager.AddToRoleAsync(user, role);
+        if (!current.Contains(role))
+        {
+            var add = await userManager.AddToRoleAsync(user, role);
+            if (!add.Succeeded)
+                return (false, add.Errors.Select(e => e.Description).ToList());
+        }
+
+        var toRemove = current.Where(r => !string.Equals(r, role, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (toRemove.Count > 0)
+        {
+            var remove = await userManager.RemoveFromRolesAsync(user, toRemove);
+            if (!remove.Succeeded)
+                return (false, remove.Errors.Select(e => e.Description).ToList());
+        }
 
         if (!string.IsNullOrWhiteSpace(newPassword))
         {
@@ -175,7 +229,9 @@ public class IdentityService(
 
     public async Task PropagateUserNameChangeAsync(string userId, string newFullName, CancellationToken ct = default)
     {
+        // Ignore the soft-delete filter — a rename must reach archived requests too.
         await db.VendorRequests
+            .IgnoreQueryFilters()
             .Where(r => r.CreatedByUserId == userId)
             .ExecuteUpdateAsync(s => s.SetProperty(r => r.CreatedByName, newFullName), ct);
         await db.VendorRevisions

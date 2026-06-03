@@ -12,16 +12,28 @@ namespace AndritzVendorPortal.Infrastructure.Services;
 /// Re-use is prevented at the business layer — the underlying approval step
 /// can only transition Pending → Approved/Rejected once.
 /// </summary>
-public class EmailActionTokenService(IConfiguration config) : IEmailActionTokenService
+public class EmailActionTokenService : IEmailActionTokenService
 {
     private static readonly TimeSpan DefaultTtl = TimeSpan.FromDays(7);
 
-    private byte[] SigningKey()
+    private readonly byte[] _signingKey;
+
+    public EmailActionTokenService(IConfiguration config)
     {
         // Reuse the JWT signing secret — already a 32+ char random configured value.
-        var key = config["JwtSettings:SecretKey"] ?? "PLACEHOLDER_KEY_REPLACE_VIA_CONFIG";
-        return Encoding.UTF8.GetBytes("email-action:" + key);
+        // These tokens authorise one-click [AllowAnonymous] approvals, so a missing
+        // key must be a hard startup failure, NOT a silent fall back to a constant
+        // placeholder that anyone could use to forge approval links on a prod box.
+        var key = config["JwtSettings:SecretKey"];
+        if (string.IsNullOrWhiteSpace(key))
+            throw new InvalidOperationException(
+                "JwtSettings:SecretKey is not configured. It signs one-click email approval tokens " +
+                "and must be set to a strong secret before the application can start.");
+
+        _signingKey = Encoding.UTF8.GetBytes("email-action:" + key);
     }
+
+    private byte[] SigningKey() => _signingKey;
 
     public string Generate(int vendorRequestId, int stepId, string userId, string action)
     {

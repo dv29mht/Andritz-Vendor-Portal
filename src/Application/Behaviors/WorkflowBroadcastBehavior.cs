@@ -28,7 +28,11 @@ public class WorkflowBroadcastBehavior<TRequest, TResponse>(INotificationService
             foreach (var step in dto.ApprovalSteps)
                 userIds.Add(step.ApproverUserId);
 
-            await notifications.BroadcastWorkflowChangeAsync(dto.Id, userIds, ct);
+            // The command has already committed; this broadcast must not be tied to the
+            // request's token. If the client disconnects between commit and broadcast,
+            // `ct` would be cancelled and the workflowChanged event silently dropped,
+            // leaving other clients to wait for the 15s poll. Use a fresh token.
+            await notifications.BroadcastWorkflowChangeAsync(dto.Id, userIds, CancellationToken.None);
         }
 
         return response;

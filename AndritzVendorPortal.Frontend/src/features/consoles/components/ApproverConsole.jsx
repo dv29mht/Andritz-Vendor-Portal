@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { CheckIcon, XMarkIcon, EyeIcon, ClockIcon, ArchiveBoxIcon,
          ExclamationCircleIcon,
          MagnifyingGlassIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
@@ -15,6 +15,7 @@ import ClearFiltersButton from '../../../shared/components/ClearFiltersButton'
 import { useViewedRequests } from '../../notifications/hooks/useViewedRequests'
 import { buildMonthlyData } from '../../../utils/statsUtils'
 import { exportRequestsToExcel, formatDateTime } from '../../../utils/exportUtils'
+import { matchesIstDateRange } from '../../../utils/dateFilter'
 
 const REJECT_REASON_MAX = 100
 
@@ -54,6 +55,11 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
 
   const { isNew, markViewed } = useViewedRequests(currentUser.id)
 
+  // Synchronous in-flight guard. workflow.actionLoading only flips after the async
+  // call starts, so a same-tick double-click can fire two POSTs before it updates;
+  // this ref blocks the second click immediately.
+  const decisionInFlight = useRef(false)
+
   const openReview = (req) => {
     markViewed(req)
     setReviewing(req)
@@ -69,6 +75,8 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
   }
 
   const handleApprove = async () => {
+    if (decisionInFlight.current) return
+    decisionInFlight.current = true
     const name = reviewing.vendorName
     try {
       await workflow.approveStep(reviewing.id, approveComment)
@@ -76,11 +84,15 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
       setToast({ type: 'success', title: 'Request Approved', body: `You approved the vendor request for ${name}. It has moved to the next step.` })
     } catch (err) {
       setToast({ type: 'error', title: 'Action Failed', body: err?.response?.data?.message ?? err?.response?.data ?? 'Failed to approve request. Please try again.' })
+    } finally {
+      decisionInFlight.current = false
     }
   }
 
   const handleReject = async () => {
     if (!rejectComment.trim()) { setRejectError('A comment is required when rejecting.'); return }
+    if (decisionInFlight.current) return
+    decisionInFlight.current = true
     const name = reviewing.vendorName
     try {
       await workflow.reject(reviewing.id, rejectComment)
@@ -88,6 +100,8 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
       setToast({ type: 'warning', title: 'Request Rejected', body: `You rejected the vendor request for ${name}. The buyer will be notified to revise and resubmit.` })
     } catch (err) {
       setToast({ type: 'error', title: 'Action Failed', body: err?.response?.data?.message ?? err?.response?.data ?? 'Failed to reject request. Please try again.' })
+    } finally {
+      decisionInFlight.current = false
     }
   }
 
@@ -105,13 +119,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
     )
   }
 
-  const matchesDateRange = (req, dateFrom, dateTo) => {
-    if (!dateFrom && !dateTo) return true
-    const d = new Date(req.createdAt)
-    if (dateFrom && d < new Date(dateFrom)) return false
-    if (dateTo   && d > new Date(dateTo + 'T23:59:59')) return false
-    return true
-  }
+  const matchesDateRange = (req, dateFrom, dateTo) => matchesIstDateRange(req.createdAt, dateFrom, dateTo)
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
@@ -270,7 +278,8 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
       {activePage === 'pending' && (() => {
         const filtered   = pending.filter(r => matchesSearch(r, pendingSearch) && matchesDateRange(r, pendingDateFrom, pendingDateTo))
         const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
-        const paginated  = filtered.slice((pendingPage - 1) * pageSize, pendingPage * pageSize)
+        const page       = Math.min(pendingPage, totalPages)
+        const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize)
         return (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -320,7 +329,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {paginated.map((req, idx) => {
-                    const serial = (pendingPage - 1) * pageSize + idx + 1
+                    const serial = (page - 1) * pageSize + idx + 1
                     const fs = req.approvalSteps?.find(s => s.isFinalApproval)
                     return (
                       <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
@@ -361,10 +370,10 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               </table>
               <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (pendingPage - 1) * pageSize + 1}–{Math.min(pendingPage * pageSize, filtered.length)} of {filtered.length}</span>
+                  <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} of {filtered.length}</span>
                   <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setPendingPage(1) }} />
                 </div>
-                <Pagination page={pendingPage} totalPages={totalPages} onPageChange={setPendingPage} />
+                <Pagination page={page} totalPages={totalPages} onPageChange={setPendingPage} />
               </div>
             </div>
           )}
@@ -376,7 +385,8 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
       {activePage === 'waiting' && (() => {
         const filtered   = waitingRevision.filter(r => matchesSearch(r, waitingSearch) && matchesDateRange(r, waitingDateFrom, waitingDateTo))
         const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
-        const paginated  = filtered.slice((waitingPage - 1) * pageSize, waitingPage * pageSize)
+        const page       = Math.min(waitingPage, totalPages)
+        const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize)
         return (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -426,7 +436,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {paginated.map((req, idx) => {
                     const step   = myStepFor(req)
-                    const serial = (waitingPage - 1) * pageSize + idx + 1
+                    const serial = (page - 1) * pageSize + idx + 1
                     return (
                       <tr key={req.id} className="hover:bg-amber-50/30 transition-colors divide-x divide-gray-200">
                         <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
@@ -457,10 +467,10 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               </table>
               <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (waitingPage - 1) * pageSize + 1}–{Math.min(waitingPage * pageSize, filtered.length)} of {filtered.length}</span>
+                  <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} of {filtered.length}</span>
                   <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setWaitingPage(1) }} />
                 </div>
-                <Pagination page={waitingPage} totalPages={totalPages} onPageChange={setWaitingPage} />
+                <Pagination page={page} totalPages={totalPages} onPageChange={setWaitingPage} />
               </div>
             </div>
           )}
@@ -472,7 +482,8 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
       {activePage === 'history' && (() => {
         const filtered   = history.filter(r => matchesSearch(r, historySearch) && matchesDateRange(r, historyDateFrom, historyDateTo))
         const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
-        const paginated  = filtered.slice((historyPage - 1) * pageSize, historyPage * pageSize)
+        const page       = Math.min(historyPage, totalPages)
+        const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize)
         return (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -528,7 +539,7 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {paginated.map((req, idx) => {
                     const step   = myStepFor(req)
-                    const serial = (historyPage - 1) * pageSize + idx + 1
+                    const serial = (page - 1) * pageSize + idx + 1
                     const fs = req.approvalSteps?.find(s => s.isFinalApproval)
                     return (
                       <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
@@ -564,10 +575,10 @@ export default function ApproverConsole({ workflow, currentUser, activePage, onN
               </table>
               <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (historyPage - 1) * pageSize + 1}–{Math.min(historyPage * pageSize, filtered.length)} of {filtered.length}</span>
+                  <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} of {filtered.length}</span>
                   <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setHistoryPage(1) }} />
                 </div>
-                <Pagination page={historyPage} totalPages={totalPages} onPageChange={setHistoryPage} />
+                <Pagination page={page} totalPages={totalPages} onPageChange={setHistoryPage} />
               </div>
             </div>
           )}

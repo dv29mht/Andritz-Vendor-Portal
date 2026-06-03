@@ -63,9 +63,24 @@ public class VendorRequestConfiguration : IEntityTypeConfiguration<VendorRequest
          .HasForeignKey(r => r.VendorRequestId)
          .OnDelete(DeleteBehavior.Cascade);
 
+        // Optimistic concurrency on the workflow state. Without this, two approvers
+        // acting on the same request at the same instant both read PendingApproval,
+        // both write, and the workflow double-advances and double-notifies. Marking
+        // Status a concurrency token makes EF append "AND Status = @original" to the
+        // UPDATE, so the second writer gets a DbUpdateConcurrencyException (mapped to
+        // 409 in GlobalExceptionMiddleware) and must re-read before retrying. This is
+        // a model-level change only — no column is added, so no schema migration.
+        e.Property(x => x.Status).IsConcurrencyToken();
+
         e.HasIndex(x => x.Status);
         e.HasIndex(x => x.CreatedByUserId);
         e.HasIndex(x => x.IsArchived);
+
+        // Soft-delete: archived requests are excluded from every LINQ query by default
+        // so they can never leak into buyer/approver lists. Callers that legitimately
+        // need archived rows (the admin grid, by-id lookups, name propagation) opt back
+        // in with IgnoreQueryFilters(). FindAsync/GetByIdAsync bypass this automatically.
+        e.HasQueryFilter(x => !x.IsArchived);
     }
 }
 

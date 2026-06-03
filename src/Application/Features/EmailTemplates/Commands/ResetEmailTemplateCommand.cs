@@ -8,7 +8,7 @@ namespace AndritzVendorPortal.Application.Features.EmailTemplates.Commands;
 
 public record ResetEmailTemplateCommand(string Code) : IRequest<EmailTemplateDetailDto>;
 
-public class ResetEmailTemplateCommandHandler(IApplicationDbContext db)
+public class ResetEmailTemplateCommandHandler(IApplicationDbContext db, IEmailTemplateService templates)
     : IRequestHandler<ResetEmailTemplateCommand, EmailTemplateDetailDto>
 {
     public async Task<EmailTemplateDetailDto> Handle(ResetEmailTemplateCommand request, CancellationToken ct)
@@ -19,6 +19,7 @@ public class ResetEmailTemplateCommandHandler(IApplicationDbContext db)
         t.Subject = t.DefaultSubject;
         t.BodyText = t.DefaultBodyText;
         await db.SaveChangesAsync(ct);
+        templates.Invalidate(t.Code); // drop the cached copy so renders pick up the reset
 
         return new EmailTemplateDetailDto(
             t.Id, t.Code, t.Name, t.Audience, t.Subject, t.BodyText,

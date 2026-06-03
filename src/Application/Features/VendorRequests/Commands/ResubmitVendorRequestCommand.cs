@@ -83,6 +83,16 @@ public class ResubmitVendorRequestCommandHandler(
         if (entity.Status != VendorRequestStatus.Rejected)
             throw new BadRequestException("Only Rejected requests can be resubmitted.");
 
+        // GST/PAN uniqueness — the resubmitted values must not collide with another
+        // active (non-archived, non-rejected) request. Exclude self.
+        if (!string.IsNullOrWhiteSpace(request.GstNumber)
+            && await repo.GstNumberExistsAsync(request.GstNumber, entity.Id, ct))
+            throw new ConflictException("A request with this GST number already exists.");
+
+        if (!string.IsNullOrWhiteSpace(request.PanCard)
+            && await repo.PanCardExistsAsync(request.PanCard, entity.Id, ct))
+            throw new ConflictException("A request with this PAN number already exists.");
+
         // Stale-approver check
         var intermediate = entity.ApprovalSteps.Where(s => !s.IsFinalApproval).OrderBy(s => s.StepOrder).ToList();
         var staleNames = new List<string>();
@@ -103,7 +113,13 @@ public class ResubmitVendorRequestCommandHandler(
             await ApprovalChainBuilder.ValidateApproversAsync(newIds, identity, ct);
 
             var finalStep = entity.ApprovalSteps.First(s => s.IsFinalApproval);
-            foreach (var s in intermediate) db.ApprovalSteps.Remove(s);
+            // Remove from the nav collection too, not just the DbSet — otherwise the
+            // returned DTO carries the stale (deleted) steps alongside the rebuilt ones.
+            foreach (var s in intermediate)
+            {
+                entity.ApprovalSteps.Remove(s);
+                db.ApprovalSteps.Remove(s);
+            }
 
             int stepOrder = 1;
             foreach (var aid in newIds)

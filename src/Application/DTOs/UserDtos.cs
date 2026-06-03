@@ -7,6 +7,14 @@ public record UserInfoDto(
     string Designation,
     bool IsArchived);
 
+public record UserWithRolesDto(
+    string Id,
+    string Email,
+    string FullName,
+    string Designation,
+    bool IsArchived,
+    IReadOnlyList<string> Roles);
+
 public record UserDto(
     string Id,
     string FullName,

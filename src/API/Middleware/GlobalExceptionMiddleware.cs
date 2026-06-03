@@ -1,5 +1,6 @@
 using AndritzVendorPortal.Application.Common.Exceptions;
 using AndritzVendorPortal.Application.Common.Models;
+using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Text.Json;
 
@@ -58,6 +59,13 @@ public class GlobalExceptionMiddleware(
         ForbiddenException fe => ((int)HttpStatusCode.Forbidden, fe.Message, []),
         NotFoundException nf => ((int)HttpStatusCode.NotFound, nf.Message, []),
         ConflictException cf => ((int)HttpStatusCode.Conflict, cf.Message, []),
+        // Optimistic-concurrency loser (e.g. two approvers acting on one request at
+        // once). Surface as a 409 so the client re-fetches and retries rather than
+        // seeing a generic 500.
+        DbUpdateConcurrencyException => (
+            (int)HttpStatusCode.Conflict,
+            "This request was just updated by someone else. Refresh and try again.",
+            []),
         AppException ae => ((int)HttpStatusCode.BadRequest, ae.Message, []),
         _ => ((int)HttpStatusCode.InternalServerError, "An unexpected error occurred.", [])
     };

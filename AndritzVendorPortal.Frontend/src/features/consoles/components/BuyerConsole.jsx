@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
 import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
@@ -27,6 +27,7 @@ import { usersService } from '../../users/services/usersService'
 import { masterDataService } from '../../vendors/services/masterDataService'
 import { buildMonthlyData, buildWeeklyData, buildCustomRangeData } from '../../../utils/statsUtils'
 import { exportRequestsToExcel, formatDateTime } from '../../../utils/exportUtils'
+import { matchesIstDateRange } from '../../../utils/dateFilter'
 
 const EMPTY_FORM = {
   purchasingOrganization: '',
@@ -446,14 +447,24 @@ ${req.vendorCode ? `<p class="code">SAP Vendor Code: ${esc(req.vendorCode)}</p>`
 }
 
 export default function BuyerConsole({ workflow, currentUser, activePage, onNavigate }) {
-  const myRequests     = workflow.requests.filter(r => r.createdByUserId === currentUser.id && !r.isArchived)
-  const draftReqs      = myRequests.filter(r => r.status === 'Draft')
-  const activeReqs     = myRequests.filter(r => r.status !== 'Rejected' && r.status !== 'Draft')
-  const rejectedReqs   = myRequests.filter(r => r.status === 'Rejected')
-  const completedReqs  = myRequests.filter(r => r.status === 'Completed')
-  const inProgressReqs = activeReqs.filter(r => r.status !== 'Completed')
-  // Requests cleared by every intermediate approver but still waiting on Pardeep Sharma
-  const finalPendingReqs = activeReqs.filter(r => r.status === 'PendingFinalApproval')
+  // These seven status buckets were each a full scan of workflow.requests on every
+  // render (including unrelated state changes like typing in a search box). Derive
+  // them once per data/user change instead.
+  const { myRequests, draftReqs, activeReqs, rejectedReqs, completedReqs, inProgressReqs, finalPendingReqs } =
+    useMemo(() => {
+      const mine        = workflow.requests.filter(r => r.createdByUserId === currentUser.id && !r.isArchived)
+      const active      = mine.filter(r => r.status !== 'Rejected' && r.status !== 'Draft')
+      return {
+        myRequests:      mine,
+        draftReqs:       mine.filter(r => r.status === 'Draft'),
+        activeReqs:      active,
+        rejectedReqs:    mine.filter(r => r.status === 'Rejected'),
+        completedReqs:   mine.filter(r => r.status === 'Completed'),
+        inProgressReqs:  active.filter(r => r.status !== 'Completed'),
+        // Cleared by every intermediate approver but still waiting on the final approver
+        finalPendingReqs: active.filter(r => r.status === 'PendingFinalApproval'),
+      }
+    }, [workflow.requests, currentUser.id])
 
   const [showForm, setShowForm]                     = useState(false)
   const [editingRequest, setEditingRequest]         = useState(null)
@@ -639,7 +650,15 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     set(field, { name: file.name, data: dataUrl })
   }
 
-  const openEdit = (req) => {
+  const openEdit = async (listReq) => {
+    // The list payload omits the document blobs for size; fetch the full record so
+    // previously-uploaded documents pre-populate the form. Fall back to the list copy.
+    let req = listReq
+    try {
+      const full = await workflow.fetchDetail(listReq.id)
+      if (full) req = full
+    } catch { /* keep list copy — documents simply won't pre-fill */ }
+
     setEditingRequest(req)
 
     // Detect stale approvers: intermediate steps whose userId is no longer in availableApprovers
@@ -941,13 +960,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     )
   }
 
-  const matchesDateRange = (req, dateFrom, dateTo) => {
-    if (!dateFrom && !dateTo) return true
-    const d = new Date(req.createdAt)
-    if (dateFrom && d < new Date(dateFrom)) return false
-    if (dateTo   && d > new Date(dateTo + 'T23:59:59')) return false
-    return true
-  }
+  const matchesDateRange = (req, dateFrom, dateTo) => matchesIstDateRange(req.createdAt, dateFrom, dateTo)
 
   // ── Sub-components ───────────────────────────────────────────────────────────
 
@@ -1366,7 +1379,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           return statusMatch && matchesSearch(r, reqsSearch) && matchesDateRange(r, reqsDateFrom, reqsDateTo)
         })
         const totalPages = Math.max(1, Math.ceil(filteredReqs.length / pageSize))
-        const paginated  = filteredReqs.slice((reqsPage - 1) * pageSize, reqsPage * pageSize)
+        const page       = Math.min(reqsPage, totalPages)
+        const paginated  = filteredReqs.slice((page - 1) * pageSize, page * pageSize)
         return (
           <div className="space-y-4">
             {/* Controls row */}
@@ -1437,7 +1451,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
                     {paginated.map((req, idx) => {
-                      const serial = (reqsPage - 1) * pageSize + idx + 1
+                      const serial = (page - 1) * pageSize + idx + 1
                       const isDraft = req.status === 'Draft'
                       return (
                         <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
@@ -1509,10 +1523,10 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 </table>
                 <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-400">Showing {filteredReqs.length === 0 ? 0 : (reqsPage - 1) * pageSize + 1}–{Math.min(reqsPage * pageSize, filteredReqs.length)} of {filteredReqs.length}</span>
+                    <span className="text-xs text-gray-400">Showing {filteredReqs.length === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, filteredReqs.length)} of {filteredReqs.length}</span>
                     <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setReqsPage(1) }} />
                   </div>
-                  <Pagination page={reqsPage} totalPages={totalPages} onPageChange={setReqsPage} />
+                  <Pagination page={page} totalPages={totalPages} onPageChange={setReqsPage} />
                 </div>
               </div>
             )}
@@ -1524,7 +1538,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       {activePage === 'revision' && (() => {
         const filteredRev = rejectedReqs.filter(r => matchesSearch(r, revSearch) && matchesDateRange(r, revDateFrom, revDateTo))
         const totalPages  = Math.max(1, Math.ceil(filteredRev.length / pageSize))
-        const paginated   = filteredRev.slice((revPage - 1) * pageSize, revPage * pageSize)
+        const page        = Math.min(revPage, totalPages)
+        const paginated   = filteredRev.slice((page - 1) * pageSize, page * pageSize)
         return (
         <div className="space-y-4">
           <div className="flex flex-row items-center gap-2">
@@ -1576,7 +1591,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {paginated.map((req, idx) => {
-                    const serial = (revPage - 1) * pageSize + idx + 1
+                    const serial = (page - 1) * pageSize + idx + 1
                     return (
                       <tr key={req.id} className="hover:bg-red-50/30 transition-colors divide-x divide-gray-200">
                         <td className="px-4 py-3 text-xs text-gray-400 font-mono">{serial}</td>
@@ -1608,10 +1623,10 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               </table>
               <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400">Showing {filteredRev.length === 0 ? 0 : (revPage - 1) * pageSize + 1}–{Math.min(revPage * pageSize, filteredRev.length)} of {filteredRev.length}</span>
+                  <span className="text-xs text-gray-400">Showing {filteredRev.length === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, filteredRev.length)} of {filteredRev.length}</span>
                   <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setRevPage(1) }} />
                 </div>
-                <Pagination page={revPage} totalPages={totalPages} onPageChange={setRevPage} />
+                <Pagination page={page} totalPages={totalPages} onPageChange={setRevPage} />
               </div>
             </div>
           )}

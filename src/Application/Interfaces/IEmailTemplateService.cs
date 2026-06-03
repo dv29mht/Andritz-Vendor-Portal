@@ -21,4 +21,10 @@ public interface IEmailTemplateService
         IReadOnlyDictionary<string, string?> values,
         CancellationToken ct = default,
         string? actionFooterHtml = null);
+
+    /// <summary>
+    /// Drops any cached copy of the template so the next render reloads it from
+    /// storage. Call after an admin edits or resets a template.
+    /// </summary>
+    void Invalidate(string code);
 }

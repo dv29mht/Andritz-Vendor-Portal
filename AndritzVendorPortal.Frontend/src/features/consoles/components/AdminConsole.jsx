@@ -22,6 +22,7 @@ import UserManagement from '../../users/components/UserManagement'
 import { vendorsService } from '../../vendors/services/vendorsService'
 import { buildStats, buildMonthlyData } from '../../../utils/statsUtils'
 import { exportRequestsToExcel, formatDateTime } from '../../../utils/exportUtils'
+import { matchesIstDateRange } from '../../../utils/dateFilter'
 
 const BAR_COLORS = ['#096fb3','#f59e0b','#10b981','#ef4444','#8b5cf6','#f97316','#06b6d4','#84cc16']
 
@@ -276,13 +277,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
   }
 
   const visible = requests.filter(r => {
-    const matchDate = (() => {
-      if (!dateFrom && !dateTo) return true
-      const d = new Date(r.createdAt)
-      if (dateFrom && d < new Date(dateFrom)) return false
-      if (dateTo   && d > new Date(dateTo + 'T23:59:59')) return false
-      return true
-    })()
+    const matchDate = matchesIstDateRange(r.createdAt, dateFrom, dateTo)
     if (filterStatus === 'Archived') return r.isArchived && matchDate
     if (!r.isArchived && r.status !== 'Draft') {
       const matchStatus = filterStatus === 'All' || r.status === filterStatus
@@ -487,7 +482,8 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
           {/* Table */}
           {(() => {
             const totalPages = Math.max(1, Math.ceil(visible.length / pageSize))
-            const paginated  = visible.slice((reqPage - 1) * pageSize, reqPage * pageSize)
+            const page       = Math.min(reqPage, totalPages)
+            const paginated  = visible.slice((page - 1) * pageSize, page * pageSize)
             return (
           <div className="rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
             <table className="text-sm" style={{ minWidth: '900px', width: '100%' }}>
@@ -504,7 +500,7 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 )}
                 {paginated.map((req, idx) => (
                   <tr key={req.id} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
-                    <td className="px-4 py-3.5 font-mono text-xs text-gray-400">#{(reqPage - 1) * pageSize + idx + 1}</td>
+                    <td className="px-4 py-3.5 font-mono text-xs text-gray-400">#{(page - 1) * pageSize + idx + 1}</td>
                     <td className="px-4 py-3.5">
                       <p className="font-medium text-gray-900 whitespace-nowrap leading-snug">{req.vendorName}</p>
                       {req.vendorCode && <p className="text-xs text-emerald-600 font-mono mt-0.5">{req.vendorCode}</p>}
@@ -589,11 +585,11 @@ export default function AdminConsole({ workflow, currentUser, activePage, onNavi
                 <span className="text-xs text-gray-400">
                   {visible.length === 0
                     ? 'No requests'
-                    : `Showing ${(reqPage - 1) * pageSize + 1}–${Math.min(reqPage * pageSize, visible.length)} of ${visible.length} request${visible.length !== 1 ? 's' : ''}`}
+                    : `Showing ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, visible.length)} of ${visible.length} request${visible.length !== 1 ? 's' : ''}`}
                 </span>
                 <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setReqPage(1) }} />
               </div>
-              <Pagination page={reqPage} totalPages={totalPages} onPageChange={setReqPage} />
+              <Pagination page={page} totalPages={totalPages} onPageChange={setReqPage} />
             </div>
           </div>
           )})()}

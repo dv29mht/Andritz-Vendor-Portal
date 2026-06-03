@@ -82,6 +82,16 @@ public class BuyerUpdateCompletedCommandHandler(
         if (entity.Status != VendorRequestStatus.Completed)
             throw new BadRequestException("Only Completed requests can be updated via this endpoint.");
 
+        // GST/PAN uniqueness — the updated values must not collide with another
+        // active (non-archived, non-rejected) request. Exclude self.
+        if (!string.IsNullOrWhiteSpace(request.GstNumber)
+            && await repo.GstNumberExistsAsync(request.GstNumber, entity.Id, ct))
+            throw new ConflictException("A request with this GST number already exists.");
+
+        if (!string.IsNullOrWhiteSpace(request.PanCard)
+            && await repo.PanCardExistsAsync(request.PanCard, entity.Id, ct))
+            throw new ConflictException("A request with this PAN number already exists.");
+
         var intermediate = entity.ApprovalSteps.Where(s => !s.IsFinalApproval).OrderBy(s => s.StepOrder).ToList();
         var staleNames = new List<string>();
         foreach (var step in intermediate)
@@ -98,7 +108,13 @@ public class BuyerUpdateCompletedCommandHandler(
             await ApprovalChainBuilder.ValidateApproversAsync(newIds, identity, ct);
 
             var finalStep = entity.ApprovalSteps.First(s => s.IsFinalApproval);
-            foreach (var s in intermediate) db.ApprovalSteps.Remove(s);
+            // Remove from the nav collection too, not just the DbSet — otherwise the
+            // returned DTO carries the stale (deleted) steps alongside the rebuilt ones.
+            foreach (var s in intermediate)
+            {
+                entity.ApprovalSteps.Remove(s);
+                db.ApprovalSteps.Remove(s);
+            }
 
             int stepOrder = 1;
             foreach (var aid in newIds)

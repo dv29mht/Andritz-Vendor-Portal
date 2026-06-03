@@ -71,6 +71,16 @@ public class AdminEditVendorRequestCommandHandler(
         if (entity.Status != VendorRequestStatus.Completed)
             throw new BadRequestException("Only completed (SAP-approved) requests can be edited by Admin.");
 
+        // GST/PAN uniqueness — the edited values must not collide with another
+        // active (non-archived, non-rejected) request. Exclude self.
+        if (!string.IsNullOrWhiteSpace(request.GstNumber)
+            && await repo.GstNumberExistsAsync(request.GstNumber, entity.Id, ct))
+            throw new ConflictException("A request with this GST number already exists.");
+
+        if (!string.IsNullOrWhiteSpace(request.PanCard)
+            && await repo.PanCardExistsAsync(request.PanCard, entity.Id, ct))
+            throw new ConflictException("A request with this PAN number already exists.");
+
         var input = new VendorFieldsInput(
             request.VendorName, request.ContactPerson, request.Telephone,
             request.GstNumber, request.PanCard, request.AddressDetails,

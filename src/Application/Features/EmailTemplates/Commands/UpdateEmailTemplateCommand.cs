@@ -19,7 +19,7 @@ public class UpdateEmailTemplateCommandValidator : AbstractValidator<UpdateEmail
     }
 }
 
-public class UpdateEmailTemplateCommandHandler(IApplicationDbContext db)
+public class UpdateEmailTemplateCommandHandler(IApplicationDbContext db, IEmailTemplateService templates)
     : IRequestHandler<UpdateEmailTemplateCommand, EmailTemplateDetailDto>
 {
     public async Task<EmailTemplateDetailDto> Handle(UpdateEmailTemplateCommand request, CancellationToken ct)
@@ -30,6 +30,7 @@ public class UpdateEmailTemplateCommandHandler(IApplicationDbContext db)
         t.Subject = request.Subject.Trim();
         t.BodyText = request.BodyText.TrimEnd();
         await db.SaveChangesAsync(ct);
+        templates.Invalidate(t.Code); // drop the cached copy so renders pick up the edit
 
         return new EmailTemplateDetailDto(
             t.Id, t.Code, t.Name, t.Audience, t.Subject, t.BodyText,

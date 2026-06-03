@@ -1,8 +1,12 @@
-import { HubConnectionBuilder, HttpTransportType, LogLevel } from '@microsoft/signalr'
+import { HubConnectionBuilder, HttpTransportType, LogLevel, HubConnectionState } from '@microsoft/signalr'
 
 // Singleton connection — one per browser tab.
 let connection = null
 let connectPromise = null
+// The live workflowChanged handler. Kept in a module variable (rather than captured
+// in the closure at build time) so a re-login rebinds the new session's callback even
+// if the underlying connection is reused.
+let currentHandler = null
 
 function resolveHubUrl() {
   // In dev, VITE_API_URL points at the local API; strip /api and append the hub path.
@@ -21,7 +25,25 @@ function resolveHubUrl() {
 }
 
 export function startNotifications(onWorkflowChanged) {
-  if (connection) return connectPromise
+  // Always adopt the latest session's callback.
+  currentHandler = onWorkflowChanged
+
+  // Reuse only a genuinely live connection. After a fast logout→login the previous
+  // connection may be mid-stop (Disconnecting/Disconnected) and wired to the old
+  // session; returning its promise would leave the new session with no live events
+  // and silently fall back to the 15s poll. Tear any non-live socket down and rebuild.
+  if (connection && connection.state === HubConnectionState.Connected) {
+    return connectPromise
+  }
+  if (connection && (connection.state === HubConnectionState.Connecting
+                  || connection.state === HubConnectionState.Reconnecting)) {
+    return connectPromise
+  }
+  if (connection) {
+    try { connection.stop() } catch { /* ignore */ }
+    connection = null
+    connectPromise = null
+  }
 
   connection = new HubConnectionBuilder()
     .withUrl(resolveHubUrl(), {
@@ -38,13 +60,13 @@ export function startNotifications(onWorkflowChanged) {
     .build()
 
   connection.on('workflowChanged', () => {
-    try { onWorkflowChanged?.() } catch (err) { console.error('[signalr] handler error', err) }
+    try { currentHandler?.() } catch (err) { console.error('[signalr] handler error', err) }
   })
 
   // After auto-reconnect, refetch state so we don't silently miss any
   // workflowChanged events that fired while we were offline.
   connection.onreconnected(() => {
-    try { onWorkflowChanged?.() } catch (err) { console.error('[signalr] reconnect handler error', err) }
+    try { currentHandler?.() } catch (err) { console.error('[signalr] reconnect handler error', err) }
   })
 
   connectPromise = connection.start().catch(err => {
@@ -56,6 +78,7 @@ export function startNotifications(onWorkflowChanged) {
 }
 
 export async function stopNotifications() {
+  currentHandler = null
   if (!connection) return
   try { await connection.stop() } catch { /* ignore */ }
   connection = null

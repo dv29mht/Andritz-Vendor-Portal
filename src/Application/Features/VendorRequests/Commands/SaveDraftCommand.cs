@@ -95,10 +95,16 @@ public class SaveDraftCommandHandler(
             var ids = request.ApproverUserIds.Distinct().ToList();
             await ApprovalChainBuilder.ValidateApproversAsync(ids, identity, ct);
 
-            // Remove existing intermediate steps and rebuild
+            // Remove existing intermediate steps and rebuild. Remove from the loaded
+            // nav collection too — db.ApprovalSteps.Remove alone leaves them attached
+            // to entity.ApprovalSteps, so the returned DTO (and any later read before
+            // reload) would surface the stale steps with the wrong StepOrder.
             var existingIntermediate = entity.ApprovalSteps.Where(s => !s.IsFinalApproval).ToList();
             foreach (var s in existingIntermediate)
+            {
+                entity.ApprovalSteps.Remove(s);
                 db.ApprovalSteps.Remove(s);
+            }
 
             int stepOrder = 1;
             foreach (var aid in ids)

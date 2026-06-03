@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { CheckBadgeIcon, StarIcon } from '@heroicons/react/24/solid'
 import { XMarkIcon, EyeIcon, CheckIcon, ClockIcon, ArchiveBoxIcon,
          UsersIcon, ArrowPathIcon, NoSymbolIcon, TrophyIcon, BuildingOfficeIcon,
@@ -17,6 +17,7 @@ import ClearFiltersButton from '../../../shared/components/ClearFiltersButton'
 import { useViewedRequests } from '../../notifications/hooks/useViewedRequests'
 import { buildStats, buildMonthlyData } from '../../../utils/statsUtils'
 import { exportRequestsToExcel, formatDateTime } from '../../../utils/exportUtils'
+import { matchesIstDateRange } from '../../../utils/dateFilter'
 
 const BAR_COLORS = ['#096fb3','#f59e0b','#10b981','#ef4444','#8b5cf6','#f97316','#06b6d4','#84cc16']
 
@@ -53,6 +54,11 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
     total:        myRequests.length,
     finalPending: queue.length,
   }
+
+  // buildMaterialData scans every request; it was being recomputed twice per render
+  // (chart data + per-bar <Cell> colours). Memoise so it runs once per data change.
+  const materialData = useMemo(() => buildMaterialData(workflow.requests), [workflow.requests])
+  const monthlyData  = useMemo(() => buildMonthlyData(workflow.requests), [workflow.requests])
 
   const [reviewing, setReviewing]           = useState(null)
   const [vendorCode, setVendorCode]         = useState('')
@@ -136,13 +142,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
     )
   }
 
-  const matchesDateRange = (req, dateFrom, dateTo) => {
-    if (!dateFrom && !dateTo) return true
-    const d = new Date(req.createdAt)
-    if (dateFrom && d < new Date(dateFrom)) return false
-    if (dateTo   && d > new Date(dateTo + 'T23:59:59')) return false
-    return true
-  }
+  const matchesDateRange = (req, dateFrom, dateTo) => matchesIstDateRange(req.createdAt, dateFrom, dateTo)
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
@@ -234,7 +234,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
               </div>
               <div className="px-2 py-4">
                 <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={buildMonthlyData(workflow.requests)} barSize={24} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                  <BarChart data={monthlyData} barSize={24} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
                     <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
@@ -252,7 +252,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
               </div>
               <div className="px-2 py-4">
                 <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={buildMaterialData(workflow.requests)} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
+                  <BarChart data={materialData} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
                     <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} domain={[0, 'dataMax+1']} />
                     <YAxis type="category" dataKey="name" width={130} axisLine={false} tickLine={false}
@@ -264,7 +264,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                     />
                     <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v) => [v, 'Requests']} />
                     <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={18}>
-                      {buildMaterialData(workflow.requests).map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                      {materialData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -278,7 +278,8 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
       {activePage === 'pending' && (() => {
         const filtered   = queue.filter(r => matchesSearch(r, queueSearch) && matchesDateRange(r, queueDateFrom, queueDateTo))
         const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
-        const paginated  = filtered.slice((queuePage - 1) * pageSize, queuePage * pageSize)
+        const page       = Math.min(queuePage, totalPages)
+        const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize)
         return (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -328,7 +329,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {paginated.map((req, idx) => {
-                    const serial = (queuePage - 1) * pageSize + idx + 1
+                    const serial = (page - 1) * pageSize + idx + 1
                     const intermediateSteps = req.approvalSteps.filter(s => !s.isFinalApproval)
                     const allIntermediate   = intermediateSteps.every(s => s.decision === 'Approved')
                     return (
@@ -387,10 +388,10 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
               </table>
               <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (queuePage - 1) * pageSize + 1}–{Math.min(queuePage * pageSize, filtered.length)} of {filtered.length}</span>
+                  <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} of {filtered.length}</span>
                   <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setQueuePage(1) }} />
                 </div>
-                <Pagination page={queuePage} totalPages={totalPages} onPageChange={setQueuePage} />
+                <Pagination page={page} totalPages={totalPages} onPageChange={setQueuePage} />
               </div>
             </div>
           )}
@@ -407,7 +408,8 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
         })
         const filtered   = byDecision.filter(r => matchesSearch(r, historySearch) && matchesDateRange(r, historyDateFrom, historyDateTo))
         const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
-        const paginated  = filtered.slice((historyPage - 1) * pageSize, historyPage * pageSize)
+        const page       = Math.min(historyPage, totalPages)
+        const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize)
         return (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -467,7 +469,7 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {paginated.map((req, idx) => {
-                    const serial     = (historyPage - 1) * pageSize + idx + 1
+                    const serial     = (page - 1) * pageSize + idx + 1
                     const step       = myStepFor(req)
                     const isApproved = step?.decision === 'Approved'
                     return (
@@ -512,10 +514,10 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
               </table>
               <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (historyPage - 1) * pageSize + 1}–{Math.min(historyPage * pageSize, filtered.length)} of {filtered.length}</span>
+                  <span className="text-xs text-gray-400">Showing {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} of {filtered.length}</span>
                   <PageSizeSelect value={pageSize} onChange={v => { setPageSize(v); setHistoryPage(1) }} />
                 </div>
-                <Pagination page={historyPage} totalPages={totalPages} onPageChange={setHistoryPage} />
+                <Pagination page={page} totalPages={totalPages} onPageChange={setHistoryPage} />
               </div>
             </div>
           )}

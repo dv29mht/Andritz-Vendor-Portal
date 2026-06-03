@@ -41,6 +41,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 // ── API plumbing ─────────────────────────────────────────────────────────────
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache(); // backs email-template + master-data dropdown caches
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // SignalR + transport-agnostic INotificationService implementation. Command

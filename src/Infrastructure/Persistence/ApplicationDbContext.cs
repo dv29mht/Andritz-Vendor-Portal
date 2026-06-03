@@ -52,5 +52,21 @@ public class ApplicationDbContext(
                     break;
             }
         }
+
+        // Stamp the soft-delete timestamp here, not at each call site. IsArchived and
+        // ArchivedAt would otherwise drift apart whenever a handler flips the flag but
+        // forgets the date — set it when archiving, clear it when restoring.
+        foreach (var entry in ChangeTracker.Entries<ISoftDelete>())
+        {
+            if (entry.State is not (EntityState.Added or EntityState.Modified)) continue;
+            if (entry.Entity.IsArchived)
+            {
+                if (entry.Entity.ArchivedAt is null) entry.Entity.ArchivedAt = now;
+            }
+            else
+            {
+                entry.Entity.ArchivedAt = null;
+            }
+        }
     }
 }

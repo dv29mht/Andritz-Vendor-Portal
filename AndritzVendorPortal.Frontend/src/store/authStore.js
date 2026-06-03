@@ -91,11 +91,17 @@ export const useAuthStore = create(
       },
 
       logout: async () => {
-        localStorage.removeItem('authToken')
-        localStorage.removeItem('csrfToken')
-        set({ currentUser: null, showWelcome: false })
+        // Hit the server while still authenticated so RevokeAllAsync actually runs —
+        // clearing the token first makes POST /auth/logout go out anonymous, the
+        // server skips revocation, and the old JWT stays valid until it expires.
+        // Clear local state afterwards regardless of the call's outcome.
         try { await authService.logout() }
         catch (err) { console.error('[authStore] logout failed:', err) }
+        finally {
+          localStorage.removeItem('authToken')
+          localStorage.removeItem('csrfToken')
+          set({ currentUser: null, showWelcome: false })
+        }
       },
 
       updateUser: (partial) =>
