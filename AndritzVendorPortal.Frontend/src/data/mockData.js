@@ -68,7 +68,6 @@ export const CITY_STATE_MAP = {
 
 // ── Users (maps to .NET Identity roles) ──────────────────────────────────────
 export const USERS = {
-  admin:        { id: 'admin-1',    name: 'Sunita Rao',     role: 'Admin',        email: 'sunita.rao@andritz.com' },
   buyer:        { id: 'buyer-1',    name: 'Vikram Nair',    role: 'Buyer',        email: 'vikram.nair@andritz.com' },
   approver:     { id: 'approver-1', name: 'Rajesh Kumar',   role: 'Approver',     email: 'rajesh.kumar@andritz.com' },
   finalApprover:{ id: 'final-1',    name: 'Pardeep Sharma', role: 'FinalApprover',email: 'pardeep.sharma@andritz.com' },

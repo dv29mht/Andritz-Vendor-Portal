@@ -71,10 +71,10 @@ export function exportRequestsToExcel(requests, filename = 'vendor_requests.xlsx
 }
 
 const ROLE_DISPLAY = {
-  Admin: 'Admin', Buyer: 'Buyer', Approver: 'Approver', FinalApprover: 'Final Approver',
+  Buyer: 'Buyer', Approver: 'Approver', FinalApprover: 'Final Approver',
 }
 const CONSOLE_LABEL = {
-  Admin: 'Admin Dashboard', Buyer: 'Buyer Console',
+  Buyer: 'Buyer Console',
   Approver: 'Approver Console', FinalApprover: 'Final Approver Console',
 }
 

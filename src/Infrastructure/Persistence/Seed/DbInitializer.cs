@@ -11,8 +11,10 @@ namespace AndritzVendorPortal.Infrastructure.Persistence.Seed;
 public static class DbInitializer
 {
     /// <summary>
-    /// Applies pending EF Core migrations and seeds roles plus the two system accounts
-    /// (Final Approver and Admin). Safe to call on every startup.
+    /// Applies pending EF Core migrations and seeds roles plus the single elevated
+    /// system account (Final Approver, which now also holds every former admin
+    /// capability). The legacy Admin account is archived if present. Safe to call
+    /// on every startup.
     /// </summary>
     public static async Task InitializeAsync(
         ApplicationDbContext db,

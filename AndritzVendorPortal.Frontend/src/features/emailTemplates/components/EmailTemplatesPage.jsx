@@ -12,8 +12,9 @@ const AUDIENCE_COLORS = {
   Buyer:           { bg: 'bg-blue-50',    text: 'text-blue-700',    ring: 'ring-blue-200'    },
   Approver:        { bg: 'bg-amber-50',   text: 'text-amber-700',   ring: 'ring-amber-200'   },
   'Final Approver':{ bg: 'bg-red-50',     text: 'text-red-700',     ring: 'ring-red-200'     },
-  Admin:           { bg: 'bg-violet-50',  text: 'text-violet-700',  ring: 'ring-violet-200'  },
 }
+// Neutral fallback for any audience not explicitly mapped above.
+const DEFAULT_AUDIENCE_COLOR = { bg: 'bg-violet-50', text: 'text-violet-700', ring: 'ring-violet-200' }
 
 export default function EmailTemplatesPage() {
   const [templates, setTemplates] = useState([])
@@ -130,7 +131,7 @@ export default function EmailTemplatesPage() {
                 </td></tr>
               )}
               {visible.map(t => {
-                const colors = AUDIENCE_COLORS[t.audience] ?? AUDIENCE_COLORS.Admin
+                const colors = AUDIENCE_COLORS[t.audience] ?? DEFAULT_AUDIENCE_COLOR
                 return (
                   <tr key={t.code} className="hover:bg-gray-50 transition-colors divide-x divide-gray-200">
                     <td className="px-4 py-3.5 align-top">

@@ -212,7 +212,18 @@ using (var scope = app.Services.CreateScope())
     var context = services.GetRequiredService<ApplicationDbContext>();
     var users = services.GetRequiredService<UserManager<ApplicationUser>>();
     var roles = services.GetRequiredService<RoleManager<IdentityRole>>();
-    var defaultPw = app.Configuration["Seed:DefaultAdminPassword"] ?? "Andritz@1234";
+    // No hardcoded fallback: the seed/recovery password must come from config
+    // (appsettings.json) or the Seed__DefaultAdminPassword environment variable.
+    // Fail fast if absent rather than ship a known default in source.
+    var defaultPw = app.Configuration["Seed:DefaultAdminPassword"];
+    if (string.IsNullOrWhiteSpace(defaultPw))
+    {
+        bootLogger.LogCritical("[Boot] Seed:DefaultAdminPassword is not configured. " +
+            "Set it in appsettings.json or the Seed__DefaultAdminPassword environment variable.");
+        throw new InvalidOperationException(
+            "Seed:DefaultAdminPassword is not configured " +
+            "(appsettings.json or Seed__DefaultAdminPassword env var).");
+    }
     await DbInitializer.InitializeAsync(context, users, roles, bootLogger, defaultPw);
     bootLogger.LogInformation("[Boot] Database migration + seed complete");
 }

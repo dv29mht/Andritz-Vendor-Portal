@@ -20,7 +20,7 @@ import { exportUsersToExcel } from '../../../utils/exportUtils'
 const ROLES = ['Buyer', 'Approver']
 
 const ROLE_DISPLAY = {
-  Admin: 'Admin', Buyer: 'Buyer', Approver: 'Approver', FinalApprover: 'Final Approver',
+  Buyer: 'Buyer', Approver: 'Approver', FinalApprover: 'Final Approver',
 }
 
 function formatDesignation(d) {
@@ -460,10 +460,10 @@ export default function UserManagement() {
   const [pageSize,   setPageSize]       = useState(10)
 
   const visible = users.filter(u => {
-    // Hide elevated/legacy accounts from the editable list: the single elevated
-    // account (FinalApprover) must not be able to archive or edit itself, and the
-    // decommissioned legacy Admin shouldn't appear.
-    if (u.roles.includes('Admin') || u.roles.includes('FinalApprover')) return false
+    // Hide the single elevated account from the editable list: the FinalApprover
+    // must not be able to archive or edit itself. (The decommissioned legacy Admin
+    // account is hidden separately by being archived with its roles stripped.)
+    if (u.roles.includes('FinalApprover')) return false
     const q = search.toLowerCase()
     const matchSearch = !q
       || u.fullName.toLowerCase().includes(q)

@@ -140,11 +140,11 @@ public static class EmailTemplateDefaults
 
         new Definition(
             EmailTemplateCodes.AdminNewVendorRequest,
-            "Admin – New Vendor Request Created",
-            "Admin",
+            "Final Approver – New Vendor Request Created",
+            "Final Approver",
             "New Vendor Registration Request Created",
             """
-            Dear Admin,
+            Dear Final Approver,
 
             A new Vendor Registration Request has been created in the system.
 
@@ -154,7 +154,7 @@ public static class EmailTemplateDefaults
             • Created By: [Buyer Name]
             • Submission Date: [Date & Time]
 
-            You can monitor the request status from the Admin Dashboard.
+            You can monitor the request status from the Final Approver Dashboard.
 
             Regards,
             Andritz Vendor Registration System
@@ -163,11 +163,11 @@ public static class EmailTemplateDefaults
 
         new Definition(
             EmailTemplateCodes.AdminVendorApproved,
-            "Admin – Vendor Approved Notification",
-            "Admin",
+            "Final Approver – Vendor Approved Notification",
+            "Final Approver",
             "Vendor Registration Successfully Approved",
             """
-            Dear Admin,
+            Dear Final Approver,
 
             A Vendor Registration Request has been successfully approved and completed.
 
