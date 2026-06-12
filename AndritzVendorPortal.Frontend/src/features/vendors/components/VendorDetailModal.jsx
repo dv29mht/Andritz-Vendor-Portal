@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   DocumentTextIcon, ClockIcon, PrinterIcon,
   CheckCircleIcon, XCircleIcon, ArrowRightIcon,
-  ArrowDownTrayIcon,
+  ArrowDownTrayIcon, EyeIcon, PaperClipIcon,
 } from '@heroicons/react/24/outline'
 import { CheckBadgeIcon } from '@heroicons/react/24/solid'
 import Modal from '../../../shared/components/Modal'
@@ -10,6 +10,47 @@ import StatusBadge from '../../../shared/components/StatusBadge'
 import ApprovalTimeline from '../../../shared/components/ApprovalTimeline'
 import clsx from 'clsx'
 import { useAuth } from '../../auth/hooks/useAuth'
+import { vendorsService } from '../services/vendorsService'
+
+// Document slots may be a single legacy data: URL string or a JSON array of { name, data }.
+function parseDocs(value) {
+  if (!value) return []
+  if (Array.isArray(value)) return value.filter(Boolean)
+  if (typeof value === 'string') {
+    const s = value.trim()
+    if (!s) return []
+    if (s.startsWith('[')) {
+      try { const a = JSON.parse(s); return Array.isArray(a) ? a.filter(d => d?.data) : [] }
+      catch { return [] }
+    }
+    if (s.startsWith('data:')) return [{ name: 'Document', data: s }]
+  }
+  return []
+}
+
+// Opens a stored document: PDFs/images in a new tab, everything else downloads.
+async function previewDoc(doc) {
+  if (!doc?.data) return
+  try {
+    const resp = await fetch(doc.data)
+    const blob = await resp.blob()
+    const url  = URL.createObjectURL(blob)
+    const mime = (blob.type || '').toLowerCase()
+    if (mime === 'application/pdf' || mime.startsWith('image/')) {
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } else {
+      const a = document.createElement('a')
+      a.href = url
+      a.download = doc.name || 'document'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  } catch {
+    window.open(doc.data, '_blank', 'noopener,noreferrer')
+  }
+}
 
 const TABS = [
   { id: 'details',   label: 'Details',          icon: DocumentTextIcon },
@@ -29,6 +70,17 @@ export default function VendorDetailModal({ request, onClose, initialTab = 'deta
   const req = { ...request, createdByName: liveCreatorName }
 
   const [activeTab, setActiveTab] = useState(initialTab)
+
+  // The list payload omits document blobs (for size); fetch the full record so the
+  // attached GST / PAN / bank documents are available to preview in the Details tab.
+  const [docs, setDocs] = useState(null)
+  useEffect(() => {
+    let alive = true
+    vendorsService.one(request.id)
+      .then(full => { if (alive && full) setDocs(full) })
+      .catch(() => { /* documents simply won't be available to preview */ })
+    return () => { alive = false }
+  }, [request.id])
 
   return (
     <Modal
@@ -86,7 +138,7 @@ export default function VendorDetailModal({ request, onClose, initialTab = 'deta
       </div>
 
       {/* Tab panels */}
-      {activeTab === 'details'   && <DetailsTab   request={req} />}
+      {activeTab === 'details'   && <DetailsTab   request={req} docs={docs} />}
       {activeTab === 'revisions' && <RevisionsTab request={req} />}
       {activeTab === 'preview'   && <PreviewTab   request={req} />}
     </Modal>
@@ -95,8 +147,16 @@ export default function VendorDetailModal({ request, onClose, initialTab = 'deta
 
 // ── Tab: Details ──────────────────────────────────────────────────────────────
 
-function DetailsTab({ request }) {
+function DetailsTab({ request, docs }) {
   const contact = request.contactPerson || request.contactInformation
+  // Prefer the full record (with document blobs) once it has loaded.
+  const docSource = docs ?? request
+  const docGroups = [
+    { label: 'GST Document',        files: parseDocs(docSource.gstDocument) },
+    { label: 'PAN Document',        files: parseDocs(docSource.panDocument) },
+    { label: 'Bank Document',       files: parseDocs(docSource.bankDocument1) },
+    { label: 'Additional Bank Doc', files: parseDocs(docSource.bankDocument2) },
+  ].filter(g => g.files.length > 0)
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-2 space-y-5">
@@ -135,7 +195,42 @@ function DetailsTab({ request }) {
         <InfoTable title="Contact" rows={[
           ['Contact Person', contact],
           ['Telephone',      request.telephone],
+          ['Email ID',       request.email],
         ]} />
+
+        {/* Attached documents — previewable by any viewer (buyer, approver, admin). */}
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5 pb-1.5 border-b border-gray-100">
+            Documents
+          </p>
+          {docGroups.length === 0 ? (
+            <p className="text-xs text-gray-400 italic py-1">
+              {docs === null ? 'Loading attachments…' : 'No documents attached.'}
+            </p>
+          ) : (
+            <ul className="space-y-1.5">
+              {docGroups.flatMap(g =>
+                g.files.map((file, i) => (
+                  <li key={`${g.label}-${i}`} className="flex items-center gap-2 rounded-lg bg-gray-50 ring-1 ring-gray-100 px-3 py-2">
+                    <PaperClipIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-700 truncate">{file.name || 'Document'}</p>
+                      <p className="text-[10px] text-gray-400">{g.label}{g.files.length > 1 ? ` (${i + 1} of ${g.files.length})` : ''}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => previewDoc(file)}
+                      className="flex items-center gap-1 rounded-md border border-gray-200 text-gray-600 text-xs font-semibold px-2.5 py-1 hover:bg-white hover:text-[#096fb3] transition-colors flex-shrink-0"
+                    >
+                      <EyeIcon className="h-3.5 w-3.5" />
+                      Preview
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
+          )}
+        </div>
 
         <InfoTable title="Submission" rows={[
           ['Submitted By',  request.createdByName],

@@ -202,37 +202,39 @@ public static class DbInitializer
             changes.Add(roleAdd.Succeeded ? $"role-added:{role}" : $"role-add-FAILED:{role}");
         }
 
-        // Force-reset password every boot regardless of whether the existing
-        // hash matches. If it matches, this is a transparent no-op for the
-        // user; if it has drifted, this restores it. Cheap insurance.
-        var token = await users.GeneratePasswordResetTokenAsync(existing);
-        var reset = await users.ResetPasswordAsync(existing, token, password);
-        if (!reset.Succeeded)
+        // Only set the seed password when the account has no usable password hash
+        // (e.g. a freshly-repaired record). NEVER overwrite an existing hash — doing
+        // so on every boot would silently revert any password the user changed
+        // themselves, so their new password stops working after the next restart.
+        if (!await users.HasPasswordAsync(existing))
         {
-            logger.LogError("[Seed] FORCE-RESET password failed for {Email}: {Errors}",
-                email, string.Join(", ", reset.Errors.Select(e => e.Description)));
-        }
-        else
-        {
-            changes.Add("password-force-reset");
+            var addPw = await users.AddPasswordAsync(existing, password);
+            if (!addPw.Succeeded)
+            {
+                logger.LogError("[Seed] AddPassword failed for {Email}: {Errors}",
+                    email, string.Join(", ", addPw.Errors.Select(e => e.Description)));
+            }
+            else
+            {
+                changes.Add("password-seeded");
+            }
         }
 
-        // Final verification — re-fetch and confirm the password hash actually
-        // accepts the seed password, so the log shows a definitive yes/no the
-        // seeded credentials work right now.
+        // Final verification — re-fetch and confirm role/account state. The password
+        // hash is intentionally left untouched when already set, so we no longer
+        // assert against the seed password here.
         var verify = await users.FindByEmailAsync(email);
-        var passwordOk = verify is not null && await users.CheckPasswordAsync(verify, password);
         logger.LogInformation(
             "[Seed] Repaired {Email}: changes=[{Changes}], roles=[{Roles}], " +
             "archived={Archived}, lockoutEnd={LockoutEnd}, failCount={FailCount}, " +
-            "passwordCheck={PasswordOk}",
+            "hasPassword={HasPassword}",
             email,
             changes.Count == 0 ? "none" : string.Join(", ", changes),
             verify is null ? "<missing>" : string.Join(",", await users.GetRolesAsync(verify)),
             verify?.IsArchived,
             verify?.LockoutEnd?.ToString("o") ?? "null",
             verify?.AccessFailedCount,
-            passwordOk ? "OK" : "FAIL");
+            verify is not null && await users.HasPasswordAsync(verify));
     }
 
     // Idempotently decommissions the legacy admin@andritz.com account now that the

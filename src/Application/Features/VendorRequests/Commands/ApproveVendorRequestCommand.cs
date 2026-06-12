@@ -62,8 +62,6 @@ public class ApproveVendorRequestCommandHandler(
         var summary = VendorRequestMapper.ToSummary(entity);
         var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
         var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
-        // Oversight copy to the elevated account (Final Approver, formerly the admin).
-        var admin = await identity.FindByEmailAsync(SystemAccounts.FinalApproverEmail);
 
         if (entity.Status == VendorRequestStatus.PendingFinalApproval)
         {
@@ -95,12 +93,12 @@ public class ApproveVendorRequestCommandHandler(
                 }
             }
 
-            // Buyer + admin: keep the existing intermediate-approval notice (StepApproved is
-            // not part of the editable template catalog — it's an internal progress ping).
+            // Buyer-only progress ping (StepApproved is not part of the editable template
+            // catalog — it's an internal progress notice). The admin/Final-Approver oversight
+            // copy was removed at the customer's request; the Final Approver already receives
+            // the actionable FinalApproverPending email above.
             var (saSubject, saBody) = LegacyEmailTemplates.StepApproved(summary, approvedBy, null, portalUrl);
             if (buyer is not null) await email.SendAsync(buyer.Email, saSubject, saBody, pdf);
-            if (admin is not null && !admin.IsArchived && admin.Email != buyer?.Email)
-                await email.SendAsync(admin.Email, saSubject, saBody, pdf);
         }
         else
         {
@@ -109,11 +107,11 @@ public class ApproveVendorRequestCommandHandler(
                 .OrderBy(s => s.StepOrder)
                 .FirstOrDefault();
 
-            // Buyer + admin: info-only progress ping (StepApproved is internal — not editable)
+            // Buyer-only info ping (StepApproved is internal — not editable). The admin/Final-Approver
+            // oversight copy was removed at the customer's request.
             var (infoSubj, infoBody) = LegacyEmailTemplates.StepApproved(summary, approvedBy, nextStep?.ApproverName, portalUrl);
             var infoRecipients = new HashSet<string>();
             if (buyer is not null) infoRecipients.Add(buyer.Email);
-            if (admin is not null && !admin.IsArchived) infoRecipients.Add(admin.Email);
             foreach (var r in infoRecipients) await email.SendAsync(r, infoSubj, infoBody, pdf);
 
             // Next approver: action-required with one-click approve/reject buttons

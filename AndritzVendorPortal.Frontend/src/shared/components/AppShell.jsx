@@ -91,7 +91,7 @@ export default function AppShell({ workflow, currentUser, onLogout, activePage, 
           )}
           {collapsed && (
             <img
-              src="/andritz-a.png"
+              src={`${import.meta.env.BASE_URL}andritz-a.png`}
               alt="Andritz"
               draggable={false}
               style={{

@@ -33,25 +33,76 @@ const EMPTY_FORM = {
   purchasingOrganization: '',
   vendorName: '', materialGroup: '', reason: '',
   isMsmeVendor: false, msmeCategory: '',
-  contactPerson: '', telephone: '',
+  contactPerson: '', telephone: '', email: '',
   gstNumber: '', panCard: '',
   addressDetails: '', postalCode: '', city: '', locality: '', state: '', country: 'IN',
   currency: 'INR', paymentTerms: '', incoterms: '', yearlyPvo: '',
   isOneTimeVendor: false, proposedBy: '',
   bankName: '', branchName: '', bankAccountNumber: '', ifscCode: '',
-  bankDocument1: null, bankDocument2: null, gstDocument: null, panDocument: null,
+  // Document slots each hold an ARRAY of { name, data } so a buyer can attach
+  // multiple files per category. Legacy single-string values are normalised on load.
+  bankDocument1: [], bankDocument2: [], gstDocument: [], panDocument: [],
 }
 
-const CURRENCIES    = ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'SGD', 'AED']
+// Full ISO 4217 currency list (includes NPR and every actively-traded world currency).
+const CURRENCIES = [
+  'AED','AFN','ALL','AMD','ANG','AOA','ARS','AUD','AWG','AZN','BAM','BBD','BDT','BGN','BHD',
+  'BIF','BMD','BND','BOB','BRL','BSD','BTN','BWP','BYN','BZD','CAD','CDF','CHF','CLP','CNY',
+  'COP','CRC','CUP','CVE','CZK','DJF','DKK','DOP','DZD','EGP','ERN','ETB','EUR','FJD','FKP',
+  'GBP','GEL','GHS','GIP','GMD','GNF','GTQ','GYD','HKD','HNL','HRK','HTG','HUF','IDR','ILS',
+  'INR','IQD','IRR','ISK','JMD','JOD','JPY','KES','KGS','KHR','KMF','KPW','KRW','KWD','KYD',
+  'KZT','LAK','LBP','LKR','LRD','LSL','LYD','MAD','MDL','MGA','MKD','MMK','MNT','MOP','MRU',
+  'MUR','MVR','MWK','MXN','MYR','MZN','NAD','NGN','NIO','NOK','NPR','NZD','OMR','PAB','PEN',
+  'PGK','PHP','PKR','PLN','PYG','QAR','RON','RSD','RUB','RWF','SAR','SBD','SCR','SDG','SEK',
+  'SGD','SHP','SLE','SOS','SRD','SSP','STN','SYP','SZL','THB','TJS','TMT','TND','TOP','TRY',
+  'TTD','TWD','TZS','UAH','UGX','USD','UYU','UZS','VES','VND','VUV','WST','XAF','XCD','XOF',
+  'XPF','YER','ZAR','ZMW','ZWL',
+]
 const INCOTERMS     = ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FAS','FOB','CFR','CIF']
 const PURCHASING_ORGS = ['900D', '900I', 'T20D', 'T20I']
 const MSME_CATEGORIES = ['Micro', 'Small', 'Medium']
 const ALL_LOCALITIES = [...new Set(Object.values(CITIES).flat())]
 
 const GST_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/
-const PAN_RE = /^[A-Z]{5}[0-9]{4}[A-Z]$/
-const IFSC_RE = /^[A-Z]{4}0[A-Z0-9]{6}$/
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const REASON_MAX = 500
+
+// GST accepts the 15-char Indian format OR "N/A" (import / foreign vendors with no GST).
+const isGstOrNa = (v) => {
+  const s = (v ?? '').trim()
+  if (!s) return false
+  if (/^n\/?a$/i.test(s)) return true
+  return GST_RE.test(s.toUpperCase())
+}
+
+// Purchasing-org suffix → vendor sourcing type. D = Domestic, I = Import.
+const sourcingType = (org) =>
+  !org ? null : /I$/.test(org) ? 'Import' : /D$/.test(org) ? 'Domestic' : null
+
+// Document slots store arrays of { name, data } where data is a base64 data: URL.
+// Older records persisted a single data: URL string; normalise both shapes to an array.
+function parseDocs(value) {
+  if (!value) return []
+  if (Array.isArray(value)) return value.filter(Boolean)
+  if (typeof value === 'string') {
+    const s = value.trim()
+    if (!s) return []
+    if (s.startsWith('[')) {
+      try { const a = JSON.parse(s); return Array.isArray(a) ? a.filter(d => d?.data) : [] }
+      catch { return [] }
+    }
+    if (s.startsWith('data:')) return [{ name: 'Document', data: s }]
+  }
+  return []
+}
+
+// Serialise a document array back to the string the backend column stores.
+// Empty → null so the backend keeps any previously-saved documents untouched.
+function serializeDocs(arr) {
+  const docs = (arr ?? []).filter(d => d?.data)
+  if (docs.length === 0) return null
+  return JSON.stringify(docs.map(d => ({ name: d.name || 'Document', data: d.data })))
+}
 
 // Reads a File into a base64 data URI for backend storage in an nvarchar(max) column.
 function readFileAsDataUrl(file) {
@@ -161,11 +212,43 @@ async function downloadTemplate() {
   URL.revokeObjectURL(url)
 }
 
-function FormSection({ title, children }) {
+// A small ON/OFF toggle switch used to enable/disable optional form sections.
+function ToggleSwitch({ enabled, onChange }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={enabled}
+      onClick={() => onChange(!enabled)}
+      className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#096fb3]/40 ${
+        enabled ? 'bg-[#096fb3]' : 'bg-gray-300'
+      }`}
+    >
+      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${enabled ? 'translate-x-5' : 'translate-x-1'}`} />
+    </button>
+  )
+}
+
+// `toggle`, when provided, renders an ON/OFF switch in the header. When OFF the
+// section's fields are hidden (and the caller skips their validation).
+function FormSection({ title, children, toggle }) {
+  const enabled = !toggle || toggle.enabled
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3 border-b border-gray-100 pb-1.5">{title}</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{children}</div>
+      <div className="flex items-center justify-between gap-3 mb-3 border-b border-gray-100 pb-1.5">
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{title}</p>
+        {toggle && (
+          <div className="flex items-center gap-2">
+            <span className={`text-[10px] font-semibold uppercase tracking-wider ${enabled ? 'text-[#096fb3]' : 'text-gray-400'}`}>
+              {enabled ? 'On' : 'Off'}
+            </span>
+            <ToggleSwitch enabled={enabled} onChange={toggle.onChange} />
+          </div>
+        )}
+      </div>
+      {enabled
+        ? <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{children}</div>
+        : <p className="text-xs text-gray-400 italic">This section is turned off — these fields will be left blank for this vendor.</p>}
     </div>
   )
 }
@@ -229,52 +312,75 @@ async function previewUploadedDoc(value) {
   }
 }
 
+// Multi-file upload with working drag-and-drop. `value` is an array of { name, data }.
+// onAdd receives a FileList (one or many files); onRemove receives the index to drop.
 function FileUploadField({
   label, required, value, error,
   accept = "image/*,application/pdf,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  span = 1, onPick, onClear,
+  span = 1, onAdd, onRemove,
 }) {
   const inputRef = useRef(null)
+  const [dragOver, setDragOver] = useState(false)
+  const docs = Array.isArray(value) ? value : (value ? [value] : [])
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setDragOver(false)
+    if (e.dataTransfer?.files?.length) onAdd(e.dataTransfer.files)
+  }
+
   return (
     <div className={span === 2 ? 'sm:col-span-2' : ''}>
       <label className="form-label">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
-      <div className="flex items-center gap-2 flex-wrap">
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() => inputRef.current?.click()}
-        >
-          <ArrowUpTrayIcon className="h-4 w-4" />
-          {value ? 'Replace File' : 'Choose File'}
-        </button>
-        {value && (
-          <>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => previewUploadedDoc(value)}
-              title="Preview — opens PDFs/images in a new tab, downloads other file types"
-            >
-              <EyeIcon className="h-4 w-4" />
-              Preview
-            </button>
-            <button type="button" className="text-gray-400 hover:text-red-500" onClick={onClear} title="Remove file">
-              <XMarkIcon className="h-4 w-4" />
-            </button>
-          </>
-        )}
+      <div
+        onClick={() => inputRef.current?.click()}
+        onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+        onDragLeave={e => { e.preventDefault(); setDragOver(false) }}
+        onDrop={handleDrop}
+        className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed px-4 py-4 text-center cursor-pointer transition-colors ${
+          dragOver ? 'border-[#096fb3] bg-[#096fb3]/5' : 'border-gray-300 hover:border-gray-400 bg-gray-50'
+        }`}
+      >
+        <ArrowUpTrayIcon className="h-5 w-5 text-gray-400" />
+        <p className="text-xs text-gray-500">
+          <span className="font-medium text-[#096fb3]">Click to upload</span> or drag &amp; drop
+        </p>
+        <p className="text-[10px] text-gray-400">You can attach multiple files (max 5 MB each)</p>
         <input
           ref={inputRef}
           type="file"
           accept={accept}
+          multiple
           className="hidden"
-          onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; onPick(f) }}
+          onChange={e => { const fl = e.target.files; e.target.value = ''; if (fl?.length) onAdd(fl) }}
         />
       </div>
-      {value && (
-        <p className="mt-1 text-xs text-gray-500 truncate">{value.name}</p>
+      {docs.length > 0 && (
+        <ul className="mt-2 space-y-1">
+          {docs.map((doc, i) => (
+            <li key={i} className="flex items-center gap-2 rounded-md bg-white ring-1 ring-gray-200 px-2.5 py-1.5">
+              <span className="flex-1 min-w-0 truncate text-xs text-gray-600">{doc.name || 'Document'}</span>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-[#096fb3]"
+                onClick={(e) => { e.stopPropagation(); previewUploadedDoc(doc) }}
+                title="Preview — opens PDFs/images in a new tab, downloads other file types"
+              >
+                <EyeIcon className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-red-500"
+                onClick={(e) => { e.stopPropagation(); onRemove(i) }}
+                title="Remove file"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
       {error && <p data-field-error="" className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
@@ -494,6 +600,10 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const [revDateFrom, setRevDateFrom]               = useState('')
   const [revDateTo, setRevDateTo]                   = useState('')
   const [showNoApproverConfirm, setShowNoApproverConfirm] = useState(false)
+  // Item 13 — ON/OFF toggles for the Taxation and Financial/Bank sections. When OFF
+  // the section's fields are hidden and excluded from validation + submission.
+  const [taxEnabled, setTaxEnabled]   = useState(true)
+  const [bankEnabled, setBankEnabled] = useState(true)
 
   const [pageSize, setPageSize] = useState(10)
   // Buyer dashboard "My Requests" chart filter — 'weekly' | 'monthly' | 'custom'
@@ -567,11 +677,10 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         if (!parsed.telephone.trim())      errs.push('Telephone is required.')
         else if (!/^[0-9+\-()\s]+$/.test(parsed.telephone.trim()))
           errs.push('Telephone / Mobile should contain only digits, spaces, and +, -, (, ) characters.')
-        if (!parsed.gstNumber.trim())      errs.push('GST Number is required.')
-        else if (!GST_RE.test(parsed.gstNumber.trim()))
-          errs.push('GST Number format is invalid (expected: 22AAAAA0000A1Z5).')
-        if (parsed.panCard.trim() && !PAN_RE.test(parsed.panCard.trim()))
-          errs.push('PAN Card format is invalid (expected: ABCDE1234F).')
+        if (!parsed.gstNumber.trim())      errs.push('GST Number is required (enter N/A if the vendor has none).')
+        else if (!isGstOrNa(parsed.gstNumber))
+          errs.push('GST Number format is invalid (expected: 22AAAAA0000A1Z5, or N/A for import / foreign vendors).')
+        // PAN format validation removed — other countries use different formats.
         if (!parsed.addressDetails.trim()) errs.push('Address Details is required.')
         if (!parsed.postalCode.trim())     errs.push('Postal Code is required.')
         if (!parsed.country)               errs.push('Country is required.')
@@ -588,9 +697,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         if (!parsed.bankName.trim())       errs.push('Bank Name is required.')
         if (!parsed.branchName.trim())     errs.push('Branch Name is required.')
         if (!parsed.bankAccountNumber.trim()) errs.push('Bank Account Number is required.')
-        if (!parsed.ifscCode.trim())       errs.push('IFSC Code is required.')
-        else if (!IFSC_RE.test(parsed.ifscCode.trim().toUpperCase()))
-          errs.push('IFSC Code format is invalid (expected: SBIN0001234, 11 characters).')
+        // IFSC Code is optional (not every country has one) — no format validation.
 
         if (errs.length) {
           setImportErrors(errs)
@@ -635,19 +742,32 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     setForm(EMPTY_FORM)
     setSelectedApprovers([])
     setChainNeedsRebuild(false)
+    setTaxEnabled(true)
+    setBankEnabled(true)
     setErrors({})
     setApiError(null)
     setShowForm(true)
   }
 
-  const setFile = async (field, file) => {
-    if (!file) { set(field, null); return }
-    if (file.size > 5 * 1024 * 1024) {
-      setToast({ type: 'error', title: 'File too large', body: `${file.name} exceeds the 5 MB limit. Please upload a smaller file.` })
-      return
+  // Append one or more picked/dropped files to a document slot (each slot is an array).
+  const addFiles = async (field, fileList) => {
+    const files = Array.from(fileList || [])
+    const accepted = []
+    for (const file of files) {
+      if (file.size > 5 * 1024 * 1024) {
+        setToast({ type: 'error', title: 'File too large', body: `${file.name} exceeds the 5 MB limit and was skipped.` })
+        continue
+      }
+      const dataUrl = await readFileAsDataUrl(file)
+      accepted.push({ name: file.name, data: dataUrl })
     }
-    const dataUrl = await readFileAsDataUrl(file)
-    set(field, { name: file.name, data: dataUrl })
+    if (accepted.length === 0) return
+    setForm(f => ({ ...f, [field]: [...(Array.isArray(f[field]) ? f[field] : []), ...accepted] }))
+    setErrors(prev => { if (!prev[field]) return prev; const n = { ...prev }; delete n[field]; return n })
+  }
+
+  const removeFileAt = (field, index) => {
+    setForm(f => ({ ...f, [field]: (Array.isArray(f[field]) ? f[field] : []).filter((_, i) => i !== index) }))
   }
 
   const openEdit = async (listReq) => {
@@ -699,6 +819,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       msmeCategory:   req.msmeCategory   ?? '',
       contactPerson:  req.contactPerson  || req.contactInformation || '',
       telephone:      req.telephone      ?? '',
+      email:          req.email          ?? '',
       gstNumber:      req.gstNumber      ?? '',
       panCard:        req.panCard        ?? '',
       addressDetails: req.addressDetails ?? '',
@@ -717,11 +838,15 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       branchName:         req.branchName         ?? '',
       bankAccountNumber:  req.bankAccountNumber  ?? '',
       ifscCode:           req.ifscCode           ?? '',
-      bankDocument1: req.bankDocument1 ? { name: 'Bank document (saved)', data: req.bankDocument1, existing: true } : null,
-      bankDocument2: req.bankDocument2 ? { name: 'Bank document 2 (saved)', data: req.bankDocument2, existing: true } : null,
-      gstDocument:   req.gstDocument   ? { name: 'GST document (saved)',   data: req.gstDocument,   existing: true } : null,
-      panDocument:   req.panDocument   ? { name: 'PAN document (saved)',   data: req.panDocument,   existing: true } : null,
+      bankDocument1: parseDocs(req.bankDocument1),
+      bankDocument2: parseDocs(req.bankDocument2),
+      gstDocument:   parseDocs(req.gstDocument),
+      panDocument:   parseDocs(req.panDocument),
     })
+    // Editing an existing vendor: default both optional sections ON so populated
+    // fields stay visible. The buyer can toggle either off again if not applicable.
+    setTaxEnabled(true)
+    setBankEnabled(true)
     setErrors({})
     setApiError(null)
     setShowForm(true)
@@ -736,9 +861,15 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     if (form.isMsmeVendor && !form.msmeCategory) e.msmeCategory = 'Select MSME Category (Micro, Small, or Medium).'
     if (!form.contactPerson.trim())  e.contactPerson  = 'Contact person is required.'
     if (!form.telephone.trim())      e.telephone      = 'Telephone is required.'
-    if (!form.gstNumber.trim())      e.gstNumber      = 'GST Number is required.'
-    else if (!GST_RE.test(form.gstNumber.trim())) e.gstNumber = 'GST must be in the format 22AAAAA0000A1Z5 (15 characters).'
-    if (form.panCard.trim() && !PAN_RE.test(form.panCard.trim())) e.panCard = 'PAN must be in the format ABCDE1234F (10 characters).'
+    // Email is optional, but if provided it must look like an email address.
+    if (form.email.trim() && !EMAIL_RE.test(form.email.trim())) e.email = 'Enter a valid email address (e.g. name@company.com).'
+    // Taxation section (toggle): GST + GST document required only when the section is ON.
+    if (taxEnabled) {
+      if (!form.gstNumber.trim())      e.gstNumber      = 'GST Number is required — enter N/A if the vendor has none.'
+      else if (!isGstOrNa(form.gstNumber)) e.gstNumber = 'GST must be 22AAAAA0000A1Z5 (15 characters), or N/A for import / foreign vendors.'
+      if (!form.gstDocument || form.gstDocument.length === 0) e.gstDocument = 'GST document upload is required.'
+    }
+    // PAN format validation removed (item 10) — different countries use different formats.
     if (!form.addressDetails.trim()) e.addressDetails = 'Address is required.'
     if (!form.postalCode.trim())     e.postalCode     = 'Postal Code is required.'
     if (!form.country)               e.country        = 'Country is required.'
@@ -746,13 +877,14 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     if (!form.city.trim())           e.city           = 'City is required.'
     if (!form.currency)              e.currency       = 'Currency is required.'
     if (!form.incoterms)             e.incoterms      = 'Incoterms is required.'
-    if (!form.bankName.trim())       e.bankName       = 'Bank Name is required.'
-    if (!form.branchName.trim())     e.branchName     = 'Branch Name is required.'
-    if (!form.bankAccountNumber.trim()) e.bankAccountNumber = 'Bank Account Number is required.'
-    if (!form.ifscCode.trim())       e.ifscCode       = 'IFSC Code is required.'
-    else if (!IFSC_RE.test(form.ifscCode.trim().toUpperCase())) e.ifscCode = 'IFSC must be 11 characters (e.g. SBIN0001234).'
-    if (!form.gstDocument)           e.gstDocument    = 'GST document upload is required.'
-    if (!form.bankDocument1)         e.bankDocument1  = 'Bank document upload is required.'
+    // Financial / Bank section (toggle): required only when the section is ON.
+    // IFSC is always optional (item 11) — not every country has it.
+    if (bankEnabled) {
+      if (!form.bankName.trim())       e.bankName       = 'Bank Name is required.'
+      if (!form.branchName.trim())     e.branchName     = 'Branch Name is required.'
+      if (!form.bankAccountNumber.trim()) e.bankAccountNumber = 'Bank Account Number is required.'
+      if (!form.bankDocument1 || form.bankDocument1.length === 0) e.bankDocument1 = 'Bank document upload is required.'
+    }
     // approvers: warn only if chain rebuild is required (stale approver case)
     if (chainNeedsRebuild && selectedApprovers.length === 0)
       e.approvers = 'The original approval chain has stale approvers — please select at least one approver to rebuild the chain.'
@@ -767,6 +899,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       vendorName:     editingRequest.vendorName     ?? '',
       contactPerson:  editingRequest.contactPerson  || editingRequest.contactInformation || '',
       telephone:      editingRequest.telephone      ?? '',
+      email:          editingRequest.email          ?? '',
       gstNumber:      editingRequest.gstNumber      ?? '',
       panCard:        editingRequest.panCard        ?? '',
       addressDetails: editingRequest.addressDetails ?? '',
@@ -785,7 +918,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       isOneTimeVendor:editingRequest.isOneTimeVendor ?? false,
     }
     const strFields = [
-      'vendorName','contactPerson','telephone','gstNumber','panCard',
+      'vendorName','contactPerson','telephone','email','gstNumber','panCard',
       'addressDetails','postalCode','city','locality','state','country',
       'currency','paymentTerms','incoterms','materialGroup','reason',
       'yearlyPvo','proposedBy',
@@ -794,10 +927,25 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     const newExtFields = ['purchasingOrganization','msmeCategory','bankName','branchName','bankAccountNumber','ifscCode']
     const hasExtChange = newExtFields.some(f => (form[f] ?? '') !== (editingRequest[f] ?? ''))
     const docFields = ['bankDocument1','bankDocument2','gstDocument','panDocument']
-    const hasDocChange = docFields.some(f => !!form[f] && !form[f]?.existing)
+    const hasDocChange = docFields.some(f => serializeDocs(form[f]) !== serializeDocs(parseDocs(editingRequest[f])))
     return hasStrChange || hasExtChange || hasDocChange
         || (form.isOneTimeVendor ?? false) !== (original.isOneTimeVendor ?? false)
   }
+
+  // Builds the API payload from the form, honouring the Taxation / Financial toggles
+  // (a disabled section submits blank values) and serialising each multi-file document
+  // slot to the string the backend column stores.
+  const buildFormPayload = () => ({
+    ...form,
+    country: Country.getCountryByCode(form.country)?.name ?? form.country,
+    email: form.email?.trim() || null,
+    ...(taxEnabled  ? {} : { gstNumber: '', panCard: '' }),
+    ...(bankEnabled ? {} : { bankName: '', branchName: '', bankAccountNumber: '', ifscCode: '' }),
+    bankDocument1: bankEnabled ? serializeDocs(form.bankDocument1) : null,
+    bankDocument2: bankEnabled ? serializeDocs(form.bankDocument2) : null,
+    gstDocument:   taxEnabled  ? serializeDocs(form.gstDocument)   : null,
+    panDocument:   taxEnabled  ? serializeDocs(form.panDocument)   : null,
+  })
 
   const handleSubmitForm = async (skipApproverConfirm = false) => {
     const e = validate()
@@ -829,19 +977,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
     setSubmitting(true)
     setApiError(null)
-    const docFor = (slot) => {
-      if (!slot) return null
-      // Already-saved documents come back with `existing: true`; don't resend them as new uploads.
-      return slot.existing ? null : slot.data
-    }
-    const payload = {
-      ...form,
-      country: Country.getCountryByCode(form.country)?.name ?? form.country,
-      bankDocument1: docFor(form.bankDocument1),
-      bankDocument2: docFor(form.bankDocument2),
-      gstDocument:   docFor(form.gstDocument),
-      panDocument:   docFor(form.panDocument),
-    }
+    const payload = buildFormPayload()
     try {
       if (editingRequest && editingRequest.status === 'Completed') {
         const name = editingRequest.vendorName
@@ -926,15 +1062,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const handleSaveDraft = async () => {
     setSavingDraft(true)
     setApiError(null)
-    const docFor = (slot) => (!slot || slot.existing) ? null : slot.data
-    const payload = {
-      ...form,
-      country: Country.getCountryByCode(form.country)?.name ?? form.country,
-      bankDocument1: docFor(form.bankDocument1),
-      bankDocument2: docFor(form.bankDocument2),
-      gstDocument:   docFor(form.gstDocument),
-      panDocument:   docFor(form.panDocument),
-    }
+    const payload = buildFormPayload()
     try {
       const name = form.vendorName?.trim() || 'Untitled Draft'
       await workflow.saveDraft(payload, selectedApprovers, editingRequest?.status === 'Draft' ? editingRequest.id : null)
@@ -1675,13 +1803,33 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
           <div className="space-y-6">
             <FormSection title="Purchasing Scope">
-              <Field label="Purchasing Organization" required error={errors.purchasingOrganization} span={2}>
+              <Field
+                label="Purchasing Organization"
+                required
+                error={errors.purchasingOrganization}
+                span={2}
+                hint="Suffix D = Domestic vendor · I = Import vendor"
+              >
                 <select className="form-input"
                   value={form.purchasingOrganization}
                   onChange={e => set('purchasingOrganization', e.target.value)}>
                   <option value="">Select Purchasing Organization</option>
-                  {PURCHASING_ORGS.map(o => <option key={o} value={o}>{o}</option>)}
+                  {PURCHASING_ORGS.map(o => (
+                    <option key={o} value={o}>
+                      {o} — {sourcingType(o)}
+                    </option>
+                  ))}
                 </select>
+                {sourcingType(form.purchasingOrganization) && (
+                  <span className={`mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${
+                    sourcingType(form.purchasingOrganization) === 'Import'
+                      ? 'bg-amber-50 text-amber-700 ring-amber-200'
+                      : 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                  }`}>
+                    {sourcingType(form.purchasingOrganization)} vendor
+                    {sourcingType(form.purchasingOrganization) === 'Import' && ' — GST may be entered as N/A'}
+                  </span>
+                )}
               </Field>
             </FormSection>
 
@@ -1823,12 +1971,15 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               </Field>
             </FormSection>
 
-            <FormSection title="Tax Identification">
-              <Field label="GST Number" required error={errors.gstNumber}>
-                <input className="form-input font-mono uppercase tracking-wider" placeholder="e.g. 27AABCT1332L1ZV"
+            <FormSection
+              title="Tax Identification"
+              toggle={{ enabled: taxEnabled, onChange: setTaxEnabled }}
+            >
+              <Field label="GST Number" required error={errors.gstNumber} hint='Enter "N/A" for import / foreign vendors with no GST'>
+                <input className="form-input font-mono uppercase tracking-wider" placeholder="e.g. 27AABCT1332L1ZV or N/A"
                   value={form.gstNumber} onChange={e => set('gstNumber', e.target.value.toUpperCase())} />
               </Field>
-              <Field label="PAN Card" error={errors.panCard} hint="Optional">
+              <Field label="PAN Card" error={errors.panCard} hint="Optional — any format">
                 <input className="form-input font-mono uppercase tracking-wider" placeholder="e.g. AABCT1332L"
                   value={form.panCard} onChange={e => set('panCard', e.target.value.toUpperCase())} />
               </Field>
@@ -1837,19 +1988,22 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 required
                 value={form.gstDocument}
                 error={errors.gstDocument}
-                onPick={f => setFile('gstDocument', f)}
-                onClear={() => set('gstDocument', null)}
+                onAdd={fl => addFiles('gstDocument', fl)}
+                onRemove={i => removeFileAt('gstDocument', i)}
               />
               <FileUploadField
                 label="PAN Document Upload (optional)"
                 value={form.panDocument}
                 error={errors.panDocument}
-                onPick={f => setFile('panDocument', f)}
-                onClear={() => set('panDocument', null)}
+                onAdd={fl => addFiles('panDocument', fl)}
+                onRemove={i => removeFileAt('panDocument', i)}
               />
             </FormSection>
 
-            <FormSection title="Financial / Bank Details">
+            <FormSection
+              title="Financial / Bank Details"
+              toggle={{ enabled: bankEnabled, onChange: setBankEnabled }}
+            >
               <Field label="Bank Name" required error={errors.bankName}>
                 <input className="form-input" placeholder="e.g. State Bank of India"
                   value={form.bankName} onChange={e => set('bankName', e.target.value)} />
@@ -1863,8 +2017,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   value={form.bankAccountNumber}
                   onChange={e => set('bankAccountNumber', e.target.value.replace(/[^0-9A-Za-z]/g, ''))} />
               </Field>
-              <Field label="IFSC Code" required error={errors.ifscCode}>
-                <input className="form-input font-mono uppercase tracking-wider" placeholder="e.g. SBIN0001234" maxLength={11}
+              <Field label="IFSC / Bank Code" error={errors.ifscCode} hint="Optional — not every country uses IFSC">
+                <input className="form-input font-mono uppercase tracking-wider" placeholder="e.g. SBIN0001234"
                   value={form.ifscCode}
                   onChange={e => set('ifscCode', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} />
               </Field>
@@ -1873,15 +2027,15 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 required
                 value={form.bankDocument1}
                 error={errors.bankDocument1}
-                onPick={f => setFile('bankDocument1', f)}
-                onClear={() => set('bankDocument1', null)}
+                onAdd={fl => addFiles('bankDocument1', fl)}
+                onRemove={i => removeFileAt('bankDocument1', i)}
               />
               <FileUploadField
                 label="Additional Bank Document (optional)"
                 value={form.bankDocument2}
                 error={errors.bankDocument2}
-                onPick={f => setFile('bankDocument2', f)}
-                onClear={() => set('bankDocument2', null)}
+                onAdd={fl => addFiles('bankDocument2', fl)}
+                onRemove={i => removeFileAt('bankDocument2', i)}
               />
             </FormSection>
 
@@ -1895,6 +2049,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 <input className="form-input" placeholder="e.g. 9876543210" inputMode="numeric"
                   value={form.telephone}
                   onChange={e => set('telephone', e.target.value.replace(/[^0-9+\-() ]/g, ''))} />
+              </Field>
+              <Field label="Email ID" error={errors.email} span={2} hint="Optional — vendor contact email">
+                <input className="form-input" type="email" placeholder="e.g. accounts@vendor.com" inputMode="email"
+                  value={form.email}
+                  onChange={e => set('email', e.target.value)} />
               </Field>
             </FormSection>
 

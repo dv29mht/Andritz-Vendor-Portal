@@ -48,7 +48,7 @@ export default function WelcomeScreen({ user, onDone }) {
       >
         <div className="text-center mb-10">
           <img
-            src="/andritz-logo.png"
+            src={`${import.meta.env.BASE_URL}andritz-logo.png`}
             alt="Andritz"
             className="h-10 w-auto mx-auto mb-3"
             style={{ filter: 'brightness(0) invert(1)' }}

@@ -47,10 +47,9 @@ public class AdminEditVendorRequestCommandValidator : AbstractValidator<AdminEdi
     {
         RuleFor(x => x.VendorName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.ContactPerson).NotEmpty().MaximumLength(100);
-        RuleFor(x => x.GstNumber).NotEmpty().Matches(ValidationPatterns.Gst).WithMessage(ValidationPatterns.GstError);
-        RuleFor(x => x.PanCard)
-            .Matches(ValidationPatterns.Pan).WithMessage(ValidationPatterns.PanError)
-            .When(x => !string.IsNullOrWhiteSpace(x.PanCard));
+        // GST may be a 15-char Indian GST number or "N/A" for import / foreign vendors.
+        RuleFor(x => x.GstNumber).Must(ValidationPatterns.IsGstOrNa).WithMessage(ValidationPatterns.GstError);
+        // PAN format validation removed — other countries use different formats. PAN is free-text optional.
         RuleFor(x => x.AddressDetails).NotEmpty().MaximumLength(500);
         RuleFor(x => x.City).NotEmpty().MaximumLength(100);
     }

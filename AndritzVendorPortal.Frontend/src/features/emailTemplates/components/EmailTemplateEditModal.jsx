@@ -216,7 +216,7 @@ export default function EmailTemplateEditModal({ template, onClose, onSaved }) {
                   <div className="rounded-xl ring-1 ring-gray-200 overflow-hidden bg-white">
                     <div className="px-6 pt-6 pb-4 bg-white flex items-center gap-3">
                       <img
-                        src="/andritz-logo.png"
+                        src={`${import.meta.env.BASE_URL}andritz-logo.png`}
                         alt="Andritz"
                         className="block flex-shrink-0"
                         style={{ height: 24, width: 'auto' }}

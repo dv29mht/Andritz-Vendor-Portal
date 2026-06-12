@@ -6,7 +6,7 @@
 export default function AndritzLogo({ white = false, className = '', style = {} }) {
   return (
     <img
-      src="/andritz-logo.png"
+      src={`${import.meta.env.BASE_URL}andritz-logo.png`}
       alt="Andritz"
       className={className}
       style={{ ...(white ? { filter: 'brightness(0) invert(1)' } : {}), ...style }}

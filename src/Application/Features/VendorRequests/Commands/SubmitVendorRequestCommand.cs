@@ -43,18 +43,12 @@ public class SubmitVendorRequestCommandHandler(
 
         await db.SaveChangesAsync(ct);
 
-        // Notifications — buyer + first approver + admin
+        // Notifications — only the approver who must act receives an email.
+        // The buyer's submission-confirmation email and the admin/Final-Approver
+        // oversight copy were removed at the customer's request (the in-app
+        // notification bell still covers both of them).
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
         var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
-
-        var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
-        if (buyer is not null)
-        {
-            var values = EmailValues.ForVendor(entity, clock.UtcNow, recipientName: buyer.FullName);
-            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "Track Request");
-            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.BuyerRequestSubmitted, values, ct, footer);
-            await email.SendAsync(buyer.Email, s, b);
-        }
 
         var firstStep = entity.ApprovalSteps
             .Where(s => hasIntermediate ? !s.IsFinalApproval : s.IsFinalApproval)
@@ -91,17 +85,6 @@ public class SubmitVendorRequestCommandHandler(
                 var (s, b) = await templates.RenderAsync(code, values, ct, footer);
                 await email.SendAsync(approver.Email, s, b, pdf);
             }
-        }
-
-        // Oversight copy to the elevated account (Final Approver, who now also holds
-        // every former admin capability). Skipped when it would duplicate the buyer.
-        var admin = await identity.FindByEmailAsync(SystemAccounts.FinalApproverEmail);
-        if (admin is not null && !admin.IsArchived && admin.Email != buyer?.Email)
-        {
-            var values = EmailValues.ForVendor(entity, clock.UtcNow, buyerName: entity.CreatedByName);
-            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "View in Admin Dashboard");
-            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.AdminNewVendorRequest, values, ct, footer);
-            await email.SendAsync(admin.Email, s, b, pdf);
         }
 
         return VendorRequestMapper.ToDetailDto(entity);
