@@ -1,25 +1,27 @@
 import axios from 'axios'
 import { useUIStore } from '../store/uiStore'
 
-const productionApiUrl = 'https://andritz-vendor-portal-production.up.railway.app/api'
+// Fallback for a dev server (`npm run dev`) when VITE_API_URL isn't set:
+// the dockerized API from docker-compose.yml, served under /SOT.
+const devFallbackApiUrl = 'http://localhost:8080/SOT/api'
 
 // In production, use a same-origin base URL so every request goes to
-// {BASE_URL}api/... on the same origin. BASE_URL is "/" for Railway and
-// "/SOT/" for the office IIS sub-app build (set by vite.config.js `base`).
+// {BASE_URL}api/... on the same origin. BASE_URL is "/SOT/" for the office IIS
+// sub-app build / local docker stack (set by vite.config.js `base`).
 // Same-origin means the auth cookie + JWT both stay first-party.
 //
-// In dev, fall back to the production Railway URL directly (or VITE_API_URL
-// for a local backend). VITE_API_URL is only honoured in dev so local
-// development can target a local server.
+// In dev, fall back to the dockerized local API (or VITE_API_URL for a custom
+// backend). VITE_API_URL is only honoured in dev so local development can
+// target a local server.
 const baseURL = import.meta.env.DEV
-  ? (import.meta.env.VITE_API_URL ?? productionApiUrl)
+  ? (import.meta.env.VITE_API_URL ?? devFallbackApiUrl)
   : `${import.meta.env.BASE_URL}api`
 
 if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
   console.warn(
-    '[api] VITE_API_URL is not set — dev requests will go to the PRODUCTION backend (%s). ' +
-    'Set VITE_API_URL in .env.local to point at your local server.',
-    productionApiUrl
+    '[api] VITE_API_URL is not set — dev requests will go to the local docker API (%s). ' +
+    'Set VITE_API_URL in .env.local to point at a different server.',
+    devFallbackApiUrl
   )
 }
 
@@ -29,10 +31,10 @@ const api = axios.create({
 })
 
 // Read the JWT token stored in localStorage at login time.
-// Vercel proxy rewrites forward request headers (including Authorization) to the
-// backend, but do not reliably forward httpOnly Set-Cookie response headers back to
+// A reverse proxy may forward request headers (including Authorization) to the
+// backend but not reliably forward httpOnly Set-Cookie response headers back to
 // the browser — so we cannot rely on the auth_token cookie being set. Sending the
-// JWT as a Bearer token in the Authorization header works through the proxy.
+// JWT as a Bearer token in the Authorization header works through any proxy.
 function getToken() {
   return localStorage.getItem('authToken') ?? ''
 }

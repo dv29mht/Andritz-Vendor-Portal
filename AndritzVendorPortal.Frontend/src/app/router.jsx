@@ -15,7 +15,7 @@ import { ROLES } from '../shared/constants/roles'
 // active sub-page from the URL pathname.
 //
 // basename comes from Vite's BASE_URL (set by `base` in vite.config.js):
-// "/" for Railway/local, "/SOT/" for the office IIS sub-app build. React
+// "/" for plain root hosting, "/SOT/" for the office IIS sub-app / docker build. React
 // Router wants no trailing slash, so we strip it; pass undefined when there
 // is no sub-path so router internals stay on the default fast path.
 const basename = import.meta.env.BASE_URL === '/'

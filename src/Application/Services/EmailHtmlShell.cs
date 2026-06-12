@@ -19,7 +19,7 @@ public static class EmailHtmlShell
     /// <param name="plainBody">Plain text body (bullets, label-value rows, paragraphs).</param>
     /// <param name="actionFooterHtml">Pre-built CTA buttons.</param>
     /// <param name="portalUrl">
-    /// Public base URL of the portal (e.g. https://andritz-vendor-portal-production.up.railway.app).
+    /// Public base URL of the portal (e.g. https://qnfsms025.andritz.com/SOT).
     /// Used to build an absolute <c>&lt;img src&gt;</c> for the wordmark logo, which Outlook
     /// and other Microsoft clients will load (they strip data: URIs and inline SVG).
     /// </param>
@@ -72,7 +72,7 @@ public static class EmailHtmlShell
         // PNG on a white header band (Outlook strips CSS filters, so we can't
         // recolour it to white at render time).
         var baseUrl = string.IsNullOrWhiteSpace(portalUrl)
-            ? "https://andritz-vendor-portal-production.up.railway.app"
+            ? "https://qnfsms025.andritz.com/SOT"
             : portalUrl.TrimEnd('/');
         return $"{baseUrl}/andritz-logo.png";
     }

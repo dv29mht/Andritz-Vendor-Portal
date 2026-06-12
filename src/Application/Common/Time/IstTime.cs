@@ -13,7 +13,7 @@ public static class IstTime
     // "India Standard Time" is the Windows ID; "Asia/Kolkata" is the IANA ID.
     // FindSystemTimeZoneById on .NET 8 accepts either on either OS, but we
     // fall back across both so the code is portable between Windows hosts and
-    // Linux containers (Railway runs Linux).
+    // Linux containers (the docker image runs Linux).
     private static readonly TimeZoneInfo IstZone = ResolveIst();
 
     private static TimeZoneInfo ResolveIst()

@@ -133,7 +133,7 @@ app.UseMiddleware<SecurityHeadersMiddleware>();
 
 // Sub-path hosting (e.g. office IIS at /SOT). Must come before UseStaticFiles
 // and UseRouting so the prefix is stripped from PathBase before any matching.
-// Empty/unset → no-op, app serves at root (Railway, local dev).
+// Empty/unset → no-op, app serves at root.
 var pathBase = builder.Configuration["App:PathBase"];
 if (!string.IsNullOrWhiteSpace(pathBase))
 {
@@ -193,7 +193,7 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok", timestamp = Date
 // returns index.html so React Router can resolve client-side routes like /login.
 app.MapFallbackToFile("index.html", spaStaticFileOptions);
 
-// Honour Railway/Docker conventions: PORT env var wins, else ASPNETCORE_URLS,
+// Honour the Docker convention: PORT env var wins, else ASPNETCORE_URLS,
 // else Kestrel's default. This avoids fighting with ASPNETCORE_URLS in the container.
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrEmpty(port))
@@ -203,7 +203,7 @@ if (!string.IsNullOrEmpty(port))
 // Block startup on migration + seed so a half-migrated DB can never serve
 // traffic — a SPA that loads but whose every API call 500s is the failure
 // mode we want to avoid. If MigrateAsync throws, the process exits and the
-// orchestrator (Railway/IIS) keeps the previous version live.
+// orchestrator (IIS / Docker) keeps the previous version live.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;

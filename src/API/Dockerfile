@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Build context: repository root. Build command (Railway / local):
+# Build context: repository root. Build command:
 #   docker build -f src/API/Dockerfile .
 #
 # Single-container deployment: one origin serves the API (/api, /swagger,
@@ -38,9 +38,9 @@ COPY AndritzVendorPortal.Frontend/ AndritzVendorPortal.Frontend/
 
 # Optional sub-path build. Pass --build-arg VITE_BASE_PATH=/SOT/ to emit the SPA's
 # assets under /SOT/assets/* and derive the router basename + API/SignalR URLs from
-# it — mirroring the office IIS sub-app (and the UAT replica). vite.config.js reads
-# this from the environment during `npm run build`. Defaults to '/' so root hosting
-# (Railway / local) is unchanged.
+# it — mirroring the office IIS sub-app (and the local docker-compose stack).
+# vite.config.js reads this from the environment during `npm run build`. Defaults
+# to '/' so plain root hosting is unchanged.
 ARG VITE_BASE_PATH=/
 ENV VITE_BASE_PATH=${VITE_BASE_PATH}
 
@@ -51,13 +51,13 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
-# Railway sets PORT — Program.cs reads it. Default to 8080 for local `docker run`.
+# Program.cs reads PORT (Docker convention). Default to 8080 for `docker run`.
 ENV PORT=8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 # appsettings.json carries the office-IIS template defaults (PathBase=/SOT).
-# Railway serves at the root of its domain, so explicitly zero PathBase here
-# instead of relying on a Railway-dashboard env var. Empty string passes the
-# IsNullOrWhiteSpace check in Program.cs, so UsePathBase is skipped.
+# Default to root hosting here; docker-compose.yml overrides App__PathBase=/SOT
+# for the local stack. Empty string passes the IsNullOrWhiteSpace check in
+# Program.cs, so UsePathBase is skipped.
 ENV App__PathBase=""
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "AndritzVendorPortal.API.dll"]

@@ -1,0 +1,70 @@
+# Local testing stack for the SOT Portal.
+#
+# The API (with the React SPA bundled into it) runs in Docker and talks to a
+# SQL Server you run yourself on the host and manage in SSMS. Only outbound
+# email is faked — MailHog captures it so you can read every notification.
+#
+# Mirrors the office deployment shape:
+#   - App hosted under the /SOT sub-path (App__PathBase=/SOT, SPA built for /SOT/)
+#   - Single origin: one container serves both the API and the React SPA
+#   - Database "SOT", code-first migrations applied on boot
+#
+# Host SQL Server prerequisites (configure once, in SSMS / SQL Server Config Mgr):
+#   - TCP/IP protocol enabled, listening on port 1433
+#   - SQL Server Authentication (mixed mode) enabled — a Linux container cannot
+#     use Windows Trusted_Connection, so it logs in with a SQL login
+#   - The login below has dbcreator/sysadmin so boot migrations can CREATE the
+#     SOT database (or pre-create an empty "SOT" db and grant db_owner)
+#
+# Override the DB connection without editing this file by creating a `.env`
+# next to it (see .env.example): DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD.
+#
+# Run:   docker compose up --build
+# Open:  http://localhost:8080/SOT      (login pardeep.sharma@andritz.com / Andritz@1234)
+# Mail:  http://localhost:8025          (MailHog inbox — every notification lands here)
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/API/Dockerfile
+      args:
+        # Build the SPA for the /SOT sub-path so assets emit under /SOT/assets/*.
+        VITE_BASE_PATH: /SOT/
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      # Lets the container reach the host's SQL Server as host.docker.internal.
+      # Automatic on Docker Desktop; this line makes it work on Linux engines too.
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - mailhog
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      PORT: "8080"
+      # Sub-path hosting, matching the client's IIS sub-app.
+      App__PathBase: "/SOT"
+      PortalUrl: "http://localhost:8080/SOT"
+      # SQL auth against the SQL Server running on YOUR host (managed in SSMS).
+      # DbInitializer creates the SOT database + schema and seeds the elevated
+      # account on first boot (it retries the connection for ~2 minutes).
+      ConnectionStrings__DefaultConnection: "Server=${DB_HOST:-host.docker.internal},${DB_PORT:-1433};Database=${DB_NAME:-SOT};User Id=${DB_USER:-sa};Password=${DB_PASSWORD:-Andritz@1234};TrustServerCertificate=True;MultipleActiveResultSets=true"
+      Seed__DefaultAdminPassword: "Andritz@1234"
+      JwtSettings__SecretKey: "Local-Only-Change-Me-Min-32-Chars-Secret-Key-123456"
+      JwtSettings__Issuer: "AndritzVendorPortal"
+      JwtSettings__Audience: "AndritzVendorPortalClient"
+      JwtSettings__ExpiryHours: "8"
+      # Capture all outbound mail in MailHog (SMTP 1025) instead of the office relay.
+      EmailSettings__Host: "mailhog"
+      EmailSettings__Port: "1025"
+      EmailSettings__EnableSsl: "false"
+      EmailSettings__Username: ""
+      EmailSettings__Password: ""
+      EmailSettings__FromEmail: "local-noreply@andritz.com"
+      EmailSettings__FromName: "SOT Local Notifications"
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "8025:8025"           # web UI
+      - "1025:1025"           # SMTP (referenced by the api service as mailhog:1025)

@@ -67,7 +67,7 @@ On each rejection+resubmission: new revision version created, tracking modified 
 - [x] Forgot password / reset password via email link
 - [x] Role-based consoles (Buyer, Approver, FinalApprover, Admin)
 - [x] JWT authentication + CSRF protection + rate limiting
-- [x] Deployed: backend on Render (PostgreSQL), frontend on Vercel
+- [x] Single-origin deployment: the API serves the React SPA (local Docker stack + office IIS at `/SOT`)
 
 ---
 
@@ -111,8 +111,8 @@ All emails sent via Brevo API (no domain restriction on recipients).
 
 | Component | Detail |
 |---|---|
-| Frontend | React 18 + Vite, deployed on Vercel |
-| Backend | .NET 8 Web API, deployed on Render (free tier) |
-| Database | PostgreSQL on Render |
+| Frontend | React 18 + Vite, bundled into the API (single origin) |
+| Backend | .NET 8 Web API (local Docker / office IIS sub-app at `/SOT`) |
+| Database | SQL Server (local SSMS-managed instance / office `QNFSMS025\SQLEXPRESS`) |
 | Email | Brevo API (`xkeysib-...`) — 300 emails/day free |
 | Auth | ASP.NET Core Identity + JWT Bearer |

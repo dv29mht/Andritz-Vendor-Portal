@@ -11,7 +11,7 @@ let currentHandler = null
 function resolveHubUrl() {
   // In dev, VITE_API_URL points at the local API; strip /api and append the hub path.
   // In production, hubs live at {BASE_URL}hubs/notifications same-origin — BASE_URL
-  // is "/" for Railway and "/SOT/" for the office IIS sub-app build.
+  // is "/SOT/" for the office IIS sub-app build / local docker stack.
   //
   // VITE_API_URL is only honoured in dev (mirrors api.js). Vite bakes .env into
   // every build, so without the DEV guard the production /SOT bundle would point
