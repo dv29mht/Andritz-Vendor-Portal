@@ -8,7 +8,7 @@ import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
 import { ExclamationTriangleIcon, CheckBadgeIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
          Cell } from 'recharts'
-import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react'
+import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react'
 import { Fragment } from 'react'
 import Modal from '../../../shared/components/Modal'
 import ConfirmDialog from '../../../shared/components/ConfirmDialog'
@@ -404,6 +404,43 @@ function FileUploadField({
       )}
       {error && <p data-field-error="" className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
+  )
+}
+
+// Searchable currency picker. A custom (fully-styled) combobox rather than a
+// native <datalist>, because Safari renders datalist popups in the OS dark theme
+// (white text on a light popup = invisible). This list is always light + readable.
+function CurrencyCombobox({ value, onChange }) {
+  const [query, setQuery] = useState('')
+  const filtered = query.trim() === ''
+    ? CURRENCIES
+    : CURRENCIES.filter(c => c.toLowerCase().includes(query.trim().toLowerCase()))
+  return (
+    <Combobox value={value || ''} immediate onChange={v => onChange(v || '')} onClose={() => setQuery('')}>
+      <ComboboxInput
+        className="form-input uppercase"
+        placeholder="Search currency — e.g. NPR, USD, EUR"
+        autoComplete="off"
+        displayValue={v => v || ''}
+        onChange={e => setQuery(e.target.value)}
+      />
+      <ComboboxOptions
+        anchor="bottom start"
+        className="z-[60] mt-1 max-h-56 w-[var(--input-width)] overflow-auto rounded-md border border-gray-200 bg-white py-1 text-sm shadow-lg focus:outline-none"
+      >
+        {filtered.length === 0 ? (
+          <div className="px-3 py-2 text-gray-500">No matching currency</div>
+        ) : filtered.map(c => (
+          <ComboboxOption
+            key={c}
+            value={c}
+            className="cursor-pointer select-none px-3 py-1.5 text-gray-900 data-[focus]:bg-[#096fb3] data-[focus]:text-white"
+          >
+            {c}
+          </ComboboxOption>
+        ))}
+      </ComboboxOptions>
+    </Combobox>
   )
 }
 
@@ -1993,12 +2030,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
             <FormSection title="Commercial Terms">
               <Field label="Currency" required error={errors.currency}>
-                <input className="form-input uppercase" list="currency-list" placeholder="Search currency — e.g. NPR, USD, EUR"
-                  value={form.currency}
-                  onChange={e => set('currency', e.target.value.toUpperCase())} />
-                <datalist id="currency-list">
-                  {CURRENCIES.map(c => <option key={c} value={c} />)}
-                </datalist>
+                <CurrencyCombobox value={form.currency} onChange={v => set('currency', v)} />
               </Field>
               <Field label="Payment Terms" error={errors.paymentTerms}>
                 <input className="form-input" placeholder="e.g. Net 30, Advance 50%"

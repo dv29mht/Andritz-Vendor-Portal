@@ -129,12 +129,32 @@ public static class DbInitializer
         {
             var def = EmailTemplateDefaults.All.FirstOrDefault(d => d.Code == tpl.Code);
             if (def is null) continue;
+            // If the admin hasn't customised the live copy (it still equals the
+            // previously-seeded default), carry forward improvements to the default
+            // body/subject so template changes reach existing deployments too.
+            if (tpl.BodyText == tpl.DefaultBodyText && tpl.BodyText != def.BodyText) { tpl.BodyText = def.BodyText; dirty = true; }
+            if (tpl.Subject == tpl.DefaultSubject && tpl.Subject != def.Subject) { tpl.Subject = def.Subject; dirty = true; }
             if (tpl.DefaultSubject != def.Subject) { tpl.DefaultSubject = def.Subject; dirty = true; }
             if (tpl.DefaultBodyText != def.BodyText) { tpl.DefaultBodyText = def.BodyText; dirty = true; }
             if (tpl.Placeholders != def.Placeholders) { tpl.Placeholders = def.Placeholders; dirty = true; }
             if (tpl.Name != def.Name) { tpl.Name = def.Name; dirty = true; }
             if (tpl.Audience != def.Audience) { tpl.Audience = def.Audience; dirty = true; }
         }
+
+        // Remove retired templates (codes no longer in the defaults catalogue, e.g.
+        // AdminVendorApproved) so they vanish from the admin template manager and are
+        // never sent. Templates are only ever created by this seeder, so any row whose
+        // code is absent from the catalogue is safe to delete.
+        var validCodes = EmailTemplateDefaults.All.Select(d => d.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var retired = templates.Where(t => !validCodes.Contains(t.Code)).ToList();
+        if (retired.Count > 0)
+        {
+            db.EmailTemplates.RemoveRange(retired);
+            dirty = true;
+            logger.LogInformation("[Seed] Removed {Count} retired email template(s): {Codes}",
+                retired.Count, string.Join(", ", retired.Select(t => t.Code)));
+        }
+
         if (dirty) await db.SaveChangesAsync();
     }
 

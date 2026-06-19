@@ -87,21 +87,9 @@ public class CompleteVendorRequestCommandHandler(
             await email.SendAsync(buyer.Email, s, b, pdf);
         }
 
-        // Oversight copy to the elevated account (Final Approver, formerly the admin).
-        // Suppressed when the final approver is the actor (they just completed it)
-        // so they don't email themselves.
-        var admin = await identity.FindByEmailAsync(SystemAccounts.FinalApproverEmail);
-        if (admin is not null && !admin.IsArchived && admin.Id != userId && admin.Email != buyer?.Email)
-        {
-            var values = EmailValues.ForVendor(
-                entity, clock.UtcNow,
-                recipientName: admin.FullName,
-                finalApproverName: step.ApproverName,
-                buyerName: entity.CreatedByName);
-            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "View Vendor Record");
-            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.AdminVendorApproved, values, ct, footer);
-            await email.SendAsync(admin.Email, s, b, pdf);
-        }
+        // The Final Approver no longer receives a "vendor approved" oversight copy
+        // (removed at the customer's request) — the buyer is notified above and the
+        // record is visible in the console.
 
         return VendorRequestMapper.ToDetailDto(entity);
     }

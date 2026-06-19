@@ -62,6 +62,7 @@ public class CreateUserCommandHandler(
                 ["[Buyer Name]"]    = request.FullName,
                 ["[Approver Name]"] = request.FullName,
                 ["[Email]"]         = request.Email,
+                ["[Password]"]      = request.Password,
                 ["[Portal URL]"]    = portalUrl,
             };
             var (subject, body) = await templates.RenderAsync(inviteCode, values, ct);

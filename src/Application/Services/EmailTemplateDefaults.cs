@@ -162,29 +162,6 @@ public static class EmailTemplateDefaults
             "[Request ID],[Vendor Name],[Buyer Name],[Date & Time]"),
 
         new Definition(
-            EmailTemplateCodes.AdminVendorApproved,
-            "Final Approver – Vendor Approved Notification",
-            "Final Approver",
-            "Vendor Registration Successfully Approved",
-            """
-            Dear Final Approver,
-
-            A Vendor Registration Request has been successfully approved and completed.
-
-            Request Details:
-            • Request ID: [Request ID]
-            • Vendor Name: [Vendor Name]
-            • Vendor Code: [Vendor Code]
-            • Final Approved By: [Final Approver Name]
-
-            The approved vendor registration document is now available for download in the system.
-
-            Regards,
-            Andritz Vendor Registration System
-            """,
-            "[Request ID],[Vendor Name],[Vendor Code],[Final Approver Name]"),
-
-        new Definition(
             EmailTemplateCodes.ApproverResubmitted,
             "Approver – Resubmitted Request Notification",
             "Approver",
@@ -246,15 +223,18 @@ public static class EmailTemplateDefaults
             Account Details:
             • Full Name: [Buyer Name]
             • Email: [Email]
+            • Temporary Password: [Password]
             • Role: Buyer
             • Portal URL: [Portal URL]
 
-            You can now sign in to create and track vendor registration requests.
+            Sign in with the email and temporary password above to create and track vendor
+            registration requests. You can reset your password anytime via "Forgot password"
+            on the sign-in page.
 
             Regards,
             Andritz Vendor Registration System
             """,
-            "[Buyer Name],[Email],[Portal URL]"),
+            "[Buyer Name],[Email],[Password],[Portal URL]"),
 
         new Definition(
             EmailTemplateCodes.ApproverInvitation,
@@ -269,14 +249,17 @@ public static class EmailTemplateDefaults
             Account Details:
             • Full Name: [Approver Name]
             • Email: [Email]
+            • Temporary Password: [Password]
             • Role: Approver
             • Portal URL: [Portal URL]
 
-            Vendor registration requests assigned to you for review will appear in your Pending Approval queue once you sign in.
+            Sign in with the email and temporary password above. Vendor registration requests
+            assigned to you for review will appear in your Pending Approval queue. You can reset
+            your password anytime via "Forgot password" on the sign-in page.
 
             Regards,
             Andritz Vendor Registration System
             """,
-            "[Approver Name],[Email],[Portal URL]"),
+            "[Approver Name],[Email],[Password],[Portal URL]"),
     ];
 }
