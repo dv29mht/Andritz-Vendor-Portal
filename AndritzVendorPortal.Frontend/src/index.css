@@ -22,6 +22,10 @@
 }
 
 @layer base {
+  /* The app has no dark theme. Pin the colour scheme to light so macOS/iOS dark
+     mode doesn't auto-darken native form controls (selects, date pickers, the
+     currency input) and render dark text on a dark background — invisible. */
+  html { color-scheme: light; }
   body { @apply text-gray-900; }
 }
 
@@ -51,7 +55,7 @@
        identically on every field) rather than a 1px inset box-shadow ring — Safari
        anti-aliases hairline inset rings inconsistently, which made some fields look
        like they had no outline. Focus adds the 2px brand-blue ring. */
-    @apply block w-full rounded-md border border-[#096fb3] py-2 px-3 text-gray-900 shadow-sm
+    @apply block w-full rounded-md border border-[#096fb3] bg-white py-2 px-3 text-gray-900 shadow-sm
            placeholder:text-gray-400 focus:outline-none focus:border-[#096fb3] focus:ring-2 focus:ring-inset sm:text-sm;
     --tw-ring-color: #096fb3;
   }
