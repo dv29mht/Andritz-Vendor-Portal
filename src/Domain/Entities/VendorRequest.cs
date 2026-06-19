@@ -26,6 +26,7 @@ public class VendorRequest : ISoftDelete, IAuditable
     public string Incoterms { get; set; } = string.Empty;
     public string ContactPerson { get; set; } = string.Empty;
     public string Telephone { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
     public string Reason { get; set; } = string.Empty;
     public string YearlyPvo { get; set; } = string.Empty;
     public bool IsOneTimeVendor { get; set; } = false;

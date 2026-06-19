@@ -52,6 +52,7 @@ public static class VendorRequestMapper
 
         return new VendorRequestDetailDto(
             r.Id, r.VendorName, r.ContactInformation, r.ContactPerson, r.Telephone,
+            r.Email,
             r.GstNumber, r.PanCard,
             r.AddressDetails, r.City, r.Locality,
             r.MaterialGroup, r.PostalCode, r.State, r.Country,

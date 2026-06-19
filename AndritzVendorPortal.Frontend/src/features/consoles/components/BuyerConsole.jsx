@@ -60,6 +60,13 @@ const CURRENCIES = [
 ]
 const INCOTERMS     = ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FAS','FOB','CFR','CIF']
 const PURCHASING_ORGS = ['900D', '900I', 'T20D', 'T20I']
+// The purchasing org is captured as two linked fields in the UI — an org number
+// (900 / T20) and a vendor type (Domestic = D suffix, Export = I suffix) — and
+// recombined into one of PURCHASING_ORGS for storage / the backend.
+const PURCHASING_ORG_BASES = [...new Set(PURCHASING_ORGS.map(o => o.replace(/[DI]$/, '')))]
+const VENDOR_TYPES = [{ label: 'Domestic', suffix: 'D' }, { label: 'Export', suffix: 'I' }]
+const poBaseOf = (po) => (po || '').replace(/[DI]$/, '')
+const poSuffixOf = (po) => (/I$/.test(po || '') ? 'I' : /D$/.test(po || '') ? 'D' : '')
 const MSME_CATEGORIES = ['Micro', 'Small', 'Medium']
 const ALL_LOCALITIES = [...new Set(Object.values(CITIES).flat())]
 
@@ -75,9 +82,9 @@ const isGstOrNa = (v) => {
   return GST_RE.test(s.toUpperCase())
 }
 
-// Purchasing-org suffix → vendor sourcing type. D = Domestic, I = Import.
+// Purchasing-org suffix → vendor sourcing type. D = Domestic, I = Export.
 const sourcingType = (org) =>
-  !org ? null : /I$/.test(org) ? 'Import' : /D$/.test(org) ? 'Domestic' : null
+  !org ? null : /I$/.test(org) ? 'Export' : /D$/.test(org) ? 'Domestic' : null
 
 // Document slots store arrays of { name, data } where data is a base64 data: URL.
 // Older records persisted a single data: URL string; normalise both shapes to an array.
@@ -118,6 +125,7 @@ function readFileAsDataUrl(file) {
 // Maps Excel column headers (lowercase, asterisks stripped) → EMPTY_FORM field names
 const EXCEL_COL_MAP = {
   'purchasing organization': 'purchasingOrganization',
+  'vendor type':             'vendorType',
   'vendor name':             'vendorName',
   'material group':          'materialGroup',
   'msme category':           'msmeCategory',
@@ -125,6 +133,8 @@ const EXCEL_COL_MAP = {
   'reason':                  'reason',
   'contact person':          'contactPerson',
   'telephone':               'telephone',
+  'email id':                'email',
+  'email':                   'email',
   'gst number':              'gstNumber',
   'pan card':                'panCard',
   'address details':         'addressDetails',
@@ -148,12 +158,14 @@ const EXCEL_COL_MAP = {
 // Required fields get a red asterisk in the template header
 const TEMPLATE_HEADERS = [
   { label: 'Purchasing Organization *', required: true  },
+  { label: 'Vendor Type *',             required: true  },
   { label: 'Vendor Name *',             required: true  },
   { label: 'Material Group',            required: false },
   { label: 'MSME Category',             required: false },
   { label: 'Reason for Registration *', required: true  },
   { label: 'Contact Person *',          required: true  },
   { label: 'Telephone *',               required: true  },
+  { label: 'Email ID',                  required: false },
   { label: 'GST Number *',              required: true  },
   { label: 'PAN Card',                  required: false },
   { label: 'Address Details *',         required: true  },
@@ -167,10 +179,10 @@ const TEMPLATE_HEADERS = [
   { label: 'Incoterms *',               required: true  },
   { label: 'Yearly PVO',                required: false },
   { label: 'Proposed By',               required: false },
-  { label: 'Bank Name *',               required: true  },
-  { label: 'Branch Name *',             required: true  },
-  { label: 'Bank Account Number *',     required: true  },
-  { label: 'IFSC Code *',               required: true  },
+  { label: 'Bank Name',                 required: false },
+  { label: 'Branch Name',               required: false },
+  { label: 'Bank Account Number',       required: false },
+  { label: 'IFSC Code',                 required: false },
   { label: 'Is One-Time Vendor',        required: false },
 ]
 
@@ -179,9 +191,9 @@ const TEMPLATE_HEADERS = [
 // frozen — xlsx 0.18.5 community cannot write freeze panes.
 async function downloadTemplate() {
   const sample = [
-    '900D', 'Acme Supplies Pvt Ltd', 'Raw Materials', 'Small',
+    '900', 'Domestic', 'Acme Supplies Pvt Ltd', 'Raw Materials', 'Small',
     'New strategic supplier for FY2026 — supplies precision-machined components used in line A',
-    'Rajiv Mehta', '9876543210',
+    'Rajiv Mehta', '9876543210', 'accounts@acmesupplies.com',
     '27AAAAA0000A1Z5', 'AAAAA1234A',
     'Plot 12, Industrial Area, Phase 2', '400001', 'Mumbai', 'Andheri',
     'Maharashtra', 'India', 'INR', 'Net 30', 'FOB', '50,00,000', 'Vikram Nair',
@@ -354,7 +366,15 @@ function FileUploadField({
           accept={accept}
           multiple
           className="hidden"
-          onChange={e => { const fl = e.target.files; e.target.value = ''; if (fl?.length) onAdd(fl) }}
+          onChange={e => {
+            // Materialise the files into a real array BEFORE resetting the input.
+            // Safari binds e.target.files live to the input, so clearing value first
+            // empties the FileList and the upload silently does nothing (worked in
+            // Chrome only because it keeps the prior reference).
+            const files = Array.from(e.target.files || [])
+            e.target.value = ''
+            if (files.length) onAdd(files)
+          }}
         />
       </div>
       {docs.length > 0 && (
@@ -655,17 +675,37 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             parsed[field] = v === 'true' || v === 'yes' || v === '1' || val === 1
           } else if (field === 'country') {
             parsed[field] = ALL_COUNTRIES.find(c => c.name === String(val))?.isoCode ?? 'IN'
+          } else if (field === 'currency') {
+            parsed[field] = String(val).trim().toUpperCase()
           } else {
             parsed[field] = String(val)
           }
         }
 
-        // Validate required fields + formats
+        // Combine the split purchasing fields (Org number + Vendor Type) into the
+        // stored code, e.g. "900" + "Domestic" → "900D". Tolerates an old-style
+        // single combined value ("900D") in the Purchasing Organization column.
+        {
+          const baseClean  = poBaseOf((parsed.purchasingOrganization || '').trim().toUpperCase())
+          const typeRaw    = (parsed.vendorType || '').trim().toLowerCase()
+          const typeSuffix = poSuffixOf((parsed.purchasingOrganization || '').toUpperCase())
+            || (typeRaw.startsWith('dom') ? 'D' : (typeRaw.startsWith('exp') || typeRaw.startsWith('imp')) ? 'I' : '')
+          parsed.purchasingOrganization = baseClean && typeSuffix ? baseClean + typeSuffix : (baseClean || '')
+          delete parsed.vendorType
+        }
+
+        // Validate required fields + formats. The Financial and Taxation sections
+        // are optional (the form has On/Off toggles): if the spreadsheet carries no
+        // bank / tax data, that section is turned OFF on the pre-filled form and its
+        // fields are not required here.
         const errs = []
+        const hasBankData = !!(parsed.bankName.trim() || parsed.branchName.trim()
+          || parsed.bankAccountNumber.trim() || parsed.ifscCode.trim())
+        const hasTaxData = !!(parsed.gstNumber.trim() || parsed.panCard.trim())
         if (!parsed.purchasingOrganization.trim())
-          errs.push('Purchasing Organization is required.')
+          errs.push('Purchasing Organization and Vendor Type are required.')
         else if (!PURCHASING_ORGS.includes(parsed.purchasingOrganization.trim()))
-          errs.push(`Purchasing Organization must be one of: ${PURCHASING_ORGS.join(', ')}.`)
+          errs.push(`Purchasing Organization must be one of ${PURCHASING_ORG_BASES.join(' / ')}, and Vendor Type must be Domestic or Export.`)
         if (!parsed.vendorName.trim())     errs.push('Vendor Name is required.')
         if (/\d/.test(parsed.vendorName))  errs.push('Vendor Name should not contain numbers.')
         if (parsed.msmeCategory.trim() && !MSME_CATEGORIES.includes(parsed.msmeCategory.trim()))
@@ -677,9 +717,14 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         if (!parsed.telephone.trim())      errs.push('Telephone is required.')
         else if (!/^[0-9+\-()\s]+$/.test(parsed.telephone.trim()))
           errs.push('Telephone / Mobile should contain only digits, spaces, and +, -, (, ) characters.')
-        if (!parsed.gstNumber.trim())      errs.push('GST Number is required (enter N/A if the vendor has none).')
-        else if (!isGstOrNa(parsed.gstNumber))
-          errs.push('GST Number format is invalid (expected: 22AAAAA0000A1Z5, or N/A for import / foreign vendors).')
+        if (parsed.email.trim() && !EMAIL_RE.test(parsed.email.trim()))
+          errs.push('Email ID is not a valid email address (e.g. name@company.com).')
+        // GST only required when the Taxation section carries data (GST / PAN present).
+        if (hasTaxData) {
+          if (!parsed.gstNumber.trim())    errs.push('GST Number is required (enter N/A if the vendor has none).')
+          else if (!isGstOrNa(parsed.gstNumber))
+            errs.push('GST Number format is invalid (expected: 22AAAAA0000A1Z5, or N/A for export / foreign vendors).')
+        }
         // PAN format validation removed — other countries use different formats.
         if (!parsed.addressDetails.trim()) errs.push('Address Details is required.')
         if (!parsed.postalCode.trim())     errs.push('Postal Code is required.')
@@ -689,14 +734,18 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         else if (/[^a-zA-Z\s]/.test(parsed.city.trim()))
           errs.push('City must contain letters only — no numbers or special characters.')
         if (!parsed.currency.trim())       errs.push('Currency is required.')
+        else if (!CURRENCIES.includes(parsed.currency.trim().toUpperCase())) errs.push('Currency must be a valid 3-letter ISO code (e.g. INR, USD, NPR).')
         if (!parsed.incoterms.trim())      errs.push('Incoterms is required.')
         if (parsed.yearlyPvo.trim() && /[^0-9,]/.test(parsed.yearlyPvo.trim()))
           errs.push('Yearly PVO must contain digits and commas only — no letters or special characters.')
         if (parsed.proposedBy.trim() && /[^a-zA-Z\s]/.test(parsed.proposedBy.trim()))
           errs.push('Proposed By must contain letters only — no numbers or special characters.')
-        if (!parsed.bankName.trim())       errs.push('Bank Name is required.')
-        if (!parsed.branchName.trim())     errs.push('Branch Name is required.')
-        if (!parsed.bankAccountNumber.trim()) errs.push('Bank Account Number is required.')
+        // Bank fields only required when the Financial section carries data.
+        if (hasBankData) {
+          if (!parsed.bankName.trim())          errs.push('Bank Name is required when bank details are provided.')
+          if (!parsed.branchName.trim())        errs.push('Branch Name is required when bank details are provided.')
+          if (!parsed.bankAccountNumber.trim()) errs.push('Bank Account Number is required when bank details are provided.')
+        }
         // IFSC Code is optional (not every country has one) — no format validation.
 
         if (errs.length) {
@@ -710,7 +759,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         openCreate()
         setTimeout(() => {
           setForm(parsed)
-          setToast({ type: 'success', title: 'Form pre-filled from Excel', body: 'Review all fields and attach the GST document and Bank document before submitting — uploads are not carried over from Excel.' })
+          // Respect the optional sections: turn Financial / Taxation OFF when the
+          // spreadsheet carried no data for them (mirrors the form's On/Off toggles).
+          setBankEnabled(hasBankData)
+          setTaxEnabled(hasTaxData)
+          setToast({ type: 'success', title: 'Form pre-filled from Excel', body: 'Review all fields and attach the required documents before submitting — uploads are not carried over from Excel.' })
         }, 50)
       } catch {
         setImportErrors(['Could not read the file. Make sure you are uploading the official Andritz template (.xlsx).'])
@@ -854,7 +907,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
   const validate = () => {
     const e = {}
-    if (!form.purchasingOrganization) e.purchasingOrganization = 'Purchasing Organization is required.'
+    if (!form.purchasingOrganization) e.purchasingOrganization = 'Purchasing Organization and Vendor Type are required.'
+    else if (!PURCHASING_ORGS.includes(form.purchasingOrganization)) e.purchasingOrganization = 'Select both the Purchasing Organization and the Vendor Type.'
     if (!form.vendorName.trim())     e.vendorName     = 'Vendor name is required.'
     if (!form.reason.trim())         e.reason         = 'Reason for registration is required.'
     else if (form.reason.length > REASON_MAX) e.reason = `Reason must be ${REASON_MAX} characters or fewer.`
@@ -866,7 +920,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     // Taxation section (toggle): GST + GST document required only when the section is ON.
     if (taxEnabled) {
       if (!form.gstNumber.trim())      e.gstNumber      = 'GST Number is required — enter N/A if the vendor has none.'
-      else if (!isGstOrNa(form.gstNumber)) e.gstNumber = 'GST must be 22AAAAA0000A1Z5 (15 characters), or N/A for import / foreign vendors.'
+      else if (!isGstOrNa(form.gstNumber)) e.gstNumber = 'GST must be 22AAAAA0000A1Z5 (15 characters), or N/A for export / foreign vendors.'
       if (!form.gstDocument || form.gstDocument.length === 0) e.gstDocument = 'GST document upload is required.'
     }
     // PAN format validation removed (item 10) — different countries use different formats.
@@ -875,7 +929,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     if (!form.country)               e.country        = 'Country is required.'
     if (!form.state.trim())          e.state          = 'State is required.'
     if (!form.city.trim())           e.city           = 'City is required.'
-    if (!form.currency)              e.currency       = 'Currency is required.'
+    if (!form.currency.trim())       e.currency       = 'Currency is required.'
+    else if (!CURRENCIES.includes(form.currency.trim().toUpperCase())) e.currency = 'Select a valid 3-letter currency code from the list (e.g. INR, USD, NPR).'
     if (!form.incoterms)             e.incoterms      = 'Incoterms is required.'
     // Financial / Bank section (toggle): required only when the section is ON.
     // IFSC is always optional (item 11) — not every country has it.
@@ -1803,33 +1858,22 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
           <div className="space-y-6">
             <FormSection title="Purchasing Scope">
-              <Field
-                label="Purchasing Organization"
-                required
-                error={errors.purchasingOrganization}
-                span={2}
-                hint="Suffix D = Domestic vendor · I = Import vendor"
-              >
+              <Field label="Purchasing Organization" required error={errors.purchasingOrganization}>
                 <select className="form-input"
-                  value={form.purchasingOrganization}
-                  onChange={e => set('purchasingOrganization', e.target.value)}>
+                  value={poBaseOf(form.purchasingOrganization)}
+                  onChange={e => set('purchasingOrganization', e.target.value ? e.target.value + poSuffixOf(form.purchasingOrganization) : '')}>
                   <option value="">Select Purchasing Organization</option>
-                  {PURCHASING_ORGS.map(o => (
-                    <option key={o} value={o}>
-                      {o} — {sourcingType(o)}
-                    </option>
-                  ))}
+                  {PURCHASING_ORG_BASES.map(b => <option key={b} value={b}>{b}</option>)}
                 </select>
-                {sourcingType(form.purchasingOrganization) && (
-                  <span className={`mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${
-                    sourcingType(form.purchasingOrganization) === 'Import'
-                      ? 'bg-amber-50 text-amber-700 ring-amber-200'
-                      : 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-                  }`}>
-                    {sourcingType(form.purchasingOrganization)} vendor
-                    {sourcingType(form.purchasingOrganization) === 'Import' && ' — GST may be entered as N/A'}
-                  </span>
-                )}
+              </Field>
+              <Field label="Vendor Type" required error={errors.purchasingOrganization}>
+                <select className="form-input"
+                  value={poSuffixOf(form.purchasingOrganization)}
+                  disabled={!poBaseOf(form.purchasingOrganization)}
+                  onChange={e => set('purchasingOrganization', poBaseOf(form.purchasingOrganization) + e.target.value)}>
+                  <option value="">Select Vendor Type</option>
+                  {VENDOR_TYPES.map(t => <option key={t.suffix} value={t.suffix}>{t.label}</option>)}
+                </select>
               </Field>
             </FormSection>
 
@@ -1905,7 +1949,6 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-[#096fb3] focus:ring-[#096fb3]"
                     checked={form.isOneTimeVendor} onChange={e => set('isOneTimeVendor', e.target.checked)} />
                   <span className="text-sm font-medium text-gray-700">One-Time Vendor</span>
-                  <span className="text-xs text-gray-400">(not added to permanent vendor master)</span>
                 </label>
               </Field>
             </FormSection>
@@ -1950,10 +1993,12 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
             <FormSection title="Commercial Terms">
               <Field label="Currency" required error={errors.currency}>
-                <select className="form-input" value={form.currency} onChange={e => set('currency', e.target.value)}>
-                  <option value="">Select Currency</option>
-                  {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <input className="form-input uppercase" list="currency-list" placeholder="Search currency — e.g. NPR, USD, EUR"
+                  value={form.currency}
+                  onChange={e => set('currency', e.target.value.toUpperCase())} />
+                <datalist id="currency-list">
+                  {CURRENCIES.map(c => <option key={c} value={c} />)}
+                </datalist>
               </Field>
               <Field label="Payment Terms" error={errors.paymentTerms}>
                 <input className="form-input" placeholder="e.g. Net 30, Advance 50%"
@@ -1975,11 +2020,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               title="Tax Identification"
               toggle={{ enabled: taxEnabled, onChange: setTaxEnabled }}
             >
-              <Field label="GST Number" required error={errors.gstNumber} hint='Enter "N/A" for import / foreign vendors with no GST'>
+              <Field label="GST Number" required error={errors.gstNumber}>
                 <input className="form-input font-mono uppercase tracking-wider" placeholder="e.g. 27AABCT1332L1ZV or N/A"
                   value={form.gstNumber} onChange={e => set('gstNumber', e.target.value.toUpperCase())} />
               </Field>
-              <Field label="PAN Card" error={errors.panCard} hint="Optional — any format">
+              <Field label="PAN Card" error={errors.panCard}>
                 <input className="form-input font-mono uppercase tracking-wider" placeholder="e.g. AABCT1332L"
                   value={form.panCard} onChange={e => set('panCard', e.target.value.toUpperCase())} />
               </Field>
@@ -2017,7 +2062,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   value={form.bankAccountNumber}
                   onChange={e => set('bankAccountNumber', e.target.value.replace(/[^0-9A-Za-z]/g, ''))} />
               </Field>
-              <Field label="IFSC / Bank Code" error={errors.ifscCode} hint="Optional — not every country uses IFSC">
+              <Field label="IFSC / Bank Code" error={errors.ifscCode}>
                 <input className="form-input font-mono uppercase tracking-wider" placeholder="e.g. SBIN0001234"
                   value={form.ifscCode}
                   onChange={e => set('ifscCode', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} />
@@ -2050,7 +2095,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                   value={form.telephone}
                   onChange={e => set('telephone', e.target.value.replace(/[^0-9+\-() ]/g, ''))} />
               </Field>
-              <Field label="Email ID" error={errors.email} span={2} hint="Optional — vendor contact email">
+              <Field label="Email ID" error={errors.email} span={2}>
                 <input className="form-input" type="email" placeholder="e.g. accounts@vendor.com" inputMode="email"
                   value={form.email}
                   onChange={e => set('email', e.target.value)} />

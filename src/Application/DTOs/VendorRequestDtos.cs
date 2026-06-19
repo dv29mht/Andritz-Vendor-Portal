@@ -35,6 +35,7 @@ public record VendorRequestDetailDto(
     string ContactInformation,
     string ContactPerson,
     string Telephone,
+    string Email,
     string GstNumber,
     string PanCard,
     string AddressDetails,

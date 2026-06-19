@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace AndritzVendorPortal.API.Controllers;
 
 public record CreateDraftModel(
-    string? VendorName, string? ContactPerson, string? Telephone, string? GstNumber, string? PanCard,
+    string? VendorName, string? ContactPerson, string? Telephone, string? Email, string? GstNumber, string? PanCard,
     string? AddressDetails, string? City, string? Locality, string? MaterialGroup, string? PostalCode,
     string? State, string? Country, string? Currency, string? PaymentTerms, string? Incoterms,
     string? Reason, string? YearlyPvo, bool? IsOneTimeVendor, string? ProposedBy,
@@ -20,7 +20,7 @@ public record CreateDraftModel(
     List<string>? ApproverUserIds);
 
 public record CreateVendorRequestModel(
-    string VendorName, string ContactPerson, string? Telephone, string GstNumber, string? PanCard,
+    string VendorName, string ContactPerson, string? Telephone, string? Email, string GstNumber, string? PanCard,
     string AddressDetails, string City, string? Locality, string? MaterialGroup, string? PostalCode,
     string? State, string? Country, string? Currency, string? PaymentTerms, string? Incoterms,
     string? Reason, string? YearlyPvo, bool? IsOneTimeVendor, string? ProposedBy,
@@ -30,7 +30,7 @@ public record CreateVendorRequestModel(
     List<string>? ApproverUserIds);
 
 public record ResubmitVendorRequestModel(
-    string VendorName, string ContactPerson, string? Telephone, string GstNumber, string? PanCard,
+    string VendorName, string ContactPerson, string? Telephone, string? Email, string GstNumber, string? PanCard,
     string AddressDetails, string City, string? Locality, string? MaterialGroup, string? PostalCode,
     string? State, string? Country, string? Currency, string? PaymentTerms, string? Incoterms,
     string? Reason, string? YearlyPvo, bool? IsOneTimeVendor, string? ProposedBy,
@@ -40,7 +40,7 @@ public record ResubmitVendorRequestModel(
     List<string>? ApproverUserIds);
 
 public record AdminEditModel(
-    string VendorName, string ContactPerson, string? Telephone, string GstNumber, string? PanCard,
+    string VendorName, string ContactPerson, string? Telephone, string? Email, string GstNumber, string? PanCard,
     string AddressDetails, string City, string? Locality, string? MaterialGroup, string? PostalCode,
     string? State, string? Country, string? Currency, string? PaymentTerms, string? Incoterms,
     string? Reason, string? YearlyPvo, bool? IsOneTimeVendor, string? ProposedBy,
@@ -78,7 +78,7 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
     public async Task<ActionResult<Result<VendorRequestDetailDto>>> CreateDraft([FromBody] CreateDraftModel m)
     {
         var dto = await mediator.Send(new CreateDraftCommand(
-            m.VendorName, m.ContactPerson, m.Telephone, m.GstNumber, m.PanCard, m.AddressDetails,
+            m.VendorName, m.ContactPerson, m.Telephone, m.Email, m.GstNumber, m.PanCard, m.AddressDetails,
             m.City, m.Locality, m.MaterialGroup, m.PostalCode, m.State, m.Country, m.Currency,
             m.PaymentTerms, m.Incoterms, m.Reason, m.YearlyPvo, m.IsOneTimeVendor, m.ProposedBy,
             m.PurchasingOrganization, m.MsmeCategory,
@@ -93,7 +93,7 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
     public async Task<ActionResult<Result<VendorRequestDetailDto>>> Create([FromBody] CreateVendorRequestModel m)
     {
         var dto = await mediator.Send(new CreateVendorRequestCommand(
-            m.VendorName, m.ContactPerson, m.Telephone, m.GstNumber, m.PanCard, m.AddressDetails,
+            m.VendorName, m.ContactPerson, m.Telephone, m.Email, m.GstNumber, m.PanCard, m.AddressDetails,
             m.City, m.Locality, m.MaterialGroup, m.PostalCode, m.State, m.Country, m.Currency,
             m.PaymentTerms, m.Incoterms, m.Reason, m.YearlyPvo, m.IsOneTimeVendor, m.ProposedBy,
             m.PurchasingOrganization, m.MsmeCategory,
@@ -108,7 +108,7 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
     public async Task<ActionResult<Result<VendorRequestDetailDto>>> SaveDraft(int id, [FromBody] CreateDraftModel m)
     {
         var dto = await mediator.Send(new SaveDraftCommand(
-            id, m.VendorName, m.ContactPerson, m.Telephone, m.GstNumber, m.PanCard, m.AddressDetails,
+            id, m.VendorName, m.ContactPerson, m.Telephone, m.Email, m.GstNumber, m.PanCard, m.AddressDetails,
             m.City, m.Locality, m.MaterialGroup, m.PostalCode, m.State, m.Country, m.Currency,
             m.PaymentTerms, m.Incoterms, m.Reason, m.YearlyPvo, m.IsOneTimeVendor, m.ProposedBy,
             m.PurchasingOrganization, m.MsmeCategory,
@@ -128,7 +128,7 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
     public async Task<ActionResult<Result<VendorRequestDetailDto>>> Resubmit(int id, [FromBody] ResubmitVendorRequestModel m)
     {
         var dto = await mediator.Send(new ResubmitVendorRequestCommand(
-            id, m.VendorName, m.ContactPerson, m.Telephone, m.GstNumber, m.PanCard, m.AddressDetails,
+            id, m.VendorName, m.ContactPerson, m.Telephone, m.Email, m.GstNumber, m.PanCard, m.AddressDetails,
             m.City, m.Locality, m.MaterialGroup, m.PostalCode, m.State, m.Country, m.Currency,
             m.PaymentTerms, m.Incoterms, m.Reason, m.YearlyPvo, m.IsOneTimeVendor, m.ProposedBy,
             m.PurchasingOrganization, m.MsmeCategory,
@@ -158,7 +158,7 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
     public async Task<ActionResult<Result<VendorRequestDetailDto>>> AdminEdit(int id, [FromBody] AdminEditModel m)
     {
         var dto = await mediator.Send(new AdminEditVendorRequestCommand(
-            id, m.VendorName, m.ContactPerson, m.Telephone, m.GstNumber, m.PanCard, m.AddressDetails,
+            id, m.VendorName, m.ContactPerson, m.Telephone, m.Email, m.GstNumber, m.PanCard, m.AddressDetails,
             m.City, m.Locality, m.MaterialGroup, m.PostalCode, m.State, m.Country, m.Currency,
             m.PaymentTerms, m.Incoterms, m.Reason, m.YearlyPvo, m.IsOneTimeVendor, m.ProposedBy,
             m.PurchasingOrganization, m.MsmeCategory,
@@ -172,7 +172,7 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
     public async Task<ActionResult<Result<VendorRequestDetailDto>>> BuyerUpdateCompleted(int id, [FromBody] ResubmitVendorRequestModel m)
     {
         var dto = await mediator.Send(new BuyerUpdateCompletedCommand(
-            id, m.VendorName, m.ContactPerson, m.Telephone, m.GstNumber, m.PanCard, m.AddressDetails,
+            id, m.VendorName, m.ContactPerson, m.Telephone, m.Email, m.GstNumber, m.PanCard, m.AddressDetails,
             m.City, m.Locality, m.MaterialGroup, m.PostalCode, m.State, m.Country, m.Currency,
             m.PaymentTerms, m.Incoterms, m.Reason, m.YearlyPvo, m.IsOneTimeVendor, m.ProposedBy,
             m.PurchasingOrganization, m.MsmeCategory,

@@ -581,6 +581,7 @@ function PreviewTab({ request }) {
     ${sec('E','Contact Details')}
     ${row(24,'Contact Person',request.contactPerson)}
     ${row(25,'Telephone',request.telephone)}
+    ${row(26,'Email ID',request.email)}
   </table>
   <p style="font-size:11px;font-weight:700;letter-spacing:.05em;margin-bottom:6px">F. APPROVAL RECORD</p>
   <table>
@@ -723,6 +724,7 @@ function PreviewTab({ request }) {
           <div className="grid grid-cols-2 gap-4">
             <FormRow no="24" label="Contact Person" value={request.contactPerson || request.contactInformation} />
             <FormRow no="25" label="Telephone"      value={request.telephone} />
+            <FormRow no="26" label="Email ID"       value={request.email} />
           </div>
 
           <hr className="border-gray-200 my-4" />

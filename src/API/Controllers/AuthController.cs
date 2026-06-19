@@ -21,12 +21,21 @@ public class AuthController(IMediator mediator) : ControllerBase
     {
         var result = await mediator.Send(new LoginCommand(model.Email, model.Password));
 
-        // Set httpOnly auth cookie + readable CSRF cookie (matches existing frontend)
+        // Set httpOnly auth cookie + readable CSRF cookie (matches existing frontend).
+        // Cookie security adapts to the connection scheme: over HTTPS (office IIS)
+        // we keep Secure + SameSite=None; over plain HTTP (the local Docker stack on
+        // http://localhost) a Secure cookie is silently dropped by the browser —
+        // Safari does this even on localhost — which would leave the csrf_token
+        // cookie unset and fail every mutation's double-submit CSRF check. Falling
+        // back to Secure=false + SameSite=Lax (the requests are same-origin) keeps
+        // local UAT working without weakening production.
+        var secure = Request.IsHttps;
+        var sameSite = secure ? SameSiteMode.None : SameSiteMode.Lax;
         var common = new CookieOptions
         {
             HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.None,
+            Secure = secure,
+            SameSite = sameSite,
             Path = "/",
             Expires = result.ExpiresAt
         };
@@ -34,8 +43,8 @@ public class AuthController(IMediator mediator) : ControllerBase
         Response.Cookies.Append("csrf_token", result.CsrfToken, new CookieOptions
         {
             HttpOnly = false,
-            Secure = true,
-            SameSite = SameSiteMode.None,
+            Secure = secure,
+            SameSite = sameSite,
             Path = "/",
             Expires = result.ExpiresAt
         });
@@ -66,11 +75,13 @@ public class AuthController(IMediator mediator) : ControllerBase
         // expire below) are rejected by OnTokenValidated on their next use.
         await mediator.Send(new LogoutCommand());
 
+        var secure = Request.IsHttps;
+        var sameSite = secure ? SameSiteMode.None : SameSiteMode.Lax;
         var expired = new CookieOptions
         {
             HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.None,
+            Secure = secure,
+            SameSite = sameSite,
             Path = "/",
             Expires = DateTime.UtcNow.AddDays(-1)
         };
@@ -78,8 +89,8 @@ public class AuthController(IMediator mediator) : ControllerBase
         Response.Cookies.Append("csrf_token", string.Empty, new CookieOptions
         {
             HttpOnly = false,
-            Secure = true,
-            SameSite = SameSiteMode.None,
+            Secure = secure,
+            SameSite = sameSite,
             Path = "/",
             Expires = DateTime.UtcNow.AddDays(-1)
         });

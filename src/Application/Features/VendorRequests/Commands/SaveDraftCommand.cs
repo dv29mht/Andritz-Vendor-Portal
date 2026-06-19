@@ -12,6 +12,7 @@ public record SaveDraftCommand(
     string? VendorName,
     string? ContactPerson,
     string? Telephone,
+    string? Email,
     string? GstNumber,
     string? PanCard,
     string? AddressDetails,
@@ -62,6 +63,7 @@ public class SaveDraftCommandHandler(
         if (request.VendorName is not null) entity.VendorName = request.VendorName;
         if (request.ContactPerson is not null) { entity.ContactPerson = request.ContactPerson; entity.ContactInformation = request.ContactPerson; }
         if (request.Telephone is not null) entity.Telephone = request.Telephone;
+        if (request.Email is not null) entity.Email = request.Email;
         if (request.GstNumber is not null) entity.GstNumber = request.GstNumber;
         if (request.PanCard is not null) entity.PanCard = request.PanCard;
         if (request.AddressDetails is not null) entity.AddressDetails = request.AddressDetails;

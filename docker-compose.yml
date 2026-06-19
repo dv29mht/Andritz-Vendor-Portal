@@ -9,15 +9,14 @@
 #   - Single origin: one container serves both the API and the React SPA
 #   - Database "SOT", code-first migrations applied on boot
 #
-# Host SQL Server prerequisites (configure once, in SSMS / SQL Server Config Mgr):
-#   - TCP/IP protocol enabled, listening on port 1433
-#   - SQL Server Authentication (mixed mode) enabled — a Linux container cannot
-#     use Windows Trusted_Connection, so it logs in with a SQL login
-#   - The login below has dbcreator/sysadmin so boot migrations can CREATE the
-#     SOT database (or pre-create an empty "SOT" db and grant db_owner)
+# Database: a SQL container (Azure SQL Edge, arm64-native) is bundled below as the
+# `sqlserver` service, so the stack is fully self-contained — no host SQL needed.
+# DbInitializer creates the SOT database + schema and seeds the elevated account on
+# first boot (it retries the connection for ~2 minutes while SQL Edge warms up).
 #
-# Override the DB connection without editing this file by creating a `.env`
-# next to it (see .env.example): DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD.
+# To use your OWN host SQL Server instead, create a `.env` (see .env.example) with
+# DB_HOST=host.docker.internal (and DB_PORT/DB_NAME/DB_USER/DB_PASSWORD as needed);
+# the bundled `sqlserver` service can then be left stopped.
 #
 # Run:   docker compose up --build
 # Open:  http://localhost:8080/SOT      (login pardeep.sharma@andritz.com / Andritz@1234)
@@ -39,6 +38,7 @@ services:
       - "host.docker.internal:host-gateway"
     depends_on:
       - mailhog
+      - sqlserver
     environment:
       ASPNETCORE_ENVIRONMENT: "Production"
       PORT: "8080"
@@ -48,7 +48,7 @@ services:
       # SQL auth against the SQL Server running on YOUR host (managed in SSMS).
       # DbInitializer creates the SOT database + schema and seeds the elevated
       # account on first boot (it retries the connection for ~2 minutes).
-      ConnectionStrings__DefaultConnection: "Server=${DB_HOST:-host.docker.internal},${DB_PORT:-1433};Database=${DB_NAME:-SOT};User Id=${DB_USER:-sa};Password=${DB_PASSWORD:-Andritz@1234};TrustServerCertificate=True;MultipleActiveResultSets=true"
+      ConnectionStrings__DefaultConnection: "Server=${DB_HOST:-sqlserver},${DB_PORT:-1433};Database=${DB_NAME:-SOT};User Id=${DB_USER:-sa};Password=${DB_PASSWORD:-Andritz@1234};TrustServerCertificate=True;MultipleActiveResultSets=true"
       Seed__DefaultAdminPassword: "Andritz@1234"
       JwtSettings__SecretKey: "Local-Only-Change-Me-Min-32-Chars-Secret-Key-123456"
       JwtSettings__Issuer: "AndritzVendorPortal"
@@ -68,3 +68,23 @@ services:
     ports:
       - "8025:8025"           # web UI
       - "1025:1025"           # SMTP (referenced by the api service as mailhog:1025)
+
+  # Bundled database so the stack is self-contained. Azure SQL Edge runs natively
+  # on Apple Silicon (arm64) and amd64; it speaks the same TDS protocol as SQL
+  # Server, so the EF Core SqlServer provider + migrations work unchanged.
+  # Inspect it from the host with Azure Data Studio at  localhost,1433  (sa / Andritz@1234).
+  sqlserver:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    cap_add:
+      - SYS_PTRACE
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${DB_PASSWORD:-Andritz@1234}"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sot_sqldata:/var/opt/mssql
+
+volumes:
+  sot_sqldata:

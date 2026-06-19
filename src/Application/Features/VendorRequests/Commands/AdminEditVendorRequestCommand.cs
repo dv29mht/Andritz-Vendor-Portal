@@ -14,6 +14,7 @@ public record AdminEditVendorRequestCommand(
     string VendorName,
     string ContactPerson,
     string? Telephone,
+    string? Email,
     string GstNumber,
     string? PanCard,
     string AddressDetails,
@@ -47,6 +48,8 @@ public class AdminEditVendorRequestCommandValidator : AbstractValidator<AdminEdi
     {
         RuleFor(x => x.VendorName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.ContactPerson).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Email).MaximumLength(200).EmailAddress()
+            .When(x => !string.IsNullOrWhiteSpace(x.Email));
         // GST may be a 15-char Indian GST number or "N/A" for import / foreign vendors.
         RuleFor(x => x.GstNumber).Must(ValidationPatterns.IsGstOrNa).WithMessage(ValidationPatterns.GstError);
         // PAN format validation removed — other countries use different formats. PAN is free-text optional.
@@ -81,7 +84,7 @@ public class AdminEditVendorRequestCommandHandler(
             throw new ConflictException("A request with this PAN number already exists.");
 
         var input = new VendorFieldsInput(
-            request.VendorName, request.ContactPerson, request.Telephone,
+            request.VendorName, request.ContactPerson, request.Telephone, request.Email,
             request.GstNumber, request.PanCard, request.AddressDetails,
             request.City, request.Locality, request.MaterialGroup, request.PostalCode,
             request.State, request.Country, request.Currency, request.PaymentTerms,

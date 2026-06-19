@@ -25,7 +25,6 @@ public class ApproveVendorRequestCommandHandler(
     IIdentityService identity,
     ICurrentUserService currentUser,
     IEmailService email,
-    IEmailTemplateService templates,
     IConfiguration config,
     IDateTimeProvider clock,
     IVendorRequestPdfService pdfService,
@@ -65,38 +64,13 @@ public class ApproveVendorRequestCommandHandler(
 
         if (entity.Status == VendorRequestStatus.PendingFinalApproval)
         {
-            // Build the list of intermediate approvers who have approved so far.
-            var intermediateApprovedNames = string.Join(", ",
-                entity.ApprovalSteps
-                    .Where(s => !s.IsFinalApproval && s.Decision == ApprovalDecision.Approved)
-                    .OrderBy(s => s.StepOrder)
-                    .Select(s => s.ApproverName));
-
-            // Notify FinalApprover via the editable template, with a reject-only token
-            // (approval requires entering the SAP code in the portal).
-            var finalStep = entity.ApprovalSteps.FirstOrDefault(s => s.IsFinalApproval);
-            if (finalStep is not null)
-            {
-                var finalUser = await identity.FindByIdAsync(finalStep.ApproverUserId);
-                if (finalUser is not null)
-                {
-                    var values = EmailValues.ForVendor(
-                        entity, clock.UtcNow,
-                        recipientName: finalStep.ApproverName,
-                        finalApproverName: finalStep.ApproverName,
-                        buyerName: entity.CreatedByName,
-                        intermediateApproverNames: intermediateApprovedNames);
-                    var rejectUrl = EmailActionLinks.BuildRejectOnly(tokens, config, entity, finalStep);
-                    var footer = EmailHtmlShell.BuildActionFooter(null, rejectUrl, portalUrl, "Review & Assign SAP Code");
-                    var (s, b) = await templates.RenderAsync(EmailTemplateCodes.FinalApproverPending, values, ct, footer);
-                    await email.SendAsync(finalUser.Email, s, b, pdf);
-                }
-            }
+            // The Final Approver no longer receives a "pending your approval" email
+            // (removed at the customer's request) — they act from the in-app
+            // notification bell / Final Approver console instead.
 
             // Buyer-only progress ping (StepApproved is not part of the editable template
             // catalog — it's an internal progress notice). The admin/Final-Approver oversight
-            // copy was removed at the customer's request; the Final Approver already receives
-            // the actionable FinalApproverPending email above.
+            // copy was removed at the customer's request.
             var (saSubject, saBody) = LegacyEmailTemplates.StepApproved(summary, approvedBy, null, portalUrl);
             if (buyer is not null) await email.SendAsync(buyer.Email, saSubject, saBody, pdf);
         }

@@ -23,6 +23,7 @@ public static class TrackedFields
         new("msmeCategory",   "MSME Category",   r => r.MsmeCategory,   d => d.MsmeCategory ?? string.Empty),
         new("contactPerson",  "Contact Person",  r => r.ContactPerson,  d => d.ContactPerson ?? string.Empty),
         new("telephone",      "Telephone",       r => r.Telephone,      d => d.Telephone ?? string.Empty),
+        new("email",          "Email",           r => r.Email,          d => d.Email ?? string.Empty),
         new("gstNumber",      "GST Number",      r => r.GstNumber,      d => d.GstNumber),
         new("panCard",        "PAN Card",        r => r.PanCard,        d => d.PanCard ?? string.Empty),
         new("addressDetails", "Address Details", r => r.AddressDetails, d => d.AddressDetails),
@@ -59,6 +60,7 @@ public static class TrackedFields
         r.ContactPerson = d.ContactPerson ?? string.Empty;
         r.ContactInformation = d.ContactPerson ?? string.Empty;
         r.Telephone = d.Telephone ?? string.Empty;
+        r.Email = d.Email ?? string.Empty;
         r.GstNumber = d.GstNumber;
         r.PanCard = d.PanCard ?? string.Empty;
         r.AddressDetails = d.AddressDetails;
@@ -93,6 +95,7 @@ public record VendorFieldsInput(
     string VendorName,
     string? ContactPerson,
     string? Telephone,
+    string? Email,
     string GstNumber,
     string? PanCard,
     string AddressDetails,

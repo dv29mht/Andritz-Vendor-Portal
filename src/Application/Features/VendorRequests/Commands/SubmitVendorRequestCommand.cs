@@ -55,34 +55,27 @@ public class SubmitVendorRequestCommandHandler(
             .OrderBy(s => s.StepOrder)
             .FirstOrDefault();
 
-        if (firstStep is not null)
+        // Per the customer's request, the Final Approver no longer receives a
+        // "pending your approval" email on submission — they act from the in-app
+        // notification bell / console. Only an intermediate approver who must act
+        // first is emailed here; when there is no intermediate approver, no email
+        // is sent on submit.
+        if (firstStep is not null && !firstStep.IsFinalApproval)
         {
             var approver = await identity.FindByIdAsync(firstStep.ApproverUserId);
             if (approver is not null)
             {
-                var code = firstStep.IsFinalApproval
-                    ? EmailTemplateCodes.FinalApproverPending
-                    : EmailTemplateCodes.ApproverApprovalRequest;
                 var values = EmailValues.ForVendor(
                     entity, clock.UtcNow,
                     recipientName: firstStep.ApproverName,
                     approverName: firstStep.ApproverName,
-                    finalApproverName: firstStep.IsFinalApproval ? firstStep.ApproverName : null,
+                    finalApproverName: null,
                     buyerName: entity.CreatedByName);
 
-                string footer;
-                if (firstStep.IsFinalApproval)
-                {
-                    var rejectUrl = EmailActionLinks.BuildRejectOnly(tokens, config, entity, firstStep);
-                    footer = EmailHtmlShell.BuildActionFooter(null, rejectUrl, portalUrl, "Review & Assign SAP Code");
-                }
-                else
-                {
-                    var (approveUrl, rejectUrl) = EmailActionLinks.BuildFor(tokens, config, entity, firstStep);
-                    footer = EmailHtmlShell.BuildActionFooter(approveUrl, rejectUrl, portalUrl, "View in Portal");
-                }
+                var (approveUrl, rejectUrl) = EmailActionLinks.BuildFor(tokens, config, entity, firstStep);
+                var footer = EmailHtmlShell.BuildActionFooter(approveUrl, rejectUrl, portalUrl, "View in Portal");
 
-                var (s, b) = await templates.RenderAsync(code, values, ct, footer);
+                var (s, b) = await templates.RenderAsync(EmailTemplateCodes.ApproverApprovalRequest, values, ct, footer);
                 await email.SendAsync(approver.Email, s, b, pdf);
             }
         }

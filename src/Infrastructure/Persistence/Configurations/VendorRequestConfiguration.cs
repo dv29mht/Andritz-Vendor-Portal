@@ -14,6 +14,7 @@ public class VendorRequestConfiguration : IEntityTypeConfiguration<VendorRequest
         e.Property(x => x.ContactPerson).HasMaxLength(100);
         e.Property(x => x.ContactInformation).HasMaxLength(200);
         e.Property(x => x.Telephone).HasMaxLength(30);
+        e.Property(x => x.Email).HasMaxLength(200);
         e.Property(x => x.GstNumber).HasMaxLength(15);
         e.Property(x => x.PanCard).HasMaxLength(10);
         e.Property(x => x.AddressDetails).HasMaxLength(500);

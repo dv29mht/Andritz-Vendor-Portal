@@ -37,12 +37,23 @@
 
   <PropertyGroup>
     <FrontendDir>$(MSBuildProjectDirectory)\..\..\AndritzVendorPortal.Frontend</FrontendDir>
+    <!-- Base path the published SPA is hosted under. It MUST match App:PathBase at
+         runtime (office IIS sub-app = /SOT) so that import.meta.env.BASE_URL-based
+         asset URLs — the Andritz logo, favicon, etc. — resolve in production
+         instead of 404ing. Resolution order:
+           1. an explicit MSBuild override:  -p:ViteBasePath=/foo/
+           2. the VITE_BASE_PATH env var (set by docker-compose / build-publish.ps1)
+           3. /SOT/ — the office production default, so a bare `dotnet publish`
+              still produces a correctly-based SPA (root hosting: -p:ViteBasePath=/). -->
+    <ViteBasePath Condition="'$(ViteBasePath)' == ''">$(VITE_BASE_PATH)</ViteBasePath>
+    <ViteBasePath Condition="'$(ViteBasePath)' == ''">/SOT/</ViteBasePath>
   </PropertyGroup>
 
   <Target Name="BuildFrontend" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release'">
-    <Message Importance="high" Text="Building React SPA in $(FrontendDir)" />
+    <Message Importance="high" Text="Building React SPA in $(FrontendDir) (base=$(ViteBasePath))" />
     <Exec Command="npm ci" WorkingDirectory="$(FrontendDir)" />
-    <Exec Command="npm run build" WorkingDirectory="$(FrontendDir)" />
+    <Exec Command="npm run build" WorkingDirectory="$(FrontendDir)"
+          EnvironmentVariables="VITE_BASE_PATH=$(ViteBasePath)" />
   </Target>
 
   <Target Name="CopyFrontendDist" AfterTargets="Publish" Condition="'$(Configuration)' == 'Release'">
