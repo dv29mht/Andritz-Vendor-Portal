@@ -42,3 +42,6 @@ publish_out*.zip
 
 # Scratch projects (one-off tools that aren't part of the build)
 _hashgen/
+
+# macOS Finder metadata
+.DS_Store
