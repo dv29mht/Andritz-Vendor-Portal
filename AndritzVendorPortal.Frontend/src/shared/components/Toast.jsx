@@ -35,9 +35,15 @@ export default function Toast({ message, title, body, type = 'success', onClose,
   const heading = message?.title ?? title
   const detail  = message?.body  ?? body
 
+  // A top-centered notification card — deliberately NOT a full-screen
+  // backdrop-blur overlay. The old overlay sat on top of (and blurred) whatever
+  // was animating underneath — a closing modal, a refreshing dashboard — which
+  // read as a "flash" right before the toast settled. A lightweight card that
+  // slides in cleanly avoids fighting with those background transitions. The
+  // wrapper ignores pointer events so it never blocks the UI behind it.
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
-      <div className={`relative flex items-start gap-3.5 rounded-2xl
+    <div className="fixed top-5 inset-x-0 z-[60] flex justify-center px-4 pointer-events-none">
+      <div className={`toast-enter relative pointer-events-auto flex items-start gap-3.5 rounded-2xl
                        shadow-2xl ring-1 px-5 py-4 max-w-sm w-full ${v.wrap}`}
            role="alert"
       >
@@ -66,6 +72,11 @@ export default function Toast({ message, title, body, type = 'success', onClose,
             from { width: 100%; }
             to   { width: 0%; }
           }
+          @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          .toast-enter { animation: toastIn 220ms cubic-bezier(0.16, 1, 0.3, 1); }
         `}</style>
       </div>
     </div>

@@ -86,11 +86,24 @@ export const useAuthStore = create(
         const user = normalizeUser(data.user)
         if (data.token)     localStorage.setItem('authToken', data.token)
         if (data.csrfToken) localStorage.setItem('csrfToken', data.csrfToken)
+        // Clear any leftover logout suppression / banner from a prior session so
+        // a genuine lapse during THIS session surfaces the banner again.
+        useUIStore.getState().setLoggingOut(false)
+        useUIStore.getState().setSessionExpired(false)
         set({ currentUser: user, showWelcome: true })
         return user
       },
 
       logout: async () => {
+        // Flag the logout up front (before the network call) so the 401
+        // interceptor suppresses the session-expired banner for the logout POST
+        // and for any in-flight or late request whose token gets revoked
+        // mid-logout. Also drop any banner that might already be showing — the
+        // user is leaving deliberately. The flag is reset on the next login.
+        const ui = useUIStore.getState()
+        ui.setLoggingOut(true)
+        ui.setSessionExpired(false)
+
         // Hit the server while still authenticated so RevokeAllAsync actually runs —
         // clearing the token first makes POST /auth/logout go out anonymous, the
         // server skips revocation, and the old JWT stays valid until it expires.

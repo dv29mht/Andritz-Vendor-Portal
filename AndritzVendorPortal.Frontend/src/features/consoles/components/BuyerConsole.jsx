@@ -41,7 +41,11 @@ const EMPTY_FORM = {
   bankName: '', branchName: '', bankAccountNumber: '', ifscCode: '',
   // Document slots each hold an ARRAY of { name, data } so a buyer can attach
   // multiple files per category. Legacy single-string values are normalised on load.
-  bankDocument1: [], bankDocument2: [], gstDocument: [], panDocument: [],
+  bankDocument1: [], gstDocument: [], panDocument: [],
+  // "Additional Documents" — general-purpose attachments shown below Contact
+  // Details. Persisted in the BankDocument2 column, repurposed from the removed
+  // "Additional Bank Document" field.
+  additionalDocuments: [],
 }
 
 // Full ISO 4217 currency list (includes NPR and every actively-traded world currency).
@@ -59,14 +63,9 @@ const CURRENCIES = [
   'XPF','YER','ZAR','ZMW','ZWL',
 ]
 const INCOTERMS     = ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FAS','FOB','CFR','CIF']
-const PURCHASING_ORGS = ['900D', '900I', 'T20D', 'T20I']
-// The purchasing org is captured as two linked fields in the UI — an org number
-// (900 / T20) and a vendor type (Domestic = D suffix, Export = I suffix) — and
-// recombined into one of PURCHASING_ORGS for storage / the backend.
-const PURCHASING_ORG_BASES = [...new Set(PURCHASING_ORGS.map(o => o.replace(/[DI]$/, '')))]
-const VENDOR_TYPES = [{ label: 'Domestic', suffix: 'D' }, { label: 'Export', suffix: 'I' }]
-const poBaseOf = (po) => (po || '').replace(/[DI]$/, '')
-const poSuffixOf = (po) => (/I$/.test(po || '') ? 'I' : /D$/.test(po || '') ? 'D' : '')
+// Purchasing organization codes. The buyer picks one code directly; the trailing
+// letter encodes the sourcing type (D = Domestic, I = Export) for display only.
+const PURCHASING_ORGS = ['900D', '900I', 'P20D', 'T20I']
 const MSME_CATEGORIES = ['Micro', 'Small', 'Medium']
 const ALL_LOCALITIES = [...new Set(Object.values(CITIES).flat())]
 
@@ -125,7 +124,6 @@ function readFileAsDataUrl(file) {
 // Maps Excel column headers (lowercase, asterisks stripped) → EMPTY_FORM field names
 const EXCEL_COL_MAP = {
   'purchasing organization': 'purchasingOrganization',
-  'vendor type':             'vendorType',
   'vendor name':             'vendorName',
   'material group':          'materialGroup',
   'msme category':           'msmeCategory',
@@ -158,7 +156,6 @@ const EXCEL_COL_MAP = {
 // Required fields get a red asterisk in the template header
 const TEMPLATE_HEADERS = [
   { label: 'Purchasing Organization *', required: true  },
-  { label: 'Vendor Type *',             required: true  },
   { label: 'Vendor Name *',             required: true  },
   { label: 'Material Group',            required: false },
   { label: 'MSME Category',             required: false },
@@ -191,7 +188,7 @@ const TEMPLATE_HEADERS = [
 // frozen — xlsx 0.18.5 community cannot write freeze panes.
 async function downloadTemplate() {
   const sample = [
-    '900', 'Domestic', 'Acme Supplies Pvt Ltd', 'Raw Materials', 'Small',
+    '900D', 'Acme Supplies Pvt Ltd', 'Raw Materials', 'Small',
     'New strategic supplier for FY2026 — supplies precision-machined components used in line A',
     'Rajiv Mehta', '9876543210', 'accounts@acmesupplies.com',
     '27AAAAA0000A1Z5', 'AAAAA1234A',
@@ -719,17 +716,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           }
         }
 
-        // Combine the split purchasing fields (Org number + Vendor Type) into the
-        // stored code, e.g. "900" + "Domestic" → "900D". Tolerates an old-style
-        // single combined value ("900D") in the Purchasing Organization column.
-        {
-          const baseClean  = poBaseOf((parsed.purchasingOrganization || '').trim().toUpperCase())
-          const typeRaw    = (parsed.vendorType || '').trim().toLowerCase()
-          const typeSuffix = poSuffixOf((parsed.purchasingOrganization || '').toUpperCase())
-            || (typeRaw.startsWith('dom') ? 'D' : (typeRaw.startsWith('exp') || typeRaw.startsWith('imp')) ? 'I' : '')
-          parsed.purchasingOrganization = baseClean && typeSuffix ? baseClean + typeSuffix : (baseClean || '')
-          delete parsed.vendorType
-        }
+        // Normalise the Purchasing Organization code (e.g. "900d" → "900D").
+        parsed.purchasingOrganization = (parsed.purchasingOrganization || '').trim().toUpperCase()
 
         // Validate required fields + formats. The Financial and Taxation sections
         // are optional (the form has On/Off toggles): if the spreadsheet carries no
@@ -740,9 +728,9 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           || parsed.bankAccountNumber.trim() || parsed.ifscCode.trim())
         const hasTaxData = !!(parsed.gstNumber.trim() || parsed.panCard.trim())
         if (!parsed.purchasingOrganization.trim())
-          errs.push('Purchasing Organization and Vendor Type are required.')
+          errs.push('Purchasing Organization is required.')
         else if (!PURCHASING_ORGS.includes(parsed.purchasingOrganization.trim()))
-          errs.push(`Purchasing Organization must be one of ${PURCHASING_ORG_BASES.join(' / ')}, and Vendor Type must be Domestic or Export.`)
+          errs.push(`Purchasing Organization must be one of: ${PURCHASING_ORGS.join(', ')}.`)
         if (!parsed.vendorName.trim())     errs.push('Vendor Name is required.')
         if (/\d/.test(parsed.vendorName))  errs.push('Vendor Name should not contain numbers.')
         if (parsed.msmeCategory.trim() && !MSME_CATEGORIES.includes(parsed.msmeCategory.trim()))
@@ -878,17 +866,10 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     const needsRebuild = stale.length > 0
     setChainNeedsRebuild(needsRebuild)
 
-    if (req.status === 'Draft') {
-      // For drafts, always pre-populate the approver chain so the buyer can edit it
-      const validSteps = intermediateSteps
-        .filter(s => availableIds.has(s.approverUserId))
-        .sort((a, b) => a.stepOrder - b.stepOrder)
-      setSelectedApprovers(validSteps.map(s => ({
-        id: s.approverUserId, name: s.approverName,
-        email: availableApprovers.find(a => a.id === s.approverUserId)?.email ?? '',
-      })))
-    } else if (needsRebuild) {
-      // Pre-populate with the still-valid approvers in original order
+    if (req.status === 'Draft' || req.status === 'Rejected' || needsRebuild) {
+      // Drafts, rejected resubmissions, and stale-chain rebuilds all let the buyer
+      // review/adjust the approval chain, so pre-populate it with the still-valid
+      // approvers in their original order.
       const validSteps = intermediateSteps
         .filter(s => availableIds.has(s.approverUserId))
         .sort((a, b) => a.stepOrder - b.stepOrder)
@@ -929,9 +910,10 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       bankAccountNumber:  req.bankAccountNumber  ?? '',
       ifscCode:           req.ifscCode           ?? '',
       bankDocument1: parseDocs(req.bankDocument1),
-      bankDocument2: parseDocs(req.bankDocument2),
       gstDocument:   parseDocs(req.gstDocument),
       panDocument:   parseDocs(req.panDocument),
+      // BankDocument2 column is repurposed to hold the general "Additional Documents".
+      additionalDocuments: parseDocs(req.bankDocument2),
     })
     // Editing an existing vendor: default both optional sections ON so populated
     // fields stay visible. The buyer can toggle either off again if not applicable.
@@ -944,8 +926,8 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
   const validate = () => {
     const e = {}
-    if (!form.purchasingOrganization) e.purchasingOrganization = 'Purchasing Organization and Vendor Type are required.'
-    else if (!PURCHASING_ORGS.includes(form.purchasingOrganization)) e.purchasingOrganization = 'Select both the Purchasing Organization and the Vendor Type.'
+    if (!form.purchasingOrganization) e.purchasingOrganization = 'Purchasing Organization is required.'
+    else if (!PURCHASING_ORGS.includes(form.purchasingOrganization)) e.purchasingOrganization = 'Select a valid Purchasing Organization.'
     if (!form.vendorName.trim())     e.vendorName     = 'Vendor name is required.'
     if (!form.reason.trim())         e.reason         = 'Reason for registration is required.'
     else if (form.reason.length > REASON_MAX) e.reason = `Reason must be ${REASON_MAX} characters or fewer.`
@@ -1018,8 +1000,9 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     const hasStrChange = strFields.some(f => (form[f] ?? '') !== (original[f] ?? ''))
     const newExtFields = ['purchasingOrganization','msmeCategory','bankName','branchName','bankAccountNumber','ifscCode']
     const hasExtChange = newExtFields.some(f => (form[f] ?? '') !== (editingRequest[f] ?? ''))
-    const docFields = ['bankDocument1','bankDocument2','gstDocument','panDocument']
+    const docFields = ['bankDocument1','gstDocument','panDocument']
     const hasDocChange = docFields.some(f => serializeDocs(form[f]) !== serializeDocs(parseDocs(editingRequest[f])))
+      || serializeDocs(form.additionalDocuments) !== serializeDocs(parseDocs(editingRequest.bankDocument2))
     return hasStrChange || hasExtChange || hasDocChange
         || (form.isOneTimeVendor ?? false) !== (original.isOneTimeVendor ?? false)
   }
@@ -1034,9 +1017,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     ...(taxEnabled  ? {} : { gstNumber: '', panCard: '' }),
     ...(bankEnabled ? {} : { bankName: '', branchName: '', bankAccountNumber: '', ifscCode: '' }),
     bankDocument1: bankEnabled ? serializeDocs(form.bankDocument1) : null,
-    bankDocument2: bankEnabled ? serializeDocs(form.bankDocument2) : null,
     gstDocument:   taxEnabled  ? serializeDocs(form.gstDocument)   : null,
     panDocument:   taxEnabled  ? serializeDocs(form.panDocument)   : null,
+    // Additional Documents live below Contact Details and are independent of the
+    // Bank section toggle. Stored in the (repurposed) BankDocument2 column.
+    bankDocument2: serializeDocs(form.additionalDocuments),
   })
 
   const handleSubmitForm = async (skipApproverConfirm = false) => {
@@ -1086,9 +1071,10 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
         setToast({ type: 'success', title: 'Request Submitted', body: `Your vendor registration request for ${name} has been submitted for approval.` })
       } else if (editingRequest) {
         const name = editingRequest.vendorName
-        const resubmitPayload = chainNeedsRebuild
-          ? { ...payload, approverUserIds: selectedApprovers.map(a => a.id) }
-          : payload
+        // Rejected requests can have their approval chain changed on resubmit, so
+        // always send the (possibly edited) chain. A non-null list — even empty —
+        // tells the backend to rebuild the chain instead of keeping the old one.
+        const resubmitPayload = { ...payload, approverUserIds: selectedApprovers.map(a => a.id) }
         await workflow.resubmit(editingRequest.id, resubmitPayload)
         setShowForm(false)
         setToast({ type: 'success', title: 'Revision Submitted', body: `Your updated request for ${name} has been resubmitted for approval.` })
@@ -1895,21 +1881,12 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
 
           <div className="space-y-6">
             <FormSection title="Purchasing Scope">
-              <Field label="Purchasing Organization" required error={errors.purchasingOrganization}>
+              <Field label="Purchasing Organization" required error={errors.purchasingOrganization} span={2}>
                 <select className="form-input"
-                  value={poBaseOf(form.purchasingOrganization)}
-                  onChange={e => set('purchasingOrganization', e.target.value ? e.target.value + poSuffixOf(form.purchasingOrganization) : '')}>
+                  value={form.purchasingOrganization}
+                  onChange={e => set('purchasingOrganization', e.target.value)}>
                   <option value="">Select Purchasing Organization</option>
-                  {PURCHASING_ORG_BASES.map(b => <option key={b} value={b}>{b}</option>)}
-                </select>
-              </Field>
-              <Field label="Vendor Type" required error={errors.purchasingOrganization}>
-                <select className="form-input"
-                  value={poSuffixOf(form.purchasingOrganization)}
-                  disabled={!poBaseOf(form.purchasingOrganization)}
-                  onChange={e => set('purchasingOrganization', poBaseOf(form.purchasingOrganization) + e.target.value)}>
-                  <option value="">Select Vendor Type</option>
-                  {VENDOR_TYPES.map(t => <option key={t.suffix} value={t.suffix}>{t.label}</option>)}
+                  {PURCHASING_ORGS.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
               </Field>
             </FormSection>
@@ -2102,17 +2079,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               <FileUploadField
                 label="Bank Document (cheque / passbook copy)"
                 required
+                span={2}
                 value={form.bankDocument1}
                 error={errors.bankDocument1}
                 onAdd={fl => addFiles('bankDocument1', fl)}
                 onRemove={i => removeFileAt('bankDocument1', i)}
-              />
-              <FileUploadField
-                label="Additional Bank Document (optional)"
-                value={form.bankDocument2}
-                error={errors.bankDocument2}
-                onAdd={fl => addFiles('bankDocument2', fl)}
-                onRemove={i => removeFileAt('bankDocument2', i)}
               />
             </FormSection>
 
@@ -2134,7 +2105,18 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               </Field>
             </FormSection>
 
-            {(!editingRequest || editingRequest?.status === 'Draft' || chainNeedsRebuild) && (
+            <FormSection title="Additional Documents">
+              <FileUploadField
+                label="Additional Documents (optional)"
+                span={2}
+                value={form.additionalDocuments}
+                error={errors.additionalDocuments}
+                onAdd={fl => addFiles('additionalDocuments', fl)}
+                onRemove={i => removeFileAt('additionalDocuments', i)}
+              />
+            </FormSection>
+
+            {(!editingRequest || editingRequest?.status === 'Draft' || editingRequest?.status === 'Rejected' || chainNeedsRebuild) && (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3 border-b border-gray-100 pb-1.5">Approvers</p>
                 {chainNeedsRebuild && (
@@ -2165,7 +2147,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
             {editingRequest && editingRequest.status !== 'Completed' && editingRequest.status !== 'Draft' && !chainNeedsRebuild && (
               <div className="rounded-lg bg-blue-50 ring-1 ring-blue-200 p-3">
                 <p className="text-xs text-[#096fb3]">
-                  The approval chain is preserved from the original request. Submitting will reset all approver decisions and increment the revision number.
+                  The approval chain above is pre-filled from the original request — adjust the approvers if needed. Submitting resets all approver decisions and increments the revision number.
                 </p>
               </div>
             )}

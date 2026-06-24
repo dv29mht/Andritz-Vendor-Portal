@@ -155,7 +155,7 @@ function DetailsTab({ request, docs }) {
     { label: 'GST Document',        files: parseDocs(docSource.gstDocument) },
     { label: 'PAN Document',        files: parseDocs(docSource.panDocument) },
     { label: 'Bank Document',       files: parseDocs(docSource.bankDocument1) },
-    { label: 'Additional Bank Doc', files: parseDocs(docSource.bankDocument2) },
+    { label: 'Additional Documents', files: parseDocs(docSource.bankDocument2) },
   ].filter(g => g.files.length > 0)
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

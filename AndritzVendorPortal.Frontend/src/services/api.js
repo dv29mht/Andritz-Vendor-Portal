@@ -71,7 +71,21 @@ api.interceptors.response.use(
   error => {
     // On 401, flag the UI store so the app shows a graceful session-expired
     // banner rather than silently wiping state and hard-redirecting.
-    if (error.response?.status === 401 && !error.config?.url?.includes('/auth/login')) {
+    //
+    // Two cases must NOT raise the banner:
+    //  - the auth endpoints themselves (login/logout) — a 401 there is the
+    //    request's own concern, not a lapsed session.
+    //  - while an intentional logout is in flight — sign-out revokes the token
+    //    server-side (RevokeAllAsync) and removes it locally on purpose, so any
+    //    in-flight poll / late request that 401s mid-logout would otherwise
+    //    resurrect the banner just as the user is leaving.
+    const url = error.config?.url ?? ''
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/logout')
+    if (
+      error.response?.status === 401 &&
+      !isAuthEndpoint &&
+      !useUIStore.getState().loggingOut
+    ) {
       useUIStore.getState().setSessionExpired(true)
     }
     // Surface the envelope's error message at err.response.data.message

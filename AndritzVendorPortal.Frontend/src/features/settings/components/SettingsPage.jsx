@@ -1,23 +1,29 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { UserIcon, EnvelopeIcon, KeyIcon, CheckCircleIcon, ExclamationCircleIcon,
          EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import { useSettings } from '../hooks/useSettings'
+import { useAuth } from '../../auth/hooks/useAuth'
+import { useUIStore } from '../../../store/uiStore'
 
 export default function SettingsPage({ currentUser, onUpdate }) {
   const { saving, updateProfile } = useSettings()
+  const { logout } = useAuth()
+  const navigate = useNavigate()
   const [name,       setName]       = useState(currentUser.name ?? '')
   const [curPwd,     setCurPwd]     = useState('')
   const [newPwd,     setNewPwd]     = useState('')
   const [confirmPwd, setConfirmPwd] = useState('')
   const [error,      setError]      = useState(null)
-  const [success,    setSuccess]    = useState(false)
+  const [success,    setSuccess]    = useState(null)
+  const [redirecting, setRedirecting] = useState(false)
   const [showCur,    setShowCur]    = useState(false)
   const [showNew,    setShowNew]    = useState(false)
   const [showCfm,    setShowCfm]    = useState(false)
 
   const handleSave = async () => {
     setError(null)
-    setSuccess(false)
+    setSuccess(null)
 
     if (!name.trim()) { setError('Full name is required.'); return }
 
@@ -39,7 +45,23 @@ export default function SettingsPage({ currentUser, onUpdate }) {
       setCurPwd('')
       setNewPwd('')
       setConfirmPwd('')
-      setSuccess(true)
+
+      if (changingPassword) {
+        // Changing the password revokes the current JWT server-side, so this
+        // session is no longer valid. Sign out cleanly and send the user to the
+        // login page instead of letting the next API call 401 into the red
+        // "session expired" banner. Flag the logout up front so that banner is
+        // suppressed during the brief delay before we redirect.
+        setRedirecting(true)
+        setSuccess('Password updated. Taking you to the sign-in page to log in with your new password…')
+        useUIStore.getState().setLoggingOut(true)
+        setTimeout(async () => {
+          await logout()
+          navigate('/login', { replace: true })
+        }, 1600)
+      } else {
+        setSuccess('Changes saved successfully.')
+      }
     } catch (err) {
       const detail = err.response?.data
       if (Array.isArray(detail))           setError(detail.join(' '))
@@ -139,11 +161,11 @@ export default function SettingsPage({ currentUser, onUpdate }) {
           {success && (
             <div className="flex items-center gap-2.5 rounded-xl bg-emerald-50 ring-1 ring-emerald-200 px-4 py-3">
               <CheckCircleIcon className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-              <p className="text-sm text-emerald-700 font-medium">Changes saved successfully.</p>
+              <p className="text-sm text-emerald-700 font-medium">{success}</p>
             </div>
           )}
         </div>
-        <button className="btn-primary flex-shrink-0" onClick={handleSave} disabled={saving}>
+        <button className="btn-primary flex-shrink-0" onClick={handleSave} disabled={saving || redirecting}>
           {saving ? 'Saving…' : 'Save Changes'}
         </button>
       </div>

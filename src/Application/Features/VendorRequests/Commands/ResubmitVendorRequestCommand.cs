@@ -104,12 +104,15 @@ public class ResubmitVendorRequestCommandHandler(
                 staleNames.Add(step.ApproverName);
         }
 
-        if (staleNames.Count > 0 && (request.ApproverUserIds is null || request.ApproverUserIds.Count == 0))
+        if (staleNames.Count > 0 && request.ApproverUserIds is null)
             throw new ConflictException(
                 "One or more approvers in the original chain no longer exist. Please provide a new approval chain.");
 
-        // Optional chain replacement
-        if (request.ApproverUserIds is { Count: > 0 })
+        // Chain replacement: a non-null ApproverUserIds list (even empty) means the
+        // buyer explicitly set the chain on resubmit — rebuild the intermediate steps
+        // from it. An empty list collapses the chain to the Final Approver only.
+        // A null list (caller sent nothing) keeps the original chain.
+        if (request.ApproverUserIds is not null)
         {
             var newIds = request.ApproverUserIds.Distinct().ToList();
             await ApprovalChainBuilder.ValidateApproversAsync(newIds, identity, ct);

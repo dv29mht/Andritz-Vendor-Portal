@@ -16,7 +16,7 @@ export default function AppLayout() {
     <AppShell
       workflow={workflow}
       currentUser={currentUser}
-      onLogout={() => { logout(); navigate('/login') }}
+      onLogout={async () => { await logout(); navigate('/login') }}
       activePage={activePage}
       setActivePage={(id) => navigate(`/${id}`)}
     >
