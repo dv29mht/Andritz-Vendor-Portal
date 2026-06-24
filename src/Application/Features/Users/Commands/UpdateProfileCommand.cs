@@ -26,8 +26,7 @@ public class UpdateProfileCommandValidator : AbstractValidator<UpdateProfileComm
 
 public class UpdateProfileCommandHandler(
     ICurrentUserService currentUser,
-    IIdentityService identity,
-    ILoginSecurityService loginSecurity) : IRequestHandler<UpdateProfileCommand, object>
+    IIdentityService identity) : IRequestHandler<UpdateProfileCommand, object>
 {
     public async Task<object> Handle(UpdateProfileCommand request, CancellationToken ct)
     {
@@ -43,17 +42,21 @@ public class UpdateProfileCommandHandler(
         var (ok, errors) = await identity.UpdateProfileAsync(
             userId, request.FullName.Trim(), request.CurrentPassword, request.NewPassword);
         if (!ok)
-            throw new BadRequestException("Profile update failed.", errors);
+            // Surface the specific reason (e.g. "Incorrect password.") in the message
+            // itself, not just the errors list, so logs and any client that only reads
+            // `message` show what actually went wrong.
+            throw new BadRequestException(
+                errors.Count > 0 ? string.Join(" ", errors) : "Profile update failed.", errors);
 
         await identity.PropagateUserNameChangeAsync(userId, request.FullName.Trim(), ct);
 
         var roles = await identity.GetRolesAsync(userId);
 
-        // Self-service password change must invalidate every JWT issued before
-        // the new credential — including the one the user is holding right now;
-        // the frontend should follow up with a redirect to /login.
-        if (passwordChanging && roles.Count > 0)
-            await loginSecurity.RevokeAllAsync(userId, roles, ct);
+        // A self-service password change does NOT revoke the current session — the
+        // JWT doesn't carry the password, so the token the user is holding stays
+        // valid and they remain signed in. (We deliberately don't force-log-out
+        // other devices here either; tokens expire on their own.)
+        _ = passwordChanging;
 
         return new
         {

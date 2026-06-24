@@ -31,11 +31,11 @@ public static class LegacyEmailTemplates
               <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);">
                 <tr><td style="background-color:#064e80;background:#064e80;padding:28px 36px;">
                   <p style="margin:0;color:#fff;font-weight:900;font-size:22px;letter-spacing:.18em;">ANDRITZ</p>
-                  <p style="margin:4px 0 0;color:rgba(255,255,255,.6);font-size:11px;letter-spacing:.3em;text-transform:uppercase;">Vendor Onboarding &amp; Compliance</p>
+                  <p style="margin:4px 0 0;color:rgba(255,255,255,.6);font-size:11px;letter-spacing:.3em;text-transform:uppercase;">Supplier Connect</p>
                 </td></tr>
                 <tr><td style="padding:32px 36px;">{bodyHtml}</td></tr>
                 <tr><td style="background:#f8f9fa;padding:20px 36px;border-top:1px solid #e9ecef;">
-                  <p style="margin:0;color:#9ca3af;font-size:12px;">Automated notification from the Andritz Vendor Portal. Do not reply.</p>
+                  <p style="margin:0;color:#9ca3af;font-size:12px;">Automated notification from the Andritz Supplier Connect portal. Do not reply.</p>
                 </td></tr>
               </table>
             </td></tr>
@@ -154,7 +154,7 @@ public static class LegacyEmailTemplates
 
     public static (string Subject, string Body) PasswordReset(string fullName, string resetLink)
     {
-        var subject = "Reset your Andritz Vendor Portal password";
+        var subject = "Reset your Andritz Supplier Connect password";
         return (subject, Wrap(subject, "Password reset link inside.", $"""
             <p style="margin:0 0 4px;color:#6b7280;font-size:13px;">Hi {Enc(fullName)},</p>
             <h2 style="margin:0 0 16px;color:#111827;font-size:18px;">Reset your password</h2>
@@ -176,7 +176,7 @@ public static class LegacyEmailTemplates
 
     public static (string Subject, string Body) WelcomeUser(string fullName, string email, string role, string portalUrl)
     {
-        var subject = "Welcome to the Andritz Vendor Portal";
+        var subject = "Welcome to Andritz Supplier Connect";
         return (subject, Wrap(subject, "Account created.", $"""
             <p style="margin:0 0 4px;color:#6b7280;font-size:13px;">Hi {Enc(fullName)},</p>
             <h2 style="margin:0 0 16px;color:#111827;font-size:18px;">Welcome</h2>

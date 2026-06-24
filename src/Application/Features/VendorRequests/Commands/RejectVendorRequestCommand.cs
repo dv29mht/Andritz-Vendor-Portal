@@ -68,25 +68,10 @@ public class RejectVendorRequestCommandHandler(
             await email.SendAsync(buyer.Email, s, b, pdf);
         }
 
-        // Oversight copy to the elevated account (Final Approver, formerly the admin).
-        // Suppressed when the final approver is the actor (rejecting at the final
-        // stage) so they don't email themselves.
-        var admin = await identity.FindByEmailAsync(SystemAccounts.FinalApproverEmail);
-        if (admin is not null && !admin.IsArchived && admin.Id != userId && admin.Email != buyer?.Email)
-        {
-            // Reuse the BuyerRejected template for the admin notification — the
-            // body opens with "[Buyer Name]" but the content is informational for
-            // any reviewer copy. Admin gets visibility, not action.
-            var values = EmailValues.ForVendor(
-                entity, clock.UtcNow,
-                recipientName: admin.FullName,
-                approverName: step.ApproverName,
-                buyerName: entity.CreatedByName,
-                comments: request.Comment);
-            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "View in Admin Dashboard");
-            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.BuyerRejected, values, ct, footer);
-            await email.SendAsync(admin.Email, s, b, pdf);
-        }
+        // The Final Approver does NOT receive a rejection email — a rejection needs
+        // action only from the buyer (revise & resubmit). The Final Approver still
+        // gets an in-app bell notification (see NotificationBehavior), per the
+        // customer's rule that they work from the bell rather than email.
 
         return VendorRequestMapper.ToDetailDto(entity);
     }

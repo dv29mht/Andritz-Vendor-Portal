@@ -27,7 +27,7 @@ public static class EmailTemplateDefaults
             """
             Dear [Buyer Name],
 
-            Your Vendor Registration Request has been successfully submitted in the Andritz Vendor Registration Portal.
+            Your Vendor Registration Request has been successfully submitted in Andritz Supplier Connect.
 
             Request Details:
             • Request ID: [Request ID]
@@ -39,7 +39,7 @@ public static class EmailTemplateDefaults
             You will receive further notifications regarding the approval status.
 
             Regards,
-            Andritz Vendor Registration System
+            Andritz Supplier Connect
             """,
             "[Buyer Name],[Request ID],[Vendor Name],[Date & Time]"),
 
@@ -59,10 +59,10 @@ public static class EmailTemplateDefaults
             • Submitted By: [Buyer Name]
             • Submission Date: [Date & Time]
 
-            Please review the request in the Andritz Vendor Registration Portal and take the necessary action.
+            Please review the request in Andritz Supplier Connect and take the necessary action.
 
             Regards,
-            Andritz Vendor Registration System
+            Andritz Supplier Connect
             """,
             "[Approver Name],[Request ID],[Vendor Name],[Buyer Name],[Date & Time]"),
 
@@ -88,7 +88,7 @@ public static class EmailTemplateDefaults
             The system will maintain the updated submission under the next revision version.
 
             Regards,
-            Andritz Vendor Registration System
+            Andritz Supplier Connect
             """,
             "[Buyer Name],[Request ID],[Vendor Name],[Approver Name],[Comments]"),
 
@@ -110,7 +110,7 @@ public static class EmailTemplateDefaults
             Please review the request and update the Vendor Code generated from SAP to complete the process.
 
             Regards,
-            Andritz Vendor Registration System
+            Andritz Supplier Connect
             """,
             "[Final Approver Name],[Request ID],[Vendor Name],[Intermediate Approver Name(s)]"),
 
@@ -134,7 +134,7 @@ public static class EmailTemplateDefaults
             You may now download the approved Vendor Registration PDF document from the portal.
 
             Regards,
-            Andritz Vendor Registration System
+            Andritz Supplier Connect
             """,
             "[Buyer Name],[Request ID],[Vendor Name],[Vendor Code]"),
 
@@ -157,7 +157,7 @@ public static class EmailTemplateDefaults
             You can monitor the request status from the Final Approver Dashboard.
 
             Regards,
-            Andritz Vendor Registration System
+            Andritz Supplier Connect
             """,
             "[Request ID],[Vendor Name],[Buyer Name],[Date & Time]"),
 
@@ -180,10 +180,10 @@ public static class EmailTemplateDefaults
 
             Updated details have been modified based on the previous rejection comments.
 
-            Please review the updated request and take the necessary action in the Andritz Vendor Registration Portal.
+            Please review the updated request and take the necessary action in Andritz Supplier Connect.
 
             Regards,
-            Andritz Vendor Registration System
+            Andritz Supplier Connect
             """,
             "[Approver Name],[Request ID],[Vendor Name],[Buyer Name],[Revision Number],[Date & Time]"),
 
@@ -206,7 +206,7 @@ public static class EmailTemplateDefaults
             The request has now been forwarded again to the approver(s) for review.
 
             Regards,
-            Andritz Vendor Registration System
+            Andritz Supplier Connect
             """,
             "[Buyer Name],[Request ID],[Vendor Name],[Revision Number],[Date & Time]"),
 
@@ -214,11 +214,11 @@ public static class EmailTemplateDefaults
             EmailTemplateCodes.BuyerInvitation,
             "Buyer – Account Invitation",
             "Buyer",
-            "Welcome to the Andritz Vendor Registration Portal",
+            "Welcome to Andritz Supplier Connect",
             """
             Dear [Buyer Name],
 
-            Your Buyer account has been created in the Andritz Vendor Registration Portal.
+            Your Buyer account has been created in Andritz Supplier Connect.
 
             Account Details:
             • Full Name: [Buyer Name]
@@ -232,7 +232,7 @@ public static class EmailTemplateDefaults
             on the sign-in page.
 
             Regards,
-            Andritz Vendor Registration System
+            Andritz Supplier Connect
             """,
             "[Buyer Name],[Email],[Password],[Portal URL]"),
 
@@ -240,11 +240,11 @@ public static class EmailTemplateDefaults
             EmailTemplateCodes.ApproverInvitation,
             "Approver – Account Invitation",
             "Approver",
-            "Welcome to the Andritz Vendor Registration Portal",
+            "Welcome to Andritz Supplier Connect",
             """
             Dear [Approver Name],
 
-            Your Approver account has been created in the Andritz Vendor Registration Portal.
+            Your Approver account has been created in Andritz Supplier Connect.
 
             Account Details:
             • Full Name: [Approver Name]
@@ -258,7 +258,7 @@ public static class EmailTemplateDefaults
             your password anytime via "Forgot password" on the sign-in page.
 
             Regards,
-            Andritz Vendor Registration System
+            Andritz Supplier Connect
             """,
             "[Approver Name],[Email],[Password],[Portal URL]"),
     ];

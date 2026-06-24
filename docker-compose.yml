@@ -61,7 +61,7 @@ services:
       EmailSettings__Username: ""
       EmailSettings__Password: ""
       EmailSettings__FromEmail: "local-noreply@andritz.com"
-      EmailSettings__FromName: "SOT Local Notifications"
+      EmailSettings__FromName: "Andritz Supplier Connect"
 
   mailhog:
     image: mailhog/mailhog:latest

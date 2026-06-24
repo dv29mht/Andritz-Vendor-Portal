@@ -38,7 +38,7 @@ public class QuestPdfVendorRequestPdfService : IVendorRequestPdfService
                 p.Footer().AlignCenter().Text(t =>
                 {
                     t.DefaultTextStyle(s => s.FontSize(9).FontColor(Muted));
-                    t.Span("Andritz Vendor Portal · Generated ");
+                    t.Span("Andritz Supplier Connect · Generated ");
                     t.Span(IstTime.FormatIso(DateTime.UtcNow));
                     t.Span("  ·  Page ");
                     t.CurrentPageNumber();

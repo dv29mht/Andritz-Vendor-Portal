@@ -283,7 +283,7 @@ export default function EmailTemplateEditModal({ template, onClose, onSaved }) {
                     })}
                   </div>
                     <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 text-xs text-gray-400">
-                      Automated notification from the Andritz Vendor Portal. Do not reply.
+                      Automated notification from the Andritz Supplier Connect portal. Do not reply.
                     </div>
                   </div>
                 </>

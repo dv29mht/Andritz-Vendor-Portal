@@ -17,6 +17,9 @@ public class VendorRevision
 
     public string? RejectionComment { get; set; }
 
+    /// <summary>Name of the approver who rejected the prior revision (null if not a rejection).</summary>
+    public string? RejectedByName { get; set; }
+
     /// <summary>JSON-serialized List&lt;FieldChangeRecord&gt; (camelCase keys).</summary>
     public string ChangesJson { get; set; } = "[]";
 }

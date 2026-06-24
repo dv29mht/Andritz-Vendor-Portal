@@ -95,8 +95,15 @@ public class ResubmitVendorRequestCommandHandler(
             && await repo.PanCardExistsAsync(request.PanCard, entity.Id, ct))
             throw new ConflictException("A request with this PAN number already exists.");
 
+        // Capture — before the chain is reset/rebuilt — who rejected the prior
+        // revision and the existing intermediate chain, so the revision can record
+        // the rejecter and any change to the approval chain.
+        var rejectedByName = entity.ApprovalSteps
+            .FirstOrDefault(s => s.Decision == ApprovalDecision.Rejected)?.ApproverName;
+
         // Stale-approver check
         var intermediate = entity.ApprovalSteps.Where(s => !s.IsFinalApproval).OrderBy(s => s.StepOrder).ToList();
+        var oldChain = intermediate.Select(s => s.ApproverName).ToList();
         var staleNames = new List<string>();
         foreach (var step in intermediate)
         {
@@ -154,6 +161,12 @@ public class ResubmitVendorRequestCommandHandler(
             }
         }
 
+        var newChain = entity.ApprovalSteps
+            .Where(s => !s.IsFinalApproval)
+            .OrderBy(s => s.StepOrder)
+            .Select(s => s.ApproverName)
+            .ToList();
+
         // Compute diff
         var input = new VendorFieldsInput(
             request.VendorName, request.ContactPerson, request.Telephone, request.Email,
@@ -167,6 +180,14 @@ public class ResubmitVendorRequestCommandHandler(
             request.BankDocument1, request.BankDocument2, request.GstDocument, request.PanDocument);
 
         var changes = TrackedFields.ComputeDiff(entity, input);
+        // Record an approval-chain change as a normal diff row so it appears in the
+        // revision timeline and the CSV/PDF exports alongside the field changes.
+        if (!oldChain.SequenceEqual(newChain))
+        {
+            var oldStr = oldChain.Count == 0 ? "Final Approver only" : string.Join(" → ", oldChain);
+            var newStr = newChain.Count == 0 ? "Final Approver only" : string.Join(" → ", newChain);
+            changes.Add(new FieldChangeRecord("approvalChain", "Approval Chain", oldStr, newStr));
+        }
         var newRevNo = entity.RevisionNo + 1;
         var changedBy = await identity.FindByIdAsync(userId);
 
@@ -179,6 +200,7 @@ public class ResubmitVendorRequestCommandHandler(
             ChangedAt = clock.UtcNow,
             RevisionType = RevisionType.Resubmit,
             RejectionComment = entity.RejectionComment,
+            RejectedByName = rejectedByName,
             ChangesJson = VendorRequestMapper.SerializeChanges(changes)
         };
         db.VendorRevisions.Add(revision);
@@ -202,67 +224,31 @@ public class ResubmitVendorRequestCommandHandler(
 
     private async Task SendNotificationsAsync(VendorRequest entity, CancellationToken ct)
     {
-        var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
-        var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
-
-        var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
-        if (buyer is not null)
-        {
-            var values = EmailValues.ForVendor(
-                entity, clock.UtcNow,
-                recipientName: buyer.FullName,
-                buyerName: buyer.FullName);
-            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "Track Request");
-            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.BuyerResubmissionConfirmation, values, ct, footer);
-            await email.SendAsync(buyer.Email, s, b);
-        }
-
-        var hasIntermediate = entity.ApprovalSteps.Any(s => !s.IsFinalApproval);
+        // Email only the intermediate approver who must act next on the (possibly
+        // rebuilt) chain. The Final Approver and the buyer work from the in-app
+        // notification bell, not email — matching the submit flow and the
+        // customer's request. An approver dropped from the chain on resubmit is no
+        // longer a step, so they receive nothing. When the chain is Final-Approver-
+        // only (no intermediate steps), no email is sent at all.
         var firstStep = entity.ApprovalSteps
-            .Where(s => hasIntermediate ? !s.IsFinalApproval : s.IsFinalApproval)
+            .Where(s => !s.IsFinalApproval)
             .OrderBy(s => s.StepOrder)
             .FirstOrDefault();
+        if (firstStep is null) return;
 
-        if (firstStep is not null)
-        {
-            var approver = await identity.FindByIdAsync(firstStep.ApproverUserId);
-            if (approver is not null)
-            {
-                var values = EmailValues.ForVendor(
-                    entity, clock.UtcNow,
-                    recipientName: firstStep.ApproverName,
-                    approverName: firstStep.ApproverName,
-                    buyerName: entity.CreatedByName);
+        var approver = await identity.FindByIdAsync(firstStep.ApproverUserId);
+        if (approver is null) return;
 
-                string footer;
-                if (firstStep.IsFinalApproval)
-                {
-                    var rejectUrl = EmailActionLinks.BuildRejectOnly(tokens, config, entity, firstStep);
-                    footer = EmailHtmlShell.BuildActionFooter(null, rejectUrl, portalUrl, "Review & Assign SAP Code");
-                }
-                else
-                {
-                    var (approveUrl, rejectUrl) = EmailActionLinks.BuildFor(tokens, config, entity, firstStep);
-                    footer = EmailHtmlShell.BuildActionFooter(approveUrl, rejectUrl, portalUrl, "View in Portal");
-                }
-
-                var (s, b) = await templates.RenderAsync(EmailTemplateCodes.ApproverResubmitted, values, ct, footer);
-                await email.SendAsync(approver.Email, s, b, pdf);
-            }
-        }
-
-        // Oversight copy to the elevated account (Final Approver, formerly the admin).
-        var admin = await identity.FindByEmailAsync(SystemAccounts.FinalApproverEmail);
-        if (admin is not null && !admin.IsArchived && admin.Email != buyer?.Email)
-        {
-            var values = EmailValues.ForVendor(
-                entity, clock.UtcNow,
-                recipientName: admin.FullName,
-                approverName: admin.FullName,
-                buyerName: entity.CreatedByName);
-            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "View in Admin Dashboard");
-            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.ApproverResubmitted, values, ct, footer);
-            await email.SendAsync(admin.Email, s, b, pdf);
-        }
+        var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
+        var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
+        var values = EmailValues.ForVendor(
+            entity, clock.UtcNow,
+            recipientName: firstStep.ApproverName,
+            approverName: firstStep.ApproverName,
+            buyerName: entity.CreatedByName);
+        var (approveUrl, rejectUrl) = EmailActionLinks.BuildFor(tokens, config, entity, firstStep);
+        var footer = EmailHtmlShell.BuildActionFooter(approveUrl, rejectUrl, portalUrl, "View in Portal");
+        var (s, b) = await templates.RenderAsync(EmailTemplateCodes.ApproverResubmitted, values, ct, footer);
+        await email.SendAsync(approver.Email, s, b, pdf);
     }
 }

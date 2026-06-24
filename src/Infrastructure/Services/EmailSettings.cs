@@ -8,5 +8,5 @@ public class EmailSettings
     public string Password { get; set; } = string.Empty;
     public bool EnableSsl { get; set; } = false;
     public string FromEmail { get; set; } = "noreply@andritz.com";
-    public string FromName { get; set; } = "Andritz Vendor Portal";
+    public string FromName { get; set; } = "Andritz Supplier Connect";
 }

@@ -76,7 +76,9 @@ public class NotificationBehavior<TRequest, TResponse>(
 
         switch (commandName)
         {
-            case "CreateVendorRequestCommand":
+            // Only the submit step notifies. CreateVendorRequestCommand just creates a
+            // Draft (the buyer-console "new request" flow calls create then submit), so
+            // notifying on create too would double every submission.
             case "SubmitVendorRequestCommand":
                 Add(finalApprover, "Submitted", "New vendor request submitted",
                     $"{buyerName} submitted \"{vendor}\" for registration.");

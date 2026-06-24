@@ -26,6 +26,7 @@ public record VendorRevisionDto(
     string ChangedByName,
     DateTime ChangedAt,
     string? RejectionComment,
+    string? RejectedByName,
     string RevisionType,
     List<FieldChangeDto> Changes);
 

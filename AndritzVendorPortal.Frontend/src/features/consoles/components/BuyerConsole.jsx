@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
          ClockIcon, ExclamationCircleIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon,
          ArrowUpTrayIcon, ArrowDownTrayIcon, XMarkIcon,
@@ -540,70 +542,80 @@ function exportRequestToExcel(req) {
 }
 
 function exportRequestToPdf(req) {
-  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-  const row = (label, val, mono = false) =>
-    `<tr><td class="lbl">${esc(label)}</td><td${mono ? ' class="mono"' : ''}>${esc(val)}</td></tr>`
+  // Generate a real PDF client-side and download it directly (no print dialog),
+  // building from data — never DOM serialization — to prevent XSS.
+  const val = v => (v === null || v === undefined) ? '' : String(v)
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' })
+  const pageWidth  = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const margin = 40
+  const ensureSpace = (y, needed = 60) => (y + needed > pageHeight - margin ? (doc.addPage(), margin + 8) : y)
 
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
-<title>Vendor Details — ${esc(req.vendorName)}</title>
-<style>
-  body { font-family: Arial, sans-serif; font-size: 11px; margin: 28px; color: #1f2937; }
-  h1 { font-size: 17px; margin-bottom: 2px; }
-  .badge { display:inline-block; background:#d1fae5; color:#065f46; border-radius:4px; padding:2px 8px; font-size:10px; font-weight:700; margin-left:8px; }
-  .code { font-family: monospace; font-size:14px; font-weight:700; color:#065f46; margin-bottom:16px; }
-  h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #6b7280; margin: 16px 0 4px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
-  table { border-collapse: collapse; width: 100%; margin-bottom: 8px; }
-  td { padding: 4px 8px; border-bottom: 1px solid #f3f4f6; vertical-align:top; }
-  .lbl { color: #9ca3af; font-size: 10px; width: 35%; }
-  .mono { font-family: monospace; letter-spacing: .05em; }
-  @media print { body { margin: 12px; } }
-</style></head><body>
-<h1>${esc(req.vendorName)} <span class="badge">${esc(req.status)}</span></h1>
-${req.vendorCode ? `<p class="code">SAP Vendor Code: ${esc(req.vendorCode)}</p>` : ''}
-<h2>Vendor Information</h2>
-<table>
-  ${row('Material Group', req.materialGroup)}
-  ${row('Reason', req.reason)}
-  ${row('GST Number', req.gstNumber, true)}
-  ${row('PAN Card', req.panCard, true)}
-  ${row('One-Time Vendor', req.isOneTimeVendor ? 'Yes' : 'No')}
-  ${row('Proposed By', req.proposedBy)}
-</table>
-<h2>Address</h2>
-<table>
-  ${row('Street / Building', req.addressDetails)}
-  ${row('City', req.city)} ${row('Locality', req.locality)}
-  ${row('State', req.state)} ${row('Postal Code', req.postalCode)}
-  ${row('Country', req.country)}
-</table>
-<h2>Commercial Terms</h2>
-<table>
-  ${row('Currency', req.currency)} ${row('Payment Terms', req.paymentTerms)}
-  ${row('Incoterms', req.incoterms)} ${row('Yearly PVO', req.yearlyPvo)}
-</table>
-<h2>Contact</h2>
-<table>
-  ${row('Contact Person', req.contactPerson || req.contactInformation)}
-  ${row('Telephone', req.telephone)}
-</table>
-<h2>Record</h2>
-<table>
-  ${row('Created By', req.createdByName)}
-  ${row('Created On', new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' }))}
-  ${row('Assigned By', req.vendorCodeAssignedBy ?? '')}
-  ${row('Revision No.', String(req.revisionNo))}
-</table>
-</body></html>`
-
-  const iframe = document.createElement('iframe')
-  iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;height:600px;border:0'
-  iframe.srcdoc = html
-  document.body.appendChild(iframe)
-  iframe.onload = () => {
-    iframe.contentWindow.focus()
-    iframe.contentWindow.print()
-    setTimeout(() => { if (document.body.contains(iframe)) document.body.removeChild(iframe) }, 2000)
+  // ── Title + status + vendor code ──
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(31, 41, 55)
+  doc.text(val(req.vendorName), margin, 48)
+  const titleW = doc.getTextWidth(val(req.vendorName))
+  doc.setFontSize(9); doc.setTextColor(6, 95, 70)
+  doc.text(`[ ${val(req.status)} ]`, margin + titleW + 10, 48)
+  let y = 66
+  if (req.vendorCode) {
+    doc.setFont('courier', 'bold'); doc.setFontSize(12); doc.setTextColor(6, 95, 70)
+    doc.text(`SAP Vendor Code: ${val(req.vendorCode)}`, margin, y)
+    y += 14
   }
+
+  const field = (label, value, mono = false) => [
+    label,
+    { content: val(value), styles: mono ? { font: 'courier' } : {} },
+  ]
+  const section = (title, body) => {
+    y = ensureSpace(doc.lastAutoTable ? doc.lastAutoTable.finalY + 16 : y + 8)
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(107, 114, 128)
+    doc.text(title.toUpperCase(), margin, y)
+    autoTable(doc, {
+      startY: y + 4,
+      theme: 'grid',
+      styles: { fontSize: 9, cellPadding: 4, lineColor: [243, 244, 246], lineWidth: 0.5, valign: 'middle' },
+      columnStyles: { 0: { cellWidth: 175, textColor: [156, 163, 175], fontSize: 9 } },
+      body,
+      margin: { left: margin, right: margin },
+    })
+  }
+
+  section('Vendor Information', [
+    field('Material Group', req.materialGroup),
+    field('Reason', req.reason),
+    field('GST Number', req.gstNumber, true),
+    field('PAN Card', req.panCard, true),
+    field('One-Time Vendor', req.isOneTimeVendor ? 'Yes' : 'No'),
+    field('Proposed By', req.proposedBy),
+  ])
+  section('Address', [
+    field('Street / Building', req.addressDetails),
+    field('City', req.city),
+    field('Locality', req.locality),
+    field('State', req.state),
+    field('Postal Code', req.postalCode),
+    field('Country', req.country),
+  ])
+  section('Commercial Terms', [
+    field('Currency', req.currency),
+    field('Payment Terms', req.paymentTerms),
+    field('Incoterms', req.incoterms),
+    field('Yearly PVO', req.yearlyPvo),
+  ])
+  section('Contact', [
+    field('Contact Person', req.contactPerson || req.contactInformation),
+    field('Telephone', req.telephone),
+  ])
+  section('Record', [
+    field('Created By', req.createdByName),
+    field('Created On', new Date(req.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' })),
+    field('Assigned By', req.vendorCodeAssignedBy ?? ''),
+    field('Revision No.', String(req.revisionNo)),
+  ])
+
+  doc.save(`${req.vendorName.replace(/\s+/g, '_')}_vendor_details.pdf`)
 }
 
 export default function BuyerConsole({ workflow, currentUser, activePage, onNavigate }) {
@@ -1041,13 +1053,12 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       return
     }
 
-    // If no intermediate approvers selected, ask for confirmation first (new requests only)
-    if (!skipApproverConfirm && !editingRequest && selectedApprovers.length === 0) {
-      setShowNoApproverConfirm(true)
-      return
-    }
-    // Also confirm for Draft submissions with no intermediate approvers
-    if (!skipApproverConfirm && editingRequest?.status === 'Draft' && selectedApprovers.length === 0) {
+    // If no intermediate approvers are selected, confirm before sending the request
+    // straight to the Final Approver. This applies anywhere the buyer chooses the
+    // approval chain: new requests, draft submissions, and rejected resubmissions.
+    const approverChainEditable =
+      !editingRequest || editingRequest.status === 'Draft' || editingRequest.status === 'Rejected'
+    if (!skipApproverConfirm && approverChainEditable && selectedApprovers.length === 0) {
       setShowNoApproverConfirm(true)
       return
     }

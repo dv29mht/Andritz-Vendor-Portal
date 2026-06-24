@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { CheckCircleIcon, ExclamationCircleIcon, ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/solid'
 
 const VARIANTS = {
@@ -20,30 +20,45 @@ const VARIANTS = {
 }
 
 /**
+ * Centered toast over a blurred dim backdrop.
+ *
  * @param {{ title: string, body?: string }} message
  * @param {'success'|'error'|'warning'} type
  * @param {() => void} onClose
- * @param {number} [duration=4500]
+ * @param {number} [duration=4500]  How long the toast stays up once visible.
+ * @param {number} [openDelay=220]  Hold-back before the toast appears.
+ *
+ * Why the delay: submissions call setToast in the same render that closes the
+ * form modal. Without it, the blurred backdrop snapped on while the modal was
+ * still animating closed (and the dashboard behind it was re-rendering), so that
+ * motion showed through the blur as a "flash". Waiting out the modal's ~150ms
+ * leave animation lets the backdrop fade in over a settled screen instead.
  */
-export default function Toast({ message, title, body, type = 'success', onClose, duration = 4500 }) {
+export default function Toast({ message, title, body, type = 'success', onClose, duration = 4500, openDelay = 220 }) {
+  const [visible, setVisible] = useState(false)
+
+  // Hold the toast back until the form modal (if any) has finished closing.
   useEffect(() => {
+    const t = setTimeout(() => setVisible(true), openDelay)
+    return () => clearTimeout(t)
+  }, [openDelay])
+
+  // Auto-dismiss only starts counting once the toast is actually on screen.
+  useEffect(() => {
+    if (!visible) return
     const t = setTimeout(onClose, duration)
     return () => clearTimeout(t)
-  }, [onClose, duration])
+  }, [visible, onClose, duration])
+
+  if (!visible) return null
 
   const v = VARIANTS[type] ?? VARIANTS.success
   const heading = message?.title ?? title
   const detail  = message?.body  ?? body
 
-  // A top-centered notification card — deliberately NOT a full-screen
-  // backdrop-blur overlay. The old overlay sat on top of (and blurred) whatever
-  // was animating underneath — a closing modal, a refreshing dashboard — which
-  // read as a "flash" right before the toast settled. A lightweight card that
-  // slides in cleanly avoids fighting with those background transitions. The
-  // wrapper ignores pointer events so it never blocks the UI behind it.
   return (
-    <div className="fixed top-5 inset-x-0 z-[60] flex justify-center px-4 pointer-events-none">
-      <div className={`toast-enter relative pointer-events-auto flex items-start gap-3.5 rounded-2xl
+    <div className="toast-backdrop fixed inset-0 z-[60] flex items-center justify-center px-4 backdrop-blur-sm bg-black/20">
+      <div className={`toast-enter relative flex items-start gap-3.5 rounded-2xl
                        shadow-2xl ring-1 px-5 py-4 max-w-sm w-full ${v.wrap}`}
            role="alert"
       >
@@ -72,11 +87,16 @@ export default function Toast({ message, title, body, type = 'success', onClose,
             from { width: 100%; }
             to   { width: 0%; }
           }
-          @keyframes toastIn {
-            from { opacity: 0; transform: translateY(-12px); }
-            to   { opacity: 1; transform: translateY(0); }
+          @keyframes toastBackdropIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
           }
-          .toast-enter { animation: toastIn 220ms cubic-bezier(0.16, 1, 0.3, 1); }
+          @keyframes toastIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to   { opacity: 1; transform: scale(1); }
+          }
+          .toast-backdrop { animation: toastBackdropIn 200ms ease-out; }
+          .toast-enter    { animation: toastIn 220ms cubic-bezier(0.16, 1, 0.3, 1); }
         `}</style>
       </div>
     </div>

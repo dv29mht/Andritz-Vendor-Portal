@@ -168,17 +168,17 @@ public class EmailActionController(
         <!DOCTYPE html>
         <html lang="en"><head><meta charset="UTF-8"/>
         <meta name="viewport" content="width=device-width,initial-scale=1"/>
-        <title>{WebUtility.HtmlEncode(title)} · Andritz Vendor Portal</title></head>
+        <title>{WebUtility.HtmlEncode(title)} · Andritz Supplier Connect</title></head>
         <body style="margin:0;padding:0;background:#f4f6f8;font-family:'Segoe UI',Arial,sans-serif;min-height:100vh;">
           <div style="max-width:560px;margin:48px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
             <div style="background:#064e80;padding:28px 36px;">
               <p style="margin:0;color:#fff;font-weight:900;font-size:22px;letter-spacing:.18em;">ANDRITZ</p>
-              <p style="margin:4px 0 0;color:rgba(255,255,255,.6);font-size:11px;letter-spacing:.3em;text-transform:uppercase;">Vendor Onboarding &amp; Compliance</p>
+              <p style="margin:4px 0 0;color:rgba(255,255,255,.6);font-size:11px;letter-spacing:.3em;text-transform:uppercase;">Supplier Connect</p>
             </div>
             <div style="height:4px;background:{accent};"></div>
             <div style="padding:32px 36px;">{innerHtml}</div>
             <div style="background:#f8f9fa;padding:16px 36px;border-top:1px solid #e9ecef;">
-              <p style="margin:0;color:#9ca3af;font-size:12px;">Automated action from the Andritz Vendor Portal.</p>
+              <p style="margin:0;color:#9ca3af;font-size:12px;">Automated action from the Andritz Supplier Connect portal.</p>
             </div>
           </div>
         </body></html>

@@ -1,22 +1,16 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { UserIcon, EnvelopeIcon, KeyIcon, CheckCircleIcon, ExclamationCircleIcon,
          EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import { useSettings } from '../hooks/useSettings'
-import { useAuth } from '../../auth/hooks/useAuth'
-import { useUIStore } from '../../../store/uiStore'
 
 export default function SettingsPage({ currentUser, onUpdate }) {
   const { saving, updateProfile } = useSettings()
-  const { logout } = useAuth()
-  const navigate = useNavigate()
   const [name,       setName]       = useState(currentUser.name ?? '')
   const [curPwd,     setCurPwd]     = useState('')
   const [newPwd,     setNewPwd]     = useState('')
   const [confirmPwd, setConfirmPwd] = useState('')
   const [error,      setError]      = useState(null)
   const [success,    setSuccess]    = useState(null)
-  const [redirecting, setRedirecting] = useState(false)
   const [showCur,    setShowCur]    = useState(false)
   const [showNew,    setShowNew]    = useState(false)
   const [showCfm,    setShowCfm]    = useState(false)
@@ -33,6 +27,12 @@ export default function SettingsPage({ currentUser, onUpdate }) {
       if (!newPwd)              { setError('Enter a new password.'); return }
       if (newPwd !== confirmPwd){ setError('New passwords do not match.'); return }
       if (newPwd.length < 8)    { setError('New password must be at least 8 characters.'); return }
+      // Mirror the server's ASP.NET Identity password policy so the user gets
+      // instant feedback instead of a generic 400 from the API.
+      if (!/[A-Z]/.test(newPwd) || !/[a-z]/.test(newPwd) || !/[0-9]/.test(newPwd) || !/[^A-Za-z0-9]/.test(newPwd)) {
+        setError('New password must include an uppercase letter, a lowercase letter, a number, and a special character.')
+        return
+      }
     }
 
     try {
@@ -45,29 +45,19 @@ export default function SettingsPage({ currentUser, onUpdate }) {
       setCurPwd('')
       setNewPwd('')
       setConfirmPwd('')
-
-      if (changingPassword) {
-        // Changing the password revokes the current JWT server-side, so this
-        // session is no longer valid. Sign out cleanly and send the user to the
-        // login page instead of letting the next API call 401 into the red
-        // "session expired" banner. Flag the logout up front so that banner is
-        // suppressed during the brief delay before we redirect.
-        setRedirecting(true)
-        setSuccess('Password updated. Taking you to the sign-in page to log in with your new password…')
-        useUIStore.getState().setLoggingOut(true)
-        setTimeout(async () => {
-          await logout()
-          navigate('/login', { replace: true })
-        }, 1600)
-      } else {
-        setSuccess('Changes saved successfully.')
-      }
+      // The password change keeps the current session valid (the server no longer
+      // revokes the live token), so the user simply stays signed in.
+      setSuccess(changingPassword ? 'Password updated successfully.' : 'Changes saved successfully.')
     } catch (err) {
       const detail = err.response?.data
-      if (Array.isArray(detail))           setError(detail.join(' '))
-      else if (typeof detail === 'string') setError(detail)
-      else if (detail?.message)            setError(detail.message)
-      else                                 setError('Failed to save changes. Please try again.')
+      // The API returns { message, errors: [...] }. The errors array carries the
+      // specific reason (e.g. "Incorrect password.") — surface it ahead of the
+      // generic message so the user knows exactly what to fix.
+      if (Array.isArray(detail?.errors) && detail.errors.length) setError(detail.errors.join(' '))
+      else if (Array.isArray(detail))           setError(detail.join(' '))
+      else if (typeof detail === 'string')      setError(detail)
+      else if (detail?.message)                 setError(detail.message)
+      else                                      setError('Failed to save changes. Please try again.')
     }
   }
 
@@ -120,7 +110,7 @@ export default function SettingsPage({ currentUser, onUpdate }) {
           <div className="px-6 py-5 space-y-4 flex-1">
             {[
               { label: 'Current Password',    value: curPwd,     set: setCurPwd,     ph: 'Current password',           show: showCur, toggle: () => setShowCur(v => !v) },
-              { label: 'New Password',         value: newPwd,     set: setNewPwd,     ph: 'New password (min. 8 chars)', show: showNew, toggle: () => setShowNew(v => !v) },
+              { label: 'New Password',         value: newPwd,     set: setNewPwd,     ph: 'New password', show: showNew, toggle: () => setShowNew(v => !v) },
               { label: 'Confirm New Password', value: confirmPwd, set: setConfirmPwd, ph: 'Repeat new password',        show: showCfm, toggle: () => setShowCfm(v => !v) },
             ].map(({ label, value, set, ph, show, toggle }) => (
               <div key={label}>
@@ -145,6 +135,9 @@ export default function SettingsPage({ currentUser, onUpdate }) {
                 </div>
               </div>
             ))}
+            <p className="text-[11px] text-gray-400">
+              Use at least 8 characters with an uppercase letter, a lowercase letter, a number, and a special character.
+            </p>
           </div>
         </div>
       </div>
@@ -165,7 +158,7 @@ export default function SettingsPage({ currentUser, onUpdate }) {
             </div>
           )}
         </div>
-        <button className="btn-primary flex-shrink-0" onClick={handleSave} disabled={saving || redirecting}>
+        <button className="btn-primary flex-shrink-0" onClick={handleSave} disabled={saving}>
           {saving ? 'Saving…' : 'Save Changes'}
         </button>
       </div>

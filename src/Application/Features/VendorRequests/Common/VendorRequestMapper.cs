@@ -46,6 +46,7 @@ public static class VendorRequestMapper
                 v.ChangedByName,
                 v.ChangedAt,
                 v.RejectionComment,
+                v.RejectedByName,
                 v.RevisionType.ToString(),
                 DeserializeChanges(v.ChangesJson)))
             .ToList();
