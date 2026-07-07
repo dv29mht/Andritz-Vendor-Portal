@@ -123,6 +123,14 @@ public class VendorRequestsController(IMediator mediator) : ControllerBase
     public async Task<ActionResult<Result<VendorRequestDetailDto>>> Submit(int id) =>
         Ok(Result<VendorRequestDetailDto>.Ok(await mediator.Send(new SubmitVendorRequestCommand(id))));
 
+    [HttpDelete("{id:int}/draft")]
+    [Authorize(Roles = Roles.Buyer)]
+    public async Task<ActionResult<Result>> DiscardDraft(int id)
+    {
+        await mediator.Send(new DiscardDraftCommand(id));
+        return Ok(Result.Ok("Draft discarded."));
+    }
+
     [HttpPost("{id:int}/resubmit")]
     [Authorize(Roles = Roles.Buyer)]
     public async Task<ActionResult<Result<VendorRequestDetailDto>>> Resubmit(int id, [FromBody] ResubmitVendorRequestModel m)

@@ -24,6 +24,7 @@ export const ENDPOINTS = {
     create:       '/vendor-requests',
     createDraft:  '/vendor-requests/draft',
     saveDraft:    (id) => `/vendor-requests/${id}/save-draft`,
+    discardDraft: (id) => `/vendor-requests/${id}/draft`,
     submit:       (id) => `/vendor-requests/${id}/submit`,
     resubmit:     (id) => `/vendor-requests/${id}/resubmit`,
     buyerUpdate:  (id) => `/vendor-requests/${id}/buyer-update`,

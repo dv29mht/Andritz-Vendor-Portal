@@ -99,6 +99,9 @@ export const vendorsService = {
   submit: (id) =>
     api.post(ENDPOINTS.vendorRequests.submit(id)).then(r => r.data),
 
+  discardDraft: (id) =>
+    api.delete(ENDPOINTS.vendorRequests.discardDraft(id)).then(r => r.data),
+
   resubmit: (id, form) =>
     api.post(ENDPOINTS.vendorRequests.resubmit(id), {
       ...buildVendorPayload(form),

@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon,
+import { PlusIcon, PaperAirplaneIcon, PencilSquareIcon, EyeIcon, TrashIcon,
          ClockIcon, ExclamationCircleIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon,
          ArrowUpTrayIcon, ArrowDownTrayIcon, XMarkIcon,
          MagnifyingGlassIcon } from '@heroicons/react/24/outline'
@@ -67,7 +67,7 @@ const CURRENCIES = [
 const INCOTERMS     = ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FAS','FOB','CFR','CIF']
 // Purchasing organization codes. The buyer picks one code directly; the trailing
 // letter encodes the sourcing type (D = Domestic, I = Export) for display only.
-const PURCHASING_ORGS = ['900D', '900I', 'P20D', 'T20I']
+const PURCHASING_ORGS = ['900D', '900I', 'T20I']
 const MSME_CATEGORIES = ['Micro', 'Small', 'Medium']
 const ALL_LOCALITIES = [...new Set(Object.values(CITIES).flat())]
 
@@ -328,16 +328,61 @@ async function previewUploadedDoc(value) {
 function FileUploadField({
   label, required, value, error,
   accept = "image/*,application/pdf,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  span = 1, onAdd, onRemove,
+  span = 1, onAdd, onRemove, onReject,
 }) {
   const inputRef = useRef(null)
   const [dragOver, setDragOver] = useState(false)
   const docs = Array.isArray(value) ? value : (value ? [value] : [])
 
-  const handleDrop = (e) => {
+  // Accepts drops from as many sources as the browser allows: files from the desktop,
+  // macOS Mail, and Gmail/Outlook attachment drags come through dataTransfer.files;
+  // some in-page image drags expose the file only via dataTransfer.items; an image
+  // dragged from a web page may arrive as just a URL. Anything the browser refuses to
+  // hand over as a file (e.g. WhatsApp Web's origin-locked blob: URLs) triggers onReject
+  // so the user is told to save it first rather than getting a silent no-op.
+  const handleDrop = async (e) => {
     e.preventDefault()
     setDragOver(false)
-    if (e.dataTransfer?.files?.length) onAdd(e.dataTransfer.files)
+    const dt = e.dataTransfer
+    if (!dt) return
+
+    // Read files + items synchronously (the DataTransfer is cleared once the handler
+    // yields to an await), then de-dupe — the two lists usually overlap.
+    const fromFiles = dt.files?.length ? Array.from(dt.files) : []
+    const fromItems = []
+    if (dt.items?.length) {
+      for (const it of Array.from(dt.items)) {
+        if (it.kind === 'file') { const f = it.getAsFile(); if (f) fromItems.push(f) }
+      }
+    }
+    const url = dt.getData('text/uri-list') || dt.getData('text/plain')
+
+    const seen = new Set()
+    const files = [...fromFiles, ...fromItems].filter(f => {
+      const key = `${f.name}:${f.size}`
+      if (seen.has(key)) return false
+      seen.add(key); return true
+    })
+    if (files.length) { onAdd(files); return }
+
+    // No file payload — the source dropped only a URL (common for images dragged out of
+    // a website). Try to fetch http(s) URLs into a file; blob:/data: from another origin
+    // can't be read, and cross-origin fetches without CORS will throw — fall back to the
+    // hint. Only accept image/pdf/spreadsheet results so a dropped link can't attach HTML.
+    if (url && /^https?:\/\//i.test(url)) {
+      try {
+        const res = await fetch(url)
+        if (!res.ok) throw new Error('fetch failed')
+        const blob = await res.blob()
+        const okType = /^image\//.test(blob.type) || blob.type === 'application/pdf'
+          || /\.(png|jpe?g|gif|webp|bmp|svg|pdf|xlsx)(\?|$)/i.test(url)
+        if (!okType) throw new Error('unsupported type')
+        const name = (url.split('/').pop() || 'attachment').split('?')[0] || 'attachment'
+        onAdd([new File([blob], name, { type: blob.type || 'application/octet-stream' })])
+        return
+      } catch { /* fall through to the reject hint */ }
+    }
+    onReject?.()
   }
 
   return (
@@ -666,6 +711,21 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   const [revDateFrom, setRevDateFrom]               = useState('')
   const [revDateTo, setRevDateTo]                   = useState('')
   const [showNoApproverConfirm, setShowNoApproverConfirm] = useState(false)
+  // Draft that the buyer has asked to discard — drives the confirmation dialog.
+  const [discardTarget, setDiscardTarget]           = useState(null)
+  const [discarding, setDiscarding]                 = useState(false)
+  // Repeat "Save as Draft" on an unchanged draft asks for confirmation first.
+  const [showDuplicateSaveConfirm, setShowDuplicateSaveConfirm] = useState(false)
+  // Full record (documents included) is fetched after the edit modal opens, so the
+  // modal appears instantly; Submit/Save stay disabled until the blobs arrive.
+  const [loadingDetail, setLoadingDetail]           = useState(false)
+  // Synchronous guard: a rapid double/triple-click on "Save as Draft" fires several
+  // handlers before React re-renders the disabled button. Without this ref each one
+  // would POST a new draft, leaving duplicate records behind.
+  const savingDraftRef                              = useRef(false)
+  // Identifies the request the in-flight detail fetch belongs to, so a late response
+  // for a modal the buyer already closed/replaced is ignored.
+  const editDetailReqIdRef                          = useRef(null)
   // Item 13 — ON/OFF toggles for the Taxation and Financial/Bank sections. When OFF
   // the section's fields are hidden and excluded from validation + submission.
   const [taxEnabled, setTaxEnabled]   = useState(true)
@@ -860,25 +920,31 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     setForm(f => ({ ...f, [field]: (Array.isArray(f[field]) ? f[field] : []).filter((_, i) => i !== index) }))
   }
 
-  const openEdit = async (listReq) => {
-    // The list payload omits the document blobs for size; fetch the full record so
-    // previously-uploaded documents pre-populate the form. Fall back to the list copy.
-    let req = listReq
-    try {
-      const full = await workflow.fetchDetail(listReq.id)
-      if (full) req = full
-    } catch { /* keep list copy — documents simply won't pre-fill */ }
+  // Shown when a drop carried no file the browser would let us read (e.g. an image
+  // dragged straight from WhatsApp Web, whose blob URL is locked to its own origin).
+  const notifyDropUnsupported = () => setToast({
+    type: 'warning',
+    title: "Couldn't attach that",
+    body: "Some apps (like WhatsApp Web) don't let the browser read a dragged item directly. Save it to your device first, then drag it in or click to upload.",
+  })
 
-    setEditingRequest(req)
+  const openEdit = (listReq) => {
+    // Open the modal instantly from the list copy instead of awaiting the network.
+    // The list payload carries every field except the four document blobs (stripped
+    // for size), so the form can be fully populated right away and the buyer sees the
+    // dialog with no lag. The blobs are fetched in the background below and merged in;
+    // until they land, Submit / Save stay disabled (loadingDetail) so a fast click
+    // can't submit a document-less copy and wipe previously-uploaded files.
+    setEditingRequest(listReq)
 
     // Detect stale approvers: intermediate steps whose userId is no longer in availableApprovers
-    const intermediateSteps = (req.approvalSteps ?? []).filter(s => !s.isFinalApproval)
+    const intermediateSteps = (listReq.approvalSteps ?? []).filter(s => !s.isFinalApproval)
     const availableIds = new Set(availableApprovers.map(a => a.id))
     const stale = intermediateSteps.filter(s => !availableIds.has(s.approverUserId))
     const needsRebuild = stale.length > 0
     setChainNeedsRebuild(needsRebuild)
 
-    if (req.status === 'Draft' || req.status === 'Rejected' || needsRebuild) {
+    if (listReq.status === 'Draft' || listReq.status === 'Rejected' || needsRebuild) {
       // Drafts, rejected resubmissions, and stale-chain rebuilds all let the buyer
       // review/adjust the approval chain, so pre-populate it with the still-valid
       // approvers in their original order.
@@ -894,46 +960,89 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     }
 
     setForm({
-      purchasingOrganization: req.purchasingOrganization ?? '',
-      vendorName:     req.vendorName     ?? '',
-      materialGroup:  req.materialGroup  ?? '',
-      reason:         req.reason         ?? '',
-      isMsmeVendor:   !!(req.msmeCategory && req.msmeCategory.trim()),
-      msmeCategory:   req.msmeCategory   ?? '',
-      contactPerson:  req.contactPerson  || req.contactInformation || '',
-      telephone:      req.telephone      ?? '',
-      email:          req.email          ?? '',
-      gstNumber:      req.gstNumber      ?? '',
-      panCard:        req.panCard        ?? '',
-      addressDetails: req.addressDetails ?? '',
-      postalCode:     req.postalCode     ?? '',
-      city:           req.city           ?? '',
-      locality:       req.locality       ?? '',
-      state:          req.state          ?? '',
-      country:        ALL_COUNTRIES.find(c => c.name === req.country)?.isoCode ?? 'IN',
-      currency:       req.currency       ?? 'INR',
-      paymentTerms:   req.paymentTerms   ?? '',
-      incoterms:      req.incoterms      ?? '',
-      yearlyPvo:      req.yearlyPvo      ?? '',
-      isOneTimeVendor:req.isOneTimeVendor ?? false,
-      proposedBy:     req.proposedBy     ?? '',
-      bankName:           req.bankName           ?? '',
-      branchName:         req.branchName         ?? '',
-      bankAccountNumber:  req.bankAccountNumber  ?? '',
-      ifscCode:           req.ifscCode           ?? '',
-      bankDocument1: parseDocs(req.bankDocument1),
-      gstDocument:   parseDocs(req.gstDocument),
-      panDocument:   parseDocs(req.panDocument),
+      purchasingOrganization: listReq.purchasingOrganization ?? '',
+      vendorName:     listReq.vendorName     ?? '',
+      materialGroup:  listReq.materialGroup  ?? '',
+      reason:         listReq.reason         ?? '',
+      isMsmeVendor:   !!(listReq.msmeCategory && listReq.msmeCategory.trim()),
+      msmeCategory:   listReq.msmeCategory   ?? '',
+      contactPerson:  listReq.contactPerson  || listReq.contactInformation || '',
+      telephone:      listReq.telephone      ?? '',
+      email:          listReq.email          ?? '',
+      gstNumber:      listReq.gstNumber      ?? '',
+      panCard:        listReq.panCard        ?? '',
+      addressDetails: listReq.addressDetails ?? '',
+      postalCode:     listReq.postalCode     ?? '',
+      city:           listReq.city           ?? '',
+      locality:       listReq.locality       ?? '',
+      state:          listReq.state          ?? '',
+      country:        ALL_COUNTRIES.find(c => c.name === listReq.country)?.isoCode ?? 'IN',
+      currency:       listReq.currency       ?? 'INR',
+      paymentTerms:   listReq.paymentTerms   ?? '',
+      incoterms:      listReq.incoterms      ?? '',
+      yearlyPvo:      listReq.yearlyPvo      ?? '',
+      isOneTimeVendor:listReq.isOneTimeVendor ?? false,
+      proposedBy:     listReq.proposedBy     ?? '',
+      bankName:           listReq.bankName           ?? '',
+      branchName:         listReq.branchName         ?? '',
+      bankAccountNumber:  listReq.bankAccountNumber  ?? '',
+      ifscCode:           listReq.ifscCode           ?? '',
+      // Documents are absent from the list copy — filled in when the detail lands.
+      bankDocument1: parseDocs(listReq.bankDocument1),
+      gstDocument:   parseDocs(listReq.gstDocument),
+      panDocument:   parseDocs(listReq.panDocument),
       // BankDocument2 column is repurposed to hold the general "Additional Documents".
-      additionalDocuments: parseDocs(req.bankDocument2),
+      additionalDocuments: parseDocs(listReq.bankDocument2),
     })
-    // Editing an existing vendor: default both optional sections ON so populated
-    // fields stay visible. The buyer can toggle either off again if not applicable.
-    setTaxEnabled(true)
-    setBankEnabled(true)
+    // Restore the Taxation / Financial section toggles from what was actually saved
+    // rather than forcing both ON. A buyer who turned a section off — e.g. a foreign
+    // or one-time vendor with no GST and no Indian bank account — would otherwise
+    // reopen the record (this bites drafts especially) to find that section
+    // re-enabled, its now-required fields empty, and submission blocked on data they
+    // never intended to provide. The toggle state isn't persisted, so infer it from
+    // whether the record carries any data in that section. Documents aren't in the list
+    // copy yet, so a section that holds only a document is revealed when the detail lands.
+    const hasTaxData = !!(listReq.gstNumber?.trim() || listReq.panCard?.trim())
+    const hasBankData = !!(
+      listReq.bankName?.trim() || listReq.branchName?.trim() ||
+      listReq.bankAccountNumber?.trim() || listReq.ifscCode?.trim()
+    )
+    // A brand-new draft with nothing filled in yet has no data in either section —
+    // keep both ON there so the buyer still sees the fields. Only turn a section OFF
+    // when the record carries real data elsewhere but that section was left empty.
+    const looksEmpty = !hasTaxData && !hasBankData &&
+      !listReq.vendorName?.trim() && !listReq.addressDetails?.trim() &&
+      !(listReq.contactPerson || listReq.contactInformation || '').trim()
+    setTaxEnabled(hasTaxData || looksEmpty)
+    setBankEnabled(hasBankData || looksEmpty)
     setErrors({})
     setApiError(null)
     setShowForm(true)
+
+    // Background-fetch the full record (with document blobs) and merge the documents in
+    // without clobbering any field the buyer may already have started editing. A late
+    // response for a modal that has since been closed/replaced is ignored via the ref.
+    editDetailReqIdRef.current = listReq.id
+    setLoadingDetail(true)
+    workflow.fetchDetail(listReq.id)
+      .then(full => {
+        if (!full || editDetailReqIdRef.current !== listReq.id) return
+        const hasTaxDocs  = parseDocs(full.gstDocument).length || parseDocs(full.panDocument).length
+        const hasBankDocs = parseDocs(full.bankDocument1).length
+        setForm(f => ({
+          ...f,
+          bankDocument1: parseDocs(full.bankDocument1),
+          gstDocument:   parseDocs(full.gstDocument),
+          panDocument:   parseDocs(full.panDocument),
+          additionalDocuments: parseDocs(full.bankDocument2),
+        }))
+        // A section can hold only documents (no text) — reveal it once its blobs load.
+        if (hasTaxDocs)  setTaxEnabled(true)
+        if (hasBankDocs) setBankEnabled(true)
+        setEditingRequest(full)
+      })
+      .catch(() => { /* keep list copy — documents simply won't pre-fill */ })
+      .finally(() => { if (editDetailReqIdRef.current === listReq.id) setLoadingDetail(false) })
   }
 
   const validate = () => {
@@ -1148,7 +1257,13 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
     }
   }
 
-  const handleSaveDraft = async () => {
+  // The actual draft save. savingDraftRef is a synchronous lock: a burst of clicks on
+  // "Save as Draft" fires several handlers in the same tick, before React re-renders
+  // the button as disabled. Without the lock each handler would POST its own draft and
+  // leave duplicate records behind — the exact "multiple forms" bug this guards against.
+  const doSaveDraft = async () => {
+    if (savingDraftRef.current) return
+    savingDraftRef.current = true
     setSavingDraft(true)
     setApiError(null)
     const payload = buildFormPayload()
@@ -1161,7 +1276,43 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       const detail = err.response?.data
       setApiError(typeof detail === 'string' ? detail : detail?.message ?? 'Failed to save draft.')
     } finally {
+      savingDraftRef.current = false
       setSavingDraft(false)
+    }
+  }
+
+  const handleSaveDraft = () => {
+    if (savingDraftRef.current) return
+    // A draft is treated as a duplicate purely by vendor name (nothing else matters):
+    // if another of the buyer's drafts already carries this name, confirm before saving
+    // — this is what stops the "clicked save twice, got two identical drafts" problem.
+    const name = form.vendorName?.trim().toLowerCase()
+    const isDuplicate = !!name && draftReqs.some(d =>
+      d.id !== editingRequest?.id && (d.vendorName ?? '').trim().toLowerCase() === name
+    )
+    if (isDuplicate) {
+      setShowDuplicateSaveConfirm(true)
+      return
+    }
+    doSaveDraft()
+  }
+
+  const handleDiscardDraft = async () => {
+    if (!discardTarget) return
+    setDiscarding(true)
+    try {
+      await workflow.discardDraft(discardTarget.id)
+      const name = discardTarget.vendorName?.trim() || 'Untitled Draft'
+      // If the draft being discarded is the one open in the edit modal, close it.
+      if (editingRequest?.id === discardTarget.id) setShowForm(false)
+      setDiscardTarget(null)
+      setToast({ type: 'success', title: 'Draft Discarded', body: `"${name}" has been permanently deleted.` })
+    } catch (err) {
+      const detail = err.response?.data
+      setDiscardTarget(null)
+      setToast({ type: 'error', title: 'Could not discard draft', body: typeof detail === 'string' ? detail : detail?.message ?? 'Failed to discard the draft. Please try again.' })
+    } finally {
+      setDiscarding(false)
     }
   }
 
@@ -1710,10 +1861,20 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                                 </button>
                               )}
                               {isDraft && (
-                                <button className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-semibold text-white bg-[#096fb3] hover:bg-[#075d99] transition-colors" onClick={() => openEdit(req)}>
-                                  <PencilSquareIcon className="h-3.5 w-3.5" />
-                                  Edit &amp; Submit
-                                </button>
+                                <>
+                                  <button className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-semibold text-white bg-[#096fb3] hover:bg-[#075d99] transition-colors" onClick={() => openEdit(req)}>
+                                    <PencilSquareIcon className="h-3.5 w-3.5" />
+                                    Edit &amp; Submit
+                                  </button>
+                                  <button
+                                    className="btn-secondary !py-1 !px-2 !text-xs !text-red-600 hover:!bg-red-50"
+                                    onClick={() => setDiscardTarget(req)}
+                                    title="Discard this draft"
+                                  >
+                                    <TrashIcon className="h-3.5 w-3.5" />
+                                    Discard
+                                  </button>
+                                </>
                               )}
                               {req.status === 'Completed' && (
                                 <>
@@ -2055,6 +2216,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 error={errors.gstDocument}
                 onAdd={fl => addFiles('gstDocument', fl)}
                 onRemove={i => removeFileAt('gstDocument', i)}
+                onReject={notifyDropUnsupported}
               />
               <FileUploadField
                 label="PAN Document Upload (optional)"
@@ -2062,6 +2224,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 error={errors.panDocument}
                 onAdd={fl => addFiles('panDocument', fl)}
                 onRemove={i => removeFileAt('panDocument', i)}
+                onReject={notifyDropUnsupported}
               />
             </FormSection>
 
@@ -2095,6 +2258,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 error={errors.bankDocument1}
                 onAdd={fl => addFiles('bankDocument1', fl)}
                 onRemove={i => removeFileAt('bankDocument1', i)}
+                onReject={notifyDropUnsupported}
               />
             </FormSection>
 
@@ -2124,6 +2288,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
                 error={errors.additionalDocuments}
                 onAdd={fl => addFiles('additionalDocuments', fl)}
                 onRemove={i => removeFileAt('additionalDocuments', i)}
+                onReject={notifyDropUnsupported}
               />
             </FormSection>
 
@@ -2172,20 +2337,37 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           </div>
 
           <div className="mt-6 flex justify-between gap-3 border-t border-gray-100 pt-5">
-            <button className="btn-secondary" onClick={() => setShowForm(false)} disabled={submitting || savingDraft}>Cancel</button>
             <div className="flex items-center gap-3">
+              <button className="btn-secondary" onClick={() => setShowForm(false)} disabled={submitting || savingDraft || discarding}>Cancel</button>
+              {/* Discard is only offered for an existing draft — a not-yet-saved new
+                  request is discarded simply by closing the form. */}
+              {editingRequest?.status === 'Draft' && (
+                <button
+                  className="btn-secondary !text-red-600 hover:!bg-red-50"
+                  onClick={() => setDiscardTarget(editingRequest)}
+                  disabled={submitting || savingDraft || discarding}
+                >
+                  <TrashIcon className="h-4 w-4" />
+                  Discard Draft
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              {loadingDetail && (
+                <span className="text-xs text-gray-400">Loading saved details…</span>
+              )}
               {/* Show "Save as Draft" only for new requests or existing drafts */}
               {(!editingRequest || editingRequest?.status === 'Draft') && (
                 <button
                   className="btn-secondary"
                   onClick={handleSaveDraft}
-                  disabled={submitting || savingDraft}
+                  disabled={submitting || savingDraft || loadingDetail}
                 >
                   <PencilSquareIcon className="h-4 w-4" />
                   {savingDraft ? 'Saving Draft…' : 'Save as Draft'}
                 </button>
               )}
-              <button className="btn-primary" onClick={() => handleSubmitForm(false)} disabled={submitting || savingDraft}>
+              <button className="btn-primary" onClick={() => handleSubmitForm(false)} disabled={submitting || savingDraft || loadingDetail}>
                 <PaperAirplaneIcon className="h-4 w-4" />
                 {submitting
                   ? (editingRequest?.status === 'Completed' ? 'Resubmitting…' : editingRequest ? 'Resubmitting…' : 'Submitting…')
@@ -2213,6 +2395,51 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
           </div>
           <p className="text-sm text-gray-500">
             You haven't added any intermediate approvers. The request will go directly to Pardeep Sharma (Final Approver) for review. Are you sure you want to proceed?
+          </p>
+        </div>
+      </ConfirmDialog>
+
+      {/* ── Discard-Draft Confirmation Dialog ───────────────────────────────── */}
+      <ConfirmDialog
+        open={!!discardTarget}
+        title="Discard this draft?"
+        cancelLabel="Keep Draft"
+        confirmLabel="Discard Draft"
+        confirmIcon={TrashIcon}
+        confirmTone="red"
+        loading={discarding}
+        onCancel={() => setDiscardTarget(null)}
+        onConfirm={handleDiscardDraft}
+      >
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+            <TrashIcon className="h-5 w-5 text-red-600" />
+          </div>
+          <p className="text-sm text-gray-500">
+            <strong className="text-gray-700">"{discardTarget?.vendorName?.trim() || 'Untitled Draft'}"</strong> will be permanently deleted.
+            This cannot be undone. The draft was never submitted, so no one else has seen it.
+          </p>
+        </div>
+      </ConfirmDialog>
+
+      {/* ── Duplicate Vendor-Name Confirmation Dialog ───────────────────────── */}
+      <ConfirmDialog
+        open={showDuplicateSaveConfirm}
+        title="A draft with this vendor name already exists"
+        cancelLabel="Cancel"
+        confirmLabel="Save Anyway"
+        confirmIcon={PencilSquareIcon}
+        confirmTone="blue"
+        onCancel={() => setShowDuplicateSaveConfirm(false)}
+        onConfirm={() => { setShowDuplicateSaveConfirm(false); doSaveDraft() }}
+      >
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+            <ExclamationTriangleIcon className="h-5 w-5 text-amber-600" />
+          </div>
+          <p className="text-sm text-gray-500">
+            You already have a draft named <strong className="text-gray-700">"{form.vendorName?.trim() || 'Untitled Draft'}"</strong>.
+            Saving will keep both. If you meant to update the existing one, cancel and open it from your drafts instead.
           </p>
         </div>
       </ConfirmDialog>

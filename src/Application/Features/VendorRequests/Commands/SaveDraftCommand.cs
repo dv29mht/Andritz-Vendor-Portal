@@ -59,33 +59,40 @@ public class SaveDraftCommandHandler(
         if (entity.Status != VendorRequestStatus.Draft)
             throw new BadRequestException("Only Draft requests can be updated via this endpoint.");
 
-        // Patch-style update: null = leave unchanged
-        if (request.VendorName is not null) entity.VendorName = request.VendorName;
-        if (request.ContactPerson is not null) { entity.ContactPerson = request.ContactPerson; entity.ContactInformation = request.ContactPerson; }
-        if (request.Telephone is not null) entity.Telephone = request.Telephone;
-        if (request.Email is not null) entity.Email = request.Email;
-        if (request.GstNumber is not null) entity.GstNumber = request.GstNumber;
-        if (request.PanCard is not null) entity.PanCard = request.PanCard;
-        if (request.AddressDetails is not null) entity.AddressDetails = request.AddressDetails;
-        if (request.City is not null) entity.City = request.City;
-        if (request.Locality is not null) entity.Locality = request.Locality;
-        if (request.MaterialGroup is not null) entity.MaterialGroup = request.MaterialGroup;
-        if (request.PostalCode is not null) entity.PostalCode = request.PostalCode;
-        if (request.State is not null) entity.State = request.State;
-        if (request.Country is not null) entity.Country = request.Country;
-        if (request.Currency is not null) entity.Currency = request.Currency;
-        if (request.PaymentTerms is not null) entity.PaymentTerms = request.PaymentTerms;
-        if (request.Incoterms is not null) entity.Incoterms = request.Incoterms;
-        if (request.Reason is not null) entity.Reason = request.Reason;
-        if (request.YearlyPvo is not null) entity.YearlyPvo = request.YearlyPvo;
-        if (request.IsOneTimeVendor is not null) entity.IsOneTimeVendor = request.IsOneTimeVendor.Value;
-        if (request.ProposedBy is not null) entity.ProposedBy = request.ProposedBy;
-        if (request.PurchasingOrganization is not null) entity.PurchasingOrganization = request.PurchasingOrganization;
-        if (request.MsmeCategory is not null) entity.MsmeCategory = request.MsmeCategory;
-        if (request.BankName is not null) entity.BankName = request.BankName;
-        if (request.BranchName is not null) entity.BranchName = request.BranchName;
-        if (request.BankAccountNumber is not null) entity.BankAccountNumber = request.BankAccountNumber;
-        if (request.IfscCode is not null) entity.IfscCode = request.IfscCode;
+        // The Save-Draft screen always sends the full form, so overwrite every scalar
+        // field outright. The previous patch behaviour (null = leave unchanged) meant a
+        // buyer who blanked a field on a saved draft lost the edit: an emptied value is
+        // sent as null, the handler skipped it, and the old value reappeared on reload.
+        entity.VendorName = request.VendorName ?? string.Empty;
+        entity.ContactPerson = request.ContactPerson ?? string.Empty;
+        entity.ContactInformation = request.ContactPerson ?? string.Empty;
+        entity.Telephone = request.Telephone ?? string.Empty;
+        entity.Email = request.Email ?? string.Empty;
+        entity.GstNumber = request.GstNumber ?? string.Empty;
+        entity.PanCard = request.PanCard ?? string.Empty;
+        entity.AddressDetails = request.AddressDetails ?? string.Empty;
+        entity.City = request.City ?? string.Empty;
+        entity.Locality = request.Locality ?? string.Empty;
+        entity.MaterialGroup = request.MaterialGroup ?? string.Empty;
+        entity.PostalCode = request.PostalCode ?? string.Empty;
+        entity.State = request.State ?? string.Empty;
+        entity.Country = request.Country ?? string.Empty;
+        entity.Currency = request.Currency ?? string.Empty;
+        entity.PaymentTerms = request.PaymentTerms ?? string.Empty;
+        entity.Incoterms = request.Incoterms ?? string.Empty;
+        entity.Reason = request.Reason ?? string.Empty;
+        entity.YearlyPvo = request.YearlyPvo ?? string.Empty;
+        entity.IsOneTimeVendor = request.IsOneTimeVendor ?? false;
+        entity.ProposedBy = request.ProposedBy ?? string.Empty;
+        entity.PurchasingOrganization = request.PurchasingOrganization ?? string.Empty;
+        entity.MsmeCategory = request.MsmeCategory ?? string.Empty;
+        entity.BankName = request.BankName ?? string.Empty;
+        entity.BranchName = request.BranchName ?? string.Empty;
+        entity.BankAccountNumber = request.BankAccountNumber ?? string.Empty;
+        entity.IfscCode = request.IfscCode ?? string.Empty;
+        // Documents keep patch semantics (null = keep what's already stored): the edit
+        // screen falls back to a document-less copy of the request when the detail
+        // fetch fails, so a null blob must not wipe a previously-uploaded document.
         if (request.BankDocument1 is not null) entity.BankDocument1 = request.BankDocument1;
         if (request.BankDocument2 is not null) entity.BankDocument2 = request.BankDocument2;
         if (request.GstDocument is not null) entity.GstDocument = request.GstDocument;

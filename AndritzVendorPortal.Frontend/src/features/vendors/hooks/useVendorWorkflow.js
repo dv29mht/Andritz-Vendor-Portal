@@ -94,6 +94,9 @@ export function useVendorWorkflow() {
   const submit = (requestId) =>
     withAction(() => vendorsService.submit(requestId))
 
+  const discardDraft = (requestId) =>
+    withAction(() => vendorsService.discardDraft(requestId))
+
   const resubmit = (requestId, form) =>
     withAction(() => vendorsService.resubmit(requestId, form))
 
@@ -133,6 +136,7 @@ export function useVendorWorkflow() {
     createRequest,
     saveDraft,
     submit,
+    discardDraft,
     resubmit,
     updateCompleted,
     approveStep,
