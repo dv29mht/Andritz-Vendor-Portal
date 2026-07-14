@@ -25,8 +25,16 @@ public class ArchiveUserCommandHandler(
         if (string.Equals(user.Email, SystemAccounts.FinalApproverEmail, StringComparison.OrdinalIgnoreCase))
             throw new BadRequestException("The Final Approver account cannot be deleted.");
 
-        // Load all currently-pending steps for this user
+        // Load all currently-pending steps for this user.
+        //
+        // IgnoreQueryFilters: ApprovalStep mirrors VendorRequest's !IsArchived filter, which would
+        // hide every step belonging to an archived request from this query. A user's lifecycle has
+        // to account for those too — a pending step on an archived request that is never flagged
+        // here becomes a step whose ApproverUserId no longer resolves the moment the request is
+        // restored, which is precisely the stale-approver state the ConflictException below exists
+        // to prevent, and it leaves the request unable to advance.
         var pendingSteps = await db.ApprovalSteps
+            .IgnoreQueryFilters()
             .Where(s => s.ApproverUserId == request.Id
                         && s.Decision == ApprovalDecision.Pending
                         && !s.IsDeletedApprover)

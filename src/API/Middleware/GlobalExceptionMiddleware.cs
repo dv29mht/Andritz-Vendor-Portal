@@ -1,5 +1,6 @@
 using AndritzVendorPortal.Application.Common.Exceptions;
 using AndritzVendorPortal.Application.Common.Models;
+using AndritzVendorPortal.Application.Common.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Text.Json;
@@ -69,17 +70,11 @@ public class GlobalExceptionMiddleware(
         // Last line of defence for the duplicate-key 500s. The races that produced them are
         // closed at the source (approval-chain upsert + VendorRequest.RowVersion), but a unique
         // index firing is by definition two writers colliding — which is a 409, never a 500.
-        DbUpdateException dbe when IsUniqueConstraintViolation(dbe) => (
+        DbUpdateException dbe when SqlErrors.IsUniqueConstraintViolation(dbe) => (
             (int)HttpStatusCode.Conflict,
             "This request was just updated by someone else. Refresh and try again.",
             []),
         AppException ae => ((int)HttpStatusCode.BadRequest, ae.Message, []),
         _ => ((int)HttpStatusCode.InternalServerError, "An unexpected error occurred.", [])
     };
-
-    // SQL Server raises 2627 (unique constraint) / 2601 (unique index) on a duplicate key.
-    // Read Number reflectively rather than referencing Microsoft.Data.SqlClient here.
-    private static bool IsUniqueConstraintViolation(DbUpdateException ex) =>
-        ex.InnerException?.GetType().GetProperty("Number")?.GetValue(ex.InnerException) is int number
-        && number is 2627 or 2601;
 }

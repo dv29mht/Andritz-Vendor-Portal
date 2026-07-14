@@ -111,12 +111,17 @@ public class EmailSendBoundedTests
     }
 
     [Fact]
-    public async Task An_unconfigured_host_is_a_no_op_rather_than_an_error()
+    public async Task An_unconfigured_host_throws_rather_than_reporting_a_send_that_never_happened()
     {
+        // This used to log "skipping" and return normally. The dispatcher, seeing no exception,
+        // stamped SentAt and cleared LastError — so the row left the filtered index for good and the
+        // outbox permanently asserted a delivery that never happened, with the mail unrecoverable.
+        // IEmailService's contract is that a send that did not happen throws.
         var email = new MailKitEmailService(
             Options.Create(new EmailSettings { Host = string.Empty }),
             NullLogger<MailKitEmailService>.Instance);
 
-        await email.SendAsync("someone@andritz.com", "subject", "<p>body</p>");
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            email.SendAsync("someone@andritz.com", "subject", "<p>body</p>"));
     }
 }

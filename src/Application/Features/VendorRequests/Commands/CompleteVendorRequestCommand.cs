@@ -1,4 +1,5 @@
 using AndritzVendorPortal.Application.Common.Exceptions;
+using AndritzVendorPortal.Application.Common.Persistence;
 using AndritzVendorPortal.Application.DTOs;
 using AndritzVendorPortal.Application.Features.VendorRequests.Common;
 using AndritzVendorPortal.Application.Interfaces;
@@ -82,7 +83,7 @@ public class CompleteVendorRequestCommandHandler(
         {
             await db.SaveChangesAsync(ct);
         }
-        catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+        catch (DbUpdateException ex) when (SqlErrors.IsUniqueConstraintViolation(ex))
         {
             // Only a unique-index collision means the vendor code is taken. Any other
             // DbUpdateException (deadlock, timeout, optimistic-concurrency) must bubble
@@ -92,16 +93,5 @@ public class CompleteVendorRequestCommandHandler(
         }
 
         return VendorRequestMapper.ToDetailDto(entity);
-    }
-
-    // SQL Server raises error 2627 (unique constraint) / 2601 (unique index) on a
-    // duplicate-key insert/update. The provider exception lives in
-    // Microsoft.Data.SqlClient, which the Application layer deliberately does not
-    // reference, so read its Number via reflection rather than coupling to the provider.
-    private static bool IsUniqueConstraintViolation(DbUpdateException ex)
-    {
-        if (ex.InnerException?.GetType().GetProperty("Number")?.GetValue(ex.InnerException) is int number)
-            return number is 2627 or 2601;
-        return false;
     }
 }

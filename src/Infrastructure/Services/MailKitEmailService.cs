@@ -33,11 +33,15 @@ public class MailKitEmailService(
         IReadOnlyList<EmailAttachment>? attachments = null,
         CancellationToken ct = default)
     {
+        // Returning normally here would be a lie the outbox cannot recover from: the dispatcher would
+        // see no exception, stamp SentAt, and the row would leave the filtered index forever —
+        // permanently asserting a delivery that never happened. Throw instead, per this interface's
+        // contract. In a dev environment with no relay configured that costs OutboxMaxAttempts noisy
+        // retries per message before the row is abandoned, which is the honest outcome: the mail
+        // genuinely was not sent.
         if (string.IsNullOrWhiteSpace(_cfg.Host))
-        {
-            logger.LogInformation("[Email] SMTP Host missing — skipping email to {To}: {Subject}", to, subject);
-            return;
-        }
+            throw new InvalidOperationException(
+                $"EmailSettings:Host is not configured — cannot send to {to}: {subject}");
 
         var timeout = TimeSpan.FromSeconds(Math.Max(1, _cfg.TimeoutSeconds));
 

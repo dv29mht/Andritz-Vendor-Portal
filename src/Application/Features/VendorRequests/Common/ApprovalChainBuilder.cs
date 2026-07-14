@@ -83,12 +83,16 @@ public static class ApprovalChainBuilder
         VendorRequest request, IApplicationDbContext db, IReadOnlyList<string> approverIds,
         IIdentityService identity, CancellationToken ct)
     {
-        // Resolve first — an id with no matching user is skipped, as the previous code did.
+        // Resolve first. An id that does not resolve is fatal, not skippable: silently dropping it
+        // would build a shorter approval chain than the buyer asked for, and the request would then
+        // complete without an approver who was meant to see it. Callers run ValidateApproversAsync
+        // immediately before this, so reaching the throw means a caller skipped that step.
         var resolved = new List<(string Id, string Name)>();
         foreach (var aid in approverIds)
         {
-            var user = await identity.FindByIdAsync(aid);
-            if (user is not null) resolved.Add((aid, user.FullName));
+            var user = await identity.FindByIdAsync(aid)
+                ?? throw new BadRequestException($"Approver ID '{aid}' does not exist.");
+            resolved.Add((aid, user.FullName));
         }
 
         var existing = request.ApprovalSteps

@@ -27,8 +27,11 @@ public class PurgeUserCommandHandler(
 
         // Same safety net as Archive: a hard delete must not strand a request whose
         // current active approver is the user being removed, and queued steps must be
-        // released so downstream requests can still advance.
+        // released so downstream requests can still advance. IgnoreQueryFilters for the same
+        // reason as Archive — steps on archived requests are the ones that would be stranded
+        // hardest, since a purged approver's id can never resolve again.
         var pendingSteps = await db.ApprovalSteps
+            .IgnoreQueryFilters()
             .Where(s => s.ApproverUserId == request.Id
                         && s.Decision == ApprovalDecision.Pending
                         && !s.IsDeletedApprover)

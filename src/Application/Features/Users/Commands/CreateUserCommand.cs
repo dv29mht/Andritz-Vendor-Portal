@@ -41,12 +41,6 @@ public class CreateUserCommandHandler(
         if (await identity.FindByEmailAsync(request.Email) is not null)
             throw new ConflictException("A user with this email address already exists.");
 
-        var (ok, userId, errors) = await identity.CreateUserAsync(
-            request.Email, request.Password, request.FullName, request.Designation, request.Role);
-
-        if (!ok)
-            throw new BadRequestException("Failed to create user.", errors);
-
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
 
         var inviteCode = request.Role switch
@@ -77,9 +71,31 @@ public class CreateUserCommandHandler(
             outbox.Enqueue(request.Email, subject, body);
         }
 
-        // The Identity user is already committed by CreateUserAsync above, so this save only
-        // persists the invite mail. Queuing rather than sending keeps a stalled relay from
-        // holding the admin's "create user" request open.
+        // Stage the invite BEFORE creating the account, so the two commit together.
+        //
+        // Identity is stored in this very DbContext (AddEntityFrameworkStores<ApplicationDbContext>,
+        // scoped — IdentityService and IApplicationDbContext resolve the same instance), so
+        // UserManager.CreateAsync saves through it: the INSERT into AspNetUsers and the staged
+        // OutboxEmails row go out in one SaveChanges, and therefore one transaction. Queue-then-create
+        // is what makes that true. The other order — create, then queue, then save — is two commits,
+        // and if the second throws the admin gets a 500 while the account exists un-invited, with no
+        // way back: re-running "create user" fails on the duplicate email, and nothing retries the mail.
+        //
+        // A rejected password (Identity's policy is stricter than this command's validator) fails
+        // inside CreateAsync before it ever saves, so the staged row is simply never persisted.
+        // Residual: if CreateAsync commits and the subsequent AddToRoleAsync fails, IdentityService
+        // deletes the user — and the invite, already committed, still goes out. That needs a missing
+        // role, which the validator and the boot-time seed both rule out; and its cost is one invite
+        // whose credentials don't work, against an account that is permanently unreachable.
+        var (ok, userId, errors) = await identity.CreateUserAsync(
+            request.Email, request.Password, request.FullName, request.Designation, request.Role);
+
+        if (!ok)
+            throw new BadRequestException("Failed to create user.", errors);
+
+        // No-op when CreateAsync already flushed the staged row; the belt-and-braces matters only if
+        // Identity is ever moved off this context, where it degrades to the old two-commit behaviour
+        // rather than dropping the invite.
         await db.SaveChangesAsync(ct);
 
         return new UserDto(userId, request.FullName, request.Email, request.Designation ?? string.Empty, [request.Role]);

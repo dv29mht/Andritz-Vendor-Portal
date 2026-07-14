@@ -24,13 +24,24 @@ public class OutboxEmail
 
     public DateTime CreatedAt { get; set; }
 
-    /// <summary>Earliest time the dispatcher may attempt (next) delivery. Moved forward on each retry.</summary>
+    /// <summary>
+    /// Earliest time the dispatcher may attempt (next) delivery. Moved forward on each retry — and
+    /// also by the claim a dispatcher takes before sending, which is what stops two overlapping
+    /// worker processes from both delivering the same row. A claim that is never resolved (the
+    /// process died mid-send) simply expires, and the row falls due again.
+    /// </summary>
     public DateTime NextAttemptAt { get; set; }
 
     public DateTime? SentAt { get; set; }
+
+    /// <summary>Incremented when a dispatcher claims the row, so a message that kills the process still burns an attempt.</summary>
     public int AttemptCount { get; set; }
 
-    /// <summary>Set once the retry budget is exhausted. The row is kept as an audit record and never retried again.</summary>
+    /// <summary>
+    /// Set once the retry budget is exhausted. The row is never retried again, and is kept as the
+    /// audit record of mail that never got through — longer than a delivered row, but not forever;
+    /// the dispatcher's retention sweep bounds both.
+    /// </summary>
     public bool IsAbandoned { get; set; }
 
     public string? LastError { get; set; }

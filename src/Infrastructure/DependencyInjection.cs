@@ -37,6 +37,21 @@ public static class DependencyInjection
                 "JwtSettings:SecretKey is not configured. Set the JwtSettings__SecretKey " +
                 "environment variable (32+ characters).");
 
+        // An anonymous internal relay is a legitimate configuration — MailKitEmailService only
+        // authenticates when a Username is set, and the SMTP diagnostic endpoint offers UseAuth=false
+        // for exactly that case. So the guard belongs on the pair, not on the password alone: a
+        // configured Username with no Password means AuthenticateAsync(user, "") on every send. The
+        // app would boot perfectly healthy and then fail auth on every message, burn its retries over
+        // ~45 minutes of backoff, and abandon every notification — a total mail outage visible only
+        // in the logs. Committing the Username to appsettings.json while the Password comes from the
+        // environment makes that the exact shape of a forgotten EmailSettings__Password.
+        var smtpUser = config["EmailSettings:Username"];
+        if (!string.IsNullOrWhiteSpace(smtpUser) && string.IsNullOrEmpty(config["EmailSettings:Password"]))
+            throw new InvalidOperationException(
+                $"EmailSettings:Password is not configured, but EmailSettings:Username ('{smtpUser}') is. " +
+                "Set the EmailSettings__Password environment variable, or clear the username to send " +
+                "anonymously.");
+
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(connectionString, sql =>
                 sql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));

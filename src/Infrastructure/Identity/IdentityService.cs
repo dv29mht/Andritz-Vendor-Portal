@@ -229,15 +229,19 @@ public class IdentityService(
 
     public async Task PropagateUserNameChangeAsync(string userId, string newFullName, CancellationToken ct = default)
     {
-        // Ignore the soft-delete filter — a rename must reach archived requests too.
+        // Ignore the soft-delete filter on all three — a rename must reach archived requests too,
+        // and VendorRevision and ApprovalStep now mirror VendorRequest's !IsArchived filter, so
+        // without this they would skip exactly the rows the first statement does update.
         await db.VendorRequests
             .IgnoreQueryFilters()
             .Where(r => r.CreatedByUserId == userId)
             .ExecuteUpdateAsync(s => s.SetProperty(r => r.CreatedByName, newFullName), ct);
         await db.VendorRevisions
+            .IgnoreQueryFilters()
             .Where(v => v.ChangedByUserId == userId)
             .ExecuteUpdateAsync(s => s.SetProperty(v => v.ChangedByName, newFullName), ct);
         await db.ApprovalSteps
+            .IgnoreQueryFilters()
             .Where(a => a.ApproverUserId == userId)
             .ExecuteUpdateAsync(s => s.SetProperty(a => a.ApproverName, newFullName), ct);
     }

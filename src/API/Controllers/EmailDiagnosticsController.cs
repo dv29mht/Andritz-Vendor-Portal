@@ -134,17 +134,29 @@ public class EmailDiagnosticsController(IOptions<EmailSettings> options) : Contr
                 Chain: chain,
                 StackTrace: ex.StackTrace);
 
+            var hint = BuildHint(ex, useAuth, port, timeout, HttpContext.RequestAborted.IsCancellationRequested);
+
             return Ok(Result<EmailDiagnosticResponse>.Ok(
-                new EmailDiagnosticResponse(false, sw.ElapsedMilliseconds, resolved, err, BuildHint(ex, useAuth, port, timeout)),
+                new EmailDiagnosticResponse(false, sw.ElapsedMilliseconds, resolved, err, hint),
                 "Test send failed."));
         }
     }
 
-    private static string? BuildHint(Exception ex, bool useAuth, int port, TimeSpan timeout)
+    private static string? BuildHint(Exception ex, bool useAuth, int port, TimeSpan timeout, bool clientAborted)
     {
         var msg = ex.Message ?? string.Empty;
         var inner = ex.InnerException?.Message ?? string.Empty;
         var combined = $"{msg} | {inner}";
+
+        // RequestAborted is linked into the CTS above, so an admin who closes the tab mid-test
+        // unwinds as an OperationCanceledException — the same exception the timeout raises. On an
+        // endpoint whose whole job is correct attribution, that must not be reported as a stalled
+        // relay: it would send someone to chase a relay that is perfectly healthy. Check the abort
+        // first, because it is the one cause we can identify with certainty.
+        if (clientAborted)
+            return "The test was cancelled before the relay answered — the browser disconnected " +
+                   "(tab closed, navigated away, or a proxy timed the request out). This says nothing " +
+                   "about the relay. Re-run it and leave the page open.";
 
         // A relay that accepts the TCP connection and then never speaks is exactly the shape of
         // the July production incident. Name it, because the symptom (a slow app) looks nothing

@@ -62,6 +62,14 @@ Set-WebConfigurationProperty -PSPath $app -Filter "system.webServer/aspNetCore/e
 Then `iisreset` (or recycle the app pool) and confirm the app starts — a missing secret now fails
 the boot loudly instead of running on a weak default.
 
+`EmailSettings__Password` is checked as a *pair* with `EmailSettings:Username`, not on its own: a
+relay that accepts anonymous internal mail is a legitimate setup (no username, no password), but a
+username with a blank password is not. It would authenticate as `(username, "")` on every send —
+the app boots perfectly healthy, then fails auth on every message, burns its retries over ~45
+minutes of backoff, and abandons every notification, visible only in the logs. Since the username
+is committed to `appsettings.json` and the password comes from the environment, that is exactly the
+shape a forgotten `EmailSettings__Password` would take, so the boot refuses it.
+
 Generate a signing key:
 
 ```powershell

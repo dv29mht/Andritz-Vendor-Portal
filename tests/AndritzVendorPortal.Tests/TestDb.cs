@@ -39,8 +39,15 @@ public sealed class TestDb : IDisposable
         Db.Database.EnsureCreated();
     }
 
-    /// <summary>An independent context with its own connection and its own change tracker.</summary>
-    public ApplicationDbContext NewContext()
+    /// <summary>
+    /// An independent context with its own connection and its own change tracker.
+    /// </summary>
+    /// <param name="factory">
+    /// Builds the context from the options. Tests that need to make the database misbehave — a save
+    /// that throws a transient error, say — pass a <see cref="SqliteApplicationDbContext"/> subclass.
+    /// </param>
+    public ApplicationDbContext NewContext(
+        Func<DbContextOptions<ApplicationDbContext>, ApplicationDbContext>? factory = null)
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseSqlite(_connectionString)
@@ -55,7 +62,7 @@ public sealed class TestDb : IDisposable
                 RelationalEventId.MultipleCollectionIncludeWarning))
             .Options;
 
-        var context = new SqliteApplicationDbContext(options);
+        var context = factory is null ? new SqliteApplicationDbContext(options) : factory(options);
         _contexts.Add(context);
         return context;
     }
@@ -71,7 +78,7 @@ public sealed class TestDb : IDisposable
     /// SQLite cannot parse. Rewrite just those to TEXT for the test schema; everything the tests
     /// assert on — keys, unique indexes, relationships, concurrency tokens — comes through untouched.
     /// </summary>
-    private sealed class SqliteApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    public class SqliteApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : ApplicationDbContext(options)
     {
         protected override void OnModelCreating(ModelBuilder builder)
@@ -107,9 +114,9 @@ public sealed class FakeIdentityService(params string[] userIds) : IIdentityServ
     public Task<(bool, string, IReadOnlyList<string>)> CreateUserAsync(string email, string password, string fullName, string? designation, string role) => throw new NotSupportedException();
     public Task<(bool, IReadOnlyList<string>)> UpdateUserAsync(string userId, string fullName, string email, string? designation, string role, string? newPassword) => throw new NotSupportedException();
     public Task<(bool, IReadOnlyList<string>)> UpdateProfileAsync(string userId, string fullName, string? currentPassword, string? newPassword) => throw new NotSupportedException();
-    public Task<(bool, IReadOnlyList<string>)> ArchiveUserAsync(string userId) => throw new NotSupportedException();
+    public Task<(bool, IReadOnlyList<string>)> ArchiveUserAsync(string userId) => Task.FromResult((true, (IReadOnlyList<string>)[]));
     public Task<(bool, IReadOnlyList<string>)> RestoreUserAsync(string userId) => throw new NotSupportedException();
-    public Task<(bool, IReadOnlyList<string>)> PurgeUserAsync(string userId) => throw new NotSupportedException();
+    public Task<(bool, IReadOnlyList<string>)> PurgeUserAsync(string userId) => Task.FromResult((true, (IReadOnlyList<string>)[]));
     public Task<string> GeneratePasswordResetTokenAsync(string email) => throw new NotSupportedException();
     public Task<(bool, IReadOnlyList<string>)> ResetPasswordAsync(string email, string token, string newPassword) => throw new NotSupportedException();
     public Task PropagateUserNameChangeAsync(string userId, string newFullName, CancellationToken ct = default) => Task.CompletedTask;
