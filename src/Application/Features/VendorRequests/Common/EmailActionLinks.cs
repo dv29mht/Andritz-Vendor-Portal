@@ -35,12 +35,8 @@ public static class EmailActionLinks
         return $"{baseUrl}/api/vendor-requests/email-action/reject?token={Uri.EscapeDataString(rejectToken)}";
     }
 
-    public static IReadOnlyList<EmailAttachment> PdfAttachment(
-        IVendorRequestPdfService pdfService, VendorRequest request)
-    {
-        var bytes = pdfService.Generate(request);
-        var safeName = string.Join("_", request.VendorName.Split(System.IO.Path.GetInvalidFileNameChars()));
-        if (string.IsNullOrWhiteSpace(safeName)) safeName = $"vendor-request-{request.Id}";
-        return new[] { new EmailAttachment($"VendorRequest_{request.Id}_{safeName}.pdf", bytes) };
-    }
+    // PdfAttachment() used to live here and called pdfService.Generate(request) — a synchronous,
+    // CPU-bound QuestPDF render — on the request thread, once per recipient. Handlers now pass the
+    // vendor request's id to IEmailOutbox.Enqueue and the dispatcher renders the PDF once, off the
+    // request thread, sharing the bytes across every recipient of that request.
 }

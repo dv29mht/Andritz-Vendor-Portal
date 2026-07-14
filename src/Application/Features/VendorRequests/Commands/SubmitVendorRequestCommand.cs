@@ -17,11 +17,10 @@ public class SubmitVendorRequestCommandHandler(
     IVendorRequestRepository repo,
     IIdentityService identity,
     ICurrentUserService currentUser,
-    IEmailService email,
+    IEmailOutbox outbox,
     IEmailTemplateService templates,
     IConfiguration config,
     IDateTimeProvider clock,
-    IVendorRequestPdfService pdfService,
     IEmailActionTokenService tokens) : IRequestHandler<SubmitVendorRequestCommand, VendorRequestDetailDto>
 {
     public async Task<VendorRequestDetailDto> Handle(SubmitVendorRequestCommand request, CancellationToken ct)
@@ -41,14 +40,14 @@ public class SubmitVendorRequestCommandHandler(
             : VendorRequestStatus.PendingFinalApproval;
         entity.UpdatedAt = clock.UtcNow;
 
-        await db.SaveChangesAsync(ct);
-
         // Notifications — only the approver who must act receives an email.
         // The buyer's submission-confirmation email and the admin/Final-Approver
         // oversight copy were removed at the customer's request (the in-app
         // notification bell still covers both of them).
+        //
+        // The mail is queued, not sent: it commits with the status change below and the
+        // dispatcher delivers it (and renders the PDF) off the request thread.
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
-        var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
 
         var firstStep = entity.ApprovalSteps
             .Where(s => hasIntermediate ? !s.IsFinalApproval : s.IsFinalApproval)
@@ -76,9 +75,11 @@ public class SubmitVendorRequestCommandHandler(
                 var footer = EmailHtmlShell.BuildActionFooter(approveUrl, rejectUrl, portalUrl, "View in Portal");
 
                 var (s, b) = await templates.RenderAsync(EmailTemplateCodes.ApproverApprovalRequest, values, ct, footer);
-                await email.SendAsync(approver.Email, s, b, pdf);
+                outbox.Enqueue(approver.Email, s, b, entity.Id);
             }
         }
+
+        await db.SaveChangesAsync(ct);
 
         return VendorRequestMapper.ToDetailDto(entity);
     }

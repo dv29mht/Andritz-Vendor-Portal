@@ -24,10 +24,9 @@ public class ApproveVendorRequestCommandHandler(
     IVendorRequestRepository repo,
     IIdentityService identity,
     ICurrentUserService currentUser,
-    IEmailService email,
+    IEmailOutbox outbox,
     IConfiguration config,
     IDateTimeProvider clock,
-    IVendorRequestPdfService pdfService,
     IEmailActionTokenService tokens) : IRequestHandler<ApproveVendorRequestCommand, VendorRequestDetailDto>
 {
     public async Task<VendorRequestDetailDto> Handle(ApproveVendorRequestCommand request, CancellationToken ct)
@@ -49,17 +48,25 @@ public class ApproveVendorRequestCommandHandler(
         ApprovalChain.AdvanceWorkflow(entity);
         entity.UpdatedAt = clock.UtcNow;
 
+        // Queue the mail against the post-decision in-memory state, then commit both together.
+        // The step rows already exist, so their IDs (which the one-click action tokens embed) are
+        // real before the save — no transaction dance needed here.
+        //
+        // Two approvers racing on the same step both reach this point with Decision=Pending in
+        // hand; ApprovalStep.Decision is a concurrency token, so exactly one SaveChanges commits
+        // and the other throws DbUpdateConcurrencyException → 409. Neither can double-advance the
+        // workflow, and neither can double-send.
+        await EnqueueNotificationsAsync(entity, step.ApproverName, ct);
+
         await db.SaveChangesAsync(ct);
 
-        await SendNotificationsAsync(entity, step.ApproverName, ct);
         return VendorRequestMapper.ToDetailDto(entity);
     }
 
-    private async Task SendNotificationsAsync(Domain.Entities.VendorRequest entity, string approvedBy, CancellationToken ct)
+    private async Task EnqueueNotificationsAsync(Domain.Entities.VendorRequest entity, string approvedBy, CancellationToken ct)
     {
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
         var summary = VendorRequestMapper.ToSummary(entity);
-        var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
         var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
 
         if (entity.Status == VendorRequestStatus.PendingFinalApproval)
@@ -72,7 +79,7 @@ public class ApproveVendorRequestCommandHandler(
             // catalog — it's an internal progress notice). The admin/Final-Approver oversight
             // copy was removed at the customer's request.
             var (saSubject, saBody) = LegacyEmailTemplates.StepApproved(summary, approvedBy, null, portalUrl);
-            if (buyer is not null) await email.SendAsync(buyer.Email, saSubject, saBody, pdf);
+            if (buyer is not null) outbox.Enqueue(buyer.Email, saSubject, saBody, entity.Id);
         }
         else
         {
@@ -86,7 +93,7 @@ public class ApproveVendorRequestCommandHandler(
             var (infoSubj, infoBody) = LegacyEmailTemplates.StepApproved(summary, approvedBy, nextStep?.ApproverName, portalUrl);
             var infoRecipients = new HashSet<string>();
             if (buyer is not null) infoRecipients.Add(buyer.Email);
-            foreach (var r in infoRecipients) await email.SendAsync(r, infoSubj, infoBody, pdf);
+            foreach (var r in infoRecipients) outbox.Enqueue(r, infoSubj, infoBody, entity.Id);
 
             // Next approver: action-required with one-click approve/reject buttons
             if (nextStep is not null)
@@ -96,7 +103,7 @@ public class ApproveVendorRequestCommandHandler(
                 {
                     var (approveUrl, rejectUrl) = EmailActionLinks.BuildFor(tokens, config, entity, nextStep);
                     var (subj, body) = LegacyEmailTemplates.StepApproved(summary, approvedBy, nextStep.ApproverName, portalUrl, approveUrl, rejectUrl);
-                    await email.SendAsync(nextUser.Email, subj, body, pdf);
+                    outbox.Enqueue(nextUser.Email, subj, body, entity.Id);
                 }
             }
         }

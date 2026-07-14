@@ -72,6 +72,15 @@ public class VendorRequest : ISoftDelete, IAuditable
     public string? CreatedBy { get; set; }
     public string? ModifiedBy { get; set; }
 
+    /// <summary>
+    /// SQL Server rowversion. Every write to a request — including the ones that rewrite its
+    /// approval chain — is checked against the version the writer read, so two concurrent
+    /// save-drafts or approvals of the same request cannot both commit. The loser gets a
+    /// DbUpdateConcurrencyException, which surfaces as a clean 409 instead of a duplicate-key
+    /// 500 from the ApprovalSteps unique index.
+    /// </summary>
+    public byte[]? RowVersion { get; set; }
+
     // Relations
     public ICollection<ApprovalStep> ApprovalSteps { get; set; } = new List<ApprovalStep>();
     public ICollection<VendorRevision> RevisionHistory { get; set; } = new List<VendorRevision>();

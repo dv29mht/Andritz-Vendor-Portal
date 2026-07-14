@@ -14,8 +14,9 @@ public class ForgotPasswordCommandValidator : AbstractValidator<ForgotPasswordCo
 }
 
 public class ForgotPasswordCommandHandler(
+    IApplicationDbContext db,
     IIdentityService identity,
-    IEmailService email,
+    IEmailOutbox outbox,
     IConfiguration config) : IRequestHandler<ForgotPasswordCommand, Unit>
 {
     public async Task<Unit> Handle(ForgotPasswordCommand request, CancellationToken ct)
@@ -29,7 +30,8 @@ public class ForgotPasswordCommandHandler(
             var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
             var resetLink = $"{portalUrl}/reset-password?email={Uri.EscapeDataString(user.Email)}&token={encoded}";
             var (subject, body) = LegacyEmailTemplates.PasswordReset(user.FullName, resetLink);
-            await email.SendAsync(user.Email, subject, body);
+            outbox.Enqueue(user.Email, subject, body);
+            await db.SaveChangesAsync(ct);
         }
         return Unit.Value;
     }

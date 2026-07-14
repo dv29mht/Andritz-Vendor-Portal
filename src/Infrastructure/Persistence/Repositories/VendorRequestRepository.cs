@@ -164,11 +164,17 @@ public class VendorRequestRepository(ApplicationDbContext db)
 
     // By-id lookups always resolve regardless of archived state — every command that
     // loads through here enforces its own status guard, and restore needs the archived row.
+    //
+    // AsSplitQuery: two collection Includes on one request produce a cartesian product in a
+    // single SELECT (steps × revisions), so every one of the request's nvarchar(max) document
+    // blobs is re-sent once per row of the cross-join. EF logs a MultipleCollectionIncludeWarning
+    // on every boot for exactly this. Splitting emits one query per collection instead.
     public async Task<VendorRequest?> GetByIdWithDetailsAsync(int id, CancellationToken ct = default) =>
         await Db.VendorRequests
             .IgnoreQueryFilters()
             .Include(r => r.ApprovalSteps)
             .Include(r => r.RevisionHistory)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(r => r.Id == id, ct);
 
     // Admin/Final-Approver grid — includes archived so the "Archived" tab has data.

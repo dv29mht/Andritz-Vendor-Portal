@@ -19,7 +19,7 @@
 # the bundled `sqlserver` service can then be left stopped.
 #
 # Run:   docker compose up --build
-# Open:  http://localhost:8080/SOT      (login pardeep.sharma@andritz.com / Andritz@1234)
+# Open:  http://localhost:8080/SOT      (login pardeep.sharma@andritz.com / LocalDev@1234)
 # Mail:  http://localhost:8025          (MailHog inbox — every notification lands here)
 
 services:
@@ -48,8 +48,8 @@ services:
       # SQL auth against the SQL Server running on YOUR host (managed in SSMS).
       # DbInitializer creates the SOT database + schema and seeds the elevated
       # account on first boot (it retries the connection for ~2 minutes).
-      ConnectionStrings__DefaultConnection: "Server=${DB_HOST:-sqlserver},${DB_PORT:-1433};Database=${DB_NAME:-SOT};User Id=${DB_USER:-sa};Password=${DB_PASSWORD:-Andritz@1234};TrustServerCertificate=True;MultipleActiveResultSets=true"
-      Seed__DefaultAdminPassword: "Andritz@1234"
+      ConnectionStrings__DefaultConnection: "Server=${DB_HOST:-sqlserver},${DB_PORT:-1433};Database=${DB_NAME:-SOT};User Id=${DB_USER:-sa};Password=${DB_PASSWORD:-LocalDev@1234};TrustServerCertificate=True;MultipleActiveResultSets=true"
+      Seed__DefaultAdminPassword: "LocalDev@1234"
       JwtSettings__SecretKey: "Local-Only-Change-Me-Min-32-Chars-Secret-Key-123456"
       JwtSettings__Issuer: "AndritzVendorPortal"
       JwtSettings__Audience: "AndritzVendorPortalClient"
@@ -72,14 +72,14 @@ services:
   # Bundled database so the stack is self-contained. Azure SQL Edge runs natively
   # on Apple Silicon (arm64) and amd64; it speaks the same TDS protocol as SQL
   # Server, so the EF Core SqlServer provider + migrations work unchanged.
-  # Inspect it from the host with Azure Data Studio at  localhost,1433  (sa / Andritz@1234).
+  # Inspect it from the host with Azure Data Studio at  localhost,1433  (sa / LocalDev@1234).
   sqlserver:
     image: mcr.microsoft.com/azure-sql-edge:latest
     cap_add:
       - SYS_PTRACE
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "${DB_PASSWORD:-Andritz@1234}"
+      MSSQL_SA_PASSWORD: "${DB_PASSWORD:-LocalDev@1234}"
       MSSQL_PID: "Developer"
     ports:
       - "1433:1433"

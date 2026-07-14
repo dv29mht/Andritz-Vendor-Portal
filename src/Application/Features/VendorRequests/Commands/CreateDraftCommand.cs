@@ -41,7 +41,13 @@ public record CreateDraftCommand(
     string? BankDocument2,
     string? GstDocument,
     string? PanDocument,
-    List<string>? ApproverUserIds) : IRequest<VendorRequestDetailDto>;
+    List<string>? ApproverUserIds) : IRequest<VendorRequestDetailDto>, IDraftVendorFields;
+
+/// <summary>
+/// The validator this command shipped without. Its absence is why an oversized paste reached SQL
+/// and surfaced as "String or binary data would be truncated" → HTTP 500 instead of a 400.
+/// </summary>
+public class CreateDraftCommandValidator : DraftVendorFieldsValidator<CreateDraftCommand>;
 
 public class CreateDraftCommandHandler(
     IApplicationDbContext db,

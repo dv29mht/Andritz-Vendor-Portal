@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { CheckBadgeIcon, StarIcon } from '@heroicons/react/24/solid'
 import { XMarkIcon, EyeIcon, CheckIcon, ClockIcon, ArchiveBoxIcon,
          UsersIcon, ArrowPathIcon, NoSymbolIcon, TrophyIcon, BuildingOfficeIcon,
@@ -86,6 +86,11 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
   const isAuthorizedFinalApprover = currentUser?.email === 'pardeep.sharma@andritz.com'
   const { isNew, markViewed } = useViewedRequests(currentUser.id)
 
+  // Synchronous in-flight guard, matching ApproverConsole. workflow.actionLoading is React state
+  // and only disables the button on the next render, so a same-tick double-click would otherwise
+  // fire two decisions on the same request.
+  const decisionInFlight = useRef(false)
+
   const openReview = (req) => {
     markViewed(req)
     const priorCode = req.vendorCode?.trim() || ''
@@ -104,6 +109,8 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
     const trimmed = codeMode === 'keep' && priorCode ? priorCode : vendorCode.trim()
     if (!trimmed)                    { setVendorCodeErr('SAP Vendor Code is required.'); return }
     if (!/^\d{1,10}$/.test(trimmed)) { setVendorCodeErr('Vendor code must be 1–10 digits only.'); return }
+    if (decisionInFlight.current) return
+    decisionInFlight.current = true
     const name = reviewing.vendorName
     const code = trimmed
     try {
@@ -111,13 +118,17 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
       setReviewing(null)
       setToast({ type: 'success', title: 'Vendor Registration Completed', body: `${name} has been approved and vendor code ${code} has been assigned.` })
     } catch (err) {
-      const msg = err?.response?.data || 'Failed to complete request.'
+      const msg = err?.response?.data?.message ?? err?.response?.data ?? 'Failed to complete request.'
       setVendorCodeErr(typeof msg === 'string' ? msg : 'Vendor code already in use or invalid.')
+    } finally {
+      decisionInFlight.current = false
     }
   }
 
   const handleReject = async () => {
     if (!rejectComment.trim()) { setRejectError('A rejection reason is required.'); return }
+    if (decisionInFlight.current) return
+    decisionInFlight.current = true
     const name = reviewing.vendorName
     try {
       await workflow.reject(reviewing.id, rejectComment)
@@ -125,6 +136,8 @@ export default function FinalApproverConsole({ workflow, currentUser, activePage
       setToast({ type: 'warning', title: 'Request Rejected', body: `You rejected the vendor request for ${name}. The buyer will be notified to revise and resubmit.` })
     } catch (err) {
       setRejectError(err?.response?.data?.message ?? err?.response?.data ?? 'Failed to reject request. Please try again.')
+    } finally {
+      decisionInFlight.current = false
     }
   }
 

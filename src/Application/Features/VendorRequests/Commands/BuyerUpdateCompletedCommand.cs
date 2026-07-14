@@ -67,11 +67,10 @@ public class BuyerUpdateCompletedCommandHandler(
     IVendorRequestRepository repo,
     IIdentityService identity,
     ICurrentUserService currentUser,
-    IEmailService email,
+    IEmailOutbox outbox,
     IEmailTemplateService templates,
     IConfiguration config,
     IDateTimeProvider clock,
-    IVendorRequestPdfService pdfService,
     IEmailActionTokenService tokens) : IRequestHandler<BuyerUpdateCompletedCommand, VendorRequestDetailDto>
 {
     public async Task<VendorRequestDetailDto> Handle(BuyerUpdateCompletedCommand request, CancellationToken ct)
@@ -104,33 +103,20 @@ public class BuyerUpdateCompletedCommandHandler(
             throw new ConflictException(
                 "One or more approvers in the original chain no longer exist. Please provide a new approval chain.");
 
+        // One transaction spans the chain rewrite (two flushes), the revision row, the status
+        // change, and the outbox mail.
+        await using var tx = await db.BeginTransactionAsync(ct);
+
         if (request.ApproverUserIds is { Count: > 0 })
         {
             var newIds = request.ApproverUserIds.Distinct().ToList();
             await ApprovalChainBuilder.ValidateApproversAsync(newIds, identity, ct);
 
-            var finalStep = entity.ApprovalSteps.First(s => s.IsFinalApproval);
-            // Remove from the nav collection too, not just the DbSet — otherwise the
-            // returned DTO carries the stale (deleted) steps alongside the rebuilt ones.
-            foreach (var s in intermediate)
-            {
-                entity.ApprovalSteps.Remove(s);
-                db.ApprovalSteps.Remove(s);
-            }
+            // Upsert in place rather than delete-then-reinsert — the pattern that collided on
+            // IX_ApprovalSteps_VendorRequestId_StepOrder under concurrent writes.
+            await ApprovalChainBuilder.RebuildIntermediateAsync(entity, db, newIds, identity, ct);
 
-            int stepOrder = 1;
-            foreach (var aid in newIds)
-            {
-                var u = await identity.FindByIdAsync(aid);
-                entity.ApprovalSteps.Add(new ApprovalStep
-                {
-                    ApproverUserId = aid,
-                    ApproverName = u!.FullName,
-                    StepOrder = stepOrder++,
-                    IsFinalApproval = false
-                });
-            }
-            finalStep.StepOrder = stepOrder;
+            var finalStep = entity.ApprovalSteps.First(s => s.IsFinalApproval);
             finalStep.Decision = ApprovalDecision.Pending;
             finalStep.Comment = null;
             finalStep.DecidedAt = null;
@@ -178,17 +164,23 @@ public class BuyerUpdateCompletedCommandHandler(
         entity.Status = hasIntermediate ? VendorRequestStatus.PendingApproval : VendorRequestStatus.PendingFinalApproval;
         entity.UpdatedAt = clock.UtcNow;
 
+        // Same reason as ResubmitVendorRequestCommand: the approver mail's one-click links embed
+        // ApprovalStep IDs that only exist after the insert, so save first and queue the mail
+        // afterwards — the transaction opened above is what keeps the two atomic.
         await db.SaveChangesAsync(ct);
 
-        await SendNotificationsAsync(entity, ct);
+        await EnqueueNotificationsAsync(entity, ct);
+        await db.SaveChangesAsync(ct);
+
+        await tx.CommitAsync(ct);
+
         entity.RevisionHistory.Add(revision);
         return VendorRequestMapper.ToDetailDto(entity);
     }
 
-    private async Task SendNotificationsAsync(VendorRequest entity, CancellationToken ct)
+    private async Task EnqueueNotificationsAsync(VendorRequest entity, CancellationToken ct)
     {
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
-        var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
 
         var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
         // Oversight copy to the elevated account (Final Approver, formerly the admin).
@@ -202,7 +194,7 @@ public class BuyerUpdateCompletedCommandHandler(
                 buyerName: buyer.FullName);
             var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "Track Request");
             var (s, b) = await templates.RenderAsync(EmailTemplateCodes.BuyerResubmissionConfirmation, values, ct, footer);
-            await email.SendAsync(buyer.Email, s, b);
+            outbox.Enqueue(buyer.Email, s, b);
         }
 
         var hasIntermediate = entity.ApprovalSteps.Any(s => !s.IsFinalApproval);
@@ -235,7 +227,7 @@ public class BuyerUpdateCompletedCommandHandler(
                 }
 
                 var (s, b) = await templates.RenderAsync(EmailTemplateCodes.ApproverResubmitted, values, ct, footer);
-                await email.SendAsync(approver.Email, s, b, pdf);
+                outbox.Enqueue(approver.Email, s, b, entity.Id);
             }
         }
 
@@ -248,7 +240,7 @@ public class BuyerUpdateCompletedCommandHandler(
                 buyerName: entity.CreatedByName);
             var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "View in Admin Dashboard");
             var (s, b) = await templates.RenderAsync(EmailTemplateCodes.ApproverResubmitted, values, ct, footer);
-            await email.SendAsync(admin.Email, s, b, pdf);
+            outbox.Enqueue(admin.Email, s, b, entity.Id);
         }
     }
 }

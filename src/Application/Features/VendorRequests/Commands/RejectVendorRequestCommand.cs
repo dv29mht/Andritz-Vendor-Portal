@@ -27,11 +27,10 @@ public class RejectVendorRequestCommandHandler(
     IVendorRequestRepository repo,
     IIdentityService identity,
     ICurrentUserService currentUser,
-    IEmailService email,
+    IEmailOutbox outbox,
     IEmailTemplateService templates,
     IConfiguration config,
-    IDateTimeProvider clock,
-    IVendorRequestPdfService pdfService) : IRequestHandler<RejectVendorRequestCommand, VendorRequestDetailDto>
+    IDateTimeProvider clock) : IRequestHandler<RejectVendorRequestCommand, VendorRequestDetailDto>
 {
     public async Task<VendorRequestDetailDto> Handle(RejectVendorRequestCommand request, CancellationToken ct)
     {
@@ -49,10 +48,7 @@ public class RejectVendorRequestCommandHandler(
         entity.RejectionComment = request.Comment;
         entity.UpdatedAt = clock.UtcNow;
 
-        await db.SaveChangesAsync(ct);
-
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
-        var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
 
         var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
         if (buyer is not null)
@@ -65,13 +61,16 @@ public class RejectVendorRequestCommandHandler(
                 comments: request.Comment);
             var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "Revise & Resubmit");
             var (s, b) = await templates.RenderAsync(EmailTemplateCodes.BuyerRejected, values, ct, footer);
-            await email.SendAsync(buyer.Email, s, b, pdf);
+            outbox.Enqueue(buyer.Email, s, b, entity.Id);
         }
 
         // The Final Approver does NOT receive a rejection email — a rejection needs
         // action only from the buyer (revise & resubmit). The Final Approver still
         // gets an in-app bell notification (see NotificationBehavior), per the
         // customer's rule that they work from the bell rather than email.
+
+        // The rejection and the mail announcing it commit together.
+        await db.SaveChangesAsync(ct);
 
         return VendorRequestMapper.ToDetailDto(entity);
     }

@@ -73,6 +73,14 @@ public class VendorRequestConfiguration : IEntityTypeConfiguration<VendorRequest
         // a model-level change only — no column is added, so no schema migration.
         e.Property(x => x.Status).IsConcurrencyToken();
 
+        // Status alone does not catch two writers who leave it unchanged — the case that
+        // produced the duplicate-key 500s: two save-drafts of the same Draft both read
+        // Status=Draft, both write Status=Draft, both rebuild the approval chain, and both
+        // insert StepOrder=1. A rowversion changes on every write, so the second writer's
+        // UPDATE matches zero rows and the whole SaveChanges (chain rewrite included) rolls
+        // back as a 409.
+        e.Property(x => x.RowVersion).IsRowVersion();
+
         e.HasIndex(x => x.Status);
         e.HasIndex(x => x.CreatedByUserId);
         e.HasIndex(x => x.IsArchived);
@@ -97,6 +105,20 @@ public class ApprovalStepConfiguration : IEntityTypeConfiguration<ApprovalStep>
 
         e.HasIndex(x => new { x.VendorRequestId, x.StepOrder }).IsUnique();
         e.HasIndex(x => x.ApproverUserId);
+
+        // A step is only ever decided once. Making Decision a concurrency token appends
+        // "AND Decision = @original" to the UPDATE, so of two concurrent approvals of the
+        // same step exactly one commits and the other gets a DbUpdateConcurrencyException
+        // (409), instead of both advancing the workflow. Model-level only — no new column.
+        e.Property(x => x.Decision).IsConcurrencyToken();
+
+        // VendorRequest carries a global !IsArchived filter and is the required principal of
+        // this relationship. Without a matching filter here EF warns on every boot
+        // (PossibleIncorrectRequiredNavigationWithQueryFilterInteraction) because a step whose
+        // request is filtered out has nowhere to attach and can be silently dropped. Mirroring
+        // the filter keeps both ends in agreement; callers that want archived rows already opt
+        // out with IgnoreQueryFilters(), which lifts the filter on both ends at once.
+        e.HasQueryFilter(x => !x.VendorRequest!.IsArchived);
     }
 }
 
@@ -112,5 +134,8 @@ public class VendorRevisionConfiguration : IEntityTypeConfiguration<VendorRevisi
         e.Property(x => x.ChangesJson);
 
         e.HasIndex(x => x.VendorRequestId);
+
+        // Matching filter for the same reason as ApprovalStep above.
+        e.HasQueryFilter(x => !x.VendorRequest!.IsArchived);
     }
 }

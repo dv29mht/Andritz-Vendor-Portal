@@ -1,6 +1,6 @@
 # SOT Portal — Database migration steps (for this release)
 
-This release adds **3 database changes** on top of what is currently on the
+This release adds **5 database changes** on top of what is currently on the
 `SOT` database. They are applied automatically on first boot, **or** you can run
 the supplied SQL script manually before deploying (recommended if the IIS
 app‑pool's SQL login is not allowed to create/alter tables).
@@ -12,6 +12,31 @@ app‑pool's SQL login is not allowed to create/alter tables).
 | New table | `Notifications` (+ index) |
 | New column | `VendorRequests.Email` |
 | New column | `VendorRevisions.RejectedByName` |
+| New table | `OutboxEmails` (+ filtered index) — the email queue |
+| New column | `VendorRequests.RowVersion` (`rowversion`) — optimistic concurrency |
+
+**No data repair is needed.** The production data is clean (0 duplicate approval steps, 0 orphans,
+0 half-applied decisions); the unique index rejected the bad insert atomically and the transaction
+rolled back. These two additions exist to stop the *code* re-creating the problem, not to fix rows.
+
+`RowVersion` is a SQL Server `rowversion` column: SQL Server populates it for every existing row
+automatically as part of the `ALTER TABLE`, so there is nothing to backfill. On a large
+`VendorRequests` table the ALTER does rewrite the table, so run it in the deployment window.
+
+`OutboxEmails` starts empty. Rows appear as soon as the app queues its first notification, and the
+background dispatcher deletes nothing — sent mail is retained as an audit trail. Watch it after
+go-live:
+
+```sql
+-- Anything stuck? Non-zero rows here means the relay is not accepting mail.
+SELECT Id, ToEmail, Subject, AttemptCount, NextAttemptAt, IsAbandoned, LastError
+FROM OutboxEmails
+WHERE SentAt IS NULL
+ORDER BY Id;
+```
+
+A row with `IsAbandoned = 1` is mail we gave up on after 6 attempts; `LastError` says why. That is
+now a visible, queryable failure instead of a silently swallowed exception.
 
 The script is **idempotent**: it checks `__EFMigrationsHistory` and only applies
 what is missing. Running it more than once is safe and does nothing the second time.
@@ -64,8 +89,8 @@ sqlcmd -S <SERVER_NAME> -d SOT -E -b -i Migrate_SOT_idempotent.sql
 
 ## Verify it worked (either option)
 
-Run this against `SOT` — you should see **5 rows**, ending in
-`20260624090245_AddRejectedByNameToRevision`:
+Run this against `SOT` — you should see **6 rows**, ending in
+`20260714104202_AddEmailOutboxAndVendorRequestRowVersion`:
 
 ```sql
 SELECT MigrationId FROM __EFMigrationsHistory ORDER BY MigrationId;
@@ -78,13 +103,16 @@ Expected:
 20260603072902_AddNotifications
 20260619060756_AddVendorEmail
 20260624090245_AddRejectedByNameToRevision
+20260714104202_AddEmailOutboxAndVendorRequestRowVersion
 ```
 
 Quick column/table check:
 ```sql
-SELECT COL_LENGTH('VendorRequests','Email')        AS Email_added,        -- non-NULL = present
-       COL_LENGTH('VendorRevisions','RejectedByName') AS RejectedByName_added,
-       OBJECT_ID('Notifications')                  AS Notifications_table; -- non-NULL = present
+SELECT COL_LENGTH('VendorRequests','Email')            AS Email_added,        -- non-NULL = present
+       COL_LENGTH('VendorRevisions','RejectedByName')  AS RejectedByName_added,
+       COL_LENGTH('VendorRequests','RowVersion')       AS RowVersion_added,
+       OBJECT_ID('Notifications')                      AS Notifications_table,
+       OBJECT_ID('OutboxEmails')                       AS OutboxEmails_table;  -- non-NULL = present
 ```
 
 ---

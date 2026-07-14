@@ -1,5 +1,6 @@
 using AndritzVendorPortal.Application.Interfaces;
 using AndritzVendorPortal.Infrastructure.Authentication;
+using AndritzVendorPortal.Infrastructure.BackgroundServices;
 using AndritzVendorPortal.Infrastructure.Identity;
 using AndritzVendorPortal.Infrastructure.Persistence;
 using AndritzVendorPortal.Infrastructure.Persistence.Repositories;
@@ -21,8 +22,20 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
+        // No secret has a fallback. Every one of these used to sit in the committed
+        // appsettings.json; they now come from the environment (or user-secrets locally), and the
+        // app refuses to boot without them rather than quietly running on a known-public default.
+        // See SECURITY-SECRETS.md.
         var connectionString = config.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not configured.");
+            ?? throw new InvalidOperationException(
+                "ConnectionStrings:DefaultConnection is not configured. Set the " +
+                "ConnectionStrings__DefaultConnection environment variable.");
+
+        var jwtSecret = config["JwtSettings:SecretKey"];
+        if (string.IsNullOrWhiteSpace(jwtSecret))
+            throw new InvalidOperationException(
+                "JwtSettings:SecretKey is not configured. Set the JwtSettings__SecretKey " +
+                "environment variable (32+ characters).");
 
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(connectionString, sql =>
@@ -59,10 +72,16 @@ public static class DependencyInjection
         services.Configure<JwtSettings>(config.GetSection("JwtSettings"));
         services.Configure<EmailSettings>(config.GetSection("EmailSettings"));
         services.AddHttpClient();
-        services.AddScoped<IEmailService, SmtpEmailService>();
+        services.AddScoped<IEmailService, MailKitEmailService>();
         services.AddScoped<IEmailTemplateService, EmailTemplateService>();
         services.AddSingleton<IVendorRequestPdfService, QuestPdfVendorRequestPdfService>();
         services.AddSingleton<IEmailActionTokenService, EmailActionTokenService>();
+
+        // Email is queued, never sent inline. Handlers stage rows through IEmailOutbox in the
+        // same transaction as the state change; this hosted service is the only thing that ever
+        // talks to SMTP, and it does so off the request thread.
+        services.AddScoped<IEmailOutbox, EmailOutbox>();
+        services.AddHostedService<OutboxEmailDispatcher>();
 
         // JWT token validation.
         // AddIdentity (above) sets DefaultAuthenticateScheme and
@@ -83,8 +102,7 @@ public static class DependencyInjection
                  opt.TokenValidationParameters = new TokenValidationParameters
                  {
                      ValidateIssuerSigningKey = true,
-                     IssuerSigningKey = new SymmetricSecurityKey(
-                     Encoding.UTF8.GetBytes(config["JwtSettings:SecretKey"])),
+                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
                      ValidateIssuer = false,
                      ValidateAudience = false,
                      ValidateLifetime = true,

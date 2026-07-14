@@ -39,7 +39,10 @@ public record SaveDraftCommand(
     string? BankDocument2,
     string? GstDocument,
     string? PanDocument,
-    List<string>? ApproverUserIds) : IRequest<VendorRequestDetailDto>;
+    List<string>? ApproverUserIds) : IRequest<VendorRequestDetailDto>, IDraftVendorFields;
+
+/// <summary>Save-draft writes the same columns as create-draft, so it gets the same length caps.</summary>
+public class SaveDraftCommandValidator : DraftVendorFieldsValidator<SaveDraftCommand>;
 
 public class SaveDraftCommandHandler(
     IApplicationDbContext db,
@@ -99,43 +102,26 @@ public class SaveDraftCommandHandler(
         if (request.PanDocument is not null) entity.PanDocument = request.PanDocument;
         entity.UpdatedAt = clock.UtcNow;
 
+        // The chain rewrite renumbers steps in two passes (see RebuildIntermediateAsync), so the
+        // whole save runs in one transaction — a mid-rewrite crash can never leave the parked
+        // intermediate StepOrders behind.
+        await using var tx = await db.BeginTransactionAsync(ct);
+
         if (request.ApproverUserIds is { Count: > 0 })
         {
             var ids = request.ApproverUserIds.Distinct().ToList();
             await ApprovalChainBuilder.ValidateApproversAsync(ids, identity, ct);
 
-            // Remove existing intermediate steps and rebuild. Remove from the loaded
-            // nav collection too — db.ApprovalSteps.Remove alone leaves them attached
-            // to entity.ApprovalSteps, so the returned DTO (and any later read before
-            // reload) would surface the stale steps with the wrong StepOrder.
-            var existingIntermediate = entity.ApprovalSteps.Where(s => !s.IsFinalApproval).ToList();
-            foreach (var s in existingIntermediate)
-            {
-                entity.ApprovalSteps.Remove(s);
-                db.ApprovalSteps.Remove(s);
-            }
-
-            int stepOrder = 1;
-            foreach (var aid in ids)
-            {
-                var u = await identity.FindByIdAsync(aid);
-                if (u is null) continue;
-                entity.ApprovalSteps.Add(new Domain.Entities.ApprovalStep
-                {
-                    ApproverUserId = aid,
-                    ApproverName = u.FullName,
-                    StepOrder = stepOrder++,
-                    IsFinalApproval = false
-                });
-            }
-
-            // Final approver step's order moves to last
-            var finalStep = entity.ApprovalSteps.FirstOrDefault(s => s.IsFinalApproval);
-            if (finalStep is not null)
-                finalStep.StepOrder = stepOrder;
+            // Upsert the chain in place. The delete-then-reinsert this replaces is what let two
+            // concurrent save-drafts of request 26 both insert StepOrder=1 and blow up on the
+            // unique index with a 500. VendorRequest.RowVersion now also makes the second of two
+            // concurrent saves lose cleanly with a 409 before it can write anything.
+            await ApprovalChainBuilder.RebuildIntermediateAsync(entity, db, ids, identity, ct);
         }
 
         await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+
         return VendorRequestMapper.ToDetailDto(entity);
     }
 }

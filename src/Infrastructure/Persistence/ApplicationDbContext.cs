@@ -4,6 +4,7 @@ using AndritzVendorPortal.Domain.Entities;
 using AndritzVendorPortal.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace AndritzVendorPortal.Infrastructure.Persistence;
 
@@ -19,12 +20,16 @@ public class ApplicationDbContext(
     public DbSet<EmailTemplate> EmailTemplates => Set<EmailTemplate>();
     public DbSet<LoginSecurity> LoginSecurities => Set<LoginSecurity>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<OutboxEmail> OutboxEmails => Set<OutboxEmail>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
     }
+
+    public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default) =>
+        Database.BeginTransactionAsync(cancellationToken);
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

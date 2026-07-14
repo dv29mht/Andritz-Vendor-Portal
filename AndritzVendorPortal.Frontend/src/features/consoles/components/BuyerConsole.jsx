@@ -723,6 +723,11 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   // handlers before React re-renders the disabled button. Without this ref each one
   // would POST a new draft, leaving duplicate records behind.
   const savingDraftRef                              = useRef(false)
+  // Same guard for Submit. `submitting` is React state, so it only disables the button on the
+  // next render — a double-click in the same tick gets through and fires the command twice.
+  // Submitting a draft is save-draft-then-submit, so a double-click raced two chain rewrites
+  // against each other, which is how the duplicate-key 500s on ApprovalSteps were provoked.
+  const submittingRef                               = useRef(false)
   // Identifies the request the in-flight detail fetch belongs to, so a late response
   // for a modal the buyer already closed/replaced is ignored.
   const editDetailReqIdRef                          = useRef(null)
@@ -1146,6 +1151,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
   })
 
   const handleSubmitForm = async (skipApproverConfirm = false) => {
+    if (submittingRef.current) return
     const e = validate()
     if (Object.keys(e).length) {
       setErrors(e)
@@ -1172,6 +1178,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       return
     }
 
+    submittingRef.current = true
     setSubmitting(true)
     setApiError(null)
     const payload = buildFormPayload()
@@ -1253,6 +1260,7 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
       else if (typeof detail === 'string') showMessage(detail)
       else                                 showMessage('Request failed. Please check your entries and try again.')
     } finally {
+      submittingRef.current = false
       setSubmitting(false)
     }
   }

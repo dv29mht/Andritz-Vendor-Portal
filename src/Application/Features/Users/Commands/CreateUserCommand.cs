@@ -30,8 +30,9 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
 }
 
 public class CreateUserCommandHandler(
+    IApplicationDbContext db,
     IIdentityService identity,
-    IEmailService email,
+    IEmailOutbox outbox,
     IEmailTemplateService templates,
     IConfiguration config) : IRequestHandler<CreateUserCommand, UserDto>
 {
@@ -66,15 +67,20 @@ public class CreateUserCommandHandler(
                 ["[Portal URL]"]    = portalUrl,
             };
             var (subject, body) = await templates.RenderAsync(inviteCode, values, ct);
-            await email.SendAsync(request.Email, subject, body);
+            outbox.Enqueue(request.Email, subject, body);
         }
         else
         {
             // Admin (and any future non-spec role) — keep the legacy generic welcome template.
             var (subject, body) = LegacyEmailTemplates.WelcomeUser(
                 request.FullName, request.Email, request.Role, portalUrl);
-            await email.SendAsync(request.Email, subject, body);
+            outbox.Enqueue(request.Email, subject, body);
         }
+
+        // The Identity user is already committed by CreateUserAsync above, so this save only
+        // persists the invite mail. Queuing rather than sending keeps a stalled relay from
+        // holding the admin's "create user" request open.
+        await db.SaveChangesAsync(ct);
 
         return new UserDto(userId, request.FullName, request.Email, request.Designation ?? string.Empty, [request.Role]);
     }

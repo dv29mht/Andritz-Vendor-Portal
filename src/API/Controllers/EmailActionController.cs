@@ -4,6 +4,7 @@ using AndritzVendorPortal.Application.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Security.Claims;
 
@@ -51,6 +52,16 @@ public class EmailActionController(
         {
             return Html(InfoPage("Already acted",
                 "This approval step has already been completed — either by you in another session, or by an admin override. No further action is needed."));
+        }
+        // This endpoint is a GET reached from an email, so it is fired twice by any double-click,
+        // and by mail clients and security scanners that prefetch links. The second run loses the
+        // race on ApprovalStep.Decision (a concurrency token) or on the request's rowversion —
+        // either way it must read as "already done", not as an error. That makes the link
+        // idempotent from the approver's point of view: clicking twice approves once.
+        catch (Exception ex) when (ex is ConflictException or DbUpdateConcurrencyException)
+        {
+            return Html(InfoPage("Already acted",
+                "This approval has already been recorded. No further action is needed."));
         }
         catch (BadRequestException ex)
         {
@@ -116,6 +127,13 @@ public class EmailActionController(
         {
             return Html(InfoPage("Already acted",
                 "This step has already been completed — no further action is needed."));
+        }
+        // Same idempotency as Approve: a resubmitted form or a concurrent decision must read as
+        // "already done" rather than an error.
+        catch (Exception ex) when (ex is ConflictException or DbUpdateConcurrencyException)
+        {
+            return Html(InfoPage("Already acted",
+                "This decision has already been recorded. No further action is needed."));
         }
         catch (BadRequestException ex)
         {

@@ -23,7 +23,7 @@ migrations on boot.
 
 ## Configure the DB connection
 
-The defaults assume login `sa` / password `Andritz@1234` against
+The defaults assume login `sa` / password `LocalDev@1234` against
 `host.docker.internal,1433`, database `SOT`. To use your own credentials, copy
 `.env.example` to `.env` (next to `docker-compose.yml`) and edit the values —
 no need to touch `docker-compose.yml`:
@@ -67,7 +67,7 @@ firewall on port 1433, and the credentials in `.env`.
 | Field | Value |
 |---|---|
 | Email | `pardeep.sharma@andritz.com` |
-| Password | `Andritz@1234` |
+| Password | `LocalDev@1234` |
 
 This single elevated account does everything — the global dashboard, All
 Requests, User Management, Email Templates, the final-approval queue, Permanent

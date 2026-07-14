@@ -1,12 +1,13 @@
 using AndritzVendorPortal.Application.Common.Models;
 using AndritzVendorPortal.Domain.Constants;
 using AndritzVendorPortal.Infrastructure.Services;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using MimeKit;
 using System.Diagnostics;
-using System.Net;
-using System.Net.Mail;
 using System.Net.Sockets;
 
 namespace AndritzVendorPortal.API.Controllers;
@@ -74,30 +75,36 @@ public class EmailDiagnosticsController(IOptions<EmailSettings> options) : Contr
             FromEmail: _cfg.FromEmail,
             FromName: _cfg.FromName);
 
+        // Bounded, like every other send in the app. This endpoint exists to diagnose a sick
+        // relay, so it is precisely the call that must not hang: on System.Net.Mail the Timeout
+        // below was silently ignored on the async path, and a black-holed relay would hold this
+        // request open until the browser gave up.
+        var timeout = TimeSpan.FromSeconds(Math.Max(1, _cfg.TimeoutSeconds));
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(HttpContext.RequestAborted);
+        cts.CancelAfter(timeout);
+
         var sw = Stopwatch.StartNew();
         try
         {
-            using var message = new MailMessage
+            var message = new MimeMessage
             {
-                From = new MailAddress(_cfg.FromEmail, _cfg.FromName),
                 Subject = $"[SOT] SMTP diagnostic ({DateTime.UtcNow:O})",
-                Body = $"Diagnostic test send.\nHost={host}\nPort={port}\nEnableSsl={ssl}\nUsingAuth={useAuth}",
-                IsBodyHtml = false
+                Body = new TextPart("plain")
+                {
+                    Text = $"Diagnostic test send.\nHost={host}\nPort={port}\nEnableSsl={ssl}\nUsingAuth={useAuth}",
+                },
             };
-            message.To.Add(new MailAddress(req.To));
+            message.From.Add(new MailboxAddress(_cfg.FromName, _cfg.FromEmail));
+            message.To.Add(MailboxAddress.Parse(req.To));
 
-            using var client = new SmtpClient(host, port)
-            {
-                EnableSsl = ssl,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = false,
-                Credentials = useAuth
-                    ? new NetworkCredential(_cfg.Username, _cfg.Password)
-                    : null,
-                Timeout = 15000
-            };
+            using var client = new SmtpClient { Timeout = (int)timeout.TotalMilliseconds };
 
-            await client.SendMailAsync(message);
+            await client.ConnectAsync(host, port, ssl ? SecureSocketOptions.StartTls : SecureSocketOptions.None, cts.Token);
+            if (useAuth)
+                await client.AuthenticateAsync(_cfg.Username ?? string.Empty, _cfg.Password ?? string.Empty, cts.Token);
+            await client.SendAsync(message, cts.Token);
+            await client.DisconnectAsync(quit: true, cts.Token);
+
             sw.Stop();
 
             return Ok(Result<EmailDiagnosticResponse>.Ok(
@@ -113,7 +120,7 @@ public class EmailDiagnosticsController(IOptions<EmailSettings> options) : Contr
             for (var cur = ex; cur is not null; cur = cur.InnerException)
             {
                 chain.Add($"{cur.GetType().FullName}: {cur.Message}");
-                if (smtpStatus is null && cur is SmtpException se)
+                if (smtpStatus is null && cur is SmtpCommandException se)
                     smtpStatus = se.StatusCode.ToString();
                 if (socketError is null && cur is SocketException sock)
                     socketError = $"{sock.SocketErrorCode} ({sock.ErrorCode})";
@@ -128,33 +135,41 @@ public class EmailDiagnosticsController(IOptions<EmailSettings> options) : Contr
                 StackTrace: ex.StackTrace);
 
             return Ok(Result<EmailDiagnosticResponse>.Ok(
-                new EmailDiagnosticResponse(false, sw.ElapsedMilliseconds, resolved, err, BuildHint(ex, ssl, useAuth, port)),
+                new EmailDiagnosticResponse(false, sw.ElapsedMilliseconds, resolved, err, BuildHint(ex, useAuth, port, timeout)),
                 "Test send failed."));
         }
     }
 
-    private static string? BuildHint(Exception ex, bool ssl, bool useAuth, int port)
+    private static string? BuildHint(Exception ex, bool useAuth, int port, TimeSpan timeout)
     {
         var msg = ex.Message ?? string.Empty;
         var inner = ex.InnerException?.Message ?? string.Empty;
         var combined = $"{msg} | {inner}";
 
-        if (combined.Contains("does not support secure", StringComparison.OrdinalIgnoreCase))
+        // A relay that accepts the TCP connection and then never speaks is exactly the shape of
+        // the July production incident. Name it, because the symptom (a slow app) looks nothing
+        // like the cause (a silent relay).
+        if (ex is TimeoutException or OperationCanceledException)
+            return $"The relay accepted the connection but did not answer within {timeout.TotalSeconds:0}s. " +
+                   "Mail is queued in the outbox and retried in the background, so the portal stays responsive — " +
+                   "but delivery is stalled until the relay responds. Check the relay with IT.";
+        if (combined.Contains("does not support the STARTTLS", StringComparison.OrdinalIgnoreCase)
+            || combined.Contains("does not support secure", StringComparison.OrdinalIgnoreCase))
             return "Relay does not advertise STARTTLS on this port. Try with EnableSsl=false (port 25 internal relays usually don't offer TLS).";
-        if (combined.Contains("authentication", StringComparison.OrdinalIgnoreCase)
-            || (ex is SmtpException se1 && se1.StatusCode == SmtpStatusCode.MustIssueStartTlsFirst))
+        if (ex is System.Security.Authentication.AuthenticationException
+            || (ex is SmtpCommandException auth && auth.StatusCode is SmtpStatusCode.AuthenticationRequired
+                    or SmtpStatusCode.AuthenticationInvalidCredentials
+                    or SmtpStatusCode.AuthenticationMechanismTooWeak))
             return useAuth
                 ? "Credentials rejected. Verify the username/password with IT, or try UseAuth=false if the relay allows anonymous internal sending."
                 : "Server requires authentication. Try UseAuth=true.";
-        if (ex is SmtpException se2 && (se2.StatusCode == SmtpStatusCode.MailboxUnavailable
-            || se2.StatusCode == SmtpStatusCode.MailboxNameNotAllowed))
+        if (ex is SmtpCommandException mailbox && mailbox.StatusCode is SmtpStatusCode.MailboxUnavailable
+                or SmtpStatusCode.MailboxNameNotAllowed)
             return "Relay refused the From or To address. The relay may not allow this app's FROM address, or the recipient domain is blocked.";
-        if (ex.InnerException is SocketException)
+        if (ex is SocketException || ex.InnerException is SocketException)
             return $"TCP connection to relay failed. Check that the production server can reach the SMTP host on port {port} (firewall, DNS, or wrong hostname).";
         if (combined.Contains("certificate", StringComparison.OrdinalIgnoreCase))
             return "TLS certificate validation failed. The relay's cert may be self-signed or expired.";
-        if (combined.Contains("timed out", StringComparison.OrdinalIgnoreCase))
-            return $"Connection timed out reaching {port}. Likely a firewall block or the relay is not listening on this port.";
         return null;
     }
 }

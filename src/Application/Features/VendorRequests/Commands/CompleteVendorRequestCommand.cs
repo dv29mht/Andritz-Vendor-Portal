@@ -29,11 +29,10 @@ public class CompleteVendorRequestCommandHandler(
     IVendorRequestRepository repo,
     IIdentityService identity,
     ICurrentUserService currentUser,
-    IEmailService email,
+    IEmailOutbox outbox,
     IEmailTemplateService templates,
     IConfiguration config,
-    IDateTimeProvider clock,
-    IVendorRequestPdfService pdfService) : IRequestHandler<CompleteVendorRequestCommand, VendorRequestDetailDto>
+    IDateTimeProvider clock) : IRequestHandler<CompleteVendorRequestCommand, VendorRequestDetailDto>
 {
     public async Task<VendorRequestDetailDto> Handle(CompleteVendorRequestCommand request, CancellationToken ct)
     {
@@ -58,6 +57,27 @@ public class CompleteVendorRequestCommandHandler(
         entity.Status = VendorRequestStatus.Completed;
         entity.UpdatedAt = clock.UtcNow;
 
+        var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
+
+        var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
+        if (buyer is not null)
+        {
+            var values = EmailValues.ForVendor(
+                entity, clock.UtcNow,
+                recipientName: buyer.FullName,
+                finalApproverName: step.ApproverName,
+                buyerName: buyer.FullName);
+            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "Download Vendor PDF");
+            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.BuyerVendorApproved, values, ct, footer);
+            outbox.Enqueue(buyer.Email, s, b, entity.Id);
+        }
+
+        // The Final Approver no longer receives a "vendor approved" oversight copy
+        // (removed at the customer's request) — the buyer is notified above and the
+        // record is visible in the console.
+
+        // The completion and its notification commit together — so a vendor-code collision,
+        // which rolls this back, cannot leave a "your vendor is approved" mail behind.
         try
         {
             await db.SaveChangesAsync(ct);
@@ -70,26 +90,6 @@ public class CompleteVendorRequestCommandHandler(
             throw new ConflictException(
                 $"Vendor code '{request.VendorCode}' was just assigned by a concurrent request. Use a different code.");
         }
-
-        var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
-        var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
-
-        var buyer = await identity.FindByIdAsync(entity.CreatedByUserId);
-        if (buyer is not null)
-        {
-            var values = EmailValues.ForVendor(
-                entity, clock.UtcNow,
-                recipientName: buyer.FullName,
-                finalApproverName: step.ApproverName,
-                buyerName: buyer.FullName);
-            var footer = EmailHtmlShell.BuildActionFooter(null, null, portalUrl, "Download Vendor PDF");
-            var (s, b) = await templates.RenderAsync(EmailTemplateCodes.BuyerVendorApproved, values, ct, footer);
-            await email.SendAsync(buyer.Email, s, b, pdf);
-        }
-
-        // The Final Approver no longer receives a "vendor approved" oversight copy
-        // (removed at the customer's request) — the buyer is notified above and the
-        // record is visible in the console.
 
         return VendorRequestMapper.ToDetailDto(entity);
     }

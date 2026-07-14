@@ -19,7 +19,7 @@ capturing every outbound email.
 
 1. **Docker Desktop** running.
 2. **Host SQL Server** reachable on `localhost:1433`, SQL auth enabled, login
-   `sa` / `Andritz@1234` (or override via a `.env` — see `.env.example`).
+   `sa` / `LocalDev@1234` (or override via a `.env` — see `.env.example`).
    The container creates the `SOT` database + schema and applies migrations on boot.
    - ⚠️ If 1433 is not listening, the container **exits on startup by design**
      (fail-fast) — start SQL Server first.
@@ -30,7 +30,7 @@ capturing every outbound email.
    docker compose logs -f api      # watch for "[Boot] Database migration + seed complete"
    ```
 4. Open the app:  **http://localhost:8080/SOT**
-   Login (Final Approver / admin):  `pardeep.sharma@andritz.com` / `Andritz@1234`
+   Login (Final Approver / admin):  `pardeep.sharma@andritz.com` / `LocalDev@1234`
 5. Email inbox (all notifications):  **http://localhost:8025**  (MailHog)
 
 ---

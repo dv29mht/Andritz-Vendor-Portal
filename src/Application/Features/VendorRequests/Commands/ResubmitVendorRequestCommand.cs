@@ -68,11 +68,10 @@ public class ResubmitVendorRequestCommandHandler(
     IVendorRequestRepository repo,
     IIdentityService identity,
     ICurrentUserService currentUser,
-    IEmailService email,
+    IEmailOutbox outbox,
     IEmailTemplateService templates,
     IConfiguration config,
     IDateTimeProvider clock,
-    IVendorRequestPdfService pdfService,
     IEmailActionTokenService tokens) : IRequestHandler<ResubmitVendorRequestCommand, VendorRequestDetailDto>
 {
     public async Task<VendorRequestDetailDto> Handle(ResubmitVendorRequestCommand request, CancellationToken ct)
@@ -115,6 +114,10 @@ public class ResubmitVendorRequestCommandHandler(
             throw new ConflictException(
                 "One or more approvers in the original chain no longer exist. Please provide a new approval chain.");
 
+        // One transaction spans the chain rewrite (which renumbers steps across two flushes), the
+        // revision row, the status change, and the outbox mail — so a resubmission is all-or-nothing.
+        await using var tx = await db.BeginTransactionAsync(ct);
+
         // Chain replacement: a non-null ApproverUserIds list (even empty) means the
         // buyer explicitly set the chain on resubmit — rebuild the intermediate steps
         // from it. An empty list collapses the chain to the Final Approver only.
@@ -124,29 +127,11 @@ public class ResubmitVendorRequestCommandHandler(
             var newIds = request.ApproverUserIds.Distinct().ToList();
             await ApprovalChainBuilder.ValidateApproversAsync(newIds, identity, ct);
 
+            // Upsert in place rather than delete-then-reinsert — the pattern that collided on
+            // IX_ApprovalSteps_VendorRequestId_StepOrder under concurrent writes.
+            await ApprovalChainBuilder.RebuildIntermediateAsync(entity, db, newIds, identity, ct);
+
             var finalStep = entity.ApprovalSteps.First(s => s.IsFinalApproval);
-            // Remove from the nav collection too, not just the DbSet — otherwise the
-            // returned DTO carries the stale (deleted) steps alongside the rebuilt ones.
-            foreach (var s in intermediate)
-            {
-                entity.ApprovalSteps.Remove(s);
-                db.ApprovalSteps.Remove(s);
-            }
-
-            int stepOrder = 1;
-            foreach (var aid in newIds)
-            {
-                var u = await identity.FindByIdAsync(aid);
-                entity.ApprovalSteps.Add(new ApprovalStep
-                {
-                    ApproverUserId = aid,
-                    ApproverName = u!.FullName,
-                    StepOrder = stepOrder++,
-                    IsFinalApproval = false
-                });
-            }
-
-            finalStep.StepOrder = stepOrder;
             finalStep.Decision = ApprovalDecision.Pending;
             finalStep.Comment = null;
             finalStep.DecidedAt = null;
@@ -215,14 +200,21 @@ public class ResubmitVendorRequestCommandHandler(
             : VendorRequestStatus.PendingFinalApproval;
         entity.UpdatedAt = clock.UtcNow;
 
+        // The approve/reject links in the mail below embed the new ApprovalStep IDs, which EF only
+        // assigns on insert — so unlike the other handlers this one cannot stage its outbox rows
+        // before the save. The transaction opened above is what keeps them atomic regardless.
         await db.SaveChangesAsync(ct);
 
-        await SendNotificationsAsync(entity, ct);
+        await EnqueueNotificationsAsync(entity, ct);
+        await db.SaveChangesAsync(ct);
+
+        await tx.CommitAsync(ct);
+
         entity.RevisionHistory.Add(revision);
         return VendorRequestMapper.ToDetailDto(entity);
     }
 
-    private async Task SendNotificationsAsync(VendorRequest entity, CancellationToken ct)
+    private async Task EnqueueNotificationsAsync(VendorRequest entity, CancellationToken ct)
     {
         // Email only the intermediate approver who must act next on the (possibly
         // rebuilt) chain. The Final Approver and the buyer work from the in-app
@@ -240,7 +232,6 @@ public class ResubmitVendorRequestCommandHandler(
         if (approver is null) return;
 
         var portalUrl = config["PortalUrl"] ?? "http://localhost:5173";
-        var pdf = EmailActionLinks.PdfAttachment(pdfService, entity);
         var values = EmailValues.ForVendor(
             entity, clock.UtcNow,
             recipientName: firstStep.ApproverName,
@@ -249,6 +240,6 @@ public class ResubmitVendorRequestCommandHandler(
         var (approveUrl, rejectUrl) = EmailActionLinks.BuildFor(tokens, config, entity, firstStep);
         var footer = EmailHtmlShell.BuildActionFooter(approveUrl, rejectUrl, portalUrl, "View in Portal");
         var (s, b) = await templates.RenderAsync(EmailTemplateCodes.ApproverResubmitted, values, ct, footer);
-        await email.SendAsync(approver.Email, s, b, pdf);
+        outbox.Enqueue(approver.Email, s, b, entity.Id);
     }
 }
