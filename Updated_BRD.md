@@ -98,12 +98,16 @@ All emails sent via Brevo API (no domain restriction on recipients).
 
 ## 10. Accounts (Live DB)
 
-| Email | Password | Role |
-|---|---|---|
-| `pardeep.sharma@yopmail.com` | `Dahlia@1234` | FinalApprover |
-| `vikram.nair@andritz.com` | `Dahlia@1234` | Buyer |
-| `rajesh.kumar@andritz.com` | `Dahlia@1234` | Approver |
-| `admin@yopmail.com` | `Andritz@1234` | Admin |
+Passwords are **not listed here**. This file is committed, and these are live logins — the four
+that used to be printed in this table are in git history and must be rotated along with the rest
+(see [SECURITY-SECRETS.md](SECURITY-SECRETS.md)).
+
+| Email | Role |
+|---|---|
+| `pardeep.sharma@yopmail.com` | FinalApprover |
+| `vikram.nair@andritz.com` | Buyer |
+| `rajesh.kumar@andritz.com` | Approver |
+| `admin@yopmail.com` | Admin |
 
 ---
 
