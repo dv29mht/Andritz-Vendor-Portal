@@ -1627,8 +1627,12 @@ export default function BuyerConsole({ workflow, currentUser, activePage, onNavi
               </div>
             </div>
 
-            {/* Recent activity */}
-            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden flex-1">
+            {/* Recent activity — sized to its content, not flex-1: with only a row or two the
+                table would otherwise be stretched to match the taller right column, leaving a large
+                empty white area below the last row (which has no closing border under divide-y).
+                The card still fills the column width (default cross-axis stretch); it just no longer
+                grows to fill the leftover vertical space. */}
+            <div className="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
               <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-gray-900">Recent Activity</h3>
                 {myRequests.length > 4 && (
