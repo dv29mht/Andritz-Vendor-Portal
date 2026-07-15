@@ -189,6 +189,16 @@ app.MapHub<AndritzVendorPortal.API.Hubs.NotificationHub>("/hubs/notifications");
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok", timestamp = DateTime.UtcNow }))
     .AllowAnonymous();
 
+// An unmatched /api or /hubs request must fail as a real 404, not fall through
+// to the SPA fallback below. MapFallbackToFile's default {*path:nonfile} pattern
+// matches any extension-less path — including a mistyped /api/... endpoint — and
+// would return index.html with HTTP 200, so an API caller (or the SPA itself)
+// can't tell a missing route from a real page and the 404 is silently masked.
+// These fallbacks carry a literal "api"/"hubs" segment, so they out-rank the
+// catch-all file fallback for those prefixes while leaving client routes alone.
+app.MapFallback("/api/{**rest}", () => Results.NotFound());
+app.MapFallback("/hubs/{**rest}", () => Results.NotFound());
+
 // SPA fallback — any GET that didn't match a controller, hub, or static file
 // returns index.html so React Router can resolve client-side routes like /login.
 app.MapFallbackToFile("index.html", spaStaticFileOptions);

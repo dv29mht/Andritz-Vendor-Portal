@@ -90,7 +90,7 @@ public class EmailActionController(
 
         var user = await identity.FindByIdAsync(payload.UserId);
         var who = user?.FullName ?? "Approver";
-        return Html(RejectFormPage(token, payload.VendorRequestId, who));
+        return Html(RejectFormPage(token, payload.VendorRequestId, who, Request.PathBase));
     }
 
     [HttpPost("reject")]
@@ -104,11 +104,11 @@ public class EmailActionController(
             return Html(ErrorPage("Invalid link", "This link is not a rejection link."));
 
         if (string.IsNullOrWhiteSpace(comment))
-            return Html(RejectFormPage(token, payload.VendorRequestId, "Approver",
+            return Html(RejectFormPage(token, payload.VendorRequestId, "Approver", Request.PathBase,
                 "A rejection comment is required."));
 
         if (comment.Length > 500)
-            return Html(RejectFormPage(token, payload.VendorRequestId, "Approver",
+            return Html(RejectFormPage(token, payload.VendorRequestId, "Approver", Request.PathBase,
                 "Rejection comment must be 500 characters or fewer."));
 
         var impersonationError = await ImpersonateAsync(payload.UserId);
@@ -221,15 +221,20 @@ public class EmailActionController(
             <p style="margin:0;color:#374151;font-size:15px;line-height:1.5;">{WebUtility.HtmlEncode(lead)}</p>
             """);
 
-    private static string RejectFormPage(string token, int requestId, string who, string? error = null)
+    private static string RejectFormPage(string token, int requestId, string who, string? pathBase, string? error = null)
     {
         var errBlock = error is null ? "" :
             $"""<div style="margin:0 0 16px;padding:10px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;color:#991b1b;font-size:13px;">{WebUtility.HtmlEncode(error)}</div>""";
+        // The form action MUST carry the app's PathBase (e.g. /SOT on the office
+        // IIS sub-app). A root-absolute "/api/..." action is resolved by the
+        // browser against the origin only, dropping /SOT, so the POST 404s and
+        // every email-driven rejection silently fails. pathBase is "" for root
+        // hosting, giving the original "/api/..." path unchanged.
         return Shell("Reject Vendor Request", "#ef4444", $"""
             <h1 style="margin:0 0 6px;color:#111827;font-size:22px;">Reject vendor request #{requestId}</h1>
             <p style="margin:0 0 20px;color:#6b7280;font-size:13px;">Acting as <strong>{WebUtility.HtmlEncode(who)}</strong>. Provide a reason — this will be visible to the buyer.</p>
             {errBlock}
-            <form method="POST" action="/api/vendor-requests/email-action/reject">
+            <form method="POST" action="{pathBase}/api/vendor-requests/email-action/reject">
               <input type="hidden" name="token" value="{WebUtility.HtmlEncode(token)}"/>
               <label for="c" style="display:block;margin-bottom:6px;color:#374151;font-size:13px;font-weight:600;">Rejection comment (required, max 500 chars)</label>
               <textarea id="c" name="comment" rows="5" maxlength="500" required
