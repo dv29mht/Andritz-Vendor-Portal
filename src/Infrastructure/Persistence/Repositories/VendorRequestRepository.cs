@@ -36,6 +36,7 @@ public class VendorRequestRepository(ApplicationDbContext db)
         public string Incoterms { get; init; } = string.Empty;
         public string ContactPerson { get; init; } = string.Empty;
         public string Telephone { get; init; } = string.Empty;
+        public string Email { get; init; } = string.Empty;
         public string Reason { get; init; } = string.Empty;
         public string YearlyPvo { get; init; } = string.Empty;
         public bool IsOneTimeVendor { get; init; }
@@ -80,6 +81,7 @@ public class VendorRequestRepository(ApplicationDbContext db)
             Incoterms = Incoterms,
             ContactPerson = ContactPerson,
             Telephone = Telephone,
+            Email = Email,
             Reason = Reason,
             YearlyPvo = YearlyPvo,
             IsOneTimeVendor = IsOneTimeVendor,
@@ -126,6 +128,7 @@ public class VendorRequestRepository(ApplicationDbContext db)
         Incoterms = r.Incoterms,
         ContactPerson = r.ContactPerson,
         Telephone = r.Telephone,
+        Email = r.Email,
         Reason = r.Reason,
         YearlyPvo = r.YearlyPvo,
         IsOneTimeVendor = r.IsOneTimeVendor,
