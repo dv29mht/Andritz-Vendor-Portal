@@ -1,6 +1,7 @@
 using AndritzVendorPortal.Application.Features.VendorRequests.Common;
 using AndritzVendorPortal.Domain.Entities;
 using AndritzVendorPortal.Domain.Enums;
+using AndritzVendorPortal.Infrastructure.BackgroundServices;
 using AndritzVendorPortal.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -165,5 +166,60 @@ public class SqlServerConcurrencyTests
         using var verify = Attach("SOT_Approve");
         Assert.Single(await verify.ApprovalSteps.IgnoreQueryFilters()
             .Where(s => s.VendorRequestId == id && s.Decision == ApprovalDecision.Approved).ToListAsync());
+    }
+
+    /// <summary>
+    /// The A2 outbox claim, on the engine it actually runs against. Two overlapping IIS workers both
+    /// select the same due row and both call TryClaimAsync — a conditional
+    /// <c>UPDATE … WHERE NextAttemptAt &lt;= @due</c>. The whole guarantee rests on SQL Server
+    /// serialising those UPDATEs on the row lock so exactly one sees a rowcount of 1; SQLite's
+    /// database-level write lock makes the SQLite test pass for the wrong reason, so this is the one
+    /// that proves it. Ten claimants, not two, to give any lost-update window room to show itself.
+    /// </summary>
+    [RequiresSqlServerFact]
+    public async Task Concurrent_outbox_claims_on_one_due_row_let_exactly_one_win()
+    {
+        using var seed = await NewDatabaseAsync("SOT_Claim");
+        var now = new DateTime(2026, 7, 14, 9, 0, 0, DateTimeKind.Utc);
+        seed.OutboxEmails.Add(new OutboxEmail
+        {
+            ToEmail = "a@andritz.com",
+            Subject = "Approval required",
+            BodyHtml = "<p>hi</p>",
+            CreatedAt = now,
+            NextAttemptAt = now,   // due
+        });
+        await seed.SaveChangesAsync();
+        var id = seed.OutboxEmails.Single().Id;
+
+        var leaseUntil = now.AddSeconds(120);
+
+        // Every claimant on its own context/connection, released together, so they genuinely contend.
+        var contexts = Enumerable.Range(0, 10).Select(_ => Attach("SOT_Claim")).ToList();
+        try
+        {
+            var gate = new TaskCompletionSource();
+            var claims = contexts.Select(ctx => Task.Run(async () =>
+            {
+                await gate.Task;
+                return await OutboxEmailDispatcher.TryClaimAsync(
+                    ctx, new OutboxEmail { Id = id }, now, leaseUntil, default);
+            })).ToList();
+
+            gate.SetResult();
+            var results = await Task.WhenAll(claims);
+
+            Assert.Equal(1, results.Count(won => won));   // exactly one winner
+
+            using var verify = Attach("SOT_Claim");
+            var row = await verify.OutboxEmails.SingleAsync(m => m.Id == id);
+            Assert.Equal(1, row.AttemptCount);            // claimed once — no lost update
+            Assert.Equal(leaseUntil, row.NextAttemptAt);  // held by the lease, off the due set
+            Assert.Null(row.SentAt);
+        }
+        finally
+        {
+            foreach (var ctx in contexts) ctx.Dispose();
+        }
     }
 }

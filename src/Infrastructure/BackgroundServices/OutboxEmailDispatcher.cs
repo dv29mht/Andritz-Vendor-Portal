@@ -183,7 +183,7 @@ public class OutboxEmailDispatcher(
     /// claim just wrote. The caller reads the attempt number from its own local, and only ever
     /// re-writes NextAttemptAt when it genuinely means to — to schedule a retry.</para>
     /// </summary>
-    private static async Task<bool> TryClaimAsync(
+    internal static async Task<bool> TryClaimAsync(
         ApplicationDbContext db, OutboxEmail message, DateTime dueAsOf, DateTime leaseUntil, CancellationToken ct)
     {
         var claimed = await db.OutboxEmails
